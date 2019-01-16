@@ -1,0 +1,425 @@
+%-------------------------------
+% use environment settings for Def file, bib files, postscripts
+% setenv TEXPICTS  ${HOME}/Latex/Inputs:
+% setenv TEXINPUTS ${HOME}/Latex/Inputs:${HOME}/Latex/Tuletter:${HOME}/Latex/Def:
+% setenv BIBINPUTS ${HOME}/Latex/Bib:
+
+%\documentclass[11pt,twoside,fleqn]{thesis}
+\documentclass[11pt,twoside,fleqn]{report}
+\pagestyle{headings}
+
+%\usepackage[scaled=0.92]{helvetrm}
+\usepackage[scaled]{helvet}
+\renewcommand\familydefault{\sfdefault} %% Only if the base font of
+                                        %% the document is to be sans serif
+\usepackage{listings}
+% \usepackage{natbib}
+
+%\usepackage[pdftex,backref,pdfpagelabels,breaklinks=true]{hyperref}  % Creates hyper links N.B. pdf option and index option [pdftex,hyperindex,backref,pdfpagelabels]
+
+% \usepackage{chapterbib}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphics}
+\usepackage{tabularx}
+\usepackage{booktabs} 
+\usepackage{lscape}
+\usepackage{rotating}
+\usepackage[dvips]{epsfig}
+
+\usepackage{psfrag}
+\usepackage[english]{babel}
+
+\usepackage{graphicx} 
+\usepackage{graphics}
+\usepackage[dvips]{epsfig}
+%\usepackage{longtable}
+\usepackage{latexsym}
+%\usepackage{xspace}
+\usepackage{psfrag}
+%\usepackage{fancyvrb} % fancy verbatim with fontsize, color, etc. VerbatimInput for FAQ
+%\usepackage{color}
+\bibliographystyle{agu}
+\usepackage{natbib}
+\usepackage[dvips, bookmarks, backref,pdfpagelabels,colorlinks=false, linkcolor=blue, urlbordercolor={0 0 1},citebordercolor={1 0 0},pdftitle={ISCE 2 StaMPS Manual}, pdfauthor={David Bekaert}, pdfkeywords={PS, PSI, MT-InSAR, StaMPS, ISCE}]{hyperref}
+%\usepackage{url}
+\usepackage[usenames]{color}
+\newcommand{\cs}[1]{{\texttt{\color{RoyalBlue}#1}}}
+\newcommand{\cc}[1]{{\texttt{\color{Red}#1}}}
+\usepackage[left=3cm,top=3cm,bottom=2cm,right=2.5cm]{geometry}
+\emergencystretch=100pt
+
+\usepackage{footnote}
+
+%\newcommand{\boxxed}[1]{\fbox{$\displaystyle{#1}$}}
+
+\newcommand\ul{\underline}
+\newcommand\ol{\overline}
+\newcommand\bl{\begin{lstlisting}}
+\newcommand\el{\end{lstlisting}}
+
+
+\newcommand{\SWVER}{v3.2}% 
+
+% COMMAND ABBREVIATIONS
+\newcommand{\be}{\begin{equation}}
+\newcommand{\ee}{\end{equation}}
+\newcommand{\bea}{\begin{eqnarray}}
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\bi}{\begin{itemize}}
+\newcommand{\ei}{\end{itemize}}
+\newcommand{\bnum}{\begin{enumerate}}
+\newcommand{\enum}{\end{enumerate}}
+\newcommand{\benum}{\begin{enumerate}}
+\newcommand{\eenum}{\end{enumerate}}
+
+%\newcommand{\startpreface}{\pagenumbering{roman}\setcounter{page}{1}}
+%\newcommand{\starttext}{\pagenumbering{arabic}\setcounter{chapter}{0}}
+%\newcommand{\startappendix}{\renewcommand{\chaptername}{Annex}\renewcommand{\thechapter}{\Alph{chapter}}\setcounter{chapter}{0}}
+%
+% CONSISTENCY
+\newcommand{\pipe}{\ensuremath{\:|\:}}
+\newcommand{\half}{\ensuremath{{1\over2}}}
+\newcommand{\degs}{\ensuremath{^\circ}}
+%
+% TYPOS
+\newcommand{\phie}{\ensuremath{\phi}}
+\newcommand{\fie}{\ensuremath{\phi}}
+\newcommand{\alfa}{\ensuremath{\alpha}}
+%
+% UNDERLINE
+\newcommand{\alphau}{\ensuremath{\underline{\alpha}}}
+\newcommand{\alfau}{\ensuremath{\underline{\alpha}}}
+\newcommand{\betau}{\ensuremath{\underline{\beta}}}
+\newcommand{\gammau}{\ensuremath{\underline{\gamma}}}
+\newcommand{\xu}{\ensuremath{\underline{x}}}
+\newcommand{\yu}{\ensuremath{\underline{y}}}
+\newcommand{\zu}{\ensuremath{\underline{z}}}
+%
+% OVERLINE
+\newcommand{\alphao}{\ensuremath{\overline{\alpha}}}
+\newcommand{\alfao}{\ensuremath{\overline{\alpha}}}
+\newcommand{\betao}{\ensuremath{\overline{\beta}}}
+\newcommand{\gammao}{\ensuremath{\overline{\gamma}}}
+\newcommand{\xo}{\ensuremath{\overline{x}}}
+\newcommand{\yo}{\ensuremath{\overline{y}}}
+\newcommand{\zo}{\ensuremath{\overline{z}}}
+%
+% DOT
+\newcommand{\alphad}{\ensuremath{\dot{\alpha}}}
+\newcommand{\alfad}{\ensuremath{\dot{\alpha}}}
+\newcommand{\betad}{\ensuremath{\dot{\beta}}}
+\newcommand{\gammad}{\ensuremath{\dot{\gamma}}}
+\newcommand{\xd}{\ensuremath{\dot{x}}}
+\newcommand{\yd}{\ensuremath{\dot{y}}}
+\newcommand{\zd}{\ensuremath{\dot{z}}}
+%
+% DUBBLE DOT
+\newcommand{\alphadd}{\ensuremath{\ddot{\alpha}}}
+\newcommand{\alfadd}{\ensuremath{\ddot{\alpha}}}
+\newcommand{\betadd}{\ensuremath{\ddot{\beta}}}
+\newcommand{\xdd}{\ensuremath{\ddot{x}}}
+\newcommand{\ydd}{\ensuremath{\ddot{y}}}
+\newcommand{\zdd}{\ensuremath{\ddot{z}}}
+%
+% VECTOR
+\newcommand{\alphav}{\ensuremath{\vec{\alpha}}}
+\newcommand{\alfav}{\ensuremath{\vec{\alpha}}}
+\newcommand{\betav}{\ensuremath{\vec{\beta}}}
+\newcommand{\gammav}{\ensuremath{\vec{\gamma}}}
+\newcommand{\xv}{\ensuremath{\vec{x}}}
+\newcommand{\yv}{\ensuremath{\vec{y}}}
+\newcommand{\zv}{\ensuremath{\vec{z}}}
+%
+% HAT
+\newcommand{\alphah}{\ensuremath{\hat{\alpha}}}
+\newcommand{\alfah}{\ensuremath{\hat{\alpha}}}
+\newcommand{\betah}{\ensuremath{\hat{\beta}}}
+\newcommand{\gammah}{\ensuremath{\hat{\gamma}}}
+\newcommand{\xh}{\ensuremath{\hat{x}}}
+\newcommand{\yh}{\ensuremath{\hat{y}}}
+\newcommand{\zh}{\ensuremath{\hat{z}}}
+%
+% SINE
+\newcommand{\sina}{\ensuremath{\sin{\alpha}}}
+\newcommand{\sinb}{\ensuremath{\sin{\beta}}}
+\newcommand{\sinc}{\ensuremath{\sin{\gamma}}}
+\newcommand{\sint}{\ensuremath{\sin{\theta}}}
+%
+% COSINE
+\newcommand{\cosa}{\ensuremath{\cos{\alpha}}}
+\newcommand{\cosb}{\ensuremath{\cos{\beta}}}
+\newcommand{\cosc}{\ensuremath{\cos{\gamma}}}
+\newcommand{\cost}{\ensuremath{\cos{\theta}}}
+%
+% FOURIER
+%\newcommand{\FTsymbol}{\matcal{F}}
+\newcommand{\FTsymbol}{\it {FT}}
+\newcommand{\IFTsymbol}{\matcal{F^{-1}}}
+\newcommand{\FT}{\stackrel{\FTsymbol}{\longleftrightarrow}}
+%
+% Consistency in used words
+\newcommand{\resfile}{{\bf result file}\xspace}
+\newcommand{\resfiles}{{\bf result files}\xspace}
+\newcommand{\mresfile}{{\bf master result file}\xspace}
+\newcommand{\sresfile}{{\bf slave result file}\xspace}
+\newcommand{\iresfile}{{\bf products result file}\xspace}
+\newcommand{\inputfile}{{\bf input file}\xspace}
+\newcommand{\inputfiles}{{\bf input files}\xspace}
+\newcommand{\outputfile}{{\bf output file}\xspace}
+\newcommand{\outputfiles}{{\bf output files}\xspace}
+\newcommand{\makefile}{Makefile\xspace}
+\newcommand{\pcf}{{\bf process control flag}\xspace}
+\newcommand{\pcfs}{{\bf process control flags}\xspace}
+
+%%% newcommands
+\newcommand{\Bpar}{{B_{\parallel}}}
+\newcommand{\Bperp}{{B_{\perp}}}
+\newcommand{\Bh}{{B_{h}}}
+\newcommand{\Bv}{{B_{v}}}
+\newcommand{\KK}{\frac{4\pi}{\lambda}}
+\newcommand{\Bperpref}{{B_{{\perp0}}}}
+\newcommand{\Bparref}{{B_{{\parallel0}}}}
+
+% too unclear: \newcommand{\pi4lam}{\ensuremath{-{4\pi\over\lambda}}}
+%%% style for mandatory/optional Keywords
+\newlength{\MY}
+\setlength{\MY}{\linewidth}
+%\addtolength{\MY}{30em}%			indent parbox
+\addtolength{\MY}{2em}%			indent parbox
+% \addtolength{\MY}{\linewidth}%			indent parbox
+\newcommand{\man}[3]{
+  {\textsf{\bf{#1}}}
+    \hfill\parbox[t]{.75\linewidth}{
+  {\textrm{\it{#2}}}}\\
+    \phantom{mm}\parbox[t]{\MY}
+  {#3}\\[3ex]}%	indent parbox
+\newcommand{\opt}[3]{
+  {\textsf{   {#1}}}
+    \hfill\parbox[t]{0.75\linewidth}{
+  {\textrm{\it{#2}}}}\\
+    \phantom{mm}\parbox[t]{\MY}
+  {#3}\\[3ex]}%	indent parbox
+%%% style for optional/default parameters
+
+\newcommand{\defpm}[1]{{\underline{#1}}}
+\newcommand{\optpm}[1]{\textnormal{[} {#1} \textnormal{]}}
+
+% These three commands make up the entire times.sty package.
+\renewcommand{\sfdefault}{phv}
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\ttdefault}{pcr}
+% enable Times now - so that all class options can see the correct font families
+\normalfont\selectfont
+
+%============================================
+\begin{document}
+\setlength{\parskip}{8pt}
+
+%\lstlistoflistings
+\definecolor{listinggray}{gray}{0.90}
+\definecolor{notegray}{gray}{0.75}
+
+\lstset{language=c++,                % choose the language of the code
+  basicstyle=\small\ttfamily,    % the size of the fonts that are used for the code
+  commentstyle=\small\ttfamily,
+  showstringspaces=false,             % underline spaces within strings
+  numbers=left,                       % where to put the line-numbers
+  numberstyle=\footnotesize\sffamily, % the size of the fonts that are used for the line-numbers
+  firstnumber=0,
+  stepnumber=0,                       % the step between two line-numbers. If it's 1 each line will be numbered
+  numbersep=10pt,                     % how far the line-numbers are from the code
+  numberblanklines=false,
+  backgroundcolor=\color{listinggray},% choose the background color. You must add \usepackage{color}
+  showspaces=false,                   % show spaces within strings adding particular underscores
+  showtabs=false,                     % show tabs within strings adding particular underscores
+  % frame=single,                     % adds a frame around the code
+  tabsize=2,                          % sets default tabsize to 2 spaces
+  captionpos=b,                       % sets the caption-position to bottom
+  breaklines=true,                   % sets automatic line breaking
+  breakatwhitespace=false,            % sets if automatic breaks should only happen at whitespace
+  escapeinside={\%*}{*)}              % if you want to add a comment within your code
+}
+
+
+\thispagestyle{empty}
+  
+\begin{center}
+{\sffamily\Huge{\textbf{\textsc{\\}}}}
+  \vspace{0cm}
+  {\sffamily\Huge{\textbf{{\\
+   ISCE to StaMPS Manual\\
+     }}}}
+     \vspace{5mm}
+     {\sffamily\Large{\textbf{Version 1.0.1}}}
+\vspace{5mm}
+
+
+\end{center}
+
+\vspace{13cm}
+
+%\begin{flushright}
+\begin{center}
+{\sffamily\textbf{Author: David Bekaert}}\\
+\vspace{4mm}
+{\sffamily\textbf{Jet Propulsion Laboratory,  California Institute of Technology }}\\
+{\sffamily\textbf{United States Government Sponsorship acknowledged}}\\
+\vspace{4mm}
+{\sffamily\textbf{20 April, 2018}}
+%\end{flushright}
+\end{center}
+
+
+\vspace{20mm}
+
+
+%    %\begin{minipage}[b]{1.0\linewidth}      
+%      \begin{minipage}[b]{0.3\linewidth}
+%        \includegraphics[width=\linewidth]{./figs/Leeds_University_logo.eps}
+%      \end{minipage}\hfill
+%      \begin{minipage}[b]{0.67\linewidth}
+%        \begin{flushright}
+%          {\sffamily
+%          \textbf{School of Earth and Environment}\\\textbf{University of Leeds}\\
+%          LS2-9JT Leeds\\
+%          United Kingdom}
+%        \end{flushright}
+%      \end{minipage}
+
+    %\end{minipage}
+
+\vspace{0mm}
+\newpage
+\pagenumbering{roman}
+\setcounter{page}{1}
+%\include{preface}
+\setlength{\parskip}{0pt}
+\tableofcontents
+\setlength{\parskip}{8pt}
+
+%
+\newpage
+\pagenumbering{arabic}
+
+
+%KNIP
+
+%\setlength{\parskip}{4pt}
+%\pagenumbering{\sffamily roman}
+%\maketitle
+%\addcontentsline{toc}{chapter}{Summary}
+%\addcontentsline{toc}{chapter}{Nomenclature}
+%{\sffamily \tableofcontents}
+
+
+\setlength{\unitlength}{1mm}
+\setlength{\parindent}{0.0cm}
+\setlength{\parskip}{10pt}
+
+\chapter{DISCLAIMER}
+
+This manual and the included scripts call routines of the JPL/Caltech ISCE software to prepare outputs of the ISCE stack processort for ingestion in the open source StaMPS package. It is assumed that the user has already generated the coregisterd stack using the "SLC" workflow of the stack processors included ISCE contrib folder. At this time, the ISCE to StaMPS package supports only outputs from the topsStack processor.\\
+
+In additon to citing ISCE and the stack processor, cite the ISCE to StaMPS as:
+\begin{center}
+D. P. S. Bekaert et al. Spaceborne Synthetic Aperture Radar Survey of Subsidence in Hampton Roads, Virginia (USA), Scientific Reports (2017). DOI: \href{https://www.nature.com/articles/s41598-017-15309-5}{10.1038/s41598-017-15309-5}
+\end{center}
+
+The provided scripts as part of this ISCE to StaMPS conversion package, are included into the contrib of ISCE and are not supported as part of official ISCE applications. The provided scripts only set-up the assumed StaMPS processing structure. Users should refer back to StaMPS for actual time-series processing. The scripts are provided to you "as is" with no warranties of corrections. Use at your own risk.\\
+
+
+Author: David Bekaert\\
+Organization: Jet Propulsion Laboratory, California Institute of Technology\\
+United States Government Sponsorship acknowledged.\\
+
+\chapter{Installation} 
+The provided scripts call ISCE and StaMPS functionality, both packages should be installed. In addition the bin folder should be added to your PATH.
+
+\chapter{Introduction}
+A set of shell scripts are provided that set-up the StaMPS directory structure using outputs from the ISCE stack processors. Outputs from stripmapApp.py and topsApp.py are not supported as these are pair-by-pair processing apps in ISCE.  Only outputs from the topsStack and stripmapStack processors are supported in which the user should have selected the "SLC" workflow. \\
+
+The SLC workflow outputs a stack of coregisted SLC's, baselines grids for each SLC, and geometry files (e.g., los, lon, lat, hgt). Each of these files should a corresponding xml file. In case xml files are needed, use the \cs{gdal2isce\_xml.py} script included in ISCE package to generate them.
+
+The following structure is assumed:
+\begin{itemize}
+\item SLC's are organized as \cc{yyyymmdd}/\cc{yyyymmdd}{\tt .slc}\cc{SLC\_suffix}, where the \cc{SLC\_suffix} is an optional suffix string.
+\item Baselines are organized as \cc{master}\_\cc{slave}/\cc{master}\_\cc{slave} or \cc{master}\_\cc{slave}/\cc{master}\_\cc{slave}.txt, where \cc{master} and \cc{slave} are in \cc{yyyymmdd} format.
+\item Geom data are stored together as {\tt lon.rdr\cc{geom\_suffix}}, {\tt lat.rdr\cc{geom\_suffix}},  {\tt hgt.rdr\cc{geom\_suffix}} and {\tt los.rdr\cc{geom\_suffix}}, where the \cc{geom\_suffix} is an optional suffix string.
+\end{itemize}
+
+
+
+ 
+\chapter{Setting-up StaMPS processing directories}
+\label{ch:ifgs_stack}
+Generate a file called "{\tt input\_file}" at the location where the {\tt INSAR\_}\cc{master\_date} needs to be generated. The following parameters should be contained in the {\tt input\_file}. Required parameters are indicated with (R), optional parameters with (O). The \cc{master\_date} can be chosen based on minimizing perpendicular and temporal baseline. The baselines will be automatically re-inverted to the chosen master.\\
+
+\begin{tabular}{p{5.5cm}p{3cm}p{6cm}}
+\textbf{Parameter Name} &	\textbf{Value} & \textbf{Description: R=required,O=optional}\\
+{\tt source\_data}  &  slc\_stack  & Do not change (R)\\
+ {\tt slc\_stack\_path}   &  \cc{PATH\_SLC}  & Path to the SLC stack (R) \\
+ {\tt slc\_stack\_master}   &  \cc{yyyymmdd}  & Master date as to be used in StaMPS processing. Does not need to be the same as the master used for generating the coregistered stack. (R)  \\
+  {\tt slc\_stack\_geom\_path}   &  \cc{PATH\_geom}  & Path to the geometry directory. (R) \\
+  {\tt slc\_stack\_baseline\_path}   &  \cc{PATH\_baseline}  & Path to the baselines directory (R)\\
+ {\tt range\_looks}                      &   \cc{40}                  & Number of range looks multi-looked products (R) \\
+  {\tt azimuth\_looks}                    &   \cc{10}                  & Number of azimuth look multi-looked products (O).  {\tt azimuth\_looks} over-rules {\tt aspect\_ratio}. \\
+ {\tt aspect\_ratio}          &  \cc{4}                   & Aspect ratio multi-looked products (R)  \\
+ {\tt lambda}                   &   \cc{0.056}           & Wavelength in meter units (R)  \\
+ {\tt slc\_suffix}             &    \cc{.full}            &  Suffix string for SLC's (O)  \\
+ {\tt geom\_suffix}          &  \cc{.full}              & Suffix string for geom files (O) \\                                                                                         
+\end{tabular}
+
+       
+To generate the single master setup type:
+
+ \cs{make\_single\_master\_stack\_isce}
+
+\section{PS Processing}
+If you plan to run the StaMPS PS processing, proceed directly to the "PS processing"  chapter of the StaMPS manual.
+Unlike the mt\_prep command detailed in the StaMPS manual use \cs{mt\_prep\_isce} instead.
+
+\section{SB Processing}
+If you plan to only run the StaMPS Small Baseline processing, it will save time and disk space to turn the hard-coded flag for the SM interferogram and amplitude file generation to 'n' in the  \cs{make\_single\_master\_stack\_isce} code.  Even when not generating the interferograms or amplitude files, the required information for the SMALL\_BASELINES processing will be extracted. \\
+
+If you did not run the STAMPS PS processing in the {\tt INSAR\_}\cc{master\_date} directory, then first load baseline info into the matlab workspace. If you already ran the PS processing, you can skip this step:
+
+ \cs{mt\_extract\_info\_isce}\\
+ \cs{matlab}\\
+ $>>$\cs{ps\_load\_info}
+ 
+To determine which small baseline interferograms to make, in the {\tt INSAR\_}\cc{master\_date} directory run one of the \cs{sb\_find*.m} codes included in StaMPS, e.g.,:
+ 
+  \cs{matlab}\\
+ $>>$\cs{sb\_find (rho\_min , Ddiff\_max , Bdiff\_max)}
+ 
+Adjust the input parameters according to your data set, where \cs{rho\_min} is the minimum coherence based on the maximum temporal \cs{Ddiff\_max} and perpendicular \cs{Bdiff\_max} decorrelated baselines. There should be no isolated clusters of images. More connections can be made by reducing {\tt rho\_min}, or individual connections can be added by editing {\tt small\_baselines.list}, which is created by {\tt sb\_find}. The connections in {\tt small\_baselines.list} can then be plotted with the default StaMPS program:
+
+$>>$\cs{plot\_sb\_baselines}.
+ 
+ To create the small baseline interferograms listed in {\tt small\_baselines.list} in the {\tt INSAR\_}\cc{master\_date} directory, run:
+ 
+ \cs{make\_small\_baselines\_isce}.
+ 
+ Once completed, proceed directly to "Small Baseline processing" chapter of the StaMPS manual.
+Unlike the mt\_prep command detailed in the StaMPS manual use \cs{mt\_prep\_isce} instead.
+
+
+\chapter{Additional scripts}
+\label{ch:ifgs_raw_slc}
+If mdx is intalled, the following command can be used to make snapshots of the interferograms:\\
+\cs{get\_quickview\_isce}   {\tt isce\_minrefdem.int}
+
+%\cs{make\_resample\_isce\_fine}
+%processes all images listed as \cc{yyyymmdd}  in {\tt make\_slcs.list}. Delete {\tt make\_slcs.list} to process all subdirectories containing a \cc{yyyymmdd} structure. The individual step can be ran in the \cc{yyyymmdd} folder by calling  \cs{step\_resample\_isce\_fine}
+
+%\chapter{Change History}
+%\section{Version 1}
+%\begin{itemize}
+%\item isce2stamps to support sentinel stack processor in ISCE contrib
+%\end{itemize}
+
+%\bibliography{allref}
+
+
+\end{document}

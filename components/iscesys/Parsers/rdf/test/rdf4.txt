@@ -1,0 +1,12 @@
+
+x = 1000
+y = 2000
+
+PREFIX = four_
+
+level4 =  rdf4
+
+SUFFIX = _4
+
+b = -2000
+a = -1000

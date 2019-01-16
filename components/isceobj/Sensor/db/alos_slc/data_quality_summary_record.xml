@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+  <rec name="Record Number" type="4" num="1"/>
+  <rec name="First Record Subtype" type="3" num="1"/>
+  <rec name="Record Type Code" type="3" num="1"/>
+  <rec name="Second Record Subtype" type="3" num="1"/>
+  <rec name="Third Record Subtype" type="3" num="1"/>
+  <rec name="Record Length" type="4" num="1"/>
+  
+  <rec name="Data summary quality record sequence number" type="2" num="4"/>
+  <rec name="SAR channel indicator" type="1" num="4"/>
+  <rec name="Date of the last calibration update" type="1" num="6"/>
+  <rec name="Number of channels" type="1" num="4"/>
+  <!-- Absolute Radiometric Data -->
+  <rec name="ISLR" type="5" num="16"/>
+  <rec name="PSLR" type="5" num="16"/>
+  <rec name="Azimuth ambiguity rate (AAR)" type="5" num="16"/>
+  <rec name="Range ambiguity rate (RAR)" type="5" num="16"/>
+  <rec name="Estimate of SNR" type="5" num="16"/>
+  <rec name="BER" type="5" num="16"/>
+  <rec name="Slant range resolution" type="5" num="16"/>
+  <rec name="Azimuth resolution" type="5" num="16"/>
+  <rec name="Radiometric resolution" type="5" num="16"/>
+  <rec name="Instantaneous dynamic range" type="5" num="16"/>
+  <rec name="Radiometric calibration magnitude uncertainty" type="5" num="16"/>
+  <rec name="Radiometric calibration phase uncertainty" type="5" num="16"/>
+  <struct nloop="8" name="Relative Radiometric Calibration">
+    <rec name="Magnitude uncertainty" type="5" num="16"/>
+    <rec name="Phase uncertainty" type="5" num="16"/>
+  </struct>
+  <rec name="skipBytes" type="0" num="256"/>
+  <rec name="Absolute location error along track" type="5" num="16"/>
+  <rec name="Absolute location error cross track" type="5" num="16"/>
+  <rec name="Geometric distortion scale in line direction" type="5" num="16"/>
+  <rec name="Geometric distortion scale in pixel direction" type="5" num="16"/>
+  <rec name="Geometric distortion skew" type="5" num="16"/>
+  <rec name="Scene orientation error" type="5" num="16"/>
+  <struct nloop="8" name="Misregistration errors">
+    <rec name="Along track relative misregistration" type="5" num="16"/>
+    <rec name="Cross track relative misregistration" type="5" num="16"/>
+  </struct>
+  <rec name="skipBytes" type="0" num="518"/>
+  <!-- ... -->
+</ceos>

@@ -1,0 +1,26 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python3
+import os
+
+Import('enviscesys')
+envDataRetriever = enviscesys.Clone()
+project = 'DataRetriever'
+envDataRetriever['PROJECT'] = project
+package = envDataRetriever['PACKAGE']
+Export('envDataRetriever')
+install = os.path.join(envDataRetriever['PRJ_SCONS_INSTALL'],package,project)
+
+initFile = '__init__.py'
+listFiles = ['DataRetriever.py','gzipfile.py',initFile]
+envDataRetriever.Install(install,listFiles)
+envDataRetriever.Alias('install',install)
+helpList,installHelp = envDataRetriever['HELP_BUILDER'](envDataRetriever,'__init__.py',install)

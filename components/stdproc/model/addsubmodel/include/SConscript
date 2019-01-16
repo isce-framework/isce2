@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envaddsubmodel')
+package = envaddsubmodel['PACKAGE']
+project = 'addsubmodel'
+build = os.path.join(envaddsubmodel['PRJ_SCONS_BUILD'],package,project,'include')
+envaddsubmodel.AppendUnique(CPPPATH = [build])
+listFiles = ['addsubmodelmodule.h','addsubmodel.h']
+envaddsubmodel.Install(build,listFiles)
+envaddsubmodel.Alias('install',build)

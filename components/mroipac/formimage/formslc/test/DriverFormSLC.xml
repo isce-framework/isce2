@@ -1,0 +1,18 @@
+<component>
+    <name>DriverFormSLC</name>
+    <property>
+        <name>SlcImage</name>
+        <factorymodule>isceobj.SlcImage.SlcImage</factorymodule>
+        <value>'SlcImage930110.xml'</value>
+    </property>
+    <property>
+        <name>RawImage</name>
+        <factorymodule>isceobj.RawImage.RawImage</factorymodule>
+        <value>'RawImage930110.xml'</value>
+    </property>
+    <property>
+        <name>FormSlc</name>
+        <factorymodule>mroipac/formimage/FormSLC</factorymodule>
+        <value>'FormSCL930110.xml'</value>
+    </property>
+</component>

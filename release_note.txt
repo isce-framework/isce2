@@ -1,0 +1,318 @@
+=====================
+isce-2.3
+=====================
+
+First version of the open source release of ISCE under the Apache License-2.0.
+Please read the LICENSE file included in this package.
+
+ISCE is the InSAR Scientific Computing Environment.  It provides a framework
+for constructing components and applications that implement workflows, in
+general, with broad built-in support for processing InSAR data from raw inputs
+through to geocoded interferograms with options for filtering, unwrapping, and
+many more standard products.  The InSAR workflows are located in the applications
+directory.  Example input files for the applications are given in the directory,
+examples/input_files.  Some examples for constructing and using applications are
+given in the examples/applications directory.
+
+ISCE is developed with Python3 components and workflows that access legacy and
+newer libraries that are developed in Fortran and C/C++.  Please read the README
+file for information on the software dependencies that must be installed and
+environment settings that must be set in order to use ISCE.
+
+
+=====================
+isce-2.2.1
+=====================
+
+Planned final release before open source release.
+
+The next release of isce-2 is planned be an open source release.  Details on where to access
+it will be coming soon. Code elements required for the insarApp.py and isceApp.py workflows
+will continue to require a license in order to use them.  The open source version of ISCE
+will not include those code elements.  Information will be made available for those people
+wanting access to the Stanford licensed components.  The open source version includes
+workflows such as stripmapApp.py that are included in this release.
+
+Additions and Bug Fixes in this release:
+
+* Fixed bug in mdx wrap interpretation - contributed by Gerald Manipon
+* Fixed bug in isceobj.Image with ENVI Hdr Render - contributed by Gerald Manipon
+
+* applications/downsampleDEM.py: contributed by David Bekaert
+    - enforcing grid range to be a multiple of the sampling
+    - adding option to either specify resolution in meters or in arcsecond
+      Arc-seconds ensure that one can sample degrees consistently.
+    - topsApp.py changes: tight burst validity required only when run with ionopsheric estimation on.
+      This remove the issue of gaps between two separate along-track processed topsApp products.
+
+* topsApp: updated to include ionospheric corrections - contributed by Cunren Liang
+   - modified: components/isceobj/Sensor/TOPS/BurstSLC.py
+               components/isceobj/Sensor/TOPS/Sentinel1.py
+
+* contrib/alos2proc: contributed by Cunren Liang
+
+* GPUTopozero: changed byte offsets to long type
+
+* applications/gdal2isce_xml.py: removed the hard coded scheme of the data in favor of directly capturing it from gdal
+
+* topsApp.xml: minor updates (see examples/input_files/master_TOPS_SENTINEL1.xml)
+
+
+=====================
+isce-2.2.0
+=====================
+
+-- General bug fixes
+-- Support for GDAL + c++11 starting from GDAL2.3
+-- Added a --skipcheck option which will disable raw_input if optional dependencies like HDF5
+   are not found. This was a feature requested by folks dockerizing ISCE for use on cloud
+   machines.
+-- Include option to specify VRT in gdal2isce_xml.py
+-- Added conversion scripts from stack output to stamps input
+-- Fixed renderVRT to not include geotransform or SRS when rendering for non-geocoded images.
+   Currently only mechanism to distinguish radar / geocoded images is by looking at coord1
+   and coord2 members of Image class
+-- For Sentinel1, increased orbit extraction from 40 to 60 seconds
+-- Changed roiApp.py/roiProc to stripmapApp.py/stripmapProc
+   Renamed examples/input_files/roiApp.xml to stripmapApp.xml
+-- Added more checks when reading in new format SLCs
+   No guarantees that the reader works for all new variants
+-- For topsApp added option to use a different DEM for geocoding.
+   If none is provided, defaults to the DEM used for processing topo.
+
+------------------------------
+
+* Updates related to topsApp:
+  -- Bug fixes corresponding to valid sample computation in range
+  -- Warning messages generated for data acquired during orbit maneuvers
+  -- Option of using a different dem for geocoding via the property “geocode demfilename”.
+     Suitable for data with large number of looks. User can use downsampleDEM.py to generate
+     an appropriately downlooked DEM for use with geocoding.
+
+* Bug fix to VRT files. EPSG information is now not included for radar geometry files.
+
+* Updated version of pyCuAmpcor from Caltech with downstream search capability
+
+* Stripmap readers
+  -- Sentinel-1 stripmap reader can read from zip files just like the TOPS reader
+  -- Updates to Envisat SLC reader to support new format from ESA
+  -- Updates to ICU unwrapper to output multiple connected components (used to be the one
+     largest component earlier)
+  -- Scons can now either be python2 / python3 based.
+  -- ALOS2 ScanSAR reader (use VRTs and save disk space without replicating data). Not used
+     by any app currently.
+
+---------------------------------
+
+stripmapApp.py:
+
+* The roiApp.py in the previous release, has been renamed to “stripmapApp.py” for clarity.
+As the self-descriptive “stripmapApp.py” implies, this ISCE application can be used for
+interferometric processing of stripmap SAR data acquired by a wide range of sensors.
+Several bugs have been fixed compared to the previous release and the stripmapApp has been
+tested on different datasets (including ALOS-1 and ALOS-2 stripmap data, CSK, Sentinel-1
+stripmap and Envisat data).
+
+* The ionospheric phase estimation have been significantly improved by enforcing common
+phase unwrapping error in the sub-band interferograms.
+
+*** There are additional README files in the contrib/stack directory
+
+---------------------------------
+Stack processing with ISCE:
+
+We have added standalone scripts to contrib/stack folder, which allows advanced users to
+process a stack of SAR data using ISCE. These scripts are experimental and have been mainly
+developed for prototyping different algorithms (e.g., precise coregistration and ionospheric
+phase estimation). However, due to large interest of the InSAR community, we have decided
+to release this scripts as is. These scripts won’t be automatically included in your install
+directory after installing ISCE. However, you can easily use them based on the instructions
+found in  contrib/stack/INSTALL.txt in your source ISCE directory.
+
+Note that there are two different stack processors for processing a stack of TOPS or stripmap
+data, found in  “contrib/stack/topsStack” and “contrib/stack/stripmapStack” respectively.
+
+
+In the “contrib/stack/“ folder there are three text files:
+
+INSTALL.txt:               explains how users should setup their $PATH variable to use the
+                           stack processor
+README_topsStack.txt:      instructions for using the scripts in topsStack directory for
+                           processing a stack of Sentinel-1 TOPS data
+README_stripmapStack.txt:  instructions for using the scripts in stripmapStack directory for
+                           processing a stack of stripmap data
+
+---------------------------------
+
+=====================
+isce-2.1.0 (20170803)
+=====================
+
+NEW FEATURES. HIGHLIGHTS:
+
+-- Added ERS_EnviSAT_SLC reader. Contributed by Scott Henderson from the ISCE
+user community.  Thank you, Scott!
+
+-- Change to minimum gcc requirement.  Must be >= gcc4.7.  Compilation of
+C/C++ code is using the "-std=c++11", which requires >= gcc4.7.  See the README
+file for required versions of software dependencies."
+
+-- New RoiProc and roiApp.py workflow added.  New code to estimate ionospheric
+contributions to phase is included in contrib/splitSpectrum and used in roiApp.py.
+
+-- The "steps" mode of processing has a new command line option: "--next".  This
+option determines the next step for a given application based on the most
+recently updated file in the PICKLE folder, whether the files are pickle files
+or xml files; the setting for the property "renderer" determines which type of
+step file is used for determining the next step to be processed using --next
+(the default being pickle files).
+
+-- The "steps" mode now renders the xxxProc.xml (as in insarProc.xml) file after
+each step so that it is available to view/use after each step.  It will be
+overwritten after each step completes.
+
+-- Added a new simplified water mask downloader, "wbd.py", and dem downloader,
+"demdb.py". The only required command line arguments are the "snwe" lat, lon
+coordinates. They create stitched watermask and dem files with xml and vrt
+meta data files.  If you use the $DEMDB environment variable the files will
+be moved to the directory pointed to by $DEMDB and will be automatically
+discoverable by ISCE anywhere on your system.
+
+-- topsApp.py DEM downloading now downloads to the directory pointed to by your
+$DEMDB environment variable (like insarApp.py and isceApp.py do).  If $DEMDB is
+not defined, then the files will be downloaded in the local processing directory.
+The dems and water masks in the $DEMDB directory are available for use in any
+directory automatically.  If you want to move your prviously downloaded dems and
+water masks to the $DEMDB directory you will have to edit the paths in their xml
+files.
+
+-- This release includes some code elements that can run on a GPU requiring as
+dependencies the CUDA API and also an executable named 'cython3' to invoke
+cython.  You may need to manually create a soft link with this name pointing
+to the name given to your installed cython.  The code that require these new
+dependencies are in components/zerodop/GPUtopozero and GPUgeo2rdr directories.
+This code is not compiled and the CUDA and cython3 dependencies are not
+required unless you include the following line in your SConfigISCE file:
+
+ENABLE_CUDA=True
+
+If you do not include this line or if you set the value to False, then
+the code will compile as usual.  This is experimental code at this time
+and is not used in the builtin Applications.  More code using CUDA for
+GPUs will be coming in the future.
+
+-- Added 'useGPU' configuration parameter to topsApp.py to use the GPU code
+mentioned above in "New Features".  You must also include the "ENABLE_CUDA=True"
+line in your SConfigISCE file in order to compile the CUDA code.
+
+-- Added "extra ESD cycles" parameter to topsApp.py to add extra ESD cycles
+to interpret overlap phase.
+
+
+
+GENERAL BUG FIXES.  HIGHLIGHTS:
+
+-- replaced dependency on "cv2" with "scipy" in RoiProc/runDispersive.py
+
+-- fixed open file leaks in image file accessors and added more output to
+show methods being used to open and close files.
+
+
+=============================================================================
+Reminder of previous new capabilities and bug fixes:
+1. topsApp related
+    a. Can provide zip files / safe folders as inputs
+    b. Bug fixes to support multi slice / region of interest processing
+    c. Generation of traditional coherence products
+    d. Output file names match insarApp – single resolution merged products
+       have .full suffix
+    e. Looks, filter strength, thresholds etc moved from topsproc level to
+       topsapp level
+    f. Changes to topsApp to use new Image API decorators
+    g. Added support for Sentinel-1B
+2. topsOffsetApp
+    a. To be run in same folder as topsApp.
+    b. Produces dense pixel offset maps from Sentinel data.
+3. Stripmap processing related
+    a. Stripped ALOS raw data of headers
+    b. Fixed bug in stripmap frame stitcher when starting ranges were different
+4. General changes
+    a. Bug fixes to support near-nadir imaging geometries like SWOT
+    b. Geocoding support for datatypes other than FLOAT / CFLOAT
+    c. Updates to envisat reader to handle new ESA format
+    d. Bug fix in water mask generation when input DEM doesn’t span the image.
+    e. Bug fix in DemStitchers to enable dem.py to work again.
+
+===============================================================================
+Previous note about compiling ISCE after unsuccessful build due to missing headers
+and libraries:
+
+When building ISCE, scons will check the list of header files and libraries that
+ISCE requires.  Scons will cache the results of this dependency checking.  So,
+if you try to build ISCE and scons tells you that you are missing headers or
+libraries, then you should remove the cached files before trying to build ISCE
+again after installing the missing headers and libraries.  The cached files are
+config.log, .sconfig.dblite, and the files in directory .sconf_temp.  You should
+run the following command while in the top directory of the ISCE source (the
+directory containing the SConstruct file):
+
+> rm -rf config.log .sconfig.dblite .sconf_temp
+
+and then try "scons install" again.
+
+===============================================================================
+From past notes about automatic downloading of dems:
+
+1. You need to have a user name and password from urs.earthdata.nasa.gov and you
+need to include LPDAAC applications to your account.
+    a. If you don't already have an earthdata username and password,
+       you can set them at https://urs.earthdata.nasa.gov/
+    b. If you already have an earthdata account, please ensure that
+       you add LPDAAC applications to your account:
+         - Login to earthdata here: https://urs.earthdata.nasa.gov/home
+         - Click on my applications on the profile
+         - Click on “Add More Applications”
+         - Search for “LP DAAC”
+         - Select “LP DAAC Data Pool” and “LP DAAC OpenDAP” and approve.
+
+2. create a file named .netrc with the following 3 lines:
+
+machine urs.earthdata.nasa.gov
+    login your_earthdata_login_name
+    password your_earthdata_password
+
+
+3. set permissions to prevent others from viewing your credentials:
+
+> chmod go-rwx .netrc
+
+===============================================================================
+From past note on making stitched dems and water masks globally available:
+
+Stitched dems and water body masks will be stored in and used from a directory
+indicated by the environment variable, $DEMDB.  If you define this environment
+variable with value equal to a path where you want to store stitched dems and
+waterbody masks, then any stitched dem or water mask will be globally available
+automatically without needing to specify any information about the dem in your
+input files for ISCE processing applications. If you use dem.py or watermask.py,
+the stitched products are left in the directory where you run these apps.  If
+you want them to be globally available, then either run dem.py or watermask.py
+in the $DEMDB directory or else move them there.
+
+==============================================================================
+From past note on where to read about installing and running ISCE and on how
+to obtain auxiliary files needed for orbit computations when working with RadarSAT1
+data.
+
+The README.txt file and the example input files in the examples/input_files
+directory are the most up to date sources of information on installing and running
+ISCE. The ISCE.pdf file is useful but may be dated in parts.
+
+
+If you want to use ISCE to process RadarSAT1 data, then you will need to download
+files to the components/isceobj/Orbit/db directory. Instructions on where to get
+the files are given in the file kernels.list file in that directory.
+
+===================
+End-Of-Release-Note
+===================

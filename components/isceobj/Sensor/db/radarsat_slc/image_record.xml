@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="skip" type="0" num="8"/>
+	<rec name="Record Length" type="4" num="1"/>	
+	
+	<rec name="SAR image data line number" type="4" num="1"/>
+	<rec name="SAR image data record index" type="4" num="1"/>
+	<rec name="Actual count of left-fill pixels" type="4" num="1"/>
+	<rec name="Actual count of data pixels" type="4" num="1"/>
+	<rec name="Actual count of right-fill pixels" type="4" num="1"/>
+	<rec name="Sensor parameters update flag" type="4" num="1"/>
+	<rec name="Sensor acquisition year" type="4" num="1"/>
+	<rec name="Sensor acquisition day of year" type="4" num="1"/>
+	<rec name="Sensor acquisition milliseconds of day" type="4" num="1"/>
+	<rec name="SAR channel indicator" type="6" num="1"/>
+	<rec name="SAR channel code" type="6" num="1"/>
+	<rec name="Transmitted polarization" type="6" num="1"/>
+	<rec name="Received polarization" type="6" num="1"/>
+	<rec name="PRF" type="4" num="1"/>
+	<rec name="skip" type="0" num="4"/>
+	
+	<rec name="Slant range to 1st pixel" type="4" num="1"/>
+	<rec name="Slant range to mid-pixel" type="4" num="1"/>
+	<rec name="Slant range to last pixel" type="4" num="1"/>
+	<rec name="First pixel Doppler centroid" type="4" num="1"/>
+	<rec name="Mid-pixel Doppler centroid" type="4" num="1"/>
+	<rec name="Last pixel Doppler centroid" type="4" num="1"/>
+	<rec name="First pixel azimuth FM rate" type="4" num="1"/>
+	<rec name="Mid-pixel azimuth FM rate" type="4" num="1"/>
+	<rec name="Last pixel azimuth FM rate" type="4" num="1"/>
+	<rec name="Nadir look angle" type="4" num="1"/>
+	<rec name="Azimuth squint angle" type="4" num="1"/>
+	<rec name="skip" type="0" num="4"/>
+	
+	<rec name="skip" type="0" num="16"/>
+	<rec name="Geographic ref. parameter update flag" type="4" num="1"/>
+	<rec name="First pixel latitude" type="4" num="1"/>
+	<rec name="Mid-pixel latitude" type="4" num="1"/>
+	<rec name="Last pixel latitude" type="4" num="1"/>
+	<rec name="First pixel longitude" type="4" num="1"/>
+	<rec name="Mid-pixel longitude" type="4" num="1"/>
+	<rec name="Last pixel longitude" type="4" num="1"/>
+</ceos>

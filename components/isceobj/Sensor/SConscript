@@ -1,0 +1,56 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Walter Szeliga
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envSensor = envisceobj.Clone()
+project = 'Sensor'
+package = envSensor['PACKAGE']
+envSensor['PROJECT'] = project
+envSensor['SENSOR_SCONS_INSTALL'] = os.path.join(
+    envSensor['PRJ_SCONS_INSTALL'], package, project)
+install = envSensor['SENSOR_SCONS_INSTALL']
+
+listFiles = ['ALOS.py','CEOS.py','COSMO_SkyMed.py','COSMO_SkyMed_SLC.py',
+             'ERS.py','EnviSAT.py','Generic.py','JERS.py','Radarsat1.py',
+             'Radarsat2.py','TerraSARX.py','Polarimetry.py','Sensor.py',
+             'ROI_PAC.py','Sentinel1.py','TanDEMX.py','KOMPSAT5.py',
+             'Risat1.py', 'Risat1_SLC.py', 'UAVSAR_RPI.py', 'UAVSAR_Stack.py', 'UAVSAR_Polsar.py',
+	     'ALOS2.py', 'ERS_SLC.py', 'ALOS_SLC.py', 'EnviSAT_SLC.py', 'ERS_EnviSAT_SLC.py', '__init__.py']
+
+helpList,installHelp = envSensor['HELP_BUILDER'](envSensor,'__init__.py',install)
+envSensor.Install(installHelp,helpList)
+envSensor.Alias('install',installHelp)
+
+envSensor.Install(install,listFiles)
+envSensor.Alias('install',install)
+# need to create different environments for each of the module created in
+# the bindings and not create a unique library with unrelated functions
+# linked to the different module. would have been better to have one dir
+# for each sensor with its own bindings including src
+envSensor1 = envSensor.Clone()
+envSensor2 = envSensor.Clone()
+envSensor3 = envSensor.Clone()
+Export('envSensor')#common
+Export('envSensor1')#alos
+Export('envSensor2')#cosar
+Export('envSensor3')#ers
+
+SConscript(os.path.join('include', 'SConscript'))
+SConscript(os.path.join('db', 'SConscript'))
+SConscript(os.path.join('bindings', 'SConscript'),
+    variant_dir = os.path.join(install, 'bindings'))
+SConscript(os.path.join('src', 'SConscript'),
+    variant_dir = os.path.join(install, 'src'))
+SConscript(os.path.join('TOPS','SConscript'))
+SConscript(os.path.join('GRD', 'SConscript'))
+SConscript(os.path.join('ScanSAR', 'SConscript'))

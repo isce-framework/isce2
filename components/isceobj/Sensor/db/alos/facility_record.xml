@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="alos">
+	<!--rec name="skipBytes" type="0" num="8"/-->
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	<rec name="Facility Related Data Record sequence number" type="1" num="4"/>
+	
+
+	
+</ceos>

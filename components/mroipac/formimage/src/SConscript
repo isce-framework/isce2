@@ -1,0 +1,19 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envformimage')
+install = envformimage['PRJ_LIB_DIR'] 
+listFiles = ['acpatch.F','rmpatch.F','rcpatch.F','intp_coef.F']
+lib = envformimage.Library(target = 'formimage', source = listFiles)
+envformimage.Install(install,lib)
+envformimage.Alias('install',install)

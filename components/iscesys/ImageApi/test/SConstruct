@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Copyright 2010 California Institute of Technology. ALL RIGHTS RESERVED.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# United States Government Sponsorship acknowledged. This software is subject to
+# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
+# (No [Export] License Required except when exporting to an embargoed country,
+# end user, or in support of a prohibited end use). By downloading this software,
+# the user agrees to comply with all applicable U.S. export laws and regulations.
+# The user has the responsibility to obtain export licenses, or other export
+# authority as may be required before exporting this software to any 'EAR99'
+# embargoed foreign country or citizen of those countries.
+#
+# Author: Giangi Sacco
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+
+import os
+import sys
+
+HOME = os.environ['HOME']
+
+# check if python version it's >= 2.6
+if ((sys.version_info[0] < 2) or ((sys.version_info[0] == 2) and (sys.version_info[1] < 6) )):
+    print "Sorry. The package requires Python 2.6.x or higher"
+    raise Exception
+
+if 'SCONS_CONFIG_DIR' in os.environ:
+    sconsConfigDir = os.environ['SCONS_CONFIG_DIR']
+else:
+    print("Error. Need to set the variable SCONS_CONFIG_DIR in the shell environment")
+    raise Exception 
+
+import sconsConfigFile
+
+env = Environment(ENV = os.environ)
+sconsSetupFile = "SConfigISCE"
+
+sconsConfigFile.setupScons(env,sconsSetupFile)
+#add some information that are necessary to build the framework such as specific includes, libpath and so on
+buildDir = env['PRJ_SCONS_BUILD']
+libPath = buildDir + '/libs'
+#this is the directory where all the built library are put so they can easily be found diring linking
+env['PRJ_LIB_DIR'] = libPath
+
+# add the libPath to the LIBPATH environment that is where all the libs are serched
+env.AppendUnique(LIBPATH = [libPath])
+
+# add the modPath to the FORTRANMODDIR environment that is where all the fortran mods are serched
+
+#not working yet
+modPath = buildDir + '/mods'
+env['FORTRANMODDIR'] =  modPath
+env.AppendUnique(FORTRANPATH = [modPath])
+env.AppendUnique(F90PATH = [modPath])
+env.AppendUnique(F77PATH = [modPath])
+#add the includes needed by the framework
+imageApiInc = buildDir + '/components/iscesys/ImageApi/include'
+lineAccessorInc = buildDir + '/components/isceobj/LineAccessor/include'
+stdOEInc =  buildDir + '/components/iscesys/StdOE/include'
+env.AppendUnique(CPPPATH = [lineAccessorInc,stdOEInc])
+env.AppendUnique(LIBPATH=[os.path.join(HOME,'ISCEPck/build/libs'),'.'])
+env.AppendUnique(CCFLAGS = '-g')
+env.AppendUnique(CPPPATH = ['/usr/include/python2.6','./','../InterleavedAccessor/include','../DataAccessor/include','../DataCaster/include','../Factories/include'])
+#env.Program('driver.ex',['driver.cpp','../InterleavedAccessor/src/InterleavedAccessor.cpp','../InterleavedAccessor/src/BSQAccessor.cpp','../InterleavedAccessor/src/BILAccessor.cpp','../InterleavedAccessor/src/BIPAccessor.cpp','../DataAccessor/src/DataAccessor.cpp','../DataAccessor/src/DataAccessorCaster.cpp','../DataAccessor/src/DataAccessorNoCaster.cpp','../DataCaster/src/DoubleToFloatCaster.cpp','../DataCaster/src/FloatToDoubleCaster.cpp','../Factories/src/CasterFactory.cpp','../Factories/src/InterleavedFactory.cpp','../Factories/src/AccessorFactory.cpp'])
+#env.Program('driver1.ex',['driver1.cpp','../InterleavedAccessor/src/InterleavedAccessor.cpp','../InterleavedAccessor/src/BSQAccessor.cpp','../InterleavedAccessor/src/BILAccessor.cpp','../InterleavedAccessor/src/BIPAccessor.cpp','../DataAccessor/src/DataAccessor.cpp','../DataAccessor/src/DataAccessorCaster.cpp','../DataAccessor/src/DataAccessorNoCaster.cpp','../DataCaster/src/DoubleToFloatCaster.cpp','../DataCaster/src/FloatToDoubleCaster.cpp','../Factories/src/CasterFactory.cpp','../Factories/src/InterleavedFactory.cpp','../Factories/src/AccessorFactory.cpp'])
+#imageApiInc = buildDir + '/components/iscesys/ImageApi/include'
+listFiles = ['test1.f90']
+lib = env.Library(target = 'test1', source = listFiles)
+libList = ['test1','InterleavedAccessor','DataAccessor']
+env.PrependUnique(LIBS = libList)
+module = env.LoadableModule(target = 'test1module.so', source = 'test1.cpp') 

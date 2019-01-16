@@ -1,0 +1,19 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envformslc')
+install = envformslc['PRJ_LIB_DIR'] 
+listFiles = ['formslc.F','formslcSetState.F','formslcGetState.F','formslcState.F']
+lib = envformslc.Library(target = 'formslcRoi', source = listFiles)
+envformslc.Install(install,lib)
+envformslc.Alias('install',install)

@@ -1,0 +1,208 @@
+ /*     This blurb gets the ball rolling */
+digraph flowchart {	
+ordering=out
+orientation=portrait
+concentrate=true
+#page="8.5, 11"
+label="RDF ENCABULATOR (With Turbo Option)"	
+size="4.8,4.8"	
+remincross=1
+ratio=2	
+
+/* Start FLOW here */
+
+start[shape="circle",color="green",label="start", style="filled"]
+start->input
+
+
+
+input->got_grammar[label="src=''src.rdf''\ngrammar=None"]
+got_grammar->grammar[label="No", color=red]
+
+grammar->plusplus
+
+
+subgraph cluster5{
+	 label="THE USER INTERFACE\nuRDF/rdfparse()"
+	 style=filled
+	 input[shape=invtrapezium, style=filled,  color=orange, label="INPUT:\n''src.rdf''"]
+
+	 RDF[shape=invhouse, style=filled, color=greenyellow, label="Iterate over iterators: \n RDF(*CONTAINER)\n =\n RDF(rec1, rec2, rec3, ..., recN)\n NB: comments are rejected\nRecords and list of Records\n are unpacked \n regardless of nesting"]
+at_the_top[shape=diamond, style=filled, color=violet, label="At\nTOP\nRDF\nFile?"]
+
+	 }
+
+subgraph cluster4{
+	 style=filled
+	 label="uRDF/rdf_include(): The PARSER"
+	 got_grammar->plusplus[label="YES", color=green]
+	 openfile[shape="parallelogram", style="filled", color=orange, label="with open(''src.rdf'') as..."]
+	 another_line[shape=diamond, style=filled, color=violet, label="another \n line?"]
+
+	 plusplus[shape="octagon", style=filled, color=cyan, label="recursion depth += 1\n affix.append([''''])"]
+	 minusminus[shape="octagon", style=filled, color=cyan, label="recursion depth -= 1\n affix.append.pop()"]
+	 yield_record[shape=ellipse, style=filled, color="deeppink"]    
+
+	 close[shape="parallelogram", style="filled", color=orange, label="...close RDF\ncontext"]
+	 got_grammar[shape=diamond, style=filled, color=violet, label="Grammar\nDefined?"]
+	 another_record[shape=diamond, style=filled, color=violet, label="Another\nRecord?"]
+
+
+	 }
+
+
+
+plusplus->openfile
+openfile->another_line
+
+another_line->minusminus[color=red, label="NO"]
+another_line->grammar_call[color=green, label="YES"]
+
+
+return->another_record
+another_record->another_line[label="NO", color=red]
+another_record->yield_record[label="YES", color=green]
+yield_record->container
+container->another_record
+
+
+minusminus->close
+close->at_the_top
+at_the_top->return[label="NO, return:\n[rec1, rec2, ..., recN']", color=red]
+at_the_top->RDF[label="YES", color=green]
+RDF->end
+
+
+
+
+subgraph cluster1 {             /* a subgraph makes a box for a subsection of the flow chart */
+	  style="filled"
+	  label="grammar/syntax.py\nGrammar Processing"
+	  color="lightgrey"
+	  grammar_call->is_line[label="Short-Circuit Loop over VERBS + NOUNS:\nINCLUDE, OPERATOR, COMMENT, AFFIXES\n Record, Comment\n in polymorphic manner \n (no type checking)"]
+
+
+return[shape="hexagon", color=red, label="Grammar\nRETURN"]
+}
+
+
+
+
+proc_include->got_grammar[color=blue, label="\nsrc=''recursive.rdf''\ngrammar=grammar"]
+proc_operator->return[label="()", style=dashed]
+proc_comment->return[label="()" style=dashed]
+proc_prefix->return[label="()" style=dashed]
+proc_suffix->return[label="()" style=dashed]
+
+subgraph cluster123 {
+label = "LEXIS:\nGive Meaning to Words"
+style=filled
+
+sin_qua_non->act[label="VERB", color=Purple]
+sin_qua_non->concrete[label="NOUN", color=DeepPink]
+
+
+is_line->sin_qua_non[label="<cls>.process(line, grammar)"]
+
+subgraph cluster2 {
+label="pragmatics/verbs.py (Commands)\n Call: SIN QUA NON = ACT method"
+	 color=purple
+	 style=blank
+
+	act[label="Verbs\n ACT", color=purple, shape=invtriangle, style=filled]
+	act->proc_include[label="INCLUDE", color=purple]
+	act->replace[label="COMMAND RE-DEF", color=purple3]
+	act->append[label="\n\nAffix", color=purple2]
+
+	     subgraph cluster20{
+	     	 label="Glyph Change ACT -> Replace GLYPH"
+	     	 color=purple3
+	 	 style=blank
+
+
+	     replace[label="_SymbolChange\n subclass", color=purple3, shape=invtriangle, style=filled]
+
+	     replace->proc_operator[label="OPERATOR", color=purple3]
+	     replace->proc_comment[label="COMMENT", color=purple3]
+
+	     proc_operator[shape="octagon", style="filled", color=cyan, label="OPERATOR = <value>\n grammar.operator = <value>"]
+	     proc_comment[shape="octagon", style="filled", color=cyan, label="COMMENT = <value>\n grammar.comment = <value>"]
+
+	     }
+
+
+	     subgraph cluster21{
+	     label="Affix Addition \n ACT -> Add Affix"
+	     style=blank
+	     color=purple2
+
+	     	append[label="_Affix\nsubclass", color=purple2, shape=invtriangle, style=filled]
+	     	append->proc_prefix[label="PREFIX", color=purple2]
+		append->proc_suffix[label="SUFFIX", color=purple2]
+
+	     proc_prefix[shape="octagon", style="filled", color=cyan, label="PREFIX = <value>\n grammar.prefix[depth] = <value>"]
+	     proc_suffix[shape="octagon", style="filled", color=cyan, label="SUFFIX = <value>\n grammar.suffix[depth] = <value>"]
+
+	     }
+
+
+
+	     }
+	     
+
+subgraph cluster3 {
+	 label="semantics/Nouns.py (Things)\n Call: SIN QUA NON = CONCRETE method"
+	 color=deeppink
+	 style=blank
+
+	concrete[label="NOUNS \nare\n Concrete", color=DeepPink, shape=invtriangle, style=filled]
+	     concrete->proc_record[label="Record", color=deeppink]
+	     concrete->proc_null[label="Comment", color=deeppink]
+
+proc_null[shape="rectangle", style="filled", color=pink, label="Parse Comment:\n ''line''"]
+proc_record[shape="rectangle", style="filled", color=pink, label="Parse Record:\n value \n (unit) \n {dimension} \n [element] \n !comment"]
+
+
+	     }
+
+}
+
+
+proc_record->return[label="RDFPreRecord\n(iter-->RDFRecord\niter->(key, Field))", color=blue]
+proc_null->return[label="RDFComment\n(iter-->self\nbool->False)", color=blue]
+
+
+
+proc_include[shape="rectangle", style="filled", color=yellow, label="INCLUDE = recursive.rdf\n Recusrively Call:\n uRDF.rdf_include()"]
+
+
+
+
+
+
+is_line[shape=diamond, style=filled, color=violet, label="cls.is_line()\nINCLUDE\nOPERATOR\nCOMMENT\nAFFIXES\nRecord\nComment?"]
+
+
+
+
+
+
+
+
+
+
+
+
+container[shape=house, style=filled, color=greenyellow, label="Extend \n CONTAINER"]
+
+grammar_call[shape="ellipse", color="green", label="Start\nGrammar\nProcessing\of\n'line'"]
+grammar[shape="octagon", style=filled, color="cyan", label="Make Fresh Grammar\ngrammar.operator = '='\ngrammar.comment = '!'\ngrammar.<af>fix = [] x 2"]
+
+end[shape="hexagon",color="red",label="exit", style="filled"]
+
+
+sin_qua_non[label="Dispatch \n<cls>.process()\n method", color=lightseagreen, shape=invtriangle, style=filled]
+
+
+
+}

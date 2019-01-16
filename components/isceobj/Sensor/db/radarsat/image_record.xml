@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+        <rec name="Record Number" type="4" num="1"/>
+        <rec name="skip" type="0" num="1"/>
+        <rec name="Record Type" type="3" num="1"/>
+        <rec name="skip" type="0" num="2"/>
+	<rec name="Record Length" type="4" num="1"/>	
+	<rec name="SAR image data line number" type="4" num="1"/>
+	<rec name="SAR image data record index" type="4" num="1"/>
+	<rec name="Actual count of left-fill pixels" type="4" num="1"/>
+	<rec name="Actual count of data pixels" type="4" num="1"/>
+	<rec name="Actual count of right-fill pixels" type="4" num="1"/>
+	<rec name="Sensor parameters update flag" type="4" num="1"/>
+	<rec name="Sensor acquisition year" type="4" num="1"/>
+	<rec name="Sensor acquisition day of year" type="4" num="1"/>
+	<rec name="Sensor acquisition milliseconds of day" type="4" num="1"/>
+	<rec name="SAR channel indicator" type="6" num="1"/>
+	<rec name="SAR channel code" type="6" num="1"/>
+	<rec name="Transmitted polarization" type="6" num="1"/>
+	<rec name="Received polarization" type="6" num="1"/>
+        <rec name="PRF" type="4" num="1"/><!--60-->
+	<rec name="skip" type="0" num="4"/>
+        <rec name="On-board range compressed flag" type="6" num="1"/>
+        <rec name="Pulse type designator" type="6" num="1"/>
+        <rec name="Chirp Length in ns" type="4" num="1"/>
+        <rec name="Chirp constant coefficient in Hz" type="4" num="1"/>
+        <rec name="Chirp linear coefficient in Hz/micros" type="4" num="1"/>
+        <rec name="Chirp quadratic coefficient in Hz/micros**2" type="4" num="1"/>
+        <rec name="skip" type="0" num="8"/>
+        <rec name="Receiver gain" type="4" num="1"/>
+        <rec name="Nought line flag" type="4" num="1"/><!--100-->
+        <rec name="Elec nadir angle in micro degrees" type="4" num="1"/>
+        <rec name="Mech nadir angle in micro degrees" type="4" num="1"/>
+        <rec name="Elec squint angle in micro degrees" type="4" num="1"/>
+        <rec name="Mech squint angle in micro degrees" type="4" num="1"/>
+        <rec name="First sample slant range in m" type="4" num="1"/>
+        <rec name="Data record window time in ns" type="4" num="1"/>
+        <rec name="skip" type="0" num="4"/>
+        <rec name="Platform position update flag" type="4" num="1"/>
+        <rec name="Platform latitude in micro degrees" type="4" num="1"/>
+        <rec name="Platform longitude in micro degrees" type="4" num="1"/>
+        <rec name="Platform altitude in m" type="4" num="1"/>
+        <rec name="Platform speed in cm/s" type="4" num="1"/><!--148-->
+        <rec name="Platform velocity in cm/s" type="0" num="12"/>
+        <rec name="Platform acceleration in cm/s**2" type="0" num="12"/>
+        <rec name="Platform track in micro degrees" type="4" num="1"/>
+        <rec name="Platform heading in micro degrees" type="4" num="1"/>
+        <rec name="Platform pitch in micro degrees" type="4" num="1"/>
+        <rec name="Platform roll in micro degrees" type="4" num="1"/>
+        <rec name="Platform yaw in micro degrees" type="4" num="1"/>
+        <!--192-->
+</ceos>

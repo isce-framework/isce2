@@ -1,0 +1,224 @@
+<insarApp>
+    <component name="insar">
+        <property  name="Sensor name">ALOS</property>
+        <component name="master">
+            <catalog>master.xml</catalog>
+        </component>
+        <component name="slave">
+            <catalog>slave.xml</catalog>
+        </component>
+    </component>
+</insarApp>
+
+
+<!--
+General Note: Using syntax highlighting makes it easier to read XML file.
+-->
+
+<!-- This is an xml comment -->
+
+<!-- An xml comment begins with the 4 characters at the start of this line and
+     end with the 3 characters at the end of this line. -->
+
+<!-- The rest of this file contains comments only.  -->
+
+<!--
+    An xml file is structured with content appearing between the tags indicated
+with the symbols '< >' and the matching closing tag symbols '</ >'.  There are
+4 different types of tags used in the 11 lines at the top of this file:
+
+  (1) The tag <insarApp> and its closing tag </insarApp> are required but the
+  name is arbitrary.
+
+  (2) The <property> </property> tags are used for simple properties.  These
+  tags includes a 'name' ('sensor name' in the above example) as an attribute
+  of the tag as well as a value appearing between the opening and closing tags.
+
+  (3) The <component> </component> tags are used for collections of properties
+  belonging to the component indicated by the 'name' attribute of the tag.
+
+  (4) The <catalog> </catalog> has no 'name' attribute and the value given
+  between the tags is the name of another xml file containing the properties
+  for the component.
+
+There are other types of tags that may be used as shown in examples below.
+
+-->
+
+<!--
+    The 11 lines at the top of this file give the minimal input file for running
+ insarApp.py, but most of the input information is contained in the two xml
+files master.xml and slave.xml sandwiched between the <catalog> tag and the
+</catalog> tag.
+    The master.xml and slave.xml files are different in structure for different
+sensors but identical to each other in structure for a given sensor.  Examples
+of master.xml for each sensor type are given in this directory with names like
+master_alos.xml. You can use these files as templates for creating your own
+master.xml and slave.xml files.  You can also in-line the contents of those
+files directly in the insarApp.xml file as in the following example for ALOS:
+
+<insarApp>
+    <component name="insar">
+        <property  name="Sensor name">ALOS</property>
+        <component name="master">
+            <property name="IMAGEFILE">IMG-HH-ALPSRP028910640-H1.0__A</property>
+            <property name="LEADERFILE">LED-ALPSRP028910640-H1.0__A</property>
+            <property name="OUTPUT">060810.raw</property>
+        </component>
+        <component name="slave">
+            <property name="IMAGEFILE">IMG-HH-ALPSRP042330640-H1.0__A</property>
+            <property name="LEADERFILE">LED-ALPSRP042330640-H1.0__A</property>
+            <property name="OUTPUT">061110.raw</property>
+        </component>
+    </component>
+</insarApp>
+
+-->
+
+<!-- <<INPUTS FOR insarApp.py>>
+     This file provides a basic template for setting up interferogram input file for insarApp.py. Only the commonly used options are described here.
+
+     There are three ways of providing basic inputs to insarApp.py. Choose any one to work with. We recommend Method 1.
+
+     Method 1: Using insarApp.xml [Uses in-built configurability]
+
+        >insarApp.py
+            - Automatically looks for insarApp.xml  and loads ISCE Application instance configuration.
+
+    Method 2:  Using insar.xml  [Uses in-built configurabiluty]
+        > insarApp.py
+            - Automatically looks for insar.xml and loads ISCE Application family configuration.
+            - "insarApp" is a specific instance of family "insar". insarApp.py first reads insar.xml to configure object and then reads insarApp.xml. If values are repeated in the two files, insarApp.xml takes precedence over insar.xml .
+
+
+    Method 3 : Using arbitrary xml file with the same structure as below.
+
+        > insarApp.py input.xml [Explicitly force use of specific XML file)
+            -  insarApp.py checks for insar.xml and loads information if available.
+            -  insarApp.py  then checks for insarApp.xml and if available updates/creates configuration.
+            -  insarApp.py then "input.xml" and updates/creates configuration.
+-->
+
+<!-- <<ISCE XML property formats>>
+     ISCE XML files support two types of property definitions.
+
+    Format 1:
+            <property name="Sensor name">ALOS</property>
+
+    Format 2:
+             <property name="Sensor name">
+                <value>ALOS</value>
+             </property>
+-->
+
+<!--
+
+<insarApp>  This tag name doesn't really matter.
+    <component name="insar">   This component has to be named insar
+
+        Mandatory entries:
+
+        Full list of sensors can be obtained using "insarApp.py -h"
+        <property  name="Sensor name">ALOS</property>
+
+        Doppler estimation method. Sensor dependent.
+             See sensor examples for details.
+        <property name="doppler method">useDOPIQ</property>
+
+
+        Master and slave information are provided through catalogs.
+        The structure of these catalog files are sensor dependent.
+        See "master_SENSOR.xml" for examples of different sensors.
+        <component name="master">
+            <catalog>master.xml</catalog> Grabs information from master.xml
+        </component>
+        <component name="slave">
+            <catalog>slave.xml</catalog>  Grabs information from slave.xml
+        </component>
+
+-->
+
+        <!-- Optional entries.
+             These need not be defined by the user.
+             Default values will be used if not provided.
+             Uncomment the <property> tags if you want to use these.-->
+
+
+        <!-- << DEM >>
+             If not provided, SRTM DEM will be automatically downloaded.
+             See "dem_latest.xml" in examples directory for an example.-->
+<!--
+        <component name="Dem">
+            <catalog>dem_latest.xml</catalog> Grabs information from dem_latest.xml
+        </component>
+-->
+
+<!-- To turn off the use of  water mask uncomment this part -->
+<!--    <component name="insarproc">
+            <property name="applyWaterMask">
+                <value>False</value>
+            </property>
+        </component>
+-->
+
+
+        <!-- <<PROCESS PART OF IMAGE IN AZIMUTH>> -->
+        <!--<property name="Number of Patches">3</property> -->
+
+        <!-- <<POSTING TO DETERMINE LOOKS>>
+             If not provided, uses DEM posting automatically. -->
+        <!-- <property name="posting"> 25 </property> -->
+
+        <!-- <<NUMBER OF LOOKS>>
+             Overrides DEM spacing and "posting" input with explicit values -->
+        <!--<property name="range looks">2</property>-->
+        <!--<property name="azimuth looks">4</property>-->
+
+        <!-- <<OFFSET ESTIMATION>>
+             Choose method used for coregistration.
+             Can be offsetprf, ampcor, nstage.
+             offsetprf is default.
+             Individual offset estimation parameters can be controlled using "insarapp_slcs_METHOD.xml" and "insarapp_intsim_METHOD.xml" where METHOD can be one of offsetprf, amcpor, nstage.-->
+        <!--<property name="slc offset method">ampcor</property>-->
+
+        <!-- Minimum number of offsets needed after culling to assume reliable matching. -->
+        <!--<property name="Culling error limit">100</property>-->
+
+        <!-- To force use of certain pixel offset between slcs -->
+        <!--<property name="gross azimuth offset">-100</property>-->
+        <!--<property name="gross range offset">25</property>-->
+
+
+        <!-- <<FILTER STRENGTH>>
+             Goldstein fitler length-->
+        <!--<property name="filter strength">0.4</property>-->
+
+        <!-- <<PHASE UNWRAPPING>>
+             Phase unwrapping can be optionally turned off.
+             Following unwrappers are currently available:
+             grass, icu, snaphu, snaphu_mcf-->
+        <!--<property name="unwrap">True</property>-->
+        <!--<property name="unwrapper name">snaphu_mcf</property>-->
+
+        <!-- 2 Stage unwrapping option requires the following tags:-->
+        <!--<property name="do unwrap">True</property> -->
+        <!--<property name="unwrapper name">snaphu_mcf</property> -->
+        <!--<property name="do unwrap 2 stage">True</property> -->
+        <!--<property name="unwrapper 2 stage name">MCF</property> -->
+
+        <!-- <<GEOCODING>> -->
+        <!-- Creating geocoded coregistered stacks is easy with ISCE.
+             You can specify the exact geocoding bounding box in SNWE format as follows.
+             As long as the same DEM and bounding box are used, all products will be
+             geocoded to the same grid.-->
+        <!--<property name="geocode bounding box">[19.1, 19.45, -155.45, -154.7]</property>-->
+        <!-- By default ISCE geocodes a long list of products. Once, you are familiar with
+             the product names, you can force ISCE to geocode only products of interest to you.
+             Geocoding parameters for a file named "abc.def" can be controlled using insarapp_geocode_abcdef.xml-->
+        <!--<property name="geocode list">filt_topophase.flat los.rdr topophase.cor phsig.cor</property>-->
+
+
+<!--
+    </component>
+</insarApp>
+-->

@@ -1,0 +1,6 @@
+<greeter>
+    <component name="greeter">
+        <property name="name to use in greeting">Bert</property>
+        <property name="language to use in greeting">Spanish</property>
+    </component>
+</greeter>

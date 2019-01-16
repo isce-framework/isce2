@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: tag/attribute names must be in lower case -->
+<isceApp>
+  <component name="isce">
+
+    <constant name="in">./</constant>
+
+    <property name="sensor name">UAVSAR_Stack</property>
+    <property name="doppler method">usedefault</property>
+<!--    <property name="number of patches">               1 </property> -->
+    <property name="do rgoffset">False</property>
+    <property name="do updatepreprocinfo">True</property>
+    <property name="do unwrap">True</property>
+    <property name="unwrapper name">icu</property>
+    <property name="do geocode">True</property>
+    <property name="resamp range looks">                     6 </property>
+    <property name="resamp azimuth looks">                  16 </property>
+    <property name="coregistration strategy">single reference</property> <!-- possible values: single reference, cascade -->
+    <property name="reference scene">uav1</property>
+    <property name="reference polarization">hh</property> <!-- average, hh, hv, vh, vh (default: hh) -->
+
+    <property name="geocode list">
+        ["filt_topophase.flat", "filt_topophase.unw"]
+    </property>
+
+
+    <component name="stack">
+      <component name="Scene1">
+        <property name="id">uav1</property>
+        <property name="hh">SanAnd_05510_09006_011_090218_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene2">
+        <property name="id">uav2</property>
+        <property name="hh">SanAnd_05510_09091_005_091117_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene3">
+        <property name="id">uav3</property>
+        <property name="hh">SanAnd_05510_10037_009_100511_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene4">
+        <property name="id">uav4</property>
+        <property name="hh">SanAnd_05510_10077_010_101028_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene5">
+        <property name="id">uav5</property>
+        <property name="hh">SanAnd_05510_11049_008_110713_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene6">
+        <property name="id">uav6</property>
+        <property name="hh">SanAnd_05510_11071_012_111103_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene7">
+        <property name="id">uav7</property>
+        <property name="hh">SanAnd_05510_12017_007_120418_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene8">
+        <property name="id">uav8</property>
+        <property name="hh">SanAnd_05510_12128_000_121105_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene9">
+        <property name="id">uav9</property>
+        <property name="hh">SanAnd_05510_13089_001_130508_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene10">
+        <property name="id">uav10</property>
+        <property name="hh">SanAnd_05510_13165_004_131031_L090HH_01_BC.ann</property>
+      </component>
+
+
+      <component name="Scene11">
+        <property name="id">uav11</property>
+        <property name="hh">SanAnd_05510_14068_000_140529_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Scene12">
+        <property name="id">uav12</property>
+        <property name="hh">SanAnd_05510_14128_003_140829_L090HH_01_BC.ann</property>
+      </component>
+
+      <component name="Raster1">
+        <property name="ncol">1500</property>
+        <property name="nlin">4000</property>
+        <property name="datatype">float</property>
+      </component>
+    </component>
+
+    <component name="dem">
+      <catalog name="dem">/A/B/C/dem/demLat_N38_N39_Lon_E043_E044.dem.wgs84.xml</catalog>
+    </component>
+
+    <!--<constant name="wdir"></constant> -->
+
+    <!-- processing parameters -->
+    <property name="output directory">.</property>
+    <property name="selectScenes">uav1-uav3</property>
+    <property name="selectPols">hh</property>
+<!--
+    <property name="selectPairs">uav1-uav3, uav3-uav5, uav5-uav7, uav7-uav9, uav9-uav11,
+        uav2/uav4, uav4/uav6, uav6/uav8, uav8/uav10, uav10/uav12, uav11/uav12
+    </property>
+-->
+    <property name="selectPairs">uav1/uav3</property>
+    <!-- pairs to be processed for inSAR steps: comma-separated list, alos1/alos2,
+         use dash to express a range:
+         alos1-alos10 will form all possible pairs with all the scenes between alos1 and alos10 -->
+    <!--property name="selectPols"></property-->
+    <!-- pols to be processed, applies to selected scenes and selected pairs:
+         comma-separated list, with values among hh, hv, vh, vv. -->
+    <property name="sensor name">UAVSAR_Stack</property>
+    <property name="dopplermethod">usedefault</property>
+<!--    <property name="number of patches">1</property> -->
+<!--
+    <property name="peg latitude (deg)"></property>
+    <property name="peg longitude (deg)"></property>
+    <property name="peg heading (deg)"></property>
+    <property name="peg radius (m)"></property>
+    <property name="slc offset method">offsetprf</property> --><!--offsetprf, ampcor-->
+
+<!--
+    <property name="slc rangelooks"></property>
+    <property name="slc azimuthlooks"></property>
+    <property name="slc filtermethod"></property>
+    <property name="slc filterheight"></property>
+    <property name="slc filterwidth"></property>
+-->
+    <property name="FR filtersize X">11</property>
+    <property name="FR filtersize Y">11</property>
+<!--
+    <property name="azimuth shift"></property>
+-->
+<!--    <property name="culling error limit">            65 </property> -->
+
+    <!-- generic processing -->
+    <!--component name="generic">
+      <property name="cmplx2magpha">False</property>
+    </component-->
+
+  </component>
+</isceApp>

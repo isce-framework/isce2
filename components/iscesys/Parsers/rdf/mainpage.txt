@@ -1,0 +1,335 @@
+/**
+@mainpage RDF Specs
+
+@section RUG The RDF Users Guide		         Version 0.0
+
+The Radar Definition Format (RDF) was developed as part of the Advanced Radar
+Technology Program (ART).   It was a proposal to help simplify the exchange of
+radar system design information between various Section 334 design tools.
+Although funding for the task was canceled before completion, a fair amount of
+work was spent defining the file format and developing software to read and
+edit these files.  Though the file format is neither new nor elaborate, it has
+a potential for simplifying data transfer between radar system elements.
+
+
+@section UGO 	Users Guide Organization
+
+The Radar Definition Format (RDF) Users Guide is divided into three distinct
+chapters.  The first chapter contains a description of the file format, its
+advantages, and limitations.  The Second chapter describes the RDF Reader
+software available to read, write, and edit RDF files.  The final chapter
+presents conventions, restrictions and guidelines that different projects have
+adopted when using the RDF files.
+
+
+@section RFF	RDF File Format
+
+
+The Radar Definition File is an ASCII file and is organized using a
+Key = Value method.  In its simplest form, each line of the file contains a
+parameter name, an operator such as Ô=Ô, and the value of the parameter.
+Optional fields include the units of the parameter and any comments that one
+wishes to make.  This method allows sufficient flexibility to handle complex
+multi-mode systems as well as single string low cost radars.  Only the
+parameters that are necessary for a particular system must be specified,
+keeping the file size down and making the RDF much more readable,  The
+ordering of parameters is not important, so they can appear in whatever
+sequence makes the most sense for a given system.
+
+@subsection DFC	Data File Components
+
+RDF files can contain two kinds of logical records: a data record and a
+comment record.  A data record consists of the following components:
+
+	Keyword   (Units)   [dimensions]   {element}   Operator    Values   Comments
+
+
+Although they must occur in the order shown above, the fields indicated by
+Italics are considered optional.   A comment record consists of any line which
+does not contain an operator field, including lines that are entirely blank.
+
+@subsubsection kw		Keyword
+
+All data in an RDF file are identified byunique Keywords.  The Keyword is
+composed of any arbitrary string of printable ascii characters except for the
+11 reserved characters listed in section 2.3.  Spaces (ascii #32) and tabs
+contained within a keyword are considered part of the keyword and must be
+present when making keyword searches. However, spaces and tabs are considered
+equivalent.  Also, consecutive spaces and tabs within a keyword are equivalent
+to a single character.  Spaces and tabs on the leading and trailing ends of
+keywords are ignored.  Both upper and lower case letters are allowed, however,
+no distinction is made between them and they are equivalent in a keyword
+search.
+
+@subsubsection units		Units
+
+
+If present, the Units field must occur between the keyword and the operator.
+It is distinguish from the key word by open and close parenthesis ( ).
+The units are expressed as an ascii field.  The RDF certified list of units
+can be found in appendix A.  They include measures of length, velocity, mass,
+time, etc.  If a logical record contains more than one data value, a separate
+unit can be specified for each value.  If there are more values than units,
+the last unit specified applies to all the remaining values.
+
+
+@subsubsection operator		Operator
+
+
+The operator separates the keyword from the list of values.  The default value
+is the equals sign, =.  The default operator can be change by the following:
+
+       OPERATOR = string
+
+where string is the desired string of characters to be used as the operator.
+It must be present in every logical data record.
+
+ 
+@subsubsection values		Values
+
+
+The value field can consist of any printable ascii character except for the
+comment deliminator (see following section). The ascii representation of
+numeric data follows the FORTRAN conventions for integer, fix point, and
+floating point data formats.  Floating point data uses an E to indicate the
+exponent value.  Data values can be space or comma delimited.  When character
+and numeric data occur within the same data field, and the character string
+contains spaces or commas, the string must be enclosed by double quotes, Ò
+
+@subsubsection comments		Comments
+
+
+Any characters following the comment deliminator are considered a comment.
+The default comment deliminator is an exclimation point, !.  The comment
+deliminator can be change by specifing:
+
+	    COMMENT = string
+
+
+where string can be any ascii string.  There is no restriction on the content
+of the comment following the comment deliminator.
+
+@subsubsection dim		Dimensions (Format Extension)
+
+
+@subsubsection el		Elements (Unused)
+
+
+@subsection del	Delimiters
+
+
+When multiple values occur in the Units or Value fields, the entries can be
+separated from each other using: commas, tabs, or spaces.
+
+@subsection RC 	Reserved Characters
+
+The following characters are not allowed in keywords, units, dimensions, and
+elements:  (,  ),   [,   ],   {,   },  <,  >,  =,  !,  and ;.   In addition,
+the semicolon, ;,  is not allowed in the value field. If ascii data contains
+spaces, commas or tabs, it must be enclosed by double quotes.  Finally, if the
+last character of a physical record is a backslash, \, the logical record is
+continued onto the following line (see section 2.5).
+
+@subsection RK Reserved Keywords
+
+
+The following keywords are reserved and cannot be used in a data file:
+
+	COMMENT, OPERATOR, PREFIX, SUFFIX, and INCLUDE.
+
+
+@subsection PS	Prefix/Suffix
+	
+	
+Often, a group of keywords will begin with similar character strings.  An
+alternative to typing the repetitious portion of the keyword over and over
+for each record is to use the following Prefix command at the beginning of
+the group of records:
+
+    PREFIX   =   Repetitious portion at the START of a set of Keywords
+
+This applies to all following keywords in the file until another prefix command
+is encounter.  At the end of the group, the prefix can be turn off by putting
+the following record in the file:
+
+    PREFIX =
+
+The PREFIX string is considered as if it were part of the key for all Keywords
+between the two above PREFIX entries.  It is the combination of the PREFIX and
+explicit keyword that must satisfy the uniqueness requirement.
+
+Similarly, if the end of a group of keywords is repetitious, the following
+entry can be used:
+
+      SUFFIX = Repetitious portion at the END of a set of Keywords
+
+
+@subsection INC	Include
+
+
+The Include command provides a convenient way of combining RDF files without
+actually merging them.  The syntax is as follows
+
+	 INCLUDE = filename
+
+
+The result is equivalent to inserting all the records of the included file
+into the original RDF file with exception of the PREFIX and SUFFIX commands.
+If a prefix or suffix is used in the original file, it is applied to the
+included file as well.  If the include file also has a prefix or suffix, they
+do not over write the original suffix/prefix.  Instead, the new prefix/suffix
+gets combined with the original for all applicable records in the included
+file.  Should the included file also have an include statement, the process
+continues. The maximum depth of include files open at any one time is 10.
+
+(italics indicates not yet implemented)
+
+@subsection WRAP	Continuation Lines
+
+If the last non-space character in a physical record is backslash, \, the
+logical record is continued onto the following line.  The last character
+before the backslash is immediately followed by the first non-space character
+of the next line.  If the first non-space character on the following line is
+also a backslash, then it is skipped and the line continues with the character
+immediately after the backslash.  This construction allows the line breaks
+to be made even in the middle of a string of spaces without any ambiguity.
+For Instance:
+
+    Example_Key  =  The rain in Spain falls mainly on the plain
+    		 is equivalent to all of the following:
+
+    Example_Key  =  The rain in Spa\
+        in falls mainly on the plain
+
+    Example_Key  =  The rain in Spain \
+    		 falls mainly on the plain
+
+    Example_Key  =  The rain in Spain \
+        \falls mainly on the plain
+
+    Example_Key  =  The rain in Spain\
+    		 \ falls mainly on the plain
+
+
+
+@section AA APPENDIX A
+
+The original RDF unit spec, based on a FORTRAN-77 platform, was inadequate.
+The python implementation is described within.
+
+
+
+@section IMP Python Implementation
+
+@subsection pandm Packages and Modules
+uRDF.py     basic __u__-sers \n 
+iRDF.py     advanced __i__-teractive stuff \n
+eRDF.py     uncut __e__-xperiment stuff\n
+parse.py    A script for processing an rdf file to stdout\n
+read.py     generators that read rdf files\n
+utils.py    non-rdf specific utilites\n\n
+__data__ External object for data\n
+	entries.py  Data structure for file lines\n
+	files.py  Mapping object (RDF) for files\n
+\n
+__reserved__ Constants as primatives.\n
+	glyphs.py  Constant character glyphs\n
+	words.py Command WORDS\n
+\n
+__language__  Grammar and Lexicon \n
+	errors.py Grammar Exceptions\n
+\n
+__language__/ __grammar__ Symbols and Parsing\n
+		morpheme.py Self-aware morphemes (affixes)\n
+		punctuation.py Self-aware punctuations\n
+		syntax.py the Grammar object that knows how to read RDF\n
+\n
+__language__/ __lexis__ Words\n
+		semantics.py Words that become things (Nouns)\n
+		pragmatics.py Words that will an can change Grammar (Verbs)\n
+\n
+__units__/ Units \n
+	   	 physical_quantity.py SI Units, Prefixes and all the basics\n
+		 addendum.py Non SI and user units.
+		 
+@subsection how How it works:
+
+RDF input is ASCII strings- usually from and RDF file. They are converted
+to an rdf.data.files.RDF mapping objects as follows:
+
+A src file name is passed to rdf.uRDF.rdf_include -which is the mothership.
+Before processing begins, an rdf.language.grammar.syntax.Grammar object
+is created-- it knows the default RDF spec.
+
+Input lines are ingested, with continued lines unwrapped, and yielded
+one-by-one by the likes of rdf.read.unwrap_file
+
+The lines are passed to the grammar  -which knows how to interpret them.
+There are procesed in rdf.language.grammar.syntax.Grammar.process which
+loops through the possible input types in a chain of the iterable
+constants: \n
+rdf.language.lexis.pragmatics.VERBS \n
+rdf.language.lexis.semantics.NOUNS \n
+until the line is ID's as and instance of one of them. That instance
+knows what to do: \n
+Verbs change the grammar ans possibly recursivey include files \n
+Nouns are Records or Comments. \n
+
+In either case the grammar object does not know what to do, the Verb or
+Noun object has that responsility.
+
+All verb except rdf.language.lexis.pragmatics.Include return and empty tuple,
+while the later returns a list of the conetents of the included file.
+
+There are to Nouns: \n\n
+rdf.language.lexis.semantics.Record \n
+rdf.language.lexis.semantics.Comment \n\n
+These become:\n\n
+rdf.data.entries.RDFPreRecord \n
+rdf.data.entries.RDFComment\n\n
+
+Both of these are iterable. The former is a single object, and when
+iterated, yields a rdf.data.entries.RDFRecord and is exhausted. \n
+The later iterates like an empty tuple: it just disappears. The point being:
+no matter what you get back from the rdf_include generator: you can iterate
+it and it will yield 0, 1, or many rdf.data.entries.RDFRecord objects
+(which is the fundamental data representation of an RDF Record).
+Note: you really can't yield 0, so what happens is it moves to the next
+rdf line, until a finite number of records is kicked put. Thus the generator
+chains them all together seemlessy, no matter the depth of recursion- and that
+can be unpacked into the rdf.data.files.RDF constructor.
+
+Note: the RDFRecord is a fancy (Key, "value") pair, where the key is the
+rdf-dictionary key, and the value is an rdf.data.entries.RDFField tuple.
+Hence the dict (really collection.OrderedDict) constructor unpacks that
+pair to make the rdf mapping.
+
+The rdf.data.entries.RDFField is a tuple of:
+
+    value (units) {dimensions} [element] !comments
+
+with some extras-- for instance, when it is created, the units (if present)
+are check against the rdf.units.units_.UNITS dictionary and converted to
+base units. It also has an eval() method, which will do what it takes to
+take the value from a string into its native type.
+
+Finally the rdf.data.files.RDF object-- which is what users really put into
+their programms-- has some features:\n
+
+(1) failed attribute requests are passed to the underline mapping class- so
+you can perferm OrderDict method calls on them.
+
+(2) getitem is special: rdf[key] returns eval(value)-- so the numeric (or
+whatever) version of value, while rdf.get(key) returns the whole rdf field.
+Note: it may be smarter to call eval on construction-- that is TBD.
+
+
+\section flowc Flow Chart
+ The flow chart:
+
+\image html rdf.tiff
+
+<div><a href="rdf.pdf">and it's high resolution version </a></div>	
+		
+		
+**/

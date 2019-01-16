@@ -1,0 +1,35 @@
+<component>
+    <name>Platform</name>
+    <property>
+        <name>BODY_FIXED_VELOCITY</name>
+        <value>7552.60745017</value>
+    </property>
+    <property>
+        <name>HEIGHT_DT</name>
+        <value>-10.7342137607</value>
+    </property>
+    <property>
+        <name>ANTENNA_LENGTH</name>
+        <value>10.0</value>
+    </property>
+    <property>
+        <name>SPACECRAFT_HEIGHT</name>
+        <value>788308.231165</value>
+    </property>
+    <property>
+        <name>ANTENNA_SCH_VELOCITY</name>
+        <value>[7552.6105119000003, 0.0, -10.6880875]</value>
+    </property>
+    <property>
+        <name>POINTING_DIRECTION</name>
+        <value>-1</value>
+    </property>
+    <property>
+        <name>SPACECRAFT_NAME</name>
+        <value>ERS1</value>
+    </property>
+    <property>
+        <name>ANTENNA_SCH_ACCELERATION</name>
+        <value>[-0.0040496000000000004, -0.62063250000000003, -7.9634865000000001]</value>
+    </property>
+</component>

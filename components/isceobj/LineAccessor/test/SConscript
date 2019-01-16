@@ -1,0 +1,38 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envLineAccessor')
+envLineAccessor.AppendUnique(LIBPATH = envLineAccessor['PRJ_LIB_DIR'])
+libPath = [envLineAccessor['LIBPATH']]
+listFiles = ['fortranSrc.F'] 
+lib = envLineAccessor.Library(target = 'fortranSrc', source = listFiles)
+inst = envLineAccessor['PRJ_LIB_DIR']
+envLineAccessor.Install(inst,lib)
+idir = envLineAccessor.Alias('install-dir',inst)
+linkLibs =  ['fortranSrc', 'LineAccessor']
+linkLibs.extend([envLineAccessor['LIBS']])#add fortran library gfortran
+driverCC = envLineAccessor.Program(target = 'driverCC.ex' , source = 'driverCC.cpp', LIBS = linkLibs, LIBPATH = libPath)
+driverF = envLineAccessor.Program(target = 'driverF.ex' , source = 'driverF.F', LIBS = linkLibs, LIBPATH = libPath)
+envLineAccessor.NoClean(driverCC)
+envLineAccessor.NoClean(driverF)
+#if the destination directory is the same as the current one, there is no need to invoke the Install (which does simply a copy to the specified dir).
+#if the Install is called explicity like 
+# a = envLineAccessor.Program(source = 'driverCC.cpp', LIBS = linkLibs, LIBPATH = libPath)
+# envLineAccessor.Install('../test',a)
+# envLineAccessor.Alias('install','../test')
+#it will give an error because it will try to copy test/driverCC (which is the target "a") in ../test/driverCC which is the same file.
+iloc = envLineAccessor.Alias('install-local','../test')
+envLineAccessor.LoadableModule(target = 'fortranSrc.abi3.so', source = 'fortranSrcmodule.cpp', LIBS = linkLibs, LIBPATH = libPath)
+envLineAccessor.Alias('install',[idir,iloc])
+
+

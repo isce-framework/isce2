@@ -1,0 +1,23 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009-2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envgetPegInfo')
+package = envgetPegInfo['PACKAGE']
+project = envgetPegInfo['PROJECT']
+envgetPegInfo.AppendUnique(envgetPegInfo['PRJ_LIB_DIR'])
+install = envgetPegInfo['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['get_peg_info','utilLib','StdOE']
+envgetPegInfo.PrependUnique(LIBS = libList)
+module = envgetPegInfo.LoadableModule(target = 'get_peg_info.abi3.so', source = 'get_peg_infomodule.cpp') 
+envgetPegInfo.Install(install,module)
+envgetPegInfo.Alias('install',install)

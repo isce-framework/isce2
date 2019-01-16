@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="alos">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+
+	<rec name="SAR channel indicator" type="2" num="4"/>
+	<rec name="Number of data sets" type="2" num="4"/>
+    <rec name="Calibration factor" type="5" num="16"/>
+    
+	<!-- transmission distortion matrix -->
+	<rec name="Real part of DT 1,1" type="5" num="16"/>
+	<rec name="Imaginary part of DT 1,1" type="5" num="16"/>
+	<rec name="Real part of DT 1,2" type="5" num="16"/>
+	<rec name="Imaginary part of DT 1,2" type="5" num="16"/>
+	<rec name="Real part of DT 2,1" type="5" num="16"/>
+	<rec name="Imaginary part of DT 2,1" type="5" num="16"/>
+	<rec name="Real part of DT 2,2" type="5" num="16"/>
+	<rec name="Imaginary part of DT 2,2" type="5" num="16"/>
+	<!-- reception distortion matrix -->
+	<rec name="Real part of DR 1,1" type="5" num="16"/>
+	<rec name="Imaginary part of DR 1,1" type="5" num="16"/>
+	<rec name="Real part of DR 1,2" type="5" num="16"/>
+	<rec name="Imaginary part of DR 1,2" type="5" num="16"/>
+	<rec name="Real part of DR 2,1" type="5" num="16"/>
+	<rec name="Imaginary part of DR 2,1" type="5" num="16"/>
+	<rec name="Real part of DR 2,2" type="5" num="16"/>
+	<rec name="Imaginary part of DR 2,2" type="5" num="16"/>
+</ceos>

@@ -1,0 +1,31 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Walter Szeliga
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envSensor')
+envGRD = envSensor.Clone()
+project = 'GRD'
+package = envGRD['PACKAGE']
+envGRD['PROJECT'] = project
+envGRD['SENSOR_SCONS_INSTALL'] = os.path.join(
+    envGRD['PRJ_SCONS_INSTALL'], package, 'Sensor',project)
+install = envGRD['SENSOR_SCONS_INSTALL']
+
+listFiles = ['__init__.py','GRDProduct.py','Sentinel1.py']
+
+helpList,installHelp = envGRD['HELP_BUILDER'](envGRD,'__init__.py',install)
+
+envGRD.Install(installHelp,helpList)
+envGRD.Alias('install',installHelp)
+
+envGRD.Install(install,listFiles)
+envGRD.Alias('install',install)

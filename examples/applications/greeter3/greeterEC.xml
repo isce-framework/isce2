@@ -1,0 +1,21 @@
+<greeter>
+    <component name="greeter">
+<!--
+          <property name="name to use in greeting" doc="A cowboy named Mr Rogers">Roy</property>
+        <component name="Greeting message">
+            <factorymodule>greetings</factorymodule>
+            <factoryname>english_cowboy</factoryname>
+            <doc>Method for greeting someone</doc>
+        </component>
+-->
+<!--
+        <component>
+            <name>Greeting message</name>
+            <factorymodule>greetings</factorymodule>
+            <factoryname>english_cowboy</factoryname>
+            <doc>Method for greeting someone</doc>
+        </component>
+-->
+        <component name="Greeting message" factorymodule="greetings" factoryname="english_cowboy" doc="Method for greeting someone"/>
+    </component>
+</greeter>

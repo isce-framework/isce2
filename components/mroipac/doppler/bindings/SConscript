@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envdoppler')
+package = envdoppler['PACKAGE']
+project = envdoppler['PROJECT']
+install = envdoppler['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['doppler','LineAccessor']
+envdoppler.PrependUnique(LIBS = libList)
+module = envdoppler.LoadableModule(target = 'doppler.abi3.so', source = 'dopplermodule.cpp') 
+envdoppler.Install(install,module)
+envdoppler.Alias('install',install)

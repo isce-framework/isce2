@@ -1,0 +1,33 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envDoppler = envisceobj.Clone()
+package = envDoppler['PACKAGE']
+project = 'Doppler'
+envDoppler['PROJECT'] = project
+install = os.path.join(envDoppler['PRJ_SCONS_INSTALL'],package,project)
+listFiles = ['Doppler.py','__init__.py','Calc_dop.py','DefaultDopp.py']
+helpList,installHelp = envDoppler['HELP_BUILDER'](envDoppler,'__init__.py',install)
+envDoppler.Install(installHelp,helpList)
+envDoppler.Alias('install',installHelp)
+
+envDoppler.Install(install,listFiles)
+envDoppler.Alias('install',install)
+Export('envDoppler')
+bindingsScons = 'bindings/SConscript'
+SConscript(bindingsScons,variant_dir = envDoppler['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/bindings')
+includeScons = 'include/SConscript'
+SConscript(includeScons)
+srcScons = 'src/SConscript'
+SConscript(srcScons,variant_dir = envDoppler['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/src')

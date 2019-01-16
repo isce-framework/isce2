@@ -1,0 +1,217 @@
+#!/bin/bash
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# see if it are azimuth ifgs or not
+if [ $# == 0  ];then
+   file_in=isce_minrefdem.int
+else
+   file_in=$1
+fi
+
+echo "----------------------------------------------------------------------"
+echo "For interferograms: get_quickview_isce isce_minrefdem.int"
+echo "For coh inteferograms: get_quickview_isce isce_minrefdem.coh"
+echo "For filt interferograms: get_quickview_isce isce_minrefdem_filt.int"
+echo "For filt coh inteferograms: get_quickview_isce isce_minrefdem_filt.coh"
+echo "For slcs: get_quickview_isce date.slc"
+echo "----------------------------------------------------------------------"
+
+
+# adding option for user to overwrite file if needed
+overwrite_flag=`grep overwrite input_file | awk '{print $2}'`
+overwrite=1
+if [ "$overwrite_flag" == "n" ] || [ "$overwrite_flag" == "no" ];
+then
+    # do not overwrite existing the files
+    overwrite=0         
+    echo Will not overwrite existing files            
+else
+    echo will overwrite
+fi
+
+# locating the input file
+input=input_file
+counter=1
+while [ $counter -lt 10 ];
+do
+   if [ -f $input ];
+   then
+       let counter=counter+10000
+   else
+       input=../$input
+   fi
+   let counter=counter+1
+done
+echo $input
+if [ ! -f $input ];
+then
+    echo "Cannot find input file"
+    exit 1
+fi
+
+# getting the aspect ratio and the number of looks that needs to be taken
+ar=`grep aspect_ratio $input | awk '{print $2}'`
+r_looks=`grep range_looks $input | awk '{print $2}'`
+a_looks=`grep azimuth_looks $input | awk '{print $2}'`
+
+# check if the az looks are given seperate, if so, overwrite the number of az looks defined through aspect ratio
+if [ -z $a_looks ];
+then
+    # computing the azimuth looks based on the aspect ratio
+    a_looks=`echo "$(($ar * $r_looks))"`
+else
+    echo "Found seperate az_looks variable which will over-rule the ar"
+fi
+
+# giving a summary to the user
+echo number of range looks: $r_looks
+echo number of azimuth looks: $a_looks
+
+# find the name of the multi-looked product
+# defining the output name based on the number of looks taken
+filename_out=`basename $file_in | cut -d. -f1`
+extension_out=`basename $file_in | cut -d. -f2`
+wkfile=${filename_out}_${r_looks}l.${extension_out}
+
+echo "Trying to make figures for: $wkfile"
+
+# loop over a few default cases
+if [ $file_in == isce_minrefdem.int ]; then
+   echo "Looks like regular IFG, store in figures_ifgs_${r_looks}l"
+   wkdir=figures_ifgs_${r_looks}l
+elif [ $file_in == isce_minrefdem_filt.int ]; then
+   echo "Looks like filt IFG, store in figures_ifgs_filt_${r_looks}l"
+   wkdir=figures_ifgs_filt_${r_looks}l
+elif [ $file_in == isce_minrefdem.coh ]; then
+   echo "Looks like COH, store in figures_cohs_${r_looks}l"
+   wkdir=figures_cohs_${r_looks}l
+elif [ $file_in == isce_minrefdem_filt.coh ]; then
+   echo "Looks like filt COH, store in figures_cohs_filt_${r_looks}l"
+   wkdir=figures_cohs_filt_${r_looks}l
+elif [ $file_in == date.slc ]; then
+   echo "Looks like SLC, store in figures_slc_${r_looks}l"
+   wkdir=figures_slc_${r_looks}l
+else
+   echo "Not a supported filename"
+   exit 1
+fi
+# backup original input file
+file_in_or=$file_in
+
+
+
+slctemp=`pwd | awk '{print substr($0,length-2)}'`
+# exit for the SLC's when SB as these can only be ran for SM
+flag_slc=0
+if [ $file_in_or == date.slc ]
+then
+	if ! [ $slctemp == SLC ] 
+        	then
+        	echo "SLC figure generation only for SLC directory"
+        	exit 1
+	fi
+  	echo "SLC"
+        flag_slc=1
+fi
+
+# make the directory
+if [ ! -d $wkdir ]; then
+    mkdir -p $wkdir;
+fi
+
+# see if small baselines or not
+mastertemp=`pwd | awk '{print substr($0,length-7)}'`
+dir=pwd
+# what type of processing has been done
+flag_sb=0
+flag_sm=0
+if [ $flag_slc == 0 ];
+then
+	if [ $mastertemp == ASELINES ]; then
+	   echo "SMALL BASELINES"
+	   flag_sb=1
+	else
+	   flag_sm=1
+	fi
+fi
+if [ $flag_sm == 1 ]; then
+    for folder in  `ls -d [0-9]*/`
+    do
+        # doing nothing just want one date
+        master_slave=`basename $folder`
+    done
+    lengthstr=`echo "$master_slave" | awk '{print length($0)}'`
+    if [ $lengthstr == 17 ]; then
+        flag_sb=1
+        echo "SMALL BASELINES"
+    else
+        echo "SINGLE MASTER"                                                                                                                           
+        flag_sm=1
+    fi
+fi
+
+# loop over the differnt ifgs folders
+for folder in `ls -d [0-9]*/`
+do
+	echo $folder
+	if [ $flag_sb == 1 ];
+	then
+		master_slave=`echo "$folder" | awk '{print substr($0,1,17)}'` 
+	elif [ $flag_sm == 1 ]; 
+	then
+        	slave=`echo "$folder" | awk '{print substr($0,1,8)}'`
+		master_slave=$mastertemp"_"$slave
+	elif [ $flag_slc == 1 ];
+	then
+		master_slave=`basename $folder`
+	fi
+	echo $master_slave
+
+	# if SLC the data of the folder will determine file name
+	if  [ $file_in_or == date.slc ]
+	then
+		file_in=${master_slave}.${extension_out}
+		wkfile=${master_slave}_${r_looks}l.${extension_out}
+	fi
+
+
+        # check if this file exist otherwize make the multi-looked products too
+        files=`find $folder -name $wkfile -type f`
+        # make files if needed
+        if [ -z "$files" ] || [ "$overwrite"=="1" ]; then
+           	cd $folder
+		step_multilook_isce $file_in
+ 		cd ../ 
+        fi
+
+	# make files if needed
+            cd $folder
+            # use mdx to generate a raster file, move in folder such in case muktiple programs are run together it does not overwrite same file
+            mdx.py -P $wkfile
+	    cd ..
+
+            # make the directory
+            if [ ! -d $folder/$wkdir ]; then
+                mkdir -p $folder/$wkdir;
+            fi
+    
+    	    # convert from ppm files to png
+            convert -despeckle -resize 50%  $folder/out.ppm $folder/$wkdir/ISCE_$master_slave.png
+	    rm $folder/out.ppm
+        cp $folder/$wkdir/ISCE_$master_slave.png $wkdir/.
+done
+
+cd $wkdir
+convert +append `ls ISCE_[0-9]*.png` merged.png
+cd ..
+
+

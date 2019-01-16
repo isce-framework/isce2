@@ -1,0 +1,39 @@
+#
+# Author: Eric Gurrola
+# Copyright 2016
+#
+
+import os
+
+Import('env')
+envtest = env.Clone()
+
+#Install the test package so that testing support code is easily available for tests.
+Import('env')
+package = 'test'
+envtest = env.Clone()
+envtest['PACKAGE'] = package
+envtest['INSTALL_PATH'] = os.path.join(envtest['PRJ_SCONS_INSTALL'], package)
+install = envtest['INSTALL_PATH']
+listFiles = ['__init__.py']
+envtest.Install(install, listFiles)
+envtest.Alias('install', install)
+Export('envtest')
+
+#Only run the tests if requested
+if envtest['Test']:
+    #import the test package
+    import test
+    #Print the test banner
+    test.print_test_banner()
+
+    #Print test banner
+    test.print_entering_banner('test')
+    #List the tests to be run in the current directory
+    testFiles = [] #'test_import_components.py']
+    #Run the tests
+    test.run_tests_and_print(testFiles)
+
+    # Finished tests here.  Move on to do more tests.
+    components = os.path.join('components','SConscript')
+    SConscript(components)

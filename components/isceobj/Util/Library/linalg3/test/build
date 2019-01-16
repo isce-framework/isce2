@@ -1,0 +1,4 @@
+gfortran -ffixed-line-length-none -c ../src/linalg3State.F 
+gcc -I ../include -c ../src/linalg3.c
+gcc -I ../include -c test.c 
+gcc linalg3State.o linalg3.o test.o -lm -o test

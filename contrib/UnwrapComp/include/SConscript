@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envUnwrapComp')
+package = envUnwrapComp['PACKAGE']
+project = envUnwrapComp['PROJECT']
+build = envUnwrapComp['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envUnwrapComp.AppendUnique(CPPPATH = [build])
+listFiles = ['relaxIVdriver.h', 'unwcompmodule.h']
+envUnwrapComp.Install(build,listFiles)
+envUnwrapComp.Alias('install',build)

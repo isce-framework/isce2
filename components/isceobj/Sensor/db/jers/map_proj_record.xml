@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="jers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	
+	<rec name="Map projection descriptor" type="1" num="32"/>
+	<rec name="Number of pixels per line of image" type="2" num="16"/>
+    <rec name="Number of lines" type="2" num="16"/>
+    <rec name="Nominal inter-pixel distance in output scene" type="5" num="16"/>
+    <rec name="Nominal inter-line distance in output scene" type="5" num="16"/>
+    <rec name="Orientation at output scene centre" type="5" num="16"/>
+	<rec name="Nominal platform orbital inclination" type="5" num="16"/>
+	<rec name="Actual ascending node" type="5" num="16"/>
+	<rec name="Geocentre to platform distance at input scene centre" type="5" num="16"/>
+	<rec name="Platform geodetic altitude over the ellipsoid" type="5" num="16"/>
+	<rec name="Ground speed at nadir at input scene centre time" type="5" num="16"/>
+	<rec name="Platform heading at nadir corresponding to scene centre" type="5" num="16"/>
+	<rec name="Name of reference ellipsoid" type="1" num="32"/>
+	<rec name="Semimajor axis of ref.ellipsoid" type="5" num="16"/>
+	<rec name="Semiminor axis of ref.ellipsoid" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="772"/>	
+	<!-- CORDINATES OF FOUR CORNER POINTS -->
+	<rec name="1st line 1st pixel geodetic latitude" type="5" num="16"/>
+	<rec name="1st line 1st pixel geodetic longitude" type="5" num="16"/>
+	<rec name="1st line last valid pixel geodetic latitude" type="5" num="16"/>
+	<rec name="1st line last valid pixel geodetic longitude" type="5" num="16"/>
+	<rec name="Last line last valid pixel geodetic latitude" type="5" num="16"/>
+	<rec name="Last line last valid pixel geodetic longitude" type="5" num="16"/>
+	<rec name="Last line 1st pixel geodetic latitude" type="5" num="16"/>
+	<rec name="Last line 1st pixel geodetic longitude" type="5" num="16"/>
+
+</ceos>

@@ -1,0 +1,121 @@
+# This file describes how to set up ISCE and run
+# the Faraday Rotation estimation code on moka.
+#
+# First, set up your environment to run ISCE
+# Set the environment variables:
+
+PATH=/home/isce/bin/:$PATH
+export PYTHONPATH=/home/szeliga/isce/components
+export LD_LIBRARY_PATH=/home/szeliga/lib64
+export ISCE_HOME='/home/szeliga/isce'
+
+# Then, in the directory in which you would like to process data, 
+# create the following input files for the Faraday Rotation script
+
+# In a file named FR.xml, place
+<component>
+ <property>
+  <name>HH</name>
+  <factoryname>createALOS</factoryname>
+  <factorymodule>isceobj.Sensor</factorymodule>
+  <value>HH.xml</value>
+ </property>
+ <property>
+  <name>HV</name>
+  <factoryname>createALOS</factoryname>
+  <factorymodule>isceobj.Sensor</factorymodule>
+  <value>HV.xml</value>
+ </property>
+ <property>
+  <name>VH</name>
+  <factoryname>createALOS</factoryname>
+  <factorymodule>isceobj.Sensor</factorymodule>
+  <value>VH.xml</value>
+ </property>
+ <property>
+  <name>VV</name>
+  <factoryname>createALOS</factoryname>
+  <factorymodule>isceobj.Sensor</factorymodule>
+  <value>VV.xml</value>
+ </property>
+</component>
+
+# In a file names HH.xml, place
+<component>
+ <property>
+  <name>LEADERFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/LED-ALPSRP063051240-P1.1__A</value>
+ </property>
+ <property>
+  <name>IMAGEFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/IMG-HH-ALPSRP063051240-P1.1__A</value>
+ </property>
+</component>
+
+# In a file names HV.xml, place
+<component>
+ <property>
+  <name>LEADERFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/LED-ALPSRP063051240-P1.1__A</value>
+ </property>
+ <property>
+  <name>IMAGEFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/IMG-HV-ALPSRP063051240-P1.1__A</value>
+ </property>
+</component>
+
+# In a file names VH.xml, place
+<component>
+ <property>
+  <name>LEADERFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/LED-ALPSRP063051240-P1.1__A</value>
+ </property>
+ <property>
+  <name>IMAGEFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/IMG-VH-ALPSRP063051240-P1.1__A</value>
+ </property>
+</component>
+
+# In a file names VV.xml, place
+<component>
+ <property>
+  <name>LEADERFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/LED-ALPSRP063051240-P1.1__A</value>
+ </property>
+ <property>
+  <name>IMAGEFILE</name>
+  <value>/u/moka4/issi/szeliga/data/aurora/frame240/IMG-VV-ALPSRP063051240-P1.1__A</value>
+ </property>
+</component>
+
+# In a file names output.xml, place
+<component>
+ <property>
+  <name>FILTER</name>
+  <value>Mean</value>
+ </property>
+ <property>
+  <name>FILTER_SIZE_X</name>
+  <value>21</value>
+ </property>
+ <property>
+  <name>FILTER_SIZE_Y</name>
+  <value>11</value>
+ </property>
+ <property>
+  <name>TEC</name>
+  <value>tec.slc</value>
+ </property>
+ <property>
+  <name>FARADAY_ROTATION</name>
+  <value>fr.slc</value>
+ </property>
+ <property>
+  <name>PHASE</name>
+  <value>phase.slc</value>
+ </property>
+</component>
+
+# From your processing directory, run the following command
+
+$ISCE_HOME/applications/ISSI.py FR.xml output.xml

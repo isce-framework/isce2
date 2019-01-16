@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: tag/attribute names must be in lower case -->
+<isceApp>
+  <component name="isce">
+
+    <component name="stack">
+
+      <component name="Scene1">
+        <!-- There can be up to 100 scenes: from Scene1 to Scene100 -->
+        <property name="id">alos1</property>
+        <!-- id is used to identify scene in selectScenes and selectPairs and to create folders (use only alphanumeric characters, NO space NO underscore NO dash) -->
+        <property name="hh">/home/mlavalle/dat8/ALOS-howland/ALPSRP172570900-P1.0__A/IMG-HH-ALPSRP172570900-P1.0__A</property>
+        <property name="hv">/home/mlavalle/dat8/ALOS-howland/ALPSRP172570900-P1.0__A/IMG-HV-ALPSRP172570900-P1.0__A</property>
+        <property name="vh">/home/mlavalle/dat8/ALOS-howland/ALPSRP172570900-P1.0__A/IMG-VH-ALPSRP172570900-P1.0__A</property>
+        <property name="vv">/home/mlavalle/dat8/ALOS-howland/ALPSRP172570900-P1.0__A/IMG-VV-ALPSRP172570900-P1.0__A</property>
+        <property name="leaderfile">/home/mlavalle/dat8/ALOS-howland/ALPSRP172570900-P1.0__A/LED-ALPSRP172570900-P1.0__A</property>
+        <!-- The tag used to refer to auxiliary file depends on sensor: leaderfile, xml, hdf5 -->
+      </component>
+
+      <component name="Scene2">
+        <property name="id">alos2</property>
+        <property name="hh">/home/mlavalle/dat8/ALOS-howland/ALPSRP179280900-P1.0__A/IMG-HH-ALPSRP179280900-P1.0__A</property>
+        <property name="hv">/home/mlavalle/dat8/ALOS-howland/ALPSRP179280900-P1.0__A/IMG-HV-ALPSRP179280900-P1.0__A</property>
+        <property name="vh">/home/mlavalle/dat8/ALOS-howland/ALPSRP179280900-P1.0__A/IMG-VH-ALPSRP179280900-P1.0__A</property>
+        <property name="vv">/home/mlavalle/dat8/ALOS-howland/ALPSRP179280900-P1.0__A/IMG-VV-ALPSRP179280900-P1.0__A</property>
+        <property name="leaderfile">/home/mlavalle/dat8/ALOS-howland/ALPSRP179280900-P1.0__A/LED-ALPSRP179280900-P1.0__A</property>
+      </component>
+
+      <component name="Raster1">
+        <property name="ncol">1500</property>
+        <property name="nlin">4000</property>
+        <property name="datatype">float</property>
+      </component>
+    </component>
+
+    <component name="dem">
+      <!-- If a dem already exists, add a catalog tag with the path to dem.xml -->
+    </component>
+
+    <!-- processing parameters -->
+    <property name="output directory">.</property>
+    <property name="selectScenes">alos1-alos2</property>
+    <property name="selectPols">hh,hv,vh,vv</property>
+    <!-- scenes to be processed for SAR steps: comma-separated list, use dash to express a range: 
+	 alos1-alos10, range will be ordered from Scene1 to Scene100 -->
+    <!--property name="selectPairs"></property-->
+    <!-- pairs to be processed for inSAR steps: comma-separated list, alos1/alos2,
+         use dash to express a range:
+         alos1-alos10 will form all possible pairs with all the scenes between alos1 and alos10 -->
+    <!--property name="selectPols"></property-->
+    <!-- pols to be processed, applies to selected scenes and selected pairs:
+         comma-separated list, with values among hh, hv, vh, vv. -->
+    <property name="sensor name">ALOS</property>
+    <property name="dopplermethod">usedopIQ</property>
+    <property name="number of patches">1</property>
+    <property name="peg latitude (deg)"></property>
+    <property name="peg longitude (deg)"></property>
+    <property name="peg heading (deg)"></property>
+    <property name="peg radius (m)"></property>
+    <property name="slc offset method">offsetprf</property> <!--offsetprf, ampcor-->
+    <property name="slc rangelooks">6</property>
+    <property name="slc azimuthlooks">30</property>
+    <property name="slc filtermethod">gaussian</property>
+    <property name="slc filterheight">5</property>
+    <property name="slc filterwidth">5</property>
+    <property name="coregistration strategy">single reference</property> <!-- possible values: single reference, cascade -->
+    <property name="reference scene">alos1</property>
+    <property name="reference pol">hh</property> <!-- average, hh, hv, vh, vh (default: hh) -->
+    <property name="FR filtersize X">11</property>
+    <property name="FR filtersize Y">11</property>
+    <property name="azimuth shift"></property>
+    <property name="resamp range looks">1</property>
+    <property name="resamp azimuth looks">6</property>
+    
+  
+    <!-- Processors to run: True/False -->
+    <property name="do preprocess">True</property>
+    <property name="do verifyDEM">False</property>
+    <property name="do pulsetiming">True</property>
+    <property name="do estimateheights">True</property>
+    <property name="do mocomppath">True</property>
+    <property name="do orbit2sch">True</property>
+    <property name="do updatepreprocinfo">True</property>
+    <property name="do formslc">True</property>
+    <property name="do multilookslc">True</property>
+    <property name="do filterslc">False</property>
+    <property name="do polarimetric correction">False</property>
+    <property name="do calculate FR">False</property>
+    <property name="do FR to TEC">False</property>
+    <property name="do TEC to phase">False</property>
+    <property name="do geocodeslc">False</property>
+    <property name="do offsetprf">True</property>
+    <property name="do outliers1">True</property>
+    <property name="do prepareresamps">True</property>
+    <property name="do resamp">True</property>
+    <property name="do resamp image">True</property>
+    <property name="do mocompbaseline">False</property>
+
+    <!-- generic processing -->
+    <component name="generic">
+      <property name="cmplx2magpha">False</property>
+    </component>
+
+  </component>
+</isceApp>

@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import os
+
+Import('envdopiq')
+package = envdopiq['PACKAGE']
+project = envdopiq['PROJECT']
+install = envdopiq['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['dopiq','DataAccessor','InterleavedAccessor']
+envdopiq.PrependUnique(LIBS = libList)
+module = envdopiq.LoadableModule(target = 'dopiq.abi3.so', source = 'dopiqmodule.cpp') 
+envdopiq.Install(install,module)
+envdopiq.Alias('install',install)

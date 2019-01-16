@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import os
+
+Import('envSensor')
+Import('envSensor1')
+Import('envSensor2')
+Import('envSensor3')
+package = envSensor['PACKAGE']
+project = envSensor['PROJECT']
+install = os.path.join(envSensor['PRJ_SCONS_INSTALL'],package,project)
+libList1 = ['alos','DataAccessor','InterleavedAccessor']
+libList2 = ['cosar','DataAccessor','InterleavedAccessor']
+envSensor1.PrependUnique(LIBS = libList1)
+envSensor2.PrependUnique(LIBS = libList2)
+
+alosmodule = envSensor1.LoadableModule(target = 'alos.abi3.so', source = 'alosmodule.cpp')
+envSensor1.Install(install,alosmodule)
+
+cosarmodule = envSensor2.LoadableModule(target = 'cosar.abi3.so', source = 'cosarmodule.cpp')
+envSensor2.Install(install,cosarmodule)
+readPulseOrbitmodule = envSensor1.LoadableModule(target = 'readOrbitPulse.abi3.so', source = 'readOrbitPulsemodule.cpp')
+envSensor1.Install(install,readPulseOrbitmodule)
+envSensor1.Alias('install',install)
+envSensor2.Alias('install',install)

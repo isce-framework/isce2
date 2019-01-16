@@ -1,0 +1,19 @@
+#
+# Author: Eric Gurrola
+# Copyright 2016
+#
+
+import os
+
+Import('envtest')
+envtest_components = envtest.Clone()
+Export('envtest_components')
+
+import test
+#Print the entering banner
+test.print_entering_banner('components')
+
+iscesys = os.path.join('iscesys','SConscript')
+SConscript(iscesys)
+isceobj = os.path.join('isceobj','SConscript')
+SConscript(isceobj)

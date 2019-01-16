@@ -1,0 +1,11 @@
+
+x = 100
+y = 200
+
+PREFIX = three_
+INCLUDE =  rdf4.txt
+
+SUFFIX = _3
+level3 = rdf3
+b = -200
+a = -100

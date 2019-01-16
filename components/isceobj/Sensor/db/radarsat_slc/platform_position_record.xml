@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Orbital elements designator" type="1" num="32"/>
+	<rec name="1st orbital element x" type="5" num="16"/>
+	<rec name="2nd orbital element y" type="5" num="16"/>
+	<rec name="3rd orbital element z" type="5" num="16"/>
+	<rec name="4th orbital element x'" type="5" num="16"/>
+	<rec name="5th orbital element y'" type="5" num="16"/>
+	<rec name="6th orbital element z'" type="5" num="16"/>
+	
+	<rec name="Number of data points" type="2" num="4"/>
+	<rec name="Year of data point" type="2" num="4"/>
+    <rec name="Month of data point" type="2" num="4"/>
+    <rec name="Day of data point" type="2" num="4"/>
+    <rec name="Day in the year" type="2" num="4"/>
+    <rec name="Seconds of day" type="5" num="22"/>
+	<rec name="Time interval between DATA points" type="5" num="22"/>
+	<rec name="Reference coordinate system" type="1" num="64"/>
+	
+	<rec name="Greenwich mean hour angle" type="5" num="22"/>
+	<rec name="Along track position error" type="5" num="16"/>
+	<rec name="Across track position error" type="5" num="16"/>
+	<rec name="Radial position error" type="5" num="16"/>
+	<rec name="Along track velocity error" type="5" num="16"/>
+	<rec name="Across track velocity error" type="5" num="16"/>
+	<rec name="Radial velocity error" type="5" num="16"/>
+	
+	<!-- position data points -->
+	<struct loop="Number of data points" name="Positional Data Points">
+		<rec name="Position vector X" type="5" num="22"/>
+		<rec name="Position vector Y" type="5" num="22"/>
+		<rec name="Position vector Z" type="5" num="22"/>
+		<rec name="Velocity vector X" type="5" num="22"/>
+		<rec name="Velocity vector Y" type="5" num="22"/>
+		<rec name="Velocity vector Z" type="5" num="22"/>
+	</struct>
+</ceos>

@@ -1,0 +1,31 @@
+#!/bin/bash
+rm -f *.o
+CC=g++
+# LIBGF95 is the location of the gfortran library
+LIBGF95="${HOME}/usr/local/lib"
+# LIBF95 is the location of the g95 library. only needed if FCOMPILER="g95"
+LIBG95="${HOME}/g95-install/lib/gcc-lib/i386-apple-darwin8.11.1/4.0.3/"
+# location of the gcc library
+LIBCC="/usr/lib"
+FCOMPILER="gfortran"
+${CC} -DNEEDS_F77_TRANSLATION -DF77EXTERNS_LOWERCASE_TRAILINGBAR  -Wall  -fPIC -g      -O3 -funroll-loops -faltivec  -fPIC -I../include   -c -o LineAccessorF.o ../src/LineAccessorF.cpp
+ar rv libLineAccessor.a LineAccessorF.o
+${CC}  -DNEEDS_F77_TRANSLATION -DF77EXTERNS_LOWERCASE_TRAILINGBAR -Wall  -fPIC -g      -O3 -funroll-loops -faltivec  -fPIC  -I../include  -c -o LineAccessor.o ../src/LineAccessor.cpp
+ar rv libLineAccessor.a LineAccessor.o
+ranlib  libLineAccessor.a
+
+if [ ${FCOMPILER} = "g95" ]
+then
+    F95=g95
+    ${F95}  -ffixed-line-length-132 -fno-second-underscore  -ftrace=full   -fstatic -g   -O3 -funroll-loops     -c -o fortranSrc.o fortranSrc.F
+    ar rcv libfortranSrc.a fortranSrc.o
+    ranlib libfortranSrc.a
+    ${F95}  -ffixed-line-length-132 -fno-second-underscore -ftrace=full    -g   -fstatic  -O3 -funroll-loops      -o driverF.ex driverF.F -L./ -lfortranSrc -lLineAccessor -L/usr/lib/ -L${LIBG95} -lf95 -lm -lstdc++.6
+elif [ ${FCOMPILER} = "gfortran" ]
+then
+    F95=gfortran
+    ${F95}  -ffixed-line-length-132 -fno-second-underscore   -g   -O3 -funroll-loops     -c -o fortranSrc.o fortranSrc.F
+    ar rcv libfortranSrc.a fortranSrc.o
+    ranlib libfortranSrc.a
+    ${F95}  -ffixed-line-length-132 -fno-second-underscore    -g   -O3 -funroll-loops      -o driverF.ex driverF.F -L./ -lfortranSrc  -lLineAccessor -L/usr/lib/  -L${LIBCC} -L${LIBGF95} -lgfortran -lm -lstdc++.6
+fi

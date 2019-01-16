@@ -1,0 +1,17 @@
+import os 
+
+Import('envCombLib')
+package = envCombLib['PACKAGE']
+project = envCombLib['PROJECT']
+subname = 'geometry'
+src = envCombLib['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
+
+#listFiles=['convert_sch_to_xyz.F', 'convert_schdot_to_xyzdot.F', 'cosineC.F', 'curvature.F', 'enubasis.F', 'getangs.F', 'gettcn_tcvec.F', 'latlon.F', 'lookvec.F', 'radar_to_xyz.F', 'schbasis.F', 'utmtoll.F', 'geometryModule.F']
+
+listFiles=['geometryModule.F']
+addFiles = []
+for entry in listFiles:
+    addFiles.append(os.path.join(subname + '/src', entry))
+envCombLib['SUBSRCLIST'] += addFiles
+envCombLib.Install(src, listFiles)
+envCombLib.Alias('build', src)

@@ -1,0 +1,24 @@
+<makerawApp>
+<component name="makeraw">
+        <property name="sensor name">  <!-- mandatory -->
+            <value>ALOS</value>
+        </property>
+        <property name="Doppler Method">  <!-- optional, useDopIQ is the default, other option is useCaldDop -->
+            <value>useDOPIQ</value>
+        </property>
+        <!-- The following properties are for an ALOS sensor.  
+             for the others, see the appropraite insarApp.xml file 
+             or the sensor object's definition in components/isceobj/Sensor -->
+        <component name="sensor">
+           <property name="IMAGEFILE">
+                <value>PATH/IMG-HH-ALPSRP056480670-H1.0__A</value>
+           </property>
+           <property name="LEADERFILE">
+                <value>PATH/LED-ALPSRP056480670-H1.0__A</value>
+           </property>
+           <property name="OUTPUT">
+                <value>DESIRED-RAW-FILE-NAME</value>
+           </property>
+        </component>
+</component>
+</makerawApp>

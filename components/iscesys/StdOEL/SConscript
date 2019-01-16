@@ -1,0 +1,36 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#!/usr/bin/env python
+
+
+import os
+import sys
+Import('enviscesys')
+envStdOEL = enviscesys.Clone() 
+project = 'StdOEL'
+envStdOEL['PROJECT'] = project
+package = envStdOEL['PACKAGE']
+Export('envStdOEL')
+install = os.path.join(envStdOEL['PRJ_SCONS_INSTALL'],package,project)
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+listFiles = [initFile,'StdOELPy.py']
+envStdOEL.Install(install,listFiles)
+envStdOEL.Alias('install',install)
+includeScons = 'include/SConscript'
+SConscript(includeScons)
+bindingsScons = 'bindings/SConscript'
+SConscript(bindingsScons, variant_dir = envStdOEL['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project  + '/bindings')
+srcScons = 'src/SConscript'
+SConscript(srcScons, variant_dir = envStdOEL['PRJ_SCONS_BUILD'] + '/' + package + '/' + project  + '/src')

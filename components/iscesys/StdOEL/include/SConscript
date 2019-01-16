@@ -1,0 +1,21 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envStdOEL')
+package = envStdOEL['PACKAGE']
+project = envStdOEL['PROJECT']
+build = envStdOEL['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envStdOEL.AppendUnique(CPPPATH = [build])
+listFiles = ['StdOEL.h','StdOELF.h','StdOELFFortTrans.h','BaseWriter.h','FileWriter.h','ScreenWriter.h','WriterFactory.h','StdOELmodule.h']
+envStdOEL.Install(build,listFiles)
+envStdOEL.Alias('build',build)

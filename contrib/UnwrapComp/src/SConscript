@@ -1,0 +1,10 @@
+#!/usr/bin/env python
+import os
+
+Import('envUnwrapComp')
+install = envUnwrapComp['PRJ_LIB_DIR'] 
+listFiles = ['RelaxIV/RelaxIV.C', 'RelaxIV/Main.C', 'relaxIVdriver.cpp']
+envUnwrapComp.PrependUnique(CPPPATH=['./RelaxIV/', '../include'])
+lib = envUnwrapComp.Library(target = 'MCFSolve.a', source = listFiles)
+envUnwrapComp.Install(install,lib)
+envUnwrapComp.Alias('install',install)

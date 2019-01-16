@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envSensorSrc')
+package = envSensorSrc['PACKAGE']
+project = envSensorSrc['PROJECT']
+install = envSensorSrc['PRJ_LIB_DIR'] 
+sourceFiles =  ['readOrbitPulseERS.F','readOrbitPulseERSState.F','readOrbitPulseERSSetState.F','readOrbitPulseERSGetState.F']
+lib = envSensorSrc.Library(target = 'readOrbitPulseERS', source = sourceFiles)
+envSensorSrc.Install(install,lib)
+envSensorSrc.Alias('install',install)

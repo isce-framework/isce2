@@ -1,0 +1,16 @@
+import os 
+
+Import('envCombLib')
+package = envCombLib['PACKAGE']
+project = envCombLib['PROJECT']
+src = envCombLib['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
+
+listFiles=['orbit.c','orbitHermite.c','orbitModule.F']
+
+addFiles = []
+for entry in listFiles:
+    addFiles.append(os.path.join(src, entry))
+
+envCombLib['SUBSRCLIST'] += addFiles
+envCombLib.Install(src, listFiles)
+envCombLib.Alias('build', src)

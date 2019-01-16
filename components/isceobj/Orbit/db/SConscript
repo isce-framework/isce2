@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+
+import os
+import fnmatch
+
+Import('envOrbit')
+envOrbitdb = envOrbit.Clone()
+package = 'db'
+
+envOrbitdb['PACKAGE'] = package
+listFiles = []
+
+listFiles = [f for f in os.listdir('.') if os.path.isfile(f) and not 'SConscript' in f]
+
+install = os.path.join(envOrbitdb['PRJ_SCONS_INSTALL'],envOrbit['PACKAGE'],'Orbit', package)
+envOrbitdb.Install(install, listFiles)
+envOrbitdb.Alias('install', install)
+Export('envOrbitdb')

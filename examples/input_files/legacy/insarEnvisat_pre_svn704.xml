@@ -1,0 +1,22 @@
+<input>
+<component name="insar">
+        <property name="do unwrap">
+            <value>0</value>
+        </property>
+        <property name="posting">
+            <value>30</value>
+        </property>
+        <property name="sensor_name">
+            <value>Envisat</value>
+        </property>
+        <property name="doppler_method">
+            <value>useDOPIQ</value>
+        </property>
+        <component name="Master">
+            <catalog>envisatMaster.xml</catalog> <!-- see envisatIn1.xml as an example -->
+        </component>
+        <component name="Slave">
+            <catalog>envisatSlave.xml</catalog><!-- see envisatIn1.xml as an example -->
+        </component>
+</component>
+</input>

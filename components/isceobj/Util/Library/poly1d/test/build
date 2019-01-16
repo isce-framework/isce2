@@ -1,0 +1,4 @@
+gcc -I ../include -c ../src/poly2d.c 
+gfortran -ffixed-line-length-none -I ../include -c ../src/poly2dState.F
+#gfortran -ffixed-line-length-none -I ../include -c test.F
+gfortran -ffixed-line-length-none -o test poly2d.o  test.F

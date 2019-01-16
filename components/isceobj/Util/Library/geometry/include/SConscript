@@ -1,0 +1,12 @@
+import os 
+
+Import('envCombLib')
+package = envCombLib['PACKAGE']
+project = envCombLib['PROJECT']
+
+include = envCombLib['PRJ_SCONS_BUILD'] + '/' + package + '/' + project +'/include'
+envCombLib.AppendUnique(CPPPATH=[include])
+listFiles=['geometry.h']
+
+envCombLib.Install(include, listFiles)
+envCombLib.Alias('build', include)

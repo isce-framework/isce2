@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="alos">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Number of attitude data points" type="2" num="4"/>
+	<struct loop="Number of attitude data points" name="Attitude Data Points">
+    		<rec name="Day of the year" type="2" num="4"/>
+	    	<rec name="Millisecond of day" type="2" num="8"/>
+		<rec name="Pitch data quality flag" type="2" num="4"/>
+		<rec name="Roll data quality flag" type="2" num="4"/>
+		<rec name="Yaw data quality flag" type="2" num="4"/>
+		<rec name="Pitch" type="5" num="14"/>
+		<rec name="Roll" type="5" num="14"/>
+		<rec name="Yaw" type="5" num="14"/>
+	
+		<rec name="Pitch rate data quality flag" type="2" num="4"/>
+		<rec name="Roll rate data quality flag" type="2" num="4"/>
+		<rec name="Yaw rate data quality flag" type="2" num="4"/>
+		<rec name="Pitch rate" type="5" num="14"/>
+		<rec name="Roll rate" type="5" num="14"/>
+		<rec name="Yaw rate" type="5" num="14"/>
+	</struct>
+</ceos>

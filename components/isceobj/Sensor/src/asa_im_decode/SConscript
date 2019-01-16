@@ -1,0 +1,10 @@
+import os
+
+Import('envSensorSrc')
+package = envSensorSrc['PACKAGE']
+project = 'Sensor'
+install = os.path.join(envSensorSrc['PRJ_SCONS_INSTALL'],package,project)
+listFiles = ['asa_im_decode.c']
+lib = envSensorSrc.LoadableModule(target = 'envisat.so', source = listFiles)
+envSensorSrc.Install(install,lib)
+envSensorSrc.Alias('install',install)

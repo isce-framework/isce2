@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+import os
+
+Import('enviscelib')
+package = enviscelib['PACKAGE'] # library
+project = enviscelib['PROJECT'] # isceLib
+install_src = os.path.join(enviscelib['PRJ_SCONS_INSTALL'], package, project, 'src')
+build_lib_dir = enviscelib['PRJ_LIB_DIR']
+
+listFiles=['Ellipsoid',
+           'LinAlg',
+           'Orbit',
+           'Peg',
+           'Pegtrans',
+           'Poly1d',
+           'Poly2d',
+           'Position']
+cppFiles = [f+'.cpp' for f in listFiles]
+objFiles = [f+'.o' for f in listFiles]
+enviscelib['ISCELIB_OBJ_LIST'] = objFiles
+
+# Build shared objects to PRJ_SCONS_INSTALL/library/src
+for i in range(len(listFiles)):
+    enviscelib.SharedObject(target=os.path.join(install_src,objFiles[i]), source=cppFiles[i])
+
+# We want to reuse the objects we just built, otherwise scons will rebuild them as static objects before building the static
+# library (clutters up build system)
+built_obj_files = [os.path.join(install_src,f) for f in objFiles]
+enviscelib.Library(target=os.path.join(build_lib_dir,'libisce.a'), source=built_obj_files)
+

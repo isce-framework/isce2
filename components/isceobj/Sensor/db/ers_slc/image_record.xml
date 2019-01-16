@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="ers">
+	<rec name="Record sequence number" type="4" num="1"/>
+	<rec name="1st record sub-type code" type="3" num="1"/>
+	<rec name="Record type code" type="3" num="1"/>
+	<rec name="2nd record sub-type code" type="3" num="1"/>
+	<rec name="3rd record sub-type code" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	<!-- Raw Signal Data -->
+</ceos>

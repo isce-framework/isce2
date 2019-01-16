@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: property names are not case sensitive -->
+
+<stitcher>
+    <component name="stitcher">
+        <!--values are version3 (default) or version2 -->
+        <property name="stitcher">
+            <value>version3</value>
+        </property>
+        <component name="demStitcher">
+            <property name="action">
+                <value>stitch</value>
+            </property>
+            <property name="directory">
+                <value>outputdir</value>   
+            </property>
+            <property name="bbox">
+                <value>[31,33,-114,-112]</value>   
+            </property>
+            <property name="keepDems">
+                <value>True</value>   
+            </property>
+            <property name="url">
+            <value>https://urlToRepository</value>   
+            </property>
+            <!-- provide username and password ith the url need authentication-->
+            <property name="username">
+                <value>yourUsername</value>   
+            </property>
+            <property name="password">
+                <value>yourPassword</value>   
+            </property>
+            <property name="noFilling">
+                <value>False</value>   
+            </property>
+        </component>
+    </component>
+</stitcher>
+

@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                  (C) 2009-2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+import os
+
+Import('envlooks')
+package = envlooks['PACKAGE']
+project = envlooks['PROJECT']
+build = envlooks['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envlooks.AppendUnique(CPPPATH = [build])
+listFiles = ['powlooksmodule.h','cpxlooksmodule.h','nbymdemmodule.h','nbymhgtmodule.h','rilooksmodule.h','looksmodule.h']
+envlooks.Install(build,listFiles)
+envlooks.Alias('install',build)

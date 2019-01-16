@@ -1,0 +1,19 @@
+
+x = 10
+
+y = 20
+
+
+PREFIX = two_
+
+level2 = rdf2
+INCLUDE =  rdf3.txt
+
+SUFFIX = _2
+INCLUDE =  rdf3.txt
+
+b = -20
+a = -10
+
+leving_level = 1
+

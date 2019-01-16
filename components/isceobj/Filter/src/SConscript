@@ -1,0 +1,10 @@
+import os
+
+Import('envFilter')
+package = envFilter['PACKAGE']
+project = envFilter['PROJECT']
+install = envFilter['PRJ_LIB_DIR']
+listFiles = ['Filter.cpp','MeanFilter.cpp','GaussianFilter.cpp','cpxPhaseFilter.cpp','filterPhase.cpp','medianFilter.cpp']
+lib = envFilter.Library(target = 'filter', source = listFiles, parse_flags='-fopenmp')
+envFilter.Install(install,lib)
+envFilter.Alias('install',install)

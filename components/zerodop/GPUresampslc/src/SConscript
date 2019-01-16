@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envGPUresampslc')
+package = envGPUresampslc['PACKAGE']
+project = envGPUresampslc['PROJECT']
+install = envGPUresampslc['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+build = envGPUresampslc['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
+
+if envGPUresampslc['GPU_ACC_ENABLED']:
+    envGPUresampslc.AppendUnique(CPPPATH=envGPUresampslc['CUDACPPPATH'])
+    envGPUresampslc.AppendUnique(LIBPATH=envGPUresampslc['CUDALIBPATH'])
+    envGPUresampslc.AppendUnique(LIBS=['cuda','cudart'])
+
+
+###Custom cython builder
+cythonBuilder = Builder(action = 'cython3 $SOURCE --cplus',
+                        suffix = '.cpp',
+                        src_suffix = '.pyx')
+envGPUresampslc.Append(BUILDERS = {'Pyx2Cpp':cythonBuilder})
+
+def cythonPseudoBuilder(env,source,bld,inst):
+    cppCode = env.Pyx2Cpp(source)
+    listFiles = [source+'.cpp', 'Interpolator.cpp', 'Poly2d.cpp', 'ResampMethods.cpp', 'ResampSlc.cpp']
+    env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
+
+    if (env['GPU_ACC_ENABLED']):
+        listFiles.append('GPUresamp.cu')
+        lib = env.LoadableModule(target = 'GPUresampslc.abi3.so', source = listFiles, CPPDEFINES = 'GPU_ACC_ENABLED')
+    else:
+        lib = env.LoadableModule(target = 'GPUresampslc.abi3.so', source = listFiles)
+    env.Install(inst,lib)
+    env.Alias('install',inst)
+
+
+envGPUresampslc.AddMethod(cythonPseudoBuilder,'Cython')
+envGPUresampslc.Cython('GPUresampslc',build,install)

@@ -1,0 +1,37 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#!/usr/bin/env python
+
+
+import os
+Import('envcomponents')
+package = 'components/mroipac'
+envmroipac = envcomponents.Clone()
+envmroipac['PACKAGE'] = package
+install = os.path.join(envmroipac['PRJ_SCONS_INSTALL'],package) 
+listFiles = ['__init__.py']
+envmroipac.Install(install,listFiles)
+envmroipac.Alias('install',install)
+Export('envmroipac')
+SConscript('formimage/SConscript')
+SConscript('dopav/SConscript')
+SConscript('getPegInfo/SConscript')
+SConscript('baseline/SConscript')
+SConscript('looks/SConscript')
+SConscript('dopiq/SConscript')
+SConscript('doppler/SConscript')
+SConscript('geolocate/SConscript')
+SConscript('filter/SConscript')
+SConscript('correlation/SConscript')
+SConscript('grass/SConscript')
+SConscript('ampcor/SConscript')
+SConscript('icu/SConscript')
+SConscript('fitoff/SConscript')
+SConscript('aikima/SConscript')

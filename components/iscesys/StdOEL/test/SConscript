@@ -1,0 +1,29 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envStdOEL')
+envStdOEL.AppendUnique(LIBPATH = envStdOEL['PRJ_LIB_DIR'])
+linkLibs =  ['StdOEL']
+envStdOEL.PrependUnique(LIBS = linkLibs)
+driver = envStdOEL.Program(target = 'testStdOEL.ex' , source = 'testStdOEL.cpp')
+envStdOEL.NoClean(driver)
+#if the destination directory is the same as the current one, there is no need to invoke the Install (which does simply a copy to the specified dir).
+#if the Install is called explicity like 
+# a = envStdOEL.Program(source = 'driverF.F', LIBS = linkLibs, LIBPATH = libPath)
+# envStdOEL.Install('../test',a)
+# envStdOEL.Alias('install','../test')
+#it will give an error because it will try to copy test/driverF (which is the target "a") in ../test/driverF which is the same file.
+iloc = envStdOEL.Alias('install-local','../test')
+envStdOEL.Alias('install',[iloc])
+
+

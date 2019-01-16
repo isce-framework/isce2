@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envalos2proc')
+build = os.path.join(envalos2proc['PRJ_SCONS_BUILD'], envalos2proc['PACKAGE'], 'alos2proc', 'include')
+envalos2proc.AppendUnique(CPPPATH = [build])
+envalos2proc.Install(build, ['resamp.h'])
+envalos2proc.Alias('install',build)

@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+import os 
+
+Import('envsplit')
+package = envsplit['PACKAGE'] # 'contrib'
+project = envsplit['PROJECT'] # 'splitRangeSpectrum'
+
+envsplit['CMAKE_CXX_STANDARD'] = '11'
+
+include = os.path.join(envsplit['PRJ_SCONS_BUILD'],package,project,'include')
+envsplit.AppendUnique(CPPPATH=[include])
+listFiles=['splitRangeSpectrum.h',
+           'common.h']
+
+envsplit.Install(include, listFiles)

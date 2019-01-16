@@ -1,0 +1,41 @@
+<insarApp>
+    <component name="insar">
+        <property name="do unwrap">
+            <value>True</value>
+        </property>
+        <property name="doppler method">useDEFAULT</property>
+        <property name="Sensor Name">
+            <value>RADARSAT2</value>
+        </property>
+        <property name="slc offset method">ampcor</property>
+        <property name="posting">30</property>
+        <component name="master">
+            <property name="xml">
+                <value>20100707/product.xml</value>
+            </property>
+            <property name="tiff">
+                <value>20100707/imagery_HH.tif</value>
+            </property>
+            <property name="gdal_translate">
+                <value>/opt/local/bin/gdal_translate</value>
+            </property>
+            <property name="OUTPUT">
+                <value>20100707.raw</value>
+            </property>
+        </component>
+        <component name="slave">
+            <property name="xml">
+                <value>20100402/product.xml</value>
+            </property>
+            <property name="tiff">
+                <value>20100402/imagery_HH.tif</value>
+            </property>
+            <property name="gdal_translate">
+                <value>/opt/local/bin/gdal_translate</value>
+            </property>
+            <property name="OUTPUT">
+                <value>20100402.raw</value>
+            </property>
+        </component>
+    </component>
+</insarApp>

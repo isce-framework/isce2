@@ -1,0 +1,31 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009-2012  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('enviscesys')
+envDebugLiner = enviscesys.Clone()
+project = 'DebugLiner'
+package = envDebugLiner['PACKAGE']
+envDebugLiner['PROJECT'] = project
+Export('envDebugLiner')
+install = os.path.join(envDebugLiner['PRJ_SCONS_INSTALL'],package,project)
+
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+listFiles = ['DebugLiner.py',initFile]
+envDebugLiner.Install(install,listFiles)
+envDebugLiner.Alias('install',install)
+

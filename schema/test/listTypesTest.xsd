@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema elementFormDefault="qualified" attributeFormDefault="unqualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="../listTypes.xsd"></xsd:include>
+
+	<xsd:complexType name="listTypesTestType">
+		<xsd:sequence>
+			<xsd:element name="d2tuple" type="Double2Tuple"></xsd:element>
+			<xsd:element name="d3tuple" type="Double3Tuple"></xsd:element>
+			<xsd:element name="d4tuple" type="Double4Tuple"></xsd:element>
+			<xsd:element name="dlist" type="DoubleListType"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+	
+    <xsd:element name="example" type="listTypesTestType"></xsd:element>
+</xsd:schema>

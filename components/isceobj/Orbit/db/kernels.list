@@ -1,0 +1,29 @@
+###Make sure that you have the following files downloaded into your Orbit/db directory; if you wish to use this interface to the SPICE library.
+
+#Source: http://naif.jpl.nasa.gov/pub/naif/generic_kernels/fk/planets/earth_assoc_itrf93.tf
+#Defines the ITRF93 coordinate system
+ITRF93          = earth_assoc_itrf93.tf
+
+#Source: http://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/earth_720101_070426.bpc
+#Detailed model of the earth
+EARTHHIGHRES    = earth_720101_070426.bpc
+
+#Source: http://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/earth_000101_141029_140808.bpc
+#Detailed model of earth constantly updated
+#File name may change based on update 
+EARTHHIGHRESLATEST = earth_000101_160305_151213.bpc
+
+#Source: http://naif.jpl.nasa.gov/pub/naif/generic_kernels/pck/pck00010.tpc
+#Constants for various bodies in the solar system
+BODYINFO        = pck00010.tpc
+
+#Source: http://naif.jpl.nasa.gov/pub/naif/generic_kernels/lsk/naif0010.tls
+#Leap second file
+LEAPSECONDS     = naif0011.tls
+
+#Source:http://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de432s.bsp
+#Planetary ephemeris
+EARTHPOSITION   = de432s.bsp
+
+#####Definition of ECI TOD coordinate systems
+EARTHECI_TOD    = earth_eci_tod.tf

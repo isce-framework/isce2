@@ -1,0 +1,185 @@
+#! /usr/bin/env python 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Author: Giangi Sacco
+# Copyright 2011, by the California Institute of Technology. ALL RIGHTS RESERVED. United States Government Sponsorship acknowledged.
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+from __future__ import print_function
+import os
+from mroipac.geolocate.Geolocate import Geolocate
+import logging
+import logging.config
+logging.config.fileConfig(os.environ['ISCE_HOME']+ '/library/applications/logging.conf')
+import sys
+framePath = '/export/proj/aria/pge/frame_util'
+if framePath not in sys.path:
+    sys.path.append(framePath)
+from FrameMetaData import FrameMetaData
+class FrameInfoExtractor():
+
+    
+    def __init__(self):
+        self.logger = logging.getLogger("FrameInfoExtractor")
+        self._frameFilename = ''
+        self._frame = None 
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['logger']
+        return d
+    def __setstate__(self,d):
+        self.__dict__.update(d)
+        self.logger = logging.getLogger("FrameInfoExtractor")
+    
+    def setFrameFilename(self,name):
+        self._frameFilename = name
+    
+    def calculateCorners(self):
+        """
+        Calculate the approximate geographic coordinates of corners of the SAR image.
+
+        @return (\a tuple) a list with the corner coordinates and a list with the look angles to these coordinates
+        """
+        # Extract the planet from the hh object
+        
+        planet = self._frame.getInstrument().getPlatform().getPlanet()
+        # Wire up the geolocation object
+        geolocate = Geolocate()
+        geolocate.wireInputPort(name='planet',object=planet)
+        
+        earlySquint = self._frame._squintAngle 
+        # Get the ranges, squints and state vectors that defined the boundaries of the frame
+        orbit = self._frame.getOrbit()               
+        nearRange = self._frame.getStartingRange()
+        farRange = self._frame.getFarRange()        
+        earlyStateVector = orbit.interpolateOrbit(self._frame.getSensingStart())
+        lateStateVector = orbit.interpolateOrbit(self._frame.getSensingStop())            
+        nearEarlyCorner,nearEarlyLookAngle,nearEarlyIncAngle = geolocate.geolocate(earlyStateVector.getPosition(),
+                                                                                   earlyStateVector.getVelocity(),
+                                                                                   nearRange,earlySquint)        
+        farEarlyCorner,farEarlyLookAngle,farEarlyIncAngle = geolocate.geolocate(earlyStateVector.getPosition(),
+                                                                                earlyStateVector.getVelocity(),
+                                                                                farRange,earlySquint)
+        nearLateCorner,nearLateLookAngle,nearLateIncAngle = geolocate.geolocate(lateStateVector.getPosition(),
+                                                                                lateStateVector.getVelocity(),
+                                                                                nearRange,earlySquint)
+        farLateCorner,farLateLookAngle,farLateIncAngle = geolocate.geolocate(lateStateVector.getPosition(),
+                                                                             lateStateVector.getVelocity(),
+                                                                             farRange,earlySquint)
+        self.logger.debug("Near Early Corner: %s" % nearEarlyCorner)
+        self.logger.debug("Near Early Look Angle: %s" % nearEarlyLookAngle)
+        self.logger.debug("Near Early Incidence Angle: %s " % nearEarlyIncAngle)
+
+        self.logger.debug("Far Early Corner: %s" % farEarlyCorner)
+        self.logger.debug("Far Early Look Angle: %s" % farEarlyLookAngle)
+        self.logger.debug("Far Early Incidence Angle: %s" % farEarlyIncAngle)
+
+        self.logger.debug("Near Late Corner: %s" % nearLateCorner)
+        self.logger.debug("Near Late Look Angle: %s" % nearLateLookAngle)
+        self.logger.debug("Near Late Incidence Angle: %s" % nearLateIncAngle)
+
+        self.logger.debug("Far Late Corner: %s" % farLateCorner)
+        self.logger.debug("Far Late Look Angle: %s" % farLateLookAngle)
+        self.logger.debug("Far Late Incidence Angle: %s" % farLateIncAngle)
+
+        corners = [nearEarlyCorner,farEarlyCorner,nearLateCorner,farLateCorner]
+        lookAngles = [nearEarlyLookAngle,farEarlyLookAngle,nearLateLookAngle,farLateLookAngle]
+        return corners,lookAngles
+    def convertBboxToPoly(self,bbox):
+        nearEarlyCorner = bbox[0]
+        farEarlyCorner = bbox[1]
+        nearLateCorner = bbox[2]
+        farLateCorner = bbox[3]
+       # save the corners starting from nearEarly and going clockwise
+        if (nearEarlyCorner[1] < farEarlyCorner[1]):
+            if (nearEarlyCorner[0] > farEalryCorner[0]):
+                corners = [nearEarlyCorner,farEarlyCorner,farLateCorner,nearLateCorner]
+            else:
+                corners = [nearEarlyCorner,nearLateCorner,farLateCorner,farEarlyCorner]
+        
+        else:
+            if (nearEarlyCorner[0] > earlyFarCorner[0]):
+                corners = [nearEarlyCorner,nearLateCorner,farLateCorner,farEarlyCorner]
+            else:
+                corners = [nearEarlyCorner,farEarlyCorner,farLateCorner,nearLateCorner]
+        return corners
+    def extractInfoFromFile(self, filename = None):
+        import cPickle as cP
+        if(filename == None):
+            filename = self._frameFilename
+        
+        fp  = open(filename,'r')
+        self._frame = cP.load(fp)
+        fp.close()
+        return self.extractInfo()
+
+
+    def extractInfoFromFrame(self,frame):
+        self._frame = frame
+        return self.extractInfo()
+
+    # update the frame by setting the attribute attr to teh value val. if obj is a string then assume that is a filename, otherwise assume that is a frame object
+    def updateFrameInfo(self,attr,val,obj):
+        if(isinstance(obj,str)):
+            import cPickle as cP
+            fp  = open(obj,'r')
+            frame = cP.load(fp)
+            fp.close()
+            if(isinstance(attr,list)):
+                for i in range(len(attr)):
+                    setattr(frame,attr[i],val[i])
+            else:
+                setattr(frame,attr,val)
+            #update the pickled file
+            fp  = open(obj,'w')
+            cP.dump(frame,fp,2)
+            fp.close()
+
+        elif(isinstance(obj,Frame)):
+            frame = obj
+            if(isinstance(attr,list)):
+                for i in range(len(attr)):
+                    setattr(frame,attr[i],val[i])
+            else:
+                setattr(frame,attr,val)
+        else:
+            self.logger.error("Error. The method updateFrameInfo takes as third argument a strig or a Frame object.")
+            raise Exception
+
+        
+    def extractInfo(self):
+        FM = FrameMetaData()
+        bbox , dummy = self.calculateCorners()
+        for bb in bbox:
+            FM._bbox.append((bb.getLatitude(),bb.getLongitude()))
+        #try since sometimes is and empty string. if so set it to None
+        try:
+            FM._frameNumber = int(self._frame.getFrameNumber())
+        except:
+            FM._frameNumber = None
+        try:
+            FM._trackNumber = int(self._frame.getTrackNumber())
+        except:
+            FM._trackNumber = None
+        try:
+            FM._orbitNumber = int(self._frame.getOrbitNumber())
+        except:
+            FM._orbitNumber = None
+        FM._sensingStart = self._frame.getSensingStart()
+        FM._sensingStop = self._frame.getSensingStop()
+        FM._spacecraftName = self._frame.getInstrument().getPlatform().getSpacecraftName()
+        return FM
+
+
+def main(argv):
+    import pdb
+    pdb.set_trace()
+    FI = FrameInfoExtractor()
+    FM = FI.extractInfoFromFile(argv[0])
+    print(FM.bbox) 
+
+if __name__ == "__main__":
+    import sys
+    argv = sys.argv[1:]
+    sys.exit(main(argv))

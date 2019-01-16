@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envSensorSrc2')
+package = envSensorSrc2['PACKAGE']
+project = envSensorSrc2['PROJECT']
+install = envSensorSrc2['PRJ_LIB_DIR'] 
+headerFiles = ['Cosar.hh','Burst.hh','Header.hh','byteswap.h']
+sourceFiles = ['Cosar.cpp','Burst.cpp','Header.cpp']
+lib = envSensorSrc2.Library(target = 'cosar', source = sourceFiles + headerFiles)
+envSensorSrc2.Install(install,lib)
+envSensorSrc2.Alias('install',install)
+
+headerInstall = envSensorSrc2['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envSensorSrc2.Install(headerInstall,headerFiles)
+envSensorSrc2.Alias('install',headerInstall)

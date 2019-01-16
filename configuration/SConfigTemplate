@@ -1,0 +1,27 @@
+PRJ_SCONS_BUILD = 
+PRJ_SCONS_INSTALL = 
+LIBPATH =  /home/isce/lib /usr/lib  
+CPPPATH =  /home/isce/include/python2.6 /home/isce/include  
+FORTRANPATH =  /home/isce/include   
+#FORTRAN = gfortran 
+#CC = gcc 
+
+
+
+
+
+
+
+#SYSTEM_TYPE  = Darwin # use shell command "uname" to find out. Supported ones are Darwin SunOs Linux
+#PRJ_SCONS_BUILD = $HOME/pathToBuildDir #the build directory
+#PRJ_SCONS_INSTALL =  $HOME/pathToInstallDir #the directory where the executable are installed
+#LIBRARY_SCONS_INSTALL =  $HOME/pathToLibraryDir #the directory where user defined applications and components and also  user and  system plugins are  installed. if not present the default is PRJ_LIB_INSTALL
+#LIBRARY_SCONS_BUILD =  $HOME/pathToLibraryDir #the directory where user defined applications and components and also  user and  system plugins are  built. if not present the default is PRJ_LIB_BUILD
+#PRJ_LIB_DIR = $HOME/pathToProjectLib #where the libraries necessaries to build the porject go. Those are the static libraries that are linked to create the sharede one (for instance python modules) 
+#LIBPATH = $HOME/pathToProjectLib $HOME/pathToFFTWLibs /pathToC++AndOrFortranLibs # list of directories where the libraries are (for the -L flag  in gcc). Add here for instance library paths for fortran and or cpp compiler if not in the path fftw lib dir and the PRJ_LIB_DIR
+#CPPPATH =  /pythonIncludes /FFTWIncludes /otherIncludesUsedByGCC  #put the includes that the system needs to be built using CC
+#FORTRANPATH =  /includeUsedByFortran /FFTWIncludes  #put the includes that the system needs to be build using FORTRAN
+#FORTRAN = gfortran # can choose g95, but will not be tested
+#STDCPPLIB = stdc++.6 # this is a library for g++ but the name seems to be platfor dependent. Darwing uses stdc++.x (x = version) while Linux only stdc++
+# If the variable STDC++LIB is not defined the sconsConfigFile will try find it for Darwing systems by looking in LIBPATH
+#CC = gcc # can choose different compilers but make sure to change with equivalent LINKFLAGS

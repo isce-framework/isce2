@@ -1,0 +1,30 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envPlanet = envisceobj.Clone()
+project = 'Planet'
+package = envPlanet['PACKAGE']
+envPlanet['PROJECT'] = project
+Export('envPlanet')
+
+install = os.path.join(envPlanet['PRJ_SCONS_INSTALL'],package,project)
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+    fout = open(initFile,"w")
+    fout.write("#!/usr/bin/env python")
+    fout.close()
+
+listFiles = ['AstronomicalHandbook.py','Ellipsoid.py','Planet.py',initFile]
+envPlanet.Install(install,listFiles)
+envPlanet.Alias('install',install)

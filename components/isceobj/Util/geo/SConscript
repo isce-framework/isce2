@@ -1,0 +1,23 @@
+import os
+Import('envUtil')
+package = envUtil['PACKAGE']
+project = 'geo'
+install = os.path.join(envUtil['PRJ_SCONS_INSTALL'] ,
+                       package,
+                       project)
+listFiles = ['__init__.py',
+             'affine.py',
+             'charts.py',
+             'coordinates.py',
+             'dxdt.py',
+             'ellipsoid.py',
+             'euclid.py',
+             'exceptions.py',
+             'motion.py',
+             'trig.py']
+
+envUtil.Install(install, listFiles)
+envUtil.Alias('install', install)
+
+
+

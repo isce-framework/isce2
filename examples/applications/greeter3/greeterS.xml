@@ -1,0 +1,9 @@
+<greeter>
+    <component name="greeter">
+        <property name="name to use in greeting"><value>Ernesto</value></property>
+        <component name="Greeting message">
+            <factorymodule>greetings</factorymodule>
+            <factoryname>spanish</factoryname>
+        </component>
+    </component>
+</greeter>

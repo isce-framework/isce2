@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="ers">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	<rec name="Ascii code character" type="1" num="2"/>
+	<rec name="skipBytes" type="0" num="2"/>	
+	<rec name="Specification number" type="1" num="12"/>
+    <rec name="Specification revision number" type="1" num="2"/>
+    <rec name="Record format revision number" type="1" num="2"/>
+    <rec name="Software version number" type="1" num="12"/>
+	<rec name="File Number" type="2" num="4"/>
+	<rec name="File Name" type="1" num="16"/>
+	<rec name="Record Sequence and Location Type Flag" type="1" num="4"/>
+	<rec name="Sequence Number Location" type="2" num="8"/>
+	<rec name="Sequence number field length" type="2" num="4"/>
+	<rec name="Record code and location type flag" type="1" num="4"/>
+	<rec name="Record code location" type="2" num="8"/>
+	<rec name="Record code field length" type="2" num="4"/>
+	<rec name="Record length and location type flag" type="1" num="4"/>
+	<rec name="Record length location" type="2" num="8"/>
+	<rec name="Record length field length" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="skipBytes" type="0" num="64"/>
+	<rec name="Number of data set summary records" type="2" num="6"/>
+	<rec name="Data set summary record length" type="2" num="6"/>
+	<rec name="Number of map projection data records" type="2" num="6"/>
+	<rec name="Map projection record length" type="2" num="6"/>
+	<rec name="Number of platform pos. data records" type="2" num="6"/>
+	<rec name="Platform position record length" type="2" num="6"/>
+	<rec name="Number of attitude data records" type="2" num="6"/>
+	<rec name="Attitude data record length" type="2" num="6"/>
+	<rec name="Number of radiometric data records" type="2" num="6"/>
+	<rec name="Radiometric record length" type="2" num="6"/>
+	<rec name="Number of rad. compensation records" type="2" num="6"/>
+	<rec name="Radiometric compensation rec. length" type="2" num="6"/>
+	<rec name="Number of data quality summary records" type="2" num="6"/>
+	<rec name="Data quality summary record length" type="2" num="6"/>
+	<rec name="Number of data histograms records" type="2" num="6"/>
+	<rec name="Data histogram record length" type="2" num="6"/>
+	<rec name="Number of range spectra records" type="2" num="6"/>
+	<rec name="Range spectra record length" type="2" num="6"/>
+	<rec name="Number of DEM descriptor records" type="2" num="6"/>
+	<rec name="DEM descriptor record length" type="2" num="6"/>
+	<rec name="Number of radar par. update records" type="2" num="6"/>
+	<rec name="Radar par. update record length" type="2" num="6"/>
+	<rec name="Number of annotation data records" type="2" num="6"/>
+	<rec name="Annotation data record length" type="2" num="6"/>
+	<rec name="Number of det. processing records" type="2" num="6"/>
+	<rec name="Det. processing record length" type="2" num="6"/>
+	<rec name="Number of calibration records" type="2" num="6"/>
+	<rec name="Calibration record length" type="2" num="6"/>
+	<rec name="Number of GCP records" type="2" num="6"/>
+	<rec name="GCP record length" type="2" num="6"/>
+	<rec name="skipBytes" type="0" num="60"/>
+	<rec name="Number of facility data records" type="2" num="6"/>
+	<rec name="Facility data record maximum length" type="2" num="6"/>
+	<rec name="skipBytes" type="0" num="2"/>
+</ceos>

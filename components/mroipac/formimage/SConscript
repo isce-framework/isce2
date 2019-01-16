@@ -1,0 +1,22 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+Import('envmroipac')
+envformimage = envmroipac.Clone()
+project = 'formimage'
+package = envformimage['PACKAGE']
+envformimage['PROJECT'] = project
+Export('envformimage')
+srcScons = 'src/SConscript'
+SConscript(srcScons,variant_dir = envformimage['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/src')
+formslcScons = 'formslc/SConscript'
+SConscript(formslcScons)

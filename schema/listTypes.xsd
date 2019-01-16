@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema" attributeFormDefault="unqualified">
+
+    <xsd:annotation>
+    	<xsd:documentation>To store list and array types.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleType name="IntListType">
+        <xsd:annotation>
+        	<xsd:documentation>std vector of type int </xsd:documentation>
+        </xsd:annotation>
+        <xsd:list itemType="xsd:int"></xsd:list></xsd:simpleType>
+
+    <xsd:simpleType name="Int2Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type int and size 2</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="IntListType">
+    		<xsd:length value="2"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+    
+    <xsd:simpleType name="Int3Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type int and size 3</xsd:documentation>
+		</xsd:annotation>
+        <xsd:restriction base="IntListType">
+    		<xsd:length value="3"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="Int4Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type int and size 4</xsd:documentation>
+		</xsd:annotation>
+        <xsd:restriction base="IntListType">
+    		<xsd:length value="4"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+        
+    <xsd:simpleType name="DoubleListType">
+        <xsd:annotation>
+        	<xsd:documentation>std vector of type double</xsd:documentation>
+		</xsd:annotation>
+        <xsd:list itemType="xsd:double">
+    	</xsd:list>
+    </xsd:simpleType>
+    
+    <xsd:simpleType name="Double2Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type double and size 2</xsd:documentation>
+		</xsd:annotation>
+        <xsd:restriction base="DoubleListType">
+    		<xsd:length value="2"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+    
+    <xsd:simpleType name="Double3Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type double and size 3</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="DoubleListType">
+    		<xsd:length value="3"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="Double4Tuple">
+        <xsd:annotation>
+        	<xsd:documentation>std array of type double and size 4</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="DoubleListType">
+    		<xsd:length value="4"></xsd:length>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+
+
+
+
+</xsd:schema>

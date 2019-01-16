@@ -1,0 +1,13 @@
+<component>
+<name>test</name>
+<property>
+<value>[0.24771,-3.2097e-06,9.4785e-11,0.0]</value>
+<name>proc_doppler_centroidcoefs</name>
+<units>m</units>
+</property>
+<property>
+<value>0.24771</value>
+<name>centroidcoefs</name>
+<units>s</units>
+</property>
+</component>

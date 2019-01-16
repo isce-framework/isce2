@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envSensor')
+Import('envSensor1')
+Import('envSensor2')
+Import('envSensor3')
+package = envSensor['PACKAGE']
+project = envSensor['PROJECT']
+build = envSensor['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envSensor1.AppendUnique(CPPPATH = [build])
+envSensor2.AppendUnique(CPPPATH = [build])
+listFiles1 = ['alosmodule.h','alosglobals.h','readOrbitPulsemodule.h','readOrbitPulsemoduleFortTrans.h']
+listFiles2 = ['cosarmodule.h']
+envSensor1.Install(build,listFiles1)
+envSensor2.Install(build,listFiles2)
+envSensor1.Alias('install',build)
+envSensor2.Alias('install',build)

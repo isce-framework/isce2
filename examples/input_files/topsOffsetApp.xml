@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<topsOffsetApp>
+  <component name="topsinsar">
+    <!--<property name="Ampcor window width">32</property>    EXAMPLE INPUT-->
+    <!--<property name="Ampcor window height">32</property>    EXAMPLE INPUT-->
+    <!--<property name="Filter window size">5</property>    EXAMPLE INPUT-->
+  </component>
+</topsOffsetApp>
+<!--
+    This is an example XML input used by topsOffsetApp.py, which is used if a
+    topsOffsetApp.xml file is located within the directory that topsOffsetApp
+    is run.
+
+    There are four important things to note about the usage of topsOffsetApp.py:
+
+        1. topsApp.py MUST BE RUN up to (at least) the 'fineresamp' step to
+            generate the correct products/metadata to run topsOffsetApp.py.
+
+        2. Since topsOffsetApp.py essentially extends topsApp.py, the version of
+            topsApp.xml that was used to run the topsApp.py steps must stay the
+            same when running topsOffsetApp.py (i.e. do not alter topsApp.xml
+            between running topsApp.py and topsOffsetApp.py).
+
+        3. As with other applications in ISCE, the list of Parameters that are
+            configurable by this topsOffsetApp.xml are listed in
+            topsOffsetApp.py. In general these parameters pertain to running
+            the DenseAmpcor module, however some are there to store values for
+            use later in the app. These values will have a note (in general) in
+            the docstring denoting "overridden by workflow" and the app will
+            overwrite any configuration set by the user.
+
+        4. Because a majority of the critical metadata is calculated in
+            topsApp.py, a topsOffsetApp.xml is *not necessary* to actually run
+            topsOffsetApp.py with the default values listed in topsOffsetApp.py.
+-->

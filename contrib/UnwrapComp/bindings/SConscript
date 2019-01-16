@@ -1,0 +1,13 @@
+#!/usr/bin/env python
+import os
+
+Import('envUnwrapComp')
+package = envUnwrapComp['PACKAGE']
+project = envUnwrapComp['PROJECT']
+install = envUnwrapComp['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['MCFSolve']
+envUnwrapComp.PrependUnique(CPPPATH=['../include/'])
+envUnwrapComp.PrependUnique(LIBS = libList)
+unwcompmodule = envUnwrapComp.LoadableModule(target = 'unwcomp.so', source = 'unwcompmodule.cpp') 
+envUnwrapComp.Install(install,unwcompmodule)
+envUnwrapComp.Alias('install',install)

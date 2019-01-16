@@ -1,0 +1,42 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#!/usr/bin/env python
+
+
+import os
+import sys
+Import('envcomponents')
+package = 'components/zerodop'
+envzerodop = envcomponents.Clone()
+envzerodop['PACKAGE'] = package
+install = envzerodop['PRJ_SCONS_INSTALL'] + '/' + package
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+        fout = open(initFile,"w")
+        fout.write("#!/usr/bin/env python3")
+        fout.close()
+
+listFiles = [initFile]
+envzerodop.Install(install,listFiles)
+envzerodop.Alias('install',install)
+Export('envzerodop')
+SConscript('topozero/SConscript')
+SConscript('geozero/SConscript')
+SConscript('geo2rdr/SConscript')
+SConscript('baseline/SConscript')
+SConscript('bistaticgeo2rdr/SConscript')
+if envzerodop['CYTHON3'] and envzerodop['GPU_ACC_ENABLED']:
+    print("CYTHON3 and ENABLE_CUDA are set in the environment")
+    SConscript('GPUtopozero/SConscript')
+    SConscript('GPUgeo2rdr/SConscript')
+    SConscript('GPUresampslc/SConscript')
+    SConscript('GPUampcor/SConscript')
+#SConscript('unw2hgt/SConscript')
+#SConscript('bistaticunw2hgt/SConscript')

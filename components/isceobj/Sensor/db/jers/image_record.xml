@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="jers">
+	<rec name="skip" type="0" num="8"/>
+	<rec name="Record Length" type="4" num="1"/>
+</ceos>

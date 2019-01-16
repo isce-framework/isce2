@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<xsd:include schemaLocation="listTypes.xsd"></xsd:include>
+	<xsd:complexType name="Function1DType">
+        <xsd:annotation>
+        	<xsd:documentation>Base class for a 1D function. Includes an origin and scale factor for the one dimension under consideration.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+			<xsd:extension base="FunctionType">
+				<xsd:sequence>
+					<xsd:element name="Axis" type="AxisType" minOccurs="1" maxOccurs="1"></xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="FunctionType">
+        <xsd:annotation>
+        	<xsd:documentation>Root class for any function type. Includes a noDataValue</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+			<xsd:element name="NoDataValue" type="xsd:double" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+
+	<xsd:complexType name="Function2DType">
+        <xsd:annotation>
+        	<xsd:documentation>Baseclass for 2D functions - f(x,y). Includes origin and norms for each dimension.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexContent>
+			<xsd:extension base="FunctionType">
+				<xsd:sequence>
+					<xsd:element name="Axis" type="AxisType" minOccurs="2" maxOccurs="2"></xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+
+
+	<xsd:complexType name="AxisType">
+		<xsd:sequence>
+			<xsd:element name="Origin" type="xsd:double" minOccurs="1" maxOccurs="1" default="0">
+			</xsd:element>
+			<xsd:element name="Scale" minOccurs="1" maxOccurs="1"
+				default="1">
+				<xsd:simpleType>
+					<xsd:restriction base="xsd:double">
+						<xsd:minExclusive value="0"></xsd:minExclusive>
+					</xsd:restriction>
+				</xsd:simpleType>
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="ers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="ASCII/EBCDIC flag" type="1" num="2"/>
+	<rec name="skipBytes" type="0" num="2"/>	
+	<rec name="Format control document ID for this data file format" type="1" num="12"/>
+    <rec name="Format control document revision level" type="1" num="2"/>
+	<rec name="File design descriptor revision letter" type="1" num="2"/>
+    <rec name="Generating software release and revision level" type="1" num="12"/>
+	<rec name="File number" type="2" num="4"/>
+    <rec name="File name" type="1" num="16"/>
+    <rec name="Record sequence and location type flag" type="1" num="4"/>
+	<rec name="Sequence number location" type="2" num="8"/>
+	<rec name="Sequence number field length" type="2" num="4"/>
+	<rec name="Record code and location type flag" type="1" num="4"/>
+	<rec name="Record code location" type="2" num="8"/>
+	<rec name="Record code field length" type="2" num="4"/>
+	<rec name="Record length and location type flag" type="1" num="4"/>
+	<rec name="Record length location" type="2" num="8"/>
+	<rec name="Record length field length" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="skipBytes" type="0" num="64"/>	
+	
+	<rec name="Number of SAR DATA records" type="2" num="6"/>
+	<rec name="SAR DATA record length" type="2" num="6"/>
+	<rec name="skipBytes" type="0" num="24"/>
+	
+	<rec name="Number of bits per sample" type="2" num="4"/>
+	<rec name="Number of samples per data group" type="2" num="4"/>
+	<rec name="Number of bytes per data group" type="2" num="4"/>
+	<rec name="Justification and order of samples within data group" type="1" num="4"/>
+	
+	<rec name="Number of SAR channels in this file" type="2" num="4"/>
+	<rec name="Number of lines per data set" type="2" num="8"/>
+	<rec name="Number of left border pixels per line" type="2" num="4"/>
+	<rec name="Number of pixels per line per SAR channel" type="2" num="8"/>
+	<rec name="Number of right border pixels per line" type="2" num="4"/>
+	<rec name="Number of top border lines" type="2" num="4"/>
+	<rec name="Number of bottom border lines" type="2" num="4"/>
+	<rec name="Interleaving indicator" type="1" num="4"/>
+	
+	<rec name="Number of physical records per line" type="2" num="2"/>
+	<rec name="Number of physical records per multi-channel line" type="2" num="2"/>
+	<rec name="Number of bytes of prefix data per record" type="2" num="4"/>
+	<rec name="Number of bytes of SAR data per record" type="2" num="8"/>
+	<rec name="Number of bytes of suffix data per record" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="192"/>
+	<rec name="skipBytes" type="0" num="28"/>
+	<rec name="skipBytes" type="0" num="96"/>
+	
+	<rec name="SAR Data format type identifier" type="1" num="28"/>
+	<rec name="SAR Data format type code" type="1" num="4"/>
+	<rec name="Number of left fill bits within pixel" type="2" num="4"/>
+	<rec name="Number of right fill bits within pixel" type="2" num="4"/>
+	<rec name="Maximum data range of pixel" type="2" num="8"/>
+	<!--rec name="skipBytes" type="0" num="15564"/-->
+</ceos>

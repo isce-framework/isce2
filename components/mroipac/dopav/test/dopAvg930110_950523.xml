@@ -1,0 +1,35 @@
+<component>
+    <name>Dopav</name>
+    <property>
+        <name>DOPPLER_CENTROID_COEFFICIENTS2</name>
+        <value>[0.25226999999999999, -4.4000000000000002e-06, 4.2050999999999998e-10, 0.0]</value>
+    </property>
+    <property>
+        <name>DOPPLER_CENTROID_COEFFICIENTS1</name>
+        <value>[0.24315000000000001, -2.0194000000000001e-06, -2.3094000000000001e-10, 0.0]</value>
+    </property>
+    <property>
+        <name>PRF1</name>
+        <value>1679.87845453</value>
+    </property>
+    <property>
+        <name>PRF2</name>
+        <value>1679.87845453</value>
+    </property>
+    <property>
+        <name>VELOCITY</name>
+        <value>7552.60745017</value>
+    </property>
+    <property>
+        <name>ANTENNA_LENGTH</name>
+        <value>10.0</value>
+    </property>
+    <property>
+        <name>SQUINT2</name>
+        <value>0.290772297206</value>
+    </property>
+    <property>
+        <name>SQUINT1</name>
+        <value>0.280527159397</value>
+    </property>
+</component>

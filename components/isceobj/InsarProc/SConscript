@@ -1,0 +1,65 @@
+#! /usr/bin/env python
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Copyright 2012 California Institute of Technology. ALL RIGHTS RESERVED.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# United States Government Sponsorship acknowledged. This software is subject to
+# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
+# (No [Export] License Required except when exporting to an embargoed country,
+# end user, or in support of a prohibited end use). By downloading this software,
+# the user agrees to comply with all applicable U.S. export laws and regulations.
+# The user has the responsibility to obtain export licenses, or other export
+# authority as may be required before exporting this software to any 'EAR99'
+# embargoed foreign country or citizen of those countries.
+#
+# Author: Eric Gurrola
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envInsarProc = envisceobj.Clone()
+package = envisceobj['PACKAGE']
+project = 'InsarProc'
+Export('envInsarProc')
+
+install = os.path.join(envInsarProc['PRJ_SCONS_INSTALL'],package,project)
+
+listFiles = ['__init__.py', 'Factories.py', 'InsarProc.py', '__InsarProc.py','runCoherence.py',
+    'runEstimateHeights.py', 'runEstimateHeights_peg.py', 'runFdMocomp.py', 'runFilter.py',
+    'runFormSLCTSX.py', 'runFormSLC.py', 'runFormSLCisce.py', 'runGeocode.py',
+    'runGrass.py', 'runMocompbaseline.py', 'runOffoutliers.py',
+    'runOrbit2sch.py', 'runPrepareResamps.py', 'runPreprocessor.py',
+    'runPulseTiming.py', 'runResamp_image.py', 'runResamp_only.py',
+    'runResamp.py', 'runOffsetprf.py', 'runOffsetprf_none.py',
+    'runOffsetprf_ampcor.py','runOffsetprf_nstage.py', 'runRgoffset.py',
+    'runSetmocomppath.py', 'runSetmocomppathFromFrame.py', 'runShadecpx2rg.py',
+    'runTopo.py', 'runCorrect.py', 'runUpdatePreprocInfo.py', 'extractInfo.py',
+    'createDem.py','runUnwrapGrass.py','runUnwrapSnaphu.py', 'runUnwrapIcu.py',
+    'runRgoffset_ampcor.py','runRgoffset_nstage.py', 'runRgoffset_none.py','runCreateWbdMask.py',
+    'runMaskImages.py', 'runUnwrap2Stage.py',
+]
+
+
+envInsarProc.Install(install,listFiles)
+envInsarProc.Alias('install',install)
+helpList,installHelp = envInsarProc['HELP_BUILDER'](envInsarProc,'__init__.py',install)
+envInsarProc.Install(installHelp,helpList)
+envInsarProc.Alias('install',installHelp)

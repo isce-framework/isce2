@@ -1,0 +1,73 @@
+#!/bin/csh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+set WORKDIR = $cwd
+set dirname = `echo $WORKDIR | gawk 'BEGIN {FS = "/"}{print $(NF)}'`
+
+if ($dirname == "SMALL_BASELINES") then
+    set INSARDIR = `echo $WORKDIR | gawk 'BEGIN {FS = "/SMALL_BASELINES"}{print $1}'`
+    echo "Small Baseline Processing"
+    echo " "
+
+    # copying the extra files from SM processing
+    cp $INSARDIR/lambda.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/heading.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/master_day.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/day.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/bperp.1.in $INSARDIR/SMALL_BASELINES/. 
+    cp $INSARDIR/slc_osfactor.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/len.txt $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/width.txt $INSARDIR/SMALL_BASELINES/.
+else
+    set INSARDIR = $WORKDIR
+endif
+
+# currently no oversampling is included
+set SLC_OSF = 1  # check if oversampled or not
+echo $SLC_OSF > $INSARDIR/slc_osfactor.1.in                 # put oversampling factor to file 
+
+# storing the processor type
+echo isce > processor.txt
+
+# Create date, and bperp information 
+# note that day.1.in and bperp.1.in only has the slave information
+grep ' ' $INSARDIR/[0-9]*/baseline | gawk '{print $2}' > bperp.1.in
+grep ' ' $INSARDIR/[0-9]*/baseline | gawk 'BEGIN {FS = ":"}{print substr($(NF),1,8) }' > day.1.in
+grep ' ' $INSARDIR/master/baseline | gawk '{print $1}' > master_day.1.in
+
+if ($dirname == "SMALL_BASELINES") then
+    ls $WORKDIR/*/isce_minrefdem.int | gawk 'BEGIN {FS = "/"}{print substr($(NF-1),1,8) " " substr($(NF-1),10,8)}' > ifgday.1.in
+endif
+
+
+# storing the bperp information for each interferogram
+# store it as Bperp_YYYYMMDD.1.in
+# Note 1.in is differnt size as ifg
+# for now the sb_load_inital and ps_load_initial will assume no variation of baseline.
+# this should be updated in future as it influences the ps noise estimation
+
+# storing the look angle for the itnerferogram
+# store it as look_angle.1.in 
+# Note 1.in is different size as ifg
+
+
+# storing of the dem parameters. 
+# This is to plot on amplitude
+
+# you need to following in a file demparms.in each time on the next line:
+# the path to the dem file, width, length, ul lon, ul lat, delta, format
+
+if ($dirname == "SMALL_BASELINES") then
+    matlab -nojvm -nosplash -nodisplay < $STAMPS/matlab/sb_parms_initial.m > sb_parms_initial.log
+else
+    matlab -nojvm -nosplash -nodisplay < $STAMPS/matlab/ps_parms_initial.m > ps_parms_initial.log
+endif

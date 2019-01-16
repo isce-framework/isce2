@@ -1,0 +1,204 @@
+#!/bin/csh -f
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### Initial welcome
+set PRG = `basename "$0"`
+set AUT = "David Bekaert, February 2016"
+echo "$PRG $AUT"
+echo " "
+set nonomatch
+
+if ($#argv == 0) then
+    echo "usage: mt_prep da_thresh [rg_patches az_patches rg_overlap az_overlap]"
+    echo "    da_thresh                = (delta) amplitude dispersion"
+    echo "                                typical values: 0.4 for PS, 0.6 for SB"
+    echo "    rg_patches (default 1)   = number of patches in range"
+    echo "    az_patches (default 1)   = number of patches in azimuth"
+    echo "    rg_overlap (default 50)  = overlapping pixels between patches in range"
+    echo "    az_overlap (default 50) = overlapping pixels between patches in azimuth"
+    echo ""
+    exit(4)
+endif
+
+if ($#argv > 0) then
+    set da_thresh = $argv[1]
+else 
+    set da_thresh = 0.4
+endif
+
+if ($#argv > 1) then
+    set prg = $argv[2]
+else 
+    set prg = 1
+endif
+
+if ($#argv > 2) then
+    set paz = $argv[3]
+else 
+    set paz = 1
+endif
+
+if ($#argv > 3) then
+    set overlap_rg = $argv[4]
+else 
+    set overlap_rg = 50
+endif
+
+if ($#argv > 4) then
+    set overlap_az = $argv[5]
+else 
+    set overlap_az = 50
+endif
+
+# checking if the StaMPS environment variable exist 
+if (! $?STAMPS ) then
+    echo STAMPS environment variable is not set in your STAMPS_CONFIG file
+    echo 
+    exit 1
+endif
+
+
+echo "Amplitude Dispersion Threshold:" $da_thresh
+echo "Processing" $prg "patch(es) in range and" $paz "in azimuth"
+echo " "
+
+set WORKDIR = $cwd
+set dirname = `echo $WORKDIR | gawk 'BEGIN {FS = "/"}{print $(NF)}'`
+
+
+if ($dirname == "SMALL_BASELINES") then
+    set INSARDIR = `echo $WORKDIR | gawk 'BEGIN {FS = "/SMALL_BASELINES"}{print $1}'`
+    echo "Small Baseline Processing"
+    echo " "
+else
+    set INSARDIR = $WORKDIR
+endif
+
+# setting up the information
+mt_extract_info_isce
+
+# loading the information
+set SLC_OSF=`cat slc_osfactor.1.in`
+set width=`cat width.txt`
+set length=`cat len.txt`
+
+# Calibrate amplitudes
+if ($dirname == "SMALL_BASELINES") then
+    ls $WORKDIR/[0-9]*/*.slc > $WORKDIR/calamp.in
+    set selfile = $WORKDIR/selsbc.in
+else
+    ls $INSARDIR/master/master.slc  > $WORKDIR/calamp.in
+    ls $INSARDIR/*/slave.slc >> $WORKDIR/calamp.in
+    set selfile = $WORKDIR/selpsc.in
+endif
+calamp calamp.in $width $WORKDIR/calamp.out
+
+# Set up patches
+echo $da_thresh > $selfile
+echo $width >> $selfile
+cat $WORKDIR/calamp.out >> $selfile
+
+@ width_p = $width / $prg
+@ length_p = $length / $paz
+set irg = 0
+set iaz = 0
+set ip = 0
+while ($irg < $prg)
+    @ irg = $irg + 1
+    while ($iaz < $paz)
+        @ iaz = $iaz + 1
+        @ ip = $ip + 1
+        @ start_rg1 = $width_p * ($irg - 1) + 1
+        @ start_rg = $start_rg1 - $overlap_rg
+        if ($start_rg < 1) then
+            set start_rg = 1
+        endif
+        @ end_rg1 = $width_p * $irg
+        @ end_rg = $end_rg1 + $overlap_rg
+        if ($end_rg > $width) then
+            @ end_rg = $width
+        endif
+        @ start_az1 = $length_p * ($iaz - 1) + 1
+        @ start_az = $start_az1 - $overlap_az
+        if ($start_az < 1) then
+            set start_az = 1
+        endif
+        @ end_az1 = $length_p * $iaz
+        @ end_az = $end_az1 + $overlap_az
+
+        if ($end_az > $length) then
+            @ end_az = $length
+        endif
+
+        if (! -e PATCH_$ip) then
+            mkdir PATCH_$ip
+        endif
+        cd PATCH_$ip
+        echo $start_rg > patch.in
+        echo $end_rg >> patch.in
+        echo $start_az >> patch.in
+        echo $end_az >> patch.in
+        echo $start_rg1 > patch_noover.in
+        echo $end_rg1 >> patch_noover.in
+        echo $start_az1 >> patch_noover.in
+        echo $end_az1 >> patch_noover.in
+        cd ..
+    end
+    set iaz = 0
+end
+
+# dumping the interferograms
+echo $width > pscphase.in
+ls $WORKDIR/*/isce_minrefdem.int >> pscphase.in
+
+# dumping the geocoordinates
+echo $width > psclonlat.in
+echo $INSARDIR'/lon.raw' >> psclonlat.in
+echo $INSARDIR'/lat.raw' >> psclonlat.in
+
+# dumping the radar-coded DEM
+echo $width > pscdem.in
+echo $INSARDIR'/dem.raw' >> pscdem.in
+
+# generating the patch list
+ls -d PATCH_* > patch.list
+
+# check if the input file can be found. 
+# allow for the SB directory to find it in directory above.
+set inputfile = input_file
+if ( ! -f $inputfile ) then
+    set inputfile = ../$inputfile
+    if ( ! -f $inputfile ) then
+        set inputfile = ../$inputfile
+    endif        
+endif
+         
+# if it found the input file then go an cehck if the mask file was specified
+set maskfile = ""
+if ( -f $inputfile ) then
+    set maskfile = `grep maskfile $inputfile | awk '{print $2}'`
+
+    # check if the maskfile actually exist, if not retun message to user
+    if ("$maskfile" == "") then
+        echo "No mask file given, will continue without applying it"                          
+    else if ( ! -f $maskfile ) then
+        echo "Could not find the mask file, will continue without applying it"                          
+        set maskfile = ""
+    else 
+        # stamps use the curdir to define the maskfile                  
+        set maskfile = `relpath.py -p $maskfile`
+        echo "maskfile: $maskfile"
+    endif
+endif
+echo mt_extract_cands 1 1 1 1 "f" 0 $maskfile 
+mt_extract_cands 1 1 1 1 "f" 0 $maskfile 
+

@@ -1,0 +1,58 @@
+#!/usr/bin/env python
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Copyright 2011 California Institute of Technology. ALL RIGHTS RESERVED.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+# http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# United States Government Sponsorship acknowledged. This software is subject to
+# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
+# (No [Export] License Required except when exporting to an embargoed country,
+# end user, or in support of a prohibited end use). By downloading this software,
+# the user agrees to comply with all applicable U.S. export laws and regulations.
+# The user has the responsibility to obtain export licenses, or other export
+# authority as may be required before exporting this software to any 'EAR99'
+# embargoed foreign country or citizen of those countries.
+#
+# Author: Eric Gurrola
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+import os
+
+Import('envmdx')
+envmdx.Append( CCFLAGS=['-DSUN','-DIO64','-I'+envmdx['MOTIFINCPATH'],'-I'+envmdx['X11INCPATH']] )
+envmdx.PrependUnique( LIBPATH=[envmdx['MOTIFLIBPATH'],envmdx['X11LIBPATH']] )
+envmdx.Append( FORTRANFLAGS=['-DSUN','-DIO64','-DGFORTRAN'] )
+
+listFiles = ['graphx_mdx.c','rdf_reader_subs.f','mdx_subs.F']
+build = envmdx['PRJ_LIB_DIR']
+lib = envmdx.Library(target='mdx',source=listFiles)
+envmdx.Install(build,lib)
+envmdx.Alias('build',build)
+
+libList = ['mdx','Xm','Xt','X11']
+envmdx.PrependUnique( LIBS=libList )
+
+#Remove unnecessary libraries 'gdal', 'hdf5', 'fftw3f' from envmdx['LIBS']
+#loop through all incidences of these libraries since they seem to accumulate
+for i in range(envmdx['LIBS'].count('gdal')): envmdx['LIBS'].remove('gdal')
+for i in range(envmdx['LIBS'].count('hdf5')): envmdx['LIBS'].remove('hdf5')
+for i in range(envmdx['LIBS'].count('fftw3f')): envmdx['LIBS'].remove('fftw3f')
+
+install = os.path.join(envmdx['PRJ_SCONS_INSTALL'],'bin')
+program = envmdx.Program(target='mdx', source='mdx_main.F')
+envmdx.Install(install,program)
+envmdx.Alias('install',install)

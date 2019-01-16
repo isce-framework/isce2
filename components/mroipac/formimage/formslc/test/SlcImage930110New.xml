@@ -1,0 +1,28 @@
+<component>
+    <name>SlcImage</name>
+    <property>
+        <name>BYTE_ORDER</name>
+        <value>l</value>
+        <doc>['endianness']</doc>
+    </property>
+    <property>
+        <name>DATA_TYPE</name>
+        <value>CFLOAT</value>
+    </property>
+    <property>
+        <name>TILE_HEIGHT</name>
+        <value>1</value>
+    </property>
+    <property>
+        <name>WIDTH</name>
+        <value>570</value>
+    </property>
+    <property>
+        <name>FILE_NAME</name>
+        <value>930110.slc</value>
+    </property>
+    <property>
+        <name>ACCESS_MODE</name>
+        <value>write</value>
+    </property>
+</component>

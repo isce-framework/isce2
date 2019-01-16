@@ -1,0 +1,34 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Walter Szeliga 
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envSensor')
+Import('envSensor1')
+Import('envSensor2')
+envSensorSrc = envSensor.Clone()
+envSensorSrc1 = envSensor1.Clone()
+envSensorSrc2 = envSensor2.Clone()
+project = 'Sensor'
+package = envSensor['PACKAGE']
+envSensor['PROJECT'] = project
+envSensor1['PROJECT'] = project
+envSensor2['PROJECT'] = project
+Export('envSensorSrc')
+Export('envSensorSrc1')
+Export('envSensorSrc2')
+SConscript('asa_im_decode/SConscript')
+SConscript('ALOS_pre_process/SConscript')
+SConscript('cosar/SConscript')
+SConscript('ERS/SConscript')
+conf = Configure(envSensorSrc)
+if (conf.CheckCXXHeader('hdf5.h') or  conf.CheckCHeader('hdf5.h')) and conf.CheckLib('hdf5'):
+    SConscript('extract_csk/SConscript')

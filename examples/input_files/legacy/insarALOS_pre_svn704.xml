@@ -1,0 +1,80 @@
+<!--
+Properties are the ISCE name for input parameters. The basic format of a property in this file is the following:
+
+
+        <property name="PPP">
+            <value>VVV</value>
+        </property>
+
+where PPP is the name defined in the code (in the _parameters method) for this parameter and VVV is the user's value.
+
+Components are program units that perform a specific job.  They contain functions and parameters, some of which are user settable.
+The component tag contains within it the properties that can be or must be set by the user.  The form of a component in this file has the following options
+
+Option 1:
+        <component name="CCC">
+           <property name="PPP">
+               <value>VVV</value>
+           </property>
+           ...
+           <component name="cc">
+               <property name="ppp">
+                  <value>vvv</value>
+               </property>
+        </component>
+
+where CCC is the name of the component defined in the code (in the _facilities method) and the PPP and VVV are as defined above in the explanation of properties.
+
+Option 2:
+
+        <component name="CCC">
+           <catalog>XXX</catalog>
+        </component>
+
+where the catalog tag specifies the name of another XML file containing the properties and components for the component CCC specified here.
+
+Option 3: any combination of in-line properties and components or catalogs.
+
+-->
+
+<insarApp>
+<component name="insarApp">
+        <property name="sensor_name">
+            <value>ALOS</value>
+        </property>
+        <property name="doppler_method">
+            <value>useDOPIQ</value><!-- can also use useCalcDop -->
+        </property>
+        <property name="do unwrap"> <!-- if set to 1 unwrapping is performed -->
+            <value>0</value>
+        </property>
+        <property name="patch_valid_pulses">
+            <value>2048</value>
+        </property>
+        <property name="patch_size">
+            <value>8192</value>
+        </property>
+        <component name="Master"> <!-- Master file -->
+           <property name="IMAGEFILE">
+               <value>'IMG-HH-ALPSRPXXXXXXXXXX-P1.0__A'</value> <!-- here goes your IMG file name -->
+           </property>
+           <property name="LEADERFILE">
+                <value>'LED-ALPSRPXXXXXXXXXXX-P1.0__A'</value><!-- here goes your LED file name -->
+           </property>
+           <property name="OUTPUT">
+                <value>master.raw</value><!-- here goes your raw output file name -->
+           </property>
+        </component>
+        <component name="Slave"><!-- Slave  file . See Master for following attributes-->
+           <property name="IMAGEFILE">
+                <value>'IMG-HH-ALPSRP080110680-P1.0__A'</value>
+           </property>
+           <property name="LEADERFILE">
+                <value>'LED-ALPSRP080110680-P1.0__A'</value>
+           </property>
+           <property name="OUTPUT">
+                <value>slave.raw</value>
+           </property>
+        </component>
+</component>
+</insarApp>

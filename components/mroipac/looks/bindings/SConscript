@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                  (C) 2009-2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+import os
+
+Import('envlooks')
+package = envlooks['PACKAGE']
+project = envlooks['PROJECT']
+envlooks.AppendUnique(envlooks['PRJ_LIB_DIR'])
+install = envlooks['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['LineAccessor']
+envlooks.PrependUnique(LIBS = libList)
+modulepow = envlooks.LoadableModule(target = 'powlooks.abi3.so', source = 'powlooksmodule.cpp') 
+modulecpx = envlooks.LoadableModule(target = 'cpxlooks.abi3.so', source = 'cpxlooksmodule.cpp') 
+moduledem = envlooks.LoadableModule(target = 'nbymdem.abi3.so', source = 'nbymdemmodule.cpp') 
+modulehgt = envlooks.LoadableModule(target = 'nbymhgt.abi3.so', source = 'nbymhgtmodule.cpp') 
+moduleri = envlooks.LoadableModule(target = 'rilooks.abi3.so', source = 'rilooksmodule.cpp')
+modulelk = envlooks.LoadableModule(target='looks.abi3.so', source='looksmodule.cpp')
+envlooks.Install(install,[modulepow,modulecpx,moduledem,modulehgt,moduleri,modulelk])
+envlooks.Alias('install',install)

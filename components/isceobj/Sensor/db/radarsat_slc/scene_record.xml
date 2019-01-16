@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Data Set Summary Record sequence number" type="2" num="4"/>
+	<rec name="SAR channel indicator" type="2" num="4"/>
+	<rec name="Scene id" type="1" num="16"/>	
+	<rec name="Scene reference number" type="1" num="32"/>
+    <rec name="Scene centre time" type="1" num="32"/>
+	<rec name="Ascending or Descending flag" type="1" num="16"/>
+    <rec name="scene centre geodetic latitude" type="5" num="16"/>
+	<rec name="scene centre geodetic longitude" type="5" num="16"/>
+    <rec name="scene centre true heading as calculated relative to North" type="5" num="16"/>
+    <rec name="Ellipsoid designator" type="1" num="16"/>
+	<rec name="Ellipsoid semimajor axis" type="5" num="16"/>
+	<rec name="Ellipsoid semiminor axis" type="5" num="16"/>
+	<rec name="Earth mass times gravitational constant" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Ellipsoid J2 parameter" type="5" num="16"/>
+	<rec name="Ellipsoid J3 parameter" type="5" num="16"/>
+	<rec name="Ellipsoid J4 parameter" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Scene centre line number" type="2" num="8"/>
+	<rec name="Scene centre pixel number" type="2" num="8"/>
+	<rec name="Processed scene length" type="5" num="16"/>
+	<rec name="Processed scene width" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	
+	<rec name="Number of SAR channels" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="Sensor platform mission identifier" type="1" num="16"/>
+	<rec name="Sensor ID and mode of operation for this channel" type="1" num="32"/>
+	<rec name="Orbit number" type="1" num="8"/>
+	<rec name="Sensor platform geodetic latitude at nadir" type="5" num="8"/>
+	<rec name="Sensor platform longitude at nadir" type="5" num="8"/>
+	<rec name="Sensor platform heading at nadir" type="5" num="8"/>
+	<rec name="Sensor clock angle" type="5" num="8"/>
+	<rec name="Incidence angle at scene centre" type="5" num="8"/>
+	<rec name="Radar frequency" type="5" num="8"/>
+	<rec name="Radar wavelength" type="5" num="16"/>
+	<rec name="Motion compensation indicator" type="1" num="2"/>
+	<rec name="Range pulse code specifier" type="1" num="16"/>
+	<rec name="Nominal range pulse (chirp) amplitude coefficient constant term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) amplitude coefficient linear term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) amplitude coefficient quadratic term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) amplitude coefficient cubic term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) amplitude coefficient quartic term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) phase coefficient constant term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) phase coefficient linear term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) phase coefficient quadratic term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) phase coefficient cubic term" type="5" num="16"/>
+	<rec name="Nominal range pulse (chirp) phase coefficient quartic term" type="5" num="16"/>
+	<rec name="Down linked data chirp extraction index" type="2" num="8"/>
+	<rec name="skipBytes" type="0" num="8"/>
+	<rec name="Range sampling rate" type="5" num="16"/>
+	<rec name="Range gate delay" type="0" num="16"/>
+	<rec name="Range pulse length" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="Range compressed flag" type="1" num="4"/> 
+	<rec name="skipBytes" type="0" num="32"/>
+	<rec name="Quantization per channel I Q" type="2" num="8"/>
+	<rec name="Quantizer descriptor" type="1" num="12"/>
+	<rec name="DC Bias for I-component" type="5" num="16"/>
+	<rec name="DC Bias for Q-component" type="5" num="16"/>
+	<rec name="Gain imbalance for I Q" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="48"/>
+	<rec name="Antenna mechanical boresight angle" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="Pulse Repetition Frequency" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="32"/>
+	<!-- SENSOR SPECIFIC PARAMETERS -->
+	<rec name="Satellite encoded binary time code" type="2" num="16"/>
+	<rec name="Satellite clock time" type="1" num="32"/>
+	<rec name="Satellite clock step length" type="2" num="8"/>
+	<rec name="skipBytes" type="0" num="8"/>
+	<!-- GENERAL PROCESSING PARAMETERS -->
+	<rec name="Processing facility identifier" type="1" num="16"/>
+	<rec name="Processing system identifier" type="1" num="8"/>
+	<rec name="Processing version identifier" type="1" num="8"/>
+	<rec name="skipBytes" type="0" num="32"/>
+	<rec name="Product type descriptor" type="1" num="32"/>
+	<rec name="Processing algorithm identifier" type="1" num="32"/>
+	<rec name="Nominal number of looks processed in azimuth" type="5" num="16"/>
+	<rec name="Nominal number of looks processed in range" type="5" num="16"/>
+	<rec name="Bandwidth per look in azimuth" type="5" num="16"/>
+	<rec name="Bandwidth per look in range" type="5" num="16"/>
+	<rec name="Total processor bandwidth in azimuth" type="5" num="16"/>
+	<rec name="Total processor bandwidth in range" type="5" num="16"/>
+	<rec name="Weighting function designator in azimuth" type="1" num="32"/>
+	<rec name="Weighting function designator in range" type="1" num="32"/>
+	<rec name="Data input source" type="1" num="16"/>
+	<rec name="Nominal resolution in range" type="5" num="16"/>
+	<rec name="Nominal resolution in azimuth" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="32"/>
+	<rec name="Along track Doppler frequency centroid constant term" type="5" num="16"/>
+	<rec name="Along track Doppler frequency centroid linear term" type="5" num="16"/>
+	<rec name="Along track Doppler frequency centroid quadratic term" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Cross track Doppler frequency centroid constant term" type="5" num="16"/>
+	<rec name="Cross track Doppler frequency centroid linear term" type="5" num="16"/>
+	<rec name="Cross track Doppler frequency centroid quadratic term" type="5" num="16"/>
+	<rec name="Time direction indicator along pixel direction" type="1" num="8"/>
+	<rec name="Time direction indicator along line direction" type="1" num="8"/>
+	<rec name="Along track Doppler frequency rate constant term" type="5" num="16"/>
+	<rec name="Along track Doppler frequency rate linear term" type="5" num="16"/>
+	<rec name="Along track Doppler frequency rate quadratic term" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Cross track Doppler frequency rate constant term" type="5" num="16"/>
+	<rec name="Cross track Doppler frequency rate linear term" type="5" num="16"/>
+	<rec name="Cross track Doppler frequency rate quadratic term" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Line content indicator" type="1" num="8"/>
+	<rec name="Clutterlock applied flag" type="1" num="4"/>
+	<rec name="Autofocussing applied flag" type="1" num="4"/>
+	<rec name="Line spacing" type="5" num="16"/>
+	<rec name="Pixel spacing" type="5" num="16"/>
+	<rec name="Processor range compression designator" type="1" num="16"/>
+
+</ceos>

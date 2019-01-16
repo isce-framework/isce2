@@ -1,0 +1,26 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envFilter = envisceobj.Clone()
+package = envisceobj['PACKAGE']
+project = 'Filter'
+envFilter['PROJECT'] = project
+install = os.path.join(envisceobj['PRJ_SCONS_INSTALL'],package,project)
+listFiles = ['Filter.py','__init__.py']
+envisceobj.Install(install,listFiles)
+envisceobj.Alias('install',install)
+Export('envFilter')
+SConscript('bindings/SConscript',variant_dir=os.path.join(envFilter['PRJ_SCONS_BUILD'],package,project,'bindings'))
+SConscript('include/SConscript')
+SConscript('src/SConscript',variant_dir=os.path.join(envFilter['PRJ_SCONS_BUILD'],package,project,'src'))

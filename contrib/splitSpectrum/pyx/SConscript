@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envsplit')
+package = envsplit['PACKAGE'] # 'library'
+project = envsplit['PROJECT'] # 'isceLib'
+objFiles = envsplit['SPLITSPECTRUM_OBJ_LIST'] # Comes from src/SConscript building
+
+envsplit['CMAKE_CXX_STANDARD'] = '11'
+
+install_main = os.path.join(envsplit['PRJ_SCONS_INSTALL'], package, project)
+install_src = os.path.join(install_main, 'src') # location of the built object files
+install_pyx = os.path.join(install_main, 'pyx') # location of the Cythonizing outputs
+
+envsplit.Append(CXXFLAGS=['-fopenmp', '-O3'])
+envsplit.Append(LIBS=['fftw3f', 'gomp', 'm', 'fftw3f_threads'])
+
+
+pyx_files=['splitRangeSpectrum.pyx']
+
+a = envsplit.Command(os.path.join(install_pyx,'splitSpectrum.cc'), 'splitSpectrum.pyx', 'cython3 $SOURCE -o $TARGET --cplus') # Cythonize the splitSpectrum.pyx file to the install dir
+b = envsplit.SharedObject(target=os.path.join(install_pyx,'splitSpectrum.o'), source=os.path.join(install_pyx,'splitSpectrum.cc')) # Build the Cythonized splitSpectrum.pyx
+
+objs_with_paths = []
+for obj in objFiles:
+    objs_with_paths.append(os.path.join(install_src,obj)) # Add paths to list of object files
+objs_with_paths.append(os.path.join(install_pyx,'splitSpectrum.o')) # Add newly-Cythonized splitSpectrum.pyx object
+
+# Build Python module from shared objects
+c = envsplit.LoadableModule(target=os.path.join(install_main,'splitSpectrum.abi3.so'), source=objs_with_paths)
+
+# Use Depends() command to make sure that changing the .pyx files rebuilds the Python module
+Depends(a, pyx_files) # Re-Cythonize splitSpectrum.pyx
+Depends(b, pyx_files) # Rebuild splitSpectrum.o
+Depends(c, pyx_files) # Rebuild splitSpectrum Python module

@@ -1,0 +1,8 @@
+This manual and the included scripts call routines of the JPL/Caltech ISCE software to set-up the StaMPS processing directory based on the output of the ISCE stack processors included in the ISCE contrib folder. The scripts are provided to you "as is" with no warranties of corrections. Use at your own risk.
+
+This provided package evolved from inital routines by Piyush Agram as demonstrated at the UNAVCO workshop in 2015: "Using ISCE as a modular, reusable library". The original scripts are distributed on the ISCE forum.
+
+Author: David Bekaert
+Organization: Jet Propulsion Laboratory, California Institute of Technology
+United States Government Sponsorship acknowledged.
+
