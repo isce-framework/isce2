@@ -1,5 +1,5 @@
 ================================================================================
-ISCE Python3 Version
+ISCE2
 ================================================================================
 
 This is the Interferometric synthetic aperture radar Scientific Computing
@@ -11,10 +11,9 @@ project.
 THIS IS RESEARCH CODE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS.
 USE AT YOUR OWN RISK.
 
-Use of this software is controlled by a non-commercial use license agreement
-provided by the California Institute of Technology Jet Propulsion Laboratory.
-You must obtain a license in order to use this software.  Please consult the
-LICENSE file found in this package.
+This software is open source under the terms of the the Apache License. Its export
+classification is 'EAR9 NLR', which entails some restrictions and responsibilities.
+Please read the accompanying LICENSE.txt and LICENSE-2.0 files.
 
 ISCE is a framework designed for the purpose of processing Interferometric
 Synthetic Aperture Radar (InSAR) data.  The framework aspects of it have been
@@ -26,13 +25,6 @@ At this time the sensors that are supported are the following: ALOS, ALOS2,
 COSMO_SKYMED, ENVISAT, ERS, KOMPSAT5, RADARSAT1, RADARSAT2, RISAT1, Sentinel1,
 TERRASARX, and UAVSAR.
 
-Starting with svn revision number r1349 (2014-03-28) ISCE was converted to work
-with Python3.  From that point forward major development has been limited to
-that version.  Some bug fixes and new code developed in the Python3 version were
-merged into the Python2 version to support our Python2 users, but going forward
-we highly recommend that our users convert to using the Python3 version.  We
-plan to release a "final" Python2 version of the code very soon.
-
 ================================================================================
 Contents
 ================================================================================
@@ -43,6 +35,7 @@ Contents
 1.3 Installing dependencies with provided setup script
 1.4 Hints for installing dependencies by hand.
 1.5 Note On 'python3' Exectuable Convention
+1.6 Separate License required for dependencies for some uses of ISCE
 2.  Building ISCE
 2.1 Configuration control: SCONS_CONFIG_DIR and SConfigISCE
 2.2 Install ISCE
@@ -51,7 +44,7 @@ Contents
 3.1 Running ISCE from the command line
 3.2 Running ISCE in the Python interpreter
 3.3 Running ISCE with steps
-3.4 NOTE on DEM
+3.4 Notes on Digital Elevation Models (DEMs)
 4.  Input Files
 5.  Component Configurability
 5.1 Component Names: Family and Instance
@@ -231,7 +224,7 @@ have write access.  Then run,
 make
 make install
 
-Builing scons
+Building scons
 At this time scons only works with Python2. The scons developers have
 announced that they are working on a Python3 version of scons.  In the
 meantime, you should have Python2.6 or Python2.7 available to you by
@@ -306,6 +299,24 @@ have the command 'python3' on your path.  Then you will be able to execute an
 ISCE application such as 'insarApp.py as "> insarApp.py" rather than as
 "> /path-to-Python3/python insarApp.py".
 
+--------------------------------------------------------------------------------
+1.6 License required for some possibly familiar parts of ISCE
+--------------------------------------------------------------------------------
+
+Some of the applications, or workflows (such as insarApp.py and isceApp.py),
+in ISCE that may be familiar to users will not work with this open source version
+of ISCE without obtaining licensed components.  WinSAR users who have downloaded
+ISCE from the UNAVCO website have signed the licence agreement and will be given
+access to those licensed components.  Others wanting to use those specific
+workflows and components may be able to sign the agreement through UNAVCO if they
+become members there.  Further instructions will be available for a possible other
+procedure for obtaining a license directly from the supplier of those components.
+
+ISCE also provides workflows that do not require the licensed components that
+may be used effectively and that will be supported going forward by the ISCE team.
+Users that need to work with newly processed data along with older processed data
+may require those licensed components as a convenience unless they also reprocess
+the older data with the same workflows available in this open source release.
 
 ================================================================================
 2. Building ISCE
@@ -384,6 +395,24 @@ scons install --setupfile=SConfigISCE_NEW
 
 This will build the necessary components and install them into the location
 specified in the configuration file as PRJ_SCONS_INSTALL.
+
+
+--------------------------------------------------------------------------------
+2.2.a Note about compiling ISCE after an unsuccessful build.
+--------------------------------------------------------------------------------
+
+When building ISCE, scons will check the list of header files and libraries that
+ISCE requires.  Scons will cache the results of this dependency checking.  So,
+if you try to build ISCE and scons tells you that you are missing headers or
+libraries, then you should remove the cached files before trying to build ISCE
+again after installing the missing headers and libraries.  The cached files are
+config.log, .sconfig.dblite, and the files in directory .sconf_temp.  You should
+run the following command while in the top directory of the ISCE source (the
+directory containing the SConstruct file):
+
+> rm -rf config.log .sconfig.dblite .sconf_temp
+
+and then try "scons install" again.
 
 --------------------------------------------------------------------------------
 2.3 Setup Your Environment
@@ -542,16 +571,54 @@ the workflow states and also to edit the state to see its effect
 on a subsequent run with --dostep or --start.
 
 ---------------------------------------------------------------------------------
-3.4 NOTE on DEM
+3.4 Notes on Digital Elevation Models (DEMs)
 ---------------------------------------------------------------------------------
 
-- If a dem component is provided but the dem is the EGM96 geo reference
-  (which is the case for SRTM DEMs) it will be converted into  WGS84.
-  A new file with suffix wgs84 is created. If it is already in WGS84
-  nothing happens.
-- If no dem component is specified in input a EGM96 will be downloaded
-  and the it will be converted into WGS84. There will be then two files,
-  an EGM96 with no suffix, and the WGS84 with the wgs84 suffix.
+- ISCE will automatically download SRTM Digital Elevation Models when you run an
+application that requires a DEM.  In order for this to work follow the next 2
+instructions:
+
+1. You will need to have a user name and password from urs.earthdata.nasa.gov and
+you need to include LPDAAC applications to your account.
+
+    a. If you don't already have an earthdata username and password,
+       you can set them at https://urs.earthdata.nasa.gov/
+
+    b. If you already have an earthdata account, please ensure that
+       you add LPDAAC applications to your account:
+         - Login to earthdata here: https://urs.earthdata.nasa.gov/home
+         - Click on my applications on the profile
+         - Click on “Add More Applications”
+         - Search for “LP DAAC”
+         - Select “LP DAAC Data Pool” and “LP DAAC OpenDAP” and approve.
+
+2. create a file named .netrc with the following 3 lines:
+
+machine urs.earthdata.nasa.gov
+    login your_earthdata_login_name
+    password your_earthdata_password
+
+3. set permissions to prevent others from viewing your credentials:
+
+> chmod go-rwx .netrc
+
+
+- When you run applications that require a dem, such as stripmapApp.py, if a dem
+component is provided but the dem is referenced to the EGM96 geo reference (which
+is the case for SRTM DEMs) it will be converted to have the  WGS84 ellipsoid as its
+reference.  A new dem file with suffix wgs84 will be created.
+
+- If no dem component is specified as an input a EGM96 will be automatically
+downloaded (provided you followed the preceding instructions to register at
+earthdata) and then it will be converted into WGS84.
+
+- If you define an environment variable named DEMDB to contain the path to a
+directory, then ISCE applications will download the DEM (and water body mask files
+into the directory indicated by $DEMDB.  Also ISCE applications will look for the
+DEMs in the $DEMDB directory and the local processing directory before downloading
+a new DEM.  This will prevent ISCE from downloading multiple copies of a DEM if
+you work with data in different subdirectories that cover similar geographic
+locations.
 
 
 ================================================================================
