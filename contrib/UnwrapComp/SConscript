@@ -1,0 +1,46 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Walter Szeliga 
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envcontrib')
+envUnwrapComp = envcontrib.Clone()
+project = 'UnwrapComp'
+package = envUnwrapComp['PACKAGE']
+envUnwrapComp['PROJECT'] = project
+Export('envUnwrapComp')
+
+# Build only if RelaxIV exists
+if os.path.exists(os.path.join('src','RelaxIV')):
+  bindingsScons = os.path.join('bindings','SConscript')
+  SConscript(bindingsScons,variant_dir = os.path.join(envUnwrapComp['PRJ_SCONS_BUILD'],package,project,'bindings'))
+
+  includeScons = os.path.join('include','SConscript')
+  SConscript(includeScons)
+
+  srcScons = os.path.join('src','SConscript')
+  SConscript(srcScons,variant_dir = os.path.join(envUnwrapComp['PRJ_SCONS_BUILD'],package,project,'src'))
+
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+install = os.path.join(envUnwrapComp['PRJ_SCONS_INSTALL'],package,project)
+
+helpList,installHelp = envUnwrapComp['HELP_BUILDER'](envUnwrapComp,'__init__.py',install)
+envUnwrapComp.Install(installHelp,helpList)
+envUnwrapComp.Alias('install',installHelp)
+
+listFiles = ['unwrapComponents.py','phaseUnwrap.py',initFile]
+envUnwrapComp.Install(install,listFiles)
+envUnwrapComp.Alias('install',install)

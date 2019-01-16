@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- encapsulated the lat and lon and corresponding deltas and sizes in a  component of type Coordinate.
+Coordinate1 is the longitude, Coordinate2 the latitude. Also added the geoid reference
+property "REFERENCE". If the reference is EGM96 (such as the SRTM ones) it will be converted to
+WGS84. A new file with wgs84 is created in the cwd.
+-->
+<component name = "Dem">
+    <property name="BYTE_ORDER">
+        <value>l</value>
+    </property>
+    <property name="ACCESS_MODE">
+        <value>read</value>
+    </property>
+    <property name="REFERENCE">
+        <value>EGM96</value>
+    </property>
+    <property name="DATA_TYPE">
+        <value>SHORT</value>
+    </property>
+    <property name="IMAGE_TYPE">
+        <value>dem</value>
+    </property>
+    <property name="FILE_NAME">
+        <value>/Users/xyz/demfile.dem</value>
+    </property>
+    <property name="DELTA_LONGITUDE">
+        <value>0.000277777777778</value>
+    </property>
+    <component name="Coordinate1">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>First coordinate of a 2D image (witdh).</doc>
+        <property name="startingValue">
+            <value>-119</value>
+            <doc>Starting value of the coordinate.</doc>
+            <units>degree</units>
+        </property>
+        <property name="delta">
+            <value>0.000277777777778</value>
+            <doc>Coordinate quantization.</doc>
+        </property>
+        <property name="size">
+            <value>7200</value>
+            <doc>Coordinate size.</doc>
+        </property>
+    </component>
+    <property name="NUMBER_BANDS">
+        <value>1</value>
+    </property>
+    <component name="Coordinate2">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>Second coordinate of a 2D image (length).</doc>
+        <property name="startingValue">
+            <value>35</value>
+            <doc>Starting value of the coordinate.</doc>
+            <units>degree</units>
+        </property>
+        <property name="delta">
+            <value>-0.000277777777778</value>
+            <doc>Coordinate quantization.</doc>
+        </property>
+        <property name="size">
+            <value>7200</value>
+            <doc>Coordinate size.</doc>
+        </property>
+    </component>
+    <property name="WIDTH">
+        <value>7200</value>
+    </property>
+    <property name="LENGTH">
+        <value>7200</value>
+    </property>
+    <property name="FIRST_LONGITUDE">
+        <value>-119</value>
+    </property>
+    <property name="DELTA_LATITUDE">
+        <value>-0.000277777777778</value>
+    </property>
+    <property name="SCHEME">
+        <value>BIP</value>
+    </property>
+    <property name="FIRST_LATITUDE">
+        <value>35</value>
+    </property>
+</component>

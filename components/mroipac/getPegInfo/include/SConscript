@@ -1,0 +1,21 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009-2010 All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envgetPegInfo')
+package = envgetPegInfo['PACKAGE']
+project = envgetPegInfo['PROJECT']
+build = envgetPegInfo['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envgetPegInfo.AppendUnique(CPPPATH = [build])
+listFiles = ['get_peg_infomodule.h','get_peg_infomoduleFortTrans.h']
+envgetPegInfo.Install(build,listFiles)
+envgetPegInfo.Alias('install',build)

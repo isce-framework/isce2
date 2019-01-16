@@ -1,0 +1,15 @@
+#
+# Author: Eric Gurrola
+# Copyright 2016
+#
+
+Import('envtest_components')
+envtest_isceobj = envtest_components.Clone()
+Export('envtest_isceobj')
+
+import test
+#Print the entering banner
+test.print_entering_banner('isceobj')
+
+Planet = 'Planet/SConscript'
+SConscript(Planet)

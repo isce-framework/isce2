@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envSensorSrc1')
+package = envSensorSrc1['PACKAGE']
+project = envSensorSrc1['PROJECT']
+install = envSensorSrc1['PRJ_LIB_DIR'] 
+headerFiles = ['data_ALOS.h','data_ALOSE.h','image_sio.h','orbit_ALOS.h','sarleader_ALOS.h','sarleader_fdr.h','siocomplex.h']
+sourceFiles = ['ALOSE_orbits_utils.c','ALOS_ldr_orbit.c','ALOS_pre_process.c','calc_dop.c','hermite_c.c','init_from_PRM.c',
+               'interpolate_ALOS_orbit.c','null_sio_struct.c','parse_ALOS_commands.c','polyfit.c','read_ALOSE_data.c',
+               'read_ALOS_data.c','read_ALOS_sarleader.c','roi_utils.c','set_ALOS_defaults.c','siocomplex.c',
+               'swap_ALOS_data_info.c','utils.c','write_ALOS_prm.c','readOrbitPulse.f','readOrbitPulseState.f','readOrbitPulseSetState.f']
+lib = envSensorSrc1.Library(target = 'alos', source = sourceFiles)
+envSensorSrc1.Install(install,lib)
+envSensorSrc1.Alias('install',install)
+
+headerInstall = os.path.join(envSensorSrc1['PRJ_SCONS_BUILD'],package,project,'include')
+envSensorSrc1.Install(headerInstall,headerFiles)
+envSensorSrc1.Alias('install',headerInstall)

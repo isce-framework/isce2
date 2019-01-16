@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+
+	<rec name="SAR channel indicator" type="2" num="4"/>
+	<rec name="Number of data sets" type="2" num="4"/>
+    <rec name="Data set size" type="2" num="8"/>
+    <rec name="channel indicator" type="1" num="4"/>
+	<rec name="skipBytes" type="0" num="4"/>	
+	<rec name="Table designator" type="1" num="24"/>
+	<rec name="Number of lookup table samples" type="2" num="8"/>
+	<rec name="Sample type designator" type="1" num="16"/>
+	<rec name="Increment between table entries" type="2" num="4"/>
+	<rec name="Output scaling gain table" type="0" num="8192"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="Thermal noise reference level" type="5" num="16"/>
+	<rec name="Scaling offset" type="0" num="16"/>
+	<rec name="Calibration constant" type="5" num="16"/>
+</ceos>

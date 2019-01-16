@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="jers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	<rec name="Name of this facility record" type="1" num="64"/>
+	
+	<rec name="Date of last release of QC software" type="1" num="6"/>
+	<rec name="skipBytes" type="0" num="2"/>	
+	<rec name="Date of the last calibration update" type="1" num="6"/>
+	<rec name="Overall QA summary flag" type="2" num="4"/>
+	<rec name="PRF code change flag" type="2" num="4"/>
+	<rec name="Sampling window start time change flag" type="2" num="4"/>
+	<rec name="Cal. system receiver gain change flag" type="2" num="4"/>
+	<rec name="Chirp replica quality flag" type="2" num="4"/>
+	<rec name="Input data statistics flag" type="2" num="4"/>
+	<rec name="Doppler centroid confidence measure flag" type="2" num="4"/>
+	<rec name="Doppler centroid value" type="2" num="4"/>
+	<rec name="Doppler ambiguity confidence measure flag" type="2" num="4"/>
+	<rec name="Output data mean flag" type="2" num="4"/>
+	<rec name="On ground on board range compressed flag" type="2" num="4"/>	
+	<rec name="Number of PRF code changes" type="2" num="4"/>
+	<rec name="Number of sampling window time changes" type="2" num="4"/>
+	<rec name="Number of calibration subsystems gain changes" type="2" num="4"/>
+	<rec name="Number of missing lines" type="2" num="4"/>
+	<rec name="Number of receiver gain changes" type="2" num="4"/>	
+	<rec name="3-dB pulse width of first Chirp Replica CCF" type="5" num="16"/>
+	<rec name="First side lobe level of chirp CCF" type="5" num="16"/>
+	<rec name="ISLR of chirp CCF function" type="5" num="16"/>
+	<rec name="Doppler centroid confidence measure" type="5" num="16"/>
+	<rec name="Doppler ambiguity confidence measure" type="5" num="16"/>
+	<rec name="Estimated mean of I input data" type="5" num="16"/>
+	<rec name="Estimated mean of Q input data" type="5" num="16"/>
+	<rec name="Estimated standard deviation of I input data" type="5" num="16"/>
+	<rec name="Estimated standard deviation of Q input data" type="5" num="16"/>
+	<rec name="Calibration system gain of first processed line" type="5" num="16"/>
+	<rec name="Receiver gain of first processed line" type="5" num="16"/>
+	<rec name="Doppler ambiguity number" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	
+	<!-- Calibration -->
+	<rec name="Bias correction applied to I channel" type="5" num="16"/>
+	<rec name="Bias correction applied to Q channel" type="5" num="16"/>
+	<rec name="IQ gain imbalance correction on I" type="5" num="16"/>
+	<rec name="IQ gain imbalance correction on Q" type="5" num="16"/>
+	<rec name="IQ non-orthogonality correction" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="16"/>
+	<rec name="Noise power per sample" type="5" num="16"/>	
+	<rec name="Calibration pulse time delay" type="5" num="16"/>
+	<rec name="Number of valid calibration pulses" type="2" num="4"/>
+	<rec name="Number of valid noise pulses" type="2" num="4"/>
+	<rec name="Number of valid replica pulses" type="2" num="4"/>
+	<rec name="First sample in replica" type="5" num="16"/>
+	<rec name="Mean calibration pulse power" type="5" num="16"/>
+	<rec name="Mean noise pulse power" type="5" num="16"/>
+	<rec name="Range compression normalisation factor" type="5" num="16"/>
+	<rec name="Replica pulse power" type="5" num="16"/>
+	<rec name="Incidence angle at first range pixel" type="5" num="16"/>
+	<rec name="Incidence angle at centre range pixel" type="5" num="16"/>
+	<rec name="Incidence angle at last valid range pixel" type="5" num="16"/>
+	<rec name="Slant range reference" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="12"/>
+	<rec name="Antenna pattern correction flag" type="2" num="4"/>
+	<rec name="Absolute calibration constant K" type="5" num="16"/>
+	<rec name="Upper bound calibration constant K" type="5" num="16"/>
+	<rec name="Lower bound calibration constant K" type="5" num="16"/>
+	<rec name="Estimated noise equivalent s o" type="5" num="16"/>
+	<rec name="Date on which K was generated" type="1" num="6"/>
+	<rec name="K version number" type="1" num="4"/>
+	
+	<!--Varous Parameters from SPH -->
+	<rec name="Number of duplicated input lines" type="2" num="4"/>
+	<rec name="Estimated bit error rate" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="12"/>
+	<rec name="Output image mean" type="5" num="16"/>
+	<rec name="Output image standard deviation" type="5" num="16"/>
+	<rec name="Output image maximum value" type="5" num="16"/>
+	<rec name="Time of raw data first input range line" type="1" num="24"/>
+	<rec name="Time of ascending node state vector" type="1" num="24"/>
+	<rec name="Ascending node state vector X" type="5" num="22"/>
+	<rec name="Ascending node state vector Y" type="5" num="22"/>
+	<rec name="Ascending node state vector Z" type="5" num="22"/>
+	<rec name="Ascending node state vector X'" type="5" num="22"/>
+	<rec name="Ascending node state vector Y'" type="5" num="22"/>
+	<rec name="Ascending node state vector Z'" type="5" num="22"/>
+	<rec name="Output pixel bit length" type="2" num="4"/>
+	<rec name="Processor gain #1" type="5" num="16"/>
+	<rec name="Processor gain #2" type="5" num="16"/>
+	<rec name="Processor gain #3" type="5" num="16"/>
+	<rec name="Peak location of CCF between first and nominal" type="2" num="4"/>
+	<rec name="3-dB width of CCF" type="5" num="16"/>
+	<rec name="First side lobe level of chirp CCF" type="5" num="16"/>
+	<rec name="ISLR of chirp CCF" type="5" num="16"/>
+	<rec name="Peak location of CCF between last and nominal" type="2" num="4"/>
+	<rec name="Roll tilt mode flag" type="2" num="4"/>
+	<rec name="Raw data correction flag" type="2" num="4"/>
+	<rec name="Look detection flag" type="2" num="4"/>
+	<rec name="Doppler ambiguity estimation flag" type="2" num="4"/>
+	<rec name="Azimuth baseband conversion flag" type="2" num="4"/>
+	<rec name="Samples per line used for the raw data analysis" type="2" num="4"/>
+	<rec name="Range lines skip factor for raw data analysis" type="2" num="4"/>
+	<rec name="Time of input state vector used to processed the image" type="1" num="24"/>
+	<rec name="Input state vector - Position vector X" type="5" num="22"/>
+	<rec name="Input state vector - Position vector Y" type="5" num="22"/>
+	<rec name="Input state vector - Position vector Z" type="5" num="22"/>
+	<rec name="Input state vector - Position vector X'" type="5" num="22"/>
+	<rec name="Input state vector - Position vector Y'" type="5" num="22"/>
+	<rec name="Input state vector - Position vector Z'" type="5" num="22"/>
+	
+	<rec name="Input state vector type flag" type="2" num="4"/>
+	<rec name="Window coefficient for range-matched filter" type="5" num="16"/>
+	<rec name="Window coefficient for azimuth-matched filter" type="5" num="16"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	<rec name="skipBytes" type="0" num="128"/>
+	<rec name="Sampling window start time bias" type="2" num="4"/>
+	<rec name="Doppler centroid cubic coefficient" type="5" num="22"/>
+	<rec name="PRF code of first range line" type="2" num="4"/>
+	<rec name="PRF code of last range line" type="2" num="4"/>
+	<rec name="Sampl. wind. start time code of first range line" type="2" num="4"/>
+	<rec name="Sampl. wind. start time code of last range line" type="2" num="4"/>
+	<rec name="Calibration system gain of last processed line" type="2" num="4"/>
+	<rec name="Receiver gain of last processed line" type="2" num="4"/>
+	<rec name="First processed range sample" type="2" num="4"/>
+	<rec name="Azimuth FFT/IFFT ratio" type="2" num="4"/>
+	<rec name="Number of azimuth blocks processed" type="2" num="4"/>
+	<rec name="Number of input raw data lines" type="2" num="8"/>
+	<rec name="skipBytes" type="0" num="180"/>
+	<rec name="Satellite binary time of first range line" type="2" num="16"/>
+	<rec name="skipBytes" type="0" num="72"/>
+	<rec name="3-dB look bandwidth" type="5" num="16"/>
+	<rec name="3-dB processed Doppler bandwidth" type="5" num="16"/>
+	<rec name="Range spreading loss compensation flag" type="2" num="4"/>
+</ceos>

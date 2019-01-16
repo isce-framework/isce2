@@ -1,0 +1,123 @@
+#!/bin/tcsh -f
+
+# Script which make an interferometric combination between slave and master
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2017 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# check if existing files needs to be overwritten or not
+set input = input_file
+set counter = 1
+while ($counter  <= 10)
+    if ( ! -f $input ) then
+        set input = ../$input
+    else
+        @ counter = $counter + 10000
+    endif
+    @ counter = $counter + 1
+end                       
+
+                            
+set overwrite = 1
+if ( -f $input ) then
+    set overwrite_flag = `grep overwrite $input | awk '{print $2}'`
+    if ( $overwrite_flag == "n" | $overwrite_flag == "no" ) then    
+        # do not overwrite existing the files
+        set overwrite = 0
+        echo Will not overwrite existing files 
+    endif
+
+    # getting the multi-look information
+    set r_looks = `grep range_looks $input | awk '{print $2}'`
+    set ar = `grep aspect_ratio $input | awk '{print $2}'`
+    set a_looks = `grep azimuth_looks $input | awk '{print $2}'`
+
+    if ( $a_looks != "" ) then
+        echo "azimuth_looks will over-rule the ar"    
+    else
+        # computing the azimuth looks based on the aspect ratio
+        @ a_looks = $ar * $r_looks
+    endif
+else
+    echo Could not find the input_file with all the processing parameters
+    exit 1
+endif
+
+
+
+    
+# giving a summary to the user
+echo number of range looks: $r_looks
+echo number of azimuth looks: $a_looks
+    
+# User can specify a file to be multi-looked (as long as its ISCE processed with corresponding xml)
+# by default no inputs are assumed and then its the intergerogram which is multi-looked
+if ($#argv == 1) then
+	# user inputed a file
+        set file_in = $argv[1]
+else
+	# default ifgs multi-looking
+	set CURDIR = `pwd` 
+	echo $CURDIR
+	
+	# retrieve the current slave data folder being processed
+	set date = `basename $CURDIR`
+	
+	# I included to be in the slave data folder, such one can reprocess easily without the need to manually specify the inputs
+	# move dir above
+	cd ..
+	
+	# defining the input interferogram that needs to be multi-looked
+	set file_in = $PWD/$date/isce_minrefdem.int
+endif
+echo Multi-look: $file_in
+
+
+# defining the output name based on the number of looks taken
+set filename_out = `basename $file_in | cut -d. -f1`
+set path_out = `dirname $file_in`
+set extension_out = `basename $file_in | cut -d. -f2`
+set file_out = {$path_out}/{$filename_out}_{$r_looks}l.{$extension_out}
+
+	
+# Doing the actual multi-looking
+set curdir = `pwd`
+if ($a_looks == 1 & $r_looks == 1) then
+   echo no multi-looking needed, will make symbolic links
+   set file_out_sym = {$filename_out}_{$r_looks}l.{$extension_out}
+   set file_out_sym_xml = {$filename_out}_{$r_looks}l.{$extension_out}.xml
+   set file_out_sym_vrt = {$filename_out}_{$r_looks}l.{$extension_out}.vrt
+   set file_in_sym = {$filename_out}.{$extension_out}
+   set file_in_sym_xml = {$filename_out}.{$extension_out}.xml
+   set file_in_sym_vrt = {$filename_out}.{$extension_out}.vrt
+
+   cd $path_out
+   # link the file and also the meta data if they exist
+   rm ${file_out_sym} $file_out_sym_xml $file_out_sym_vrt >& /dev/null
+   ln -s $file_in_sym $file_out_sym
+   if ( -f "$file_in_sym_xml" ) then
+      ln -s $file_in_sym_xml $file_out_sym_xml
+   endif
+   if ( -f "$file_in_sym_vrt" ) then
+      ln -s $file_in_sym_vrt $file_out_sym_vrt
+   endif
+   cd $curdir
+else
+    # skip the run in case the user does not want to overwrite files
+    if ( -f $file_out & $overwrite == 0 ) then
+        # nothing to be done, file exist and user does not want to overwrite it
+        echo $file_out exist, will not overwrite on user request
+    else
+       echo looks.py -i $file_in -o $file_out -r $r_looks -a $a_looks
+       echo looks.py -i $file_in -o $file_out -r $r_looks -a $a_looks >> processing.log
+       looks.py -i $file_in -o $file_out -r $r_looks -a $a_looks
+       fixImageXml.py -f -i $file_out
+   endif
+endif

@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import os
+
+Import('envSnaphu')
+package = envSnaphu['PACKAGE']
+project = envSnaphu['PROJECT']
+install = envSnaphu['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['snaphu']
+envSnaphu.PrependUnique(LIBS = libList)
+snaphumodule = envSnaphu.LoadableModule(target = 'snaphu.abi3.so', source = 'snaphumodule.cpp') 
+envSnaphu.Install(install,snaphumodule)
+envSnaphu.Alias('install',install)

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="ers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	<rec name="Name of this facility record" type="1" num="64"/>
+	<rec name="skipBytes" type="0" num="3372"/>
+	<rec name="chirp average density" type="0" num="16"/>
+		
+</ceos>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: property names are not case sensitive -->
+
+<insarApp>
+<component name="insar">
+<!-- Azimuth Patch Size is automatically calculated if not specified here.
+    <property name="Azimuth Patch Size">
+        <value>8192</value>
+    </property>
+-->
+<!-- Number Of Patches is automatically calculated if not specified here.
+    <property name="Number Of Patches">
+        <value>1</value>
+    </property>
+-->
+<!-- Patch Valid Pulses is automatically calculated if not specified here.
+    <property name="Patch Valid Pulses">
+        <value>6144</value>
+    </property>
+-->
+<!-- Posting is automatically calculated if not specified here.
+        <property name="Posting">
+            <value>30</value>
+        </property>
+-->
+<!-- Unwrap is assumed True if not specified here (False).
+    <property name="do unwrap">
+        <value>False</value>
+    </property>
+-->
+<!-- UseHighResolutionDemOnly flag is False by default.  If it is set to True,
+     then a DEM will be downloaded only if the SRTM 1-arcsecond DEM is available.
+     In the default mode the highest resolution DEM available is downloaded.
+     If the user supplies a DEM using the "DEM" component (see below), then
+     no DEM is downloaded and this flag will not be used.
+    <property name="useHighResolutionDemOnly">
+        <value>True</value>
+    </property>
+-->
+        <property name="Sensor Name">
+            <value>ERS</value>
+        </property>
+        <property name="Doppler Method">
+            <value>useDopIQ</value>
+        </property>
+        <component name="Master">
+           <property name="IMAGEFILE">
+                <value>'../IMAGERY19920715'</value>
+           </property>
+           <property name="LEADERFILE">
+           <value>'../SARLEADER19920715'</value>
+           </property>
+           <property name="OUTPUT">
+                <value>'IMAGERY19920715.raw'</value>
+           </property>
+           <property name="ORBIT_TYPE">
+                <value>"ODR"</value>
+           </property>
+           <property name="ORBIT_DIRECTORY">
+               <value>"../../orbit/ODR/ERS1"</value>
+           </property>
+        </component>
+        <component name="Slave">
+           <property name="IMAGEFILE">
+                <value>'../IMAGERY19920819'</value>
+           </property>
+           <property name="LEADERFILE">
+           <value>'../SARLEADER19920819'</value>
+           </property>
+           <property name="OUTPUT">
+                <value>'IMAGERY19920819.raw'</value>
+           </property>
+           <property name="ORBIT_TYPE">
+                <value>"ODR"</value>
+           </property>
+           <property name="ORBIT_DIRECTORY">
+               <value>"../../orbit/ODR/ERS1"</value>
+           </property>
+        </component>
+<!-- If the user has a DEM that she wants to use for processing,
+     then she should use this tag and fill in the information
+     required in dem_latest.xml.  If the user does not supply
+     this tag, then ISCE will attempt to download an SRTM DEM.
+        <component name='Dem'><catalog>demLat.dem.xml</catalog></component>
+-->
+</component>
+</insarApp>

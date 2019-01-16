@@ -1,0 +1,14 @@
+FC = g77
+FFLAGS = -ffixed-line-length-none -O2 
+
+LC = g77
+
+XTARGS = histogram
+  
+all: $(XTARGS) 
+
+histogram.o : histogram.f
+	$(FC) $(FFLAGS) -c histogram.f
+
+histogram: histogram.o 
+	$(LC) histogram.o  -o histogram  -force_flat_namespace 

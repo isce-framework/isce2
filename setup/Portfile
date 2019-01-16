@@ -1,0 +1,178 @@
+# -*- coding: utf-8; mode: tcl; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- vim:fenc=utf-8:ft=tcl:et:sw=4:ts=4:sts=4
+# $Id: Portfile 131797 2015-01-18 20:29:16Z isceteam@gmail.com $
+
+PortSystem              1.0
+PortGroup               python 1.0
+PortGroup               active_variants 1.1
+PortGroup               compilers 1.0
+
+name                    py-isce
+version                 2.0.0
+revision
+epoch                   201505
+platforms               darwin
+license                 BSD
+
+
+maintainers             isceteam@gmail.com
+description             Library for SAR data processing
+long_description        ${description}
+
+homepage                http://winsar.unavco.org/isce.html
+checksums               sha256  d828220a3eff9c109bb88da993f72c4207a52ff920a6cd84afd2688ba34edb4d\
+                        rmd160  1ae5676cf4a1046e854df019776891e98afd66a2
+
+set     iscedist        isce-${version}_${epoch}.bz2 
+
+
+distfiles           ${iscedist}
+worksrcdir          isce-${version}_${epoch}
+use_bzip2           yes
+use_configure       no
+
+
+#####Python information
+python.versions         33 34
+python.default_version  34
+python.add_archflags    no
+universal_variant       no
+
+set workconfpath        ${workpath}/config
+set workbldpath         ${workpath}/build
+set workinstallpath         ${workpath}/isce
+
+####Build parameters
+build.cmd       "SCONS_CONFIG_DIR=${workconfpath} ${prefix}/bin/scons"
+build.target    install
+use_parallel_build  no
+
+#Currently testing only gcc46, gcc47 and gcc48
+compilers.setup         -clang -dragonegg -llvm -gcc44 -gcc45 -g95 -gfortran
+
+
+
+if {${name} ne ${subport}} {
+
+    notes-append        "
+
+To install
+-----------
+
+port install py34-isce +gcc48 fetch.user=\"winsarusername\" fetch.password=\"winsarpasswd\"
+
+You will need the winsar username and password to install ISCE.
+
+After installation
+------------------
+
+After installation and before using ISCE, do the following:
+
+1) Set environment variable ISCE_HOME=${prefix}${python.pkgd}/isce .
+2) Append \$ISCE_HOME/applications and \$ISCE_HOME/bin to PATH.
+
+
+Other important notes
+----------------------
+
+1) GDAL is required for working with Radarsat2, Terrasar-X and Sentinel 1-A. Suggested variant of gdal is  +expat+geos+hdf5+netcdf+postgresql93+sqlite3
+2) To work with orbits in inertial coordinate systems (Radarsat-1 and RISAT), install SpiceyPy from http://spiceypy.readthedocs.org/en/master/ .
+
+
+    "    
+
+    depends_lib-append      port:wget \
+                            port:curl \
+                            port:bzip2\
+                            port:openmotif\
+                            port:hdf5 \
+                            port:fftw-3\
+                            port:fftw-3-single\
+                            port:gdal \
+                            port:scons\
+                            port:py${python.version}-setuptools\
+                            port:py${python.version}-numpy \
+                            port:py${python.version}-nose  \
+                            port:py${python.version}-gdal  \
+                            port:py${python.version}-h5py
+
+    require_active_variants port:wget ssl
+    require_active_variants port:curl ssl
+    require_active_variants port:gdal hdf5 
+    require_active_variants port:gdal netcdf 
+
+
+    #####STEP 1: Fetch step
+    ####Pre-fetching
+    pre-fetch {
+
+        if {![gcc_variant_isset]} {
+            return -code error
+"You have selected a non gcc compiler for installing ISCE. ISCE currently only supports gcc."
+        }
+
+        set gccvar  [gcc_variant_name]
+
+#        require_active_variants port:fftw-3 ${gccvar}
+        require_active_variants port:fftw-3-single ${gccvar}
+
+    }
+
+    #####Part that actually uses WGET To 
+    fetch {
+
+     system   "wget -N --user ${fetch.user} --password ${fetch.password} --directory=${distpath} http://winsar.unavco.org/software/ISCE/${iscedist}"
+
+
+    }
+
+    ####Post-fetching
+    post-fetch {}
+
+    #####STEP 2: Configure step
+    #Pre-configure
+    pre-configure {
+        xinstall -d ${workconfpath}
+        xinstall -d ${workbldpath}
+    }
+
+    #Actual configuration
+    #Setup SConfigISCE and config dir here
+    configure {
+        set gccvar  [gcc_variant_name]
+        set gcclast [string index ${gccvar} end]  
+        set cfgname ${workconfpath}/SConfigISCE
+        set fileId [open $cfgname "w"]
+
+
+        puts   $fileId  "PRJ_SCONS_BUILD  =   ${workbldpath}"
+        puts   $fileId  "PRJ_SCONS_INSTALL =  ${workinstallpath}"
+        puts   $fileId  "LIBPATH  =      ${prefix}/lib"
+        puts   $fileId  "CPPPATH  =      ${python.include}"
+        puts   $fileId  "CC       =      ${prefix}/bin/gcc-mp-4.${gcclast}"
+        puts   $fileId  "CXX      =      ${prefix}/bin/g++-mp-4.${gcclast}"
+        puts   $fileId  "FORTRANPATH  =   ${prefix}/include"
+        puts   $fileId  "FORTRAN   =     ${prefix}/bin/gfortran-mp-4.${gcclast}"
+        puts   $fileId  "MOTIFLIBPATH =  ${prefix}/lib"
+        puts   $fileId  "X11LIBPATH   =  ${prefix}/lib"
+        puts   $fileId  "MOTIFINCPATH =  ${prefix}/include"
+        puts   $fileId  "X11INCPATH   =  ${prefix}/include"
+        close   $fileId
+}
+
+#    post-configure{}
+
+
+#### This will contain the linking of executables to /opt/local/bin
+#### This should also contain softlinking of python executable to /opt/local/bin/python3
+    destroot {
+        ####This is a temporary fix till "SConstruct" is fixed.
+        system "find ${workinstallpath} -name *.py -exec sed -i '' 's/usr\\\/bin\\\/env python3/usr\\\/bin\\\/env python${python.branch}/g' {} +"
+        xinstall -m 755 -d ${destroot}${python.pkgd}/isce
+        system "cp -rf ${workinstallpath}/* ${destroot}${python.pkgd}/isce"
+
+    }
+
+    default_variants    +gcc48
+
+    livecheck.type      none
+}

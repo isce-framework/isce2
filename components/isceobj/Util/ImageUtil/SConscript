@@ -1,0 +1,13 @@
+import os
+Import('envUtil')
+package = envUtil['PACKAGE']
+project = 'ImageUtil'
+install = os.path.join(envUtil['PRJ_SCONS_INSTALL'] ,
+                       package,
+                       project)
+listFiles = ['__init__.py',
+             'ImageLib.py',
+             'DemImageLib.py']
+
+envUtil.Install(install, listFiles)
+envUtil.Alias('install', install)

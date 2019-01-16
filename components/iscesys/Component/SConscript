@@ -1,0 +1,31 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('enviscesys')
+envComponent = enviscesys.Clone()
+project = 'Component'
+envComponent['PROJECT'] = project
+package = envComponent['PACKAGE']
+Export('envComponent')
+install = os.path.join(envComponent['PRJ_SCONS_INSTALL'],package,project)
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+        fout = open(initFile,"w")
+        fout.write("#!/usr/bin/env python")
+        fout.close()
+
+listFiles = ['Application.py','Component.py','Configurable.py','manager.py','TraitSeq.py',
+                        'FactoryInit.py','InitFromFile.py','InitFromXmlFile.py','ProductManager.py',
+                        'InitFromObject.py','InitFromDictionary.py',initFile]
+envComponent.Install(install,listFiles)
+envComponent.Alias('install',install)

@@ -1,0 +1,142 @@
+How to use the LineAccessor library.
+ 
+  
+  NOTE: to see the image API documentation, open the index.html file in the LineAccessorPck/docs/html directory from the browser.
+  
+  To build the image API package first create the sconsConfigDir by untarring the file sconsConfigDir.tar.bz2 by issuing the command "tar -xjvf sconsConfigDir.tar.bz2".
+  and then edit the configuration file sconsConfigDir/SConfigLineAccessor. In this file some environment variables used to build the executables are set.
+  The format of the file is a "KEY_WORD  = " followed by the values that the keyword assumes. Each value is separated by at least a blank.
+  Everything following a "#" character is condidered a comment and skipped.
+  The minimun set of keywords required are:
+  -SYSTEM_TYPE  is the platform on which the code is running. Use the shell command "uname" to find out. Supported ones are Darwin SunOs Linux.
+  -PRJ_SCONS_BUILD is the directory where the package is built.
+  -PRJ_SCONS_INSTALL is the directory where the package is installed. Since in python packages are imported from here, set it to ${HOME}/LineAccessor/install, 
+  where ${HOME} is the home directory. If the configuration variable is set to a different value (it still  has to end with /install), one has to add it 
+  to the shell environment variable PYTHONPATH (without the /install part). 
+  -PRJ_LIB_DIR is the directory where the several libraries that are created during the compilation are put.
+  -LIBPATH is a list of directories where the libraries needed for building are located (basically the directories preceeded by the -L flag during compilation).
+  A minimun list consists in  the locations of the  fortran and  cpp compilers libraries and the directory PRJ_LIB_DIR. For default configuration of gcc
+  the libraries (gfortran, stdc++ , m ) are located in /usr/lib . 
+  -CPPPATH is a list of directories where  includes files  that are globally used (i.e. almost every .cpp requires) are located. A minimun list correspond to
+  the location of the file Python.h. For default configuration this file is located in  /usr/include/pythonX.Y  where X.Y is the python version. 
+  -FORTRAN is the fortran compiler. Default is gfortran. One can choose g95, but it's not  tested.
+  -CC is the CC compiler. The only one supported is gcc.
+  -STDC++LIB is a library for g++ but the name seems to be platform dependent. Darwing uses stdc++.x (x = version) while Linux only stdc++. For default
+  configuration it is located in /usr/lib. Look for something like libstdc++.x.dylib for Darwing or libstdc++.so for Linux. 
+  If the variable STDC++LIB is not defined the a script will try to find it for Darwing systems by looking in LIBPATH
+  Some of the variables are already set or hinted. 
+  To create all the driver executables run the command "scons -Q install".
+  After running scons a building directory the build and a install directories  are created according to the values set in the SConfigLineAccessor.
+  Run "scons -Q -c" to clean the build directory. All the drivers will be put in LineAccessorPck/test. Run them from there.
+
+  In the LineAccessorPck/test there are also the scripts (makeDriverCC,F) to compile the fortran and CC drivers using make.
+  In this case the executable driverCC,F.ex are created locally.
+  
+  
+  
+
+- Using C++ driver to run a fortran subroutine (refer to the file driverCC.cpp and fortranSrc.F as examples).
+       The first step is to write the necessary files that allow C++ and Fortran to be interfaced. Using the examples the fortranSrc.F will normally 
+       contain the engine code that we want to run. The core code is declared as a subroutine (in this case testImageSetGet()). An auxiliary file is used 
+       to make the symbols compatible between C and the particular fortran compiler used (see the file driverCCFortTrans.h). If using gfortran compiler (or g95) the following translation needs to be done:
+       - Take the name of the core subrountine as defined in the fortran code (in this case testImageSetGet).
+       - Decide the name of the subroutine the way is invoked from the CC driver (in this case testImageSetGet_f).
+       - Issue a #define command where the name in the previous second step  is associated to the name in the name in the first step but with all small letter and a 
+         underscore added at the end (in the example it will correspond to issuing the command "#define testImageSetGet_f testimagesetget_").
+       - Repeat the same procedure if more that one subroutine needs to be called.
+
+      
+       Use the example driverCCFortTrans.h as a template. The macros NEEDS_F77_TRANSLATION and F77EXTERNS_LOWERCASE_TRAILINGBAR are arbitrary names. The first
+       indicates that a symbol translation is necessary and the second which type of translation is needed for that particular compiler
+       (one could add others "#if defined" statements to support other compilers). The important thing is to compile with the flags -DNEEDS_F77_TRANSLATION and 
+       -DF77EXTERNS_LOWERCASE_TRAILINGBAR (see the make file makeDriverCC and makeDriverF).
+
+       A second file is used to simply declare the prototype of the core subroutine the way is invoked from C. If the function takes a  LineAccessor object as 
+       argument, then declare it as "uint64_t *" (see driverCC.h). 
+ 
+       Note: to use a uint64_t type include te file <stdint.h> in the headers. 
+    
+       After the necessary files have been created one can proceed in using the image API. These are the required steps in the driver file.
+
+       1) Create a LineAccessor object for each image (in the example in driverCC.cpp LAGet refers to a input image from which data 
+       are read while LASet refers to an output image where data are set) using the syntax "LineAccessor ObjectName;". Once the object has been created 
+       all the public methods can be accessed by "ObjectName.publicMethod()" (see the Image API documentation for a list and description of all the public methods).
+       2) Most of the methods require that the "ObjectName.initLineAccessor()" method be called. This function initializes the image object.
+       3) Call the function that invokes the core fortran subroutine passing the oppurtune arguments. In driverCC.cpp we call the function 
+       testImageSetGet_f passing the two addresses of the images and a pointer to an int.
+       4) If the initLineAccessor() was previously invoked, then call the counter part finalizeLineAccessor().
+
+
+- Using fortran driver to run fortran code (refer to the file driverF.F and fortranSrc.F as examples).
+    In this case the procedure is less convoluted since there is no need of auxiliary files.
+
+    In the fortran driver these are the necessary steps.
+
+    1) Declare an integer*8 for each image object passed to the core subroutine (the fortran subroutine testImageSetGet in our example).
+    2) Instantiate a LineAccessor object by calling getLineAccessorObject(ptObject). This allocates a LineAccessor object and puts the address in
+       the interger*8 variable ptObject.
+    3) Initialize the object by calling the function initLineAccessor(). Some methods do not require the object to be initialized. See the description of 
+       imageSetGet.cpp in the image API documentation.
+    4) Invoke the fortran subroutine (in this case testImageSetGet()) passing the image object(s) as argument(s) (plus other arguments if needed).
+    5) If the initLineAccessor() was previously invoked, then call the counter part finalizeLineAccessor().
+
+
+    When calling methods from fortran remember the following condiderations:
+
+    1) For each method remove the suffix "_f" at the end of the method name.
+    2) When the function defined in imageSetGet.h takes:
+	- a uint64_t argument, declare it as integer*8 in fortran,
+	- a int * argument, declare it as integer or integer*4 in fortran,
+	- a char * argument, declare it as a character*N in fortran. N is an integer and must be big enough to contain the associated string.
+	  If the  function takes the endianness as argument, than declare as character*1. 
+
+    Note: to use a uint64_t type include te file <stdint.h> in the headers. 
+
+- Using python  driver to run fortran code (refer to the file driverPy.py and fortranSrc.F as examples).
+
+       The first step is to write the necessary files that allow python and Fortran to be interfaced. Using the examples the fortranSrc.F will normally 
+       contain the engine code that we want to run. The core code is declared as a subroutine (in this case testImageSetGet()). An auxiliary file is used 
+       to make the symbols compatible between python, C++ (which is used as a middel man between python and Fortran) and the particular fortran compiler used (see the file fortranSrcmoduleFortTrans.h).
+       If using gfortran compiler (or g95) the following translation needs to be done:
+       - Take the name of the core subrountine as defined in the fortran code (in this case testImageSetGet).
+       - Decide the name of the subroutine the way is invoked from the CC driver (in this case testImageSetGet_f).
+       - Issue a #define command where the name in the previous second step  is associated to the name in the name in the first step but with all small letter and a 
+         underscore added at the end (in the example it will correspond to issuing the command "#define testImageSetGet_f testimagesetget_").
+       - Repeat the same procedure if more that one subroutine needs to be called.
+
+      
+       Use the example driverCCFortTrans.h as a template. The macros NEEDS_F77_TRANSLATION and F77EXTERNS_LOWERCASE_TRAILINGBAR are arbitrary names. The first
+       indicates that a symbol translation is necessary and the second which type of translation is needed for that particular compiler
+       (one could add others "#if defined" statements to support other compilers). The important thing is to compile with the flags -DNEEDS_F77_TRANSLATION and 
+       -DF77EXTERNS_LOWERCASE_TRAILINGBAR (see the make file makeDriverCC and makeDriverF).
+
+       A second file is used to simply declare the prototype of the core subroutine the way is invoked from C and python. If the function takes a  LineAccessor object as 
+       argument, then declare it as "uint64_t *" (see fortranSrcmodule.h).  
+       Note: to use a uint64_t type include te file <stdint.h> in the headers.
+
+       A third file declares the name of the module in python and what the function testImageSetGet_C performs.
+       The sole scope is to provide an interface between python and fortran so it gets the arguments form the 
+       python call fortranSrc.testImageSetGet() and passes them (after necesary conversion) to the testImageSetGet_f() 
+       function.
+    
+       After the necessary files have been created one can proceed in using the image API. These are the required steps in the driver file.
+
+       1) Create a LineAccessor object for each image (in the example in driverPy.py LAGet refers to a input image from which data 
+       are read while LASet refers to an output image where data are set) using the syntax "LAObj = LineAccessorPy.LineAccessorPy()" followed by
+       "LAObj.createLineAccessorObject()". Once the object has been created 
+       the methods can be accessed by "LAObj.publicMethod()" (see the Image API documentation for a list and description of all the public methods).
+       2) Most of the methods require that the "LAObj.initLineAccessor()" method be called. This function initializes the image object.
+       3) Call the function that invokes the core fortran subroutine passing the oppurtune arguments. In driverPy.py we call the function 
+       fortranSrc.testImageSetGet() passing the two addresses of the images and  an int. To get the image address use the method LAObj.getLineAccessorPointer().
+       4) If the initLineAccessor() was previously invoked, then call the counter part finalizeLineAccessor().
+
+- No matter which driver is used, in the core fortran subroutine these are the required steps.
+
+       1) Declare an integer*8 for each image object passed to the subroutine. In the fortranSrc.F example there are two, the ptImageAccessorSet and 
+       the ptImageAccessorGet. Those are the addresses of the image object and need to be passed as first argument of each function call accessing the 
+       image API methods (see the imageSetGet.cpp documentation for a list of subroutine that can be called. The action performed is a subset of the ones performed by the 
+       public methods in the LineAccessor class).
+       2) Call the image API methods as needed.
+
+
+  NOTE: to see the image API documentation, open the index.html file in the LineAccessorPck/docs/html directory from the browser.

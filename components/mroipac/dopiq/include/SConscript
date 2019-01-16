@@ -1,0 +1,10 @@
+import os
+
+Import('envdopiq')
+package = envdopiq['PACKAGE']
+project = envdopiq['PROJECT']
+build = envdopiq['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envdopiq.AppendUnique(CPPPATH = [build])
+listFiles = ['dopiqmodule.h','dopiqmoduleFortTrans.h']
+envdopiq.Install(build,listFiles)
+envdopiq.Alias('install',build)

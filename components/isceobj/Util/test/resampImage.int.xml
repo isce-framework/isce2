@@ -1,0 +1,50 @@
+<imageFile>
+    <property name="SCHEME">
+        <value>BIP</value>
+    </property>
+    <property name="LENGTH">
+        <value>10</value>
+    </property>
+    <property name="ACCESS_MODE">
+        <value>write</value>
+    </property>
+    <component name="Coordinate1">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>First coordinate of a 2D image (witdh).</doc>
+        <property name="size">
+            <value>5</value>
+            <doc>{'doc': 'Coordinate size.'}</doc>
+        </property>
+    </component>
+    <property name="FILE_NAME">
+        <value>resampImage.int</value>
+    </property>
+    <component name="Coordinate2">
+        <factorymodule>isceobj.Image</factorymodule>
+        <factoryname>createCoordinate</factoryname>
+        <doc>Second coordinate of a 2D image (length).</doc>
+        <property name="size">
+            <value>10</value>
+            <doc>{'doc': 'Coordinate size.'}</doc>
+        </property>
+    </component>
+    <property name="IMAGE_TYPE">
+        <value>cpx</value>
+    </property>
+    <property name="BYTE_ORDER">
+        <value>l</value>
+    </property>
+    <property name="DATA_TYPE">
+        <value>CFLOAT</value>
+    </property>
+    <property name="WIDTH">
+        <value>5</value>
+    </property>
+    <property name="NUMBER_BANDS">
+        <value>1</value>
+    </property>
+    <property name="ISCE_VERSION">
+        <value>Release: 2.0.0, svn-1544, 20140724. Current: svn-1544:1548.</value>
+    </property>
+</imageFile>

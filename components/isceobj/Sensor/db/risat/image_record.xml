@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="risat">
+  <rec name="skip" type="0" num="8"/>
+  <rec name="Record Length" type="4" num="1"/>
+  <rec name="SAR image data line number" type="4" num="1"/>
+  <rec name="SAR image data record index" type="4" num="1"/>
+  <rec name="Actual count of left-fill pixels" type="4" num="1"/>
+  <rec name="Actual count of data pixels" type="4" num="1"/>
+  <rec name="Actual count of right-fill pixels" type="4" num="1"/>
+  <rec name="Sensor parameters update flag" type="4" num="1"/>
+  <rec name="Sensor acquisition year" type="4" num="1"/>
+  <rec name="Sensor acquisition day of year" type="4" num="1"/>
+  <rec name="Sensor acquisition milliseconds of day" type="8" num="1"/>
+  <rec name="SAR channel indicator" type="6" num="1"/>
+  <rec name="SAR channel code" type="6" num="1"/>
+  <rec name="Transmitted polarization" type="6" num="1"/>
+  <rec name="Received polarization" type="6" num="1"/>
+  <rec name="PRF" type="8" num="1"/>
+  <rec name="Replica flag" type="4" num="1"/>
+  <rec name="Onboard range compressed flag" type="6" num="1"/>
+  <rec name="Pulse type designator" type="6" num="1"/>
+  <rec name="Pulse length in ns" type="4" num="1"/>
+  <rec name="Chirp constant coefficients" type="4" num="1"/>
+  <rec name="Chirp linear coefficients" type="4" num="1"/>
+  <rec name="Chirp quadratic coefficients" type="4" num="1"/>
+  <rec name="Acquisition time bias in ms" type="4" num="1"/>
+  <rec name="skipBytes" type="0" num="28"/>
+  <rec name="Slant range to 1st pixel" type="8" num="1"/>
+  <rec name="Data record window time in ns" type="8" num="1"/>
+  <rec name="skipBytes" type="0" num="8"/>
+  <rec name="Platform latitude in micro degs" type="4" num="1"/>
+  <rec name="Platform latitude in micro degs" type="4" num="1"/>
+  <rec name="Platform altitude in m" type="8" num="1"/>
+  <rec name="Platform speed in cm/s" type="8" num="1"/>
+  <rec name="Platform X velocity in cm/s" type="8" num="1"/>
+  <rec name="Platform Y velocity in cm/s" type="8" num="1"/>
+  <rec name="Platform Z velocity in cm/s" type="8" num="1"/>
+  <rec name="Platform X acceleration in cm/s2" type="8" num="1"/>
+  <rec name="Platform Y acceleration in cm/s2" type="8" num="1"/>
+  <rec name="Platform Z acceleration in cm/s2" type="8" num="1"/>
+  <rec name="Platform track in micro degs" type="4" num="1"/>
+  <rec name="Platform heading in micro degs" type="4" num="1"/>
+  <rec name="Platform pitch in micro degs" type="4" num="1"/>
+  <rec name="Platform roll in micro degs" type="4" num="1"/>
+  <rec name="Platform yaw in micro degs" type="4" num="1"/>
+
+  <!-- Aux record -->
+  <rec name="FSW" type="4" num="1"/>
+  <rec name="IQ-VH ID" type="6" num="1"/>
+  <rec name="Sensor ID" type="6" num="1"/>
+  <rec name="Beam PRF count" type="6" num="1"/>
+  <rec name="DACS PRF frame count" type="4" num="1"/>
+  <rec name="PLC PRF count" type="4" num="1"/>
+  <rec name="SAR mode" type="6" num="1"/>
+  <rec name="BAQ select or cal" type="6" num="1"/>
+  <rec name="Chirp select" type="6" num="1"/>
+  <rec name="Beam sequence" type="6" num="1"/>
+  <rec name="Antenna beam number" type="6" num="1"/>
+  <rec name="Polarization combination" type="6" num="1"/>
+  <rec name="PRI" type="6" num="1"/>
+  <rec name="nPRI" type="6" num="1"/>
+  <rec name="Window start" type="6" num="1"/>
+  <rec name="Number of samples" type="6" num="1"/>
+  <rec name="MGC control" type="6" num="1"/>
+  <rec name="Beam duration" type="4" num="1"/>
+  <rec name="OBT TT" type="6" num="1"/>
+  <rec name="TM Status" type="9" num="1"/>
+  <rec name="CAL PRF counter" type="6" num="1"/>
+  <rec name="skipBytes" type="0" num="72"/>
+
+  <rec name="Sync status" type="1" num="1"/>
+  <rec name="GRT" type="1" num="20"/>
+  <rec name="Line count" type="1" num="10"/>
+  <rec name="Polar combination" type="1" num="5"/>
+  <rec name="Beam sequence number" type="1" num="3"/>
+  <rec name="Beam number" type="1" num="3"/>
+  <rec name="Number of BAQ blocks" type="1" num="4"/>
+  <rec name="Number of actual BAQ blocks" type="1" num="4"/>
+  <rec name="skipBytes" type="0" num="14"/> 
+
+</ceos>

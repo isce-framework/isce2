@@ -1,0 +1,15 @@
+#
+# Author: Eric Gurrola
+# Copyright 2016
+#
+
+Import('envtest_components')
+envtest_iscesys = envtest_components.Clone()
+Export('envtest_iscesys')
+
+import test
+#Print the entering banner
+test.print_entering_banner('iscesys')
+
+Component = 'Component/SConscript'
+SConscript(Component)

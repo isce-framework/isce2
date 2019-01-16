@@ -1,0 +1,24 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envformslc')
+package = envformslc['PACKAGE']
+project = envformslc['PROJECT']
+envformslc.AppendUnique(LIBPATH = envformslc['PRJ_LIB_DIR'])
+libPath = envformslc['LIBPATH']
+install = envformslc['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+libList = ['formslcRoi','utilLib','DataAccessor','InterleavedAccessor','formimage','fftw3f']
+envformslc.PrependUnique(LIBS = libList)
+module = envformslc.LoadableModule(target = 'formslc.abi3.so', source = 'formslcmodule.cpp') 
+envformslc.Install(install,module)
+envformslc.Alias('install',install)

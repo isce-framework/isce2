@@ -1,0 +1,34 @@
+<greeter>
+    <component name="greeter">
+<!--
+        <property name="name to use in greeting"><value>Eric</value></property>
+        <property name="language to use in greeting"><value>English</value></property>
+-->
+<!--
+        <property name="name to use in greeting">
+            <value>Eric</value>
+        </property>
+        <property name="language to use in greeting">
+            <value>
+                Cowboy
+            </value>
+        </property>
+-->
+<!--
+        <property>
+            <name>name to use in greeting</name>
+            <value>Eric</value>
+        </property>
+        <property>
+            <name>
+                language to use in greeting
+            </name>
+            <value>
+                Spanish
+            </value>
+        </property>
+-->
+        <property name="name to use in greeting" value="George" />
+        <property name="language to use in greeting" value="Cowboy"/>
+    </component>
+</greeter>

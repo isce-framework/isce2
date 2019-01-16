@@ -1,0 +1,67 @@
+<greeter>
+    <component name="greeter">
+
+<!-- classic style: should work -->
+<!--
+        <property name="name to use in greeting"><value>Maria</value><doc>additional documentation from input file</doc></property>
+-->
+
+<!-- new simple style with unnamed value: should work -->
+        <property name="name to use in greeting">Juanita</property>   
+
+<!-- everything as attributes: should work -->
+<!--
+        <property name="name to use in greeting" value="Rico"/>
+--> 
+
+<!-- any mixture of attributes and tags as long as the elements are not duplicated: should work -->
+<!--        
+        <property value="Paco"><name>name to use in greeting</name></property>
+--> 
+
+<!-- all property elements as named tags: should work -->
+<!--
+        <property><value>Mickey</value><name>name to use in greeting</name></property>
+-->
+
+<!-- units and doc as tags: should work -->
+<!--
+        <property name="name to use in greeting"><value>Minney</value><doc>A cartoon female mouse name</doc><units>n</units></property>  
+-->
+
+<!-- units and doc as attributes: should work -->
+<!--
+        <property name="name to use in greeting" units="nil" doc="Name of a cartoon female mouse">     
+            <value>Minney</value>
+        </property>
+-->
+<!-- unnamed value first, followed by other tags: should work -->
+<!--
+        <property name="name to use in greeting">     
+            Minney
+            <units>"nil"</units>
+            <doc>"Name of a cartoon female mouse"</doc>
+        </property>
+-->
+
+<!-- unnamed value not first and mixed with other tags: should not work -->
+<!--
+        <property name="name to use in greeting">     
+            <units>"nil"</units>
+            Minney
+            <doc>"Name of a cartoon female mouse"</doc>
+        </property>
+-->
+
+<!-- duplication of elements as attribute and named tag: should not work.-->
+<!--
+        <property name="name to use in greeting"><value>Minnie</value><name>name to use in greeting</name></property>
+-->
+
+<!-- duplication of value given as attribute and also unnamed value: should not work -->
+<!--
+        <property name="name to use in greeting" value="Jorge">George</property>  
+--> 
+
+    </component>
+</greeter>

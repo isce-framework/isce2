@@ -1,0 +1,26 @@
+<component>
+    <property name="HDF5">
+        <value>KOMPSAT_SLC.h5</value>
+    </property>
+    <property name="OUTPUT">
+        <value>20140101.slc</value>
+    </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for KOMPSAT5 sensor. The master and slave catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: Multiple Frames
+    ========================
+
+    Stitching multiple SLC frames is not possible with ISCE. Each frame is typically focussed with different parameters and they cannot be seamlessly stitched into a larger frame.
+
+    Note 2: Doppler Centroid
+    =========================
+
+    The doppler centroid data used for focusing the raw data is included in the SLC hdf5 file. The doppler method in "insarApp.xml" must be set to useDEFAULT for processing any SLC data.
+
+    <property name="doppler method">useDEFAULT</property>
+
+-->

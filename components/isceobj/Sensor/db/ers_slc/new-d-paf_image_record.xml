@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="ers">
+	<rec name="Record sequence number" type="4" num="1"/>
+	<rec name="1st record sub-type code" type="3" num="1"/>
+	<rec name="Record type code" type="3" num="1"/>
+	<rec name="2nd record sub-type code" type="3" num="1"/>
+	<rec name="3rd record sub-type code" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	<!-- Prefix data - General Information -->
+	<rec name="SAR image data line number" type="4" num="1"/>
+	<rec name="SAR image data record index" type="4" num="1"/>
+	<rec name="Actual count of left-fill pixels" type="4" num="1"/>
+	<rec name="Actual count of data pixels" type="4" num="1"/>
+	<rec name="Actual count of right-fill pixels" type="4" num="1"/>
+	<!-- Prefix data - Sensor Parameters -->
+	<rec name="skip" type="0" num="12"/>
+	<rec name="Record time in milliseconds" type="4" num="1"/>
+	<rec name="skip" type="0" num="80"/>
+	<!-- Prefix data - Platform Reference Information -->
+	<rec name="skip" type="0" num="64"/>
+	<!-- Prefix data - Sensor Specific Data -->
+	<rec name="skip" type="0" num="6"/>
+	<rec name="Fixed code" type="1" num="1"/>
+	<rec name="ORGC/OBRC flag" type="3" num="1"/>
+	<rec name="ICU on board time" type="4" num="1"/>
+	<rec name="Activity task" type="6" num="1"/>
+	<rec name="Image format counter" type="4" num="1"/>
+	<rec name="Sampling window start time" type="6" num="1"/>
+	<rec name="Pulse repetition interval" type="6" num="1"/>
+	<rec name="Calibration attenuation setting" type="3" num="1"/>
+	<rec name="Receiver gain attenuation settings" type="3" num="1"/>
+	<rec name="skip" type="0" num="120"/>
+	<!-- Replica pulses -->
+	<rec name="skip" type="0" num="72"/>
+	<!-- Raw Signal Data -->
+</ceos>

@@ -1,0 +1,10 @@
+import os
+
+Import('envSensorSrc')
+package = envSensorSrc['PACKAGE']
+project = 'Sensor'
+install = os.path.join(envSensorSrc['PRJ_SCONS_INSTALL'],package,project)
+listFiles = ['extract_csk.c','extract_csk_slc.c']
+lib = envSensorSrc.LoadableModule(target = 'csk.so', source = listFiles, parse_flags='-lhdf5 -fopenmp')
+envSensorSrc.Install(install,lib)
+envSensorSrc.Alias('install',install)

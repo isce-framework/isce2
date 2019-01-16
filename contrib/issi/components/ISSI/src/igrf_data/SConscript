@@ -1,0 +1,33 @@
+import os
+
+Import('envissiISSI')
+package = envissiISSI['PACKAGE']
+project = envissiISSI['PROJECT']
+envissiIGRF = envissiISSI.Clone()
+envissiIGRF['PACKAGE'] = package
+envissiIGRF['PROJECT'] = project
+
+igrfFiles = [
+    'dgrf00.dat',
+    'dgrf45.dat',
+    'dgrf50.dat',
+    'dgrf55.dat',
+    'dgrf60.dat',
+    'dgrf65.dat',
+    'dgrf70.dat',
+    'dgrf75.dat',
+    'dgrf80.dat',
+    'dgrf85.dat',
+    'dgrf90.dat',
+    'dgrf95.dat',
+    'igrf05.dat',
+    'igrf05full.dat',
+    'igrf05s.dat',
+    'igrf10.dat'
+]
+
+installIGRF = os.path.join(envissiIGRF['PRJ_SCONS_INSTALL'], package, project,
+    'igrf_data')
+
+envissiIGRF.Install(installIGRF,igrfFiles)
+envissiIGRF.Alias('install',installIGRF)

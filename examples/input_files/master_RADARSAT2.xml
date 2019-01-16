@@ -1,0 +1,39 @@
+<component>
+    <property name="xml">
+        <value>20100707/product.xml</value>
+    </property>
+    <property name="tiff">
+        <value>20100707/imagery_HH.tif</value>
+    </property>
+    <property name="OUTPUT">
+        <value>2010707.slc</value>
+    </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for RADARSAT2 sensor. The master and slave catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: Python GDAL bindings
+    =============================
+
+    ISCE uses the GDAL library to read Radarsat2 geotiff files. GDAL python bindings must be installed to process Radarsat2 data with ISCE.
+
+
+    Note 2 : Orbit extensions
+    ==========================
+
+    Radarsat2 metadata includes trunctaed state vectors that do not extend beyong the extent of the image. ISCE uses an orbit extender module to extend these state vectors.
+
+    Note 3: Multiple Frames
+    ========================
+
+    Stitching multiple SLC frames is not possible with ISCE. Each frame is typically focussed with different parameters and they cannot be seamlessly stitched into a larger frame.
+
+    Note 4: Doppler Centroid
+    =========================
+
+    The doppler centroid data used for focusing the raw data is included in the product XML file. The doppler method in "insarApp.xml" must be set to useDEFAULT for processing any SLC data.
+
+    <property name="doppler method">useDEFAULT</property>
+-->

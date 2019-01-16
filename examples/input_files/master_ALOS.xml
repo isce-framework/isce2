@@ -1,0 +1,51 @@
+<component>
+    <property name="IMAGEFILE">
+        <value>data/IMG-HH-ALPSRP207310710-H1.0__A</value>
+    </property>
+    <property name="LEADERFILE">
+        <value>data/LED-ALPSRP207310710-H1.0__A</value>
+    </property>
+    <property name="OUTPUT">
+        <value>091215.raw</value>
+    </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for ALOS sensor. The master and slave catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: FBS/FBD 
+    ================
+
+     ISCE also allows for processing of interferograms between FBD and FBS acquisitions.
+
+     To process an FBD acquisition as an FBS one (FBD2FBS), you will need to include the following property
+     <property name="RESAMPLE_FLAG">
+        <value>dual2single</value>
+    </property>
+
+
+    ISCE also supports FBS2FBD operation. However, this is not recommended. 
+    <property name="RESAMPLE_FLAG">
+        <value>single2dual</value>
+    </property>
+
+    Note 2: Multiple frames
+    ========================
+
+    ISCE can automatically stitch multiple raw data frames before focusing them. Modify your image file and leader file entries should be provided as lists as follows:
+
+    <property name="IMAGEFILE">
+        <value>['data/IMG-HH-1-H1.0__A','data/IMG-HH-2-H1.0__A']</value>
+    </property>
+    <property name="LEADERFILE">
+        <value>['data/LED-1-H1.0__A','data/LED-2-H1.0__A']</value>
+    </property>
+
+    The entries for image file and leader file should match up, i.e, entry 1 in imagefile list should correspond to entry 1 in leaderfile list.
+
+    Note 3 : Doppler Centroid
+    ==========================
+
+    ALOS raw data leaders do not include any doppler centroid information. These are always estimated from the data and lie between -0.5 and 0.5 PRF.
+-->

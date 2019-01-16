@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envGPUtopozero')
+package = envGPUtopozero['PACKAGE'] 
+project = envGPUtopozero['PROJECT']
+install = envGPUtopozero['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+build = envGPUtopozero['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
+
+if envGPUtopozero['GPU_ACC_ENABLED']:
+    envGPUtopozero.AppendUnique(CPPPATH=envGPUtopozero['CUDACPPPATH'])
+    envGPUtopozero.AppendUnique(LIBPATH=envGPUtopozero['CUDALIBPATH'])
+    envGPUtopozero.AppendUnique(LIBS=['cuda','cudart'])
+
+###Custom cython builder
+cythonBuilder = Builder(action = 'cython3 $SOURCE --cplus',
+                        suffix = '.cpp',
+                        src_suffix = '.pyx')
+envGPUtopozero.Append(BUILDERS = {'Pyx2Cpp':cythonBuilder})
+
+def cythonPseudoBuilder(env,source,bld,inst):
+    cppCode = env.Pyx2Cpp(source)
+    listFiles = [source+'.cpp', 'Ellipsoid.cpp', 'AkimaLib.cpp', 'Peg.cpp', 'PegTrans.cpp', 'Topo.cpp', 'Topozero.cpp', 'TopoMethods.cpp', 'LinAlg.cpp', 'Orbit.cpp', 'UniformInterp.cpp','Poly2d.cpp']
+    env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
+
+    if (env['GPU_ACC_ENABLED']):
+        listFiles.append('gpuTopo.cu')
+        lib = env.LoadableModule(target = 'GPUtopozero.abi3.so', source = listFiles, CPPDEFINES='GPU_ACC_ENABLED')
+    else:
+        lib = env.LoadableModule(target = 'GPUtopozero.abi3.so', source=listFiles)
+
+    env.Install(inst,lib)
+    env.Alias('install',inst)
+
+envGPUtopozero.AddMethod(cythonPseudoBuilder,'Cython')
+envGPUtopozero.Cython('GPUtopozero',build,install)

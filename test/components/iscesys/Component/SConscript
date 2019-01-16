@@ -1,0 +1,20 @@
+#
+# Author: Eric Gurrola
+# Copyright 2016
+
+from __future__ import print_function
+import os
+import subprocess
+
+Import('envtest_iscesys')
+envtest_Component = envtest_iscesys.Clone()
+
+import test
+#Print the entering banner
+test.print_entering_banner('iscesys/Component')
+#run the tests
+testFiles = ['test_traitseq.py']
+test.run_tests_and_print(testFiles)
+#Clean up files produced in tests
+cleanup_list = ['isce.log', 'test.xml']
+test.cleanup(cleanup_list)

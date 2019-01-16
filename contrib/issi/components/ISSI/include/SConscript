@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envissiISSI')
+package = envissiISSI['PACKAGE']
+project = envissiISSI['PROJECT']
+build = os.path.join(envissiISSI['PRJ_SCONS_BUILD'],package,project,'include')
+envissiISSI.AppendUnique(CPPPATH = [build])
+listFiles = ['cfr.h','issibyteswap.h','BVector.h','frToTEC.h','tecToPhase.h','polcal.h']
+envissiISSI.Install(build,listFiles)
+envissiISSI.Alias('install',build)

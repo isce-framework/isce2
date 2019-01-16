@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="../function1DTypes.xsd"></xsd:include>
+
+	<xsd:complexType name="function1DTypesTestType">
+		<xsd:sequence>
+			<xsd:element name="poly1d" type="Poly1DType"></xsd:element>
+			<xsd:element name="math" type="Math1DType"></xsd:element>
+			<xsd:element name="lut" type="LUT1DType"></xsd:element>
+			<xsd:element name="compose" type="Composition1DType"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:element name="example" type="function1DTypesTestType"></xsd:element>
+</xsd:schema>

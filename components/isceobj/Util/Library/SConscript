@@ -1,0 +1,62 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envUtil')
+envCombLib = envUtil.Clone()
+package = envCombLib['PACKAGE']
+project = 'Library'
+envCombLib['PROJECT'] = project
+
+
+build = envCombLib['PRJ_LIB_DIR']
+include = os.path.join(envCombLib['PRJ_SCONS_BUILD'], package, project, '/include')
+src = os.path.join(envCombLib['PRJ_SCONS_BUILD'], package,  project,  '/src')
+envCombLib['SUBSRCLIST'] = []
+envCombLib['SUBINCLIST'] = []
+
+# Patch to protect from build errors of conflicting with library/isceLib
+old_cpppath = envCombLib['CPPPATH']
+new_cpppath = []
+for path in old_cpppath:
+    if (path != os.path.join(envCombLib['PRJ_SCONS_BUILD'],'library','isceLib','include')):
+        new_cpppath.append(path)
+envCombLib['CPPPATH'] = new_cpppath
+
+Export('envCombLib')
+
+####Include sub dirs here
+modules = ['poly1d', 'poly2d', 'linalg3', 'geometry', 'orbit']
+for module in modules:
+    includeSc = os.path.join(module, 'include/SConscript')
+    SConscript(includeSc)
+    srcSc = os.path.join(module, 'src/SConscript')
+    SConscript(srcSc)
+
+
+####Build the stuff
+srcFiles = envCombLib['SUBSRCLIST']
+
+envCombLib.AppendUnique(CPPPATH=[include])
+
+includeScons = os.path.join('include', 'SConscript')
+SConscript(includeScons)
+
+bindingsScons = os.path.join('bindings', 'SConscript')
+SConscript(bindingsScons, variant_dir = os.path.join(envCombLib['PRJ_SCONS_BUILD'], package, project, 'bindings'))
+
+pyScons = os.path.join('python', 'SConscript')
+SConscript(pyScons, variant_dir=os.path.join(envCombLib['PRJ_SCONS_BUILD'], package, project, 'python'))
+
+lib = envCombLib.Library(target = 'combinedLib', source=srcFiles)
+envCombLib.Install(build, lib)
+envCombLib.Alias('build', build)

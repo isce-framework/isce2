@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: property names are not case sensitive -->
+
+<datatilemanager>
+    <component name="datatilemanager">
+        <!--values are dem1,dem3,wbd  -->
+        <property name="dataSource">
+            <value>dem1</value>
+        </property>
+        <property name="action">
+            <value>download</value>
+        </property>
+        <!-- define bounding box -->
+        <!--
+        <property name="bbox">
+            <value>[31,33,-114,-112]</value>   
+        </property>
+        -->
+        <!-- define pairs to use -->
+        <property name="pairs">
+            <value>[34,-114,35,-112]]</value>   
+        </property>
+        <component name="manager">
+            <property name="directory">
+                <value>outputdir</value>   
+            </property>
+            <!-- keep uncompressed data after stitching -->
+            <!--
+            <property name="keep">
+                <value>True</value>   
+            </property>
+            -->
+            <!-- use local files in "directory" for stitching -->
+            <property name="useLocal">
+                <value>False</value>   
+            </property>
+        </component>
+    </component>
+</datatilemanager>
+

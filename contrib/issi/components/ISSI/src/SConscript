@@ -1,0 +1,17 @@
+import os
+
+Import('envissiISSI')
+package = envissiISSI['PACKAGE']
+project = envissiISSI['PROJECT']
+
+listFiles = ['cfr.c', 'cfrToFr.c', 'calculateBVector.c', 'igrf2005_sub.f',
+    'frToTEC.c', 'tecToPhase.c', 'polcal.c', 'polarimetricCalibration.f']
+
+lib = envissiISSI.LoadableModule(target = 'issi.so', source = listFiles)
+
+install = os.path.join(envissiISSI['PRJ_SCONS_INSTALL'],package,project)
+envissiISSI.Install(install,lib)
+envissiISSI.Alias('install',install)
+Export('envissiISSI')
+
+SConscript(os.path.join('igrf_data', 'SConscript'))

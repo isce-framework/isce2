@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="function1DTypesTest.xsd"><!--Example of poly1d class serialization-->
+  <poly1d>
+    <NoDataValue>0.0</NoDataValue>
+    <Axis>
+      <Origin>0.0</Origin>
+      <Scale>1.0</Scale>
+    </Axis>
+    <Coefficients>357.4 23.5 -1.7 1.1e-4</Coefficients>
+  </poly1d><!--Example of math1d class serialization-->
+  <math>
+    <NoDataValue>-10000.0</NoDataValue>
+    <Axis>
+      <Origin>850e3</Origin>
+      <Scale>4.75</Scale>
+    </Axis>
+    <Name>sin</Name>
+  </math><!--Example of lut1d class serialization-->
+  <lut>
+    <NoDataValue>0.0</NoDataValue>
+    <Axis>
+      <Origin>750000.0</Origin>
+      <Scale>10.0</Scale>
+    </Axis>
+    <Index>1 11 21 31 41 51 61 </Index>
+    <Value>34.5 34.6 34.7 34.8 34.9 35.0</Value>
+    <Method>Linear</Method>
+  </lut>
+  <compose>
+    <NoDataValue>0.0</NoDataValue>
+    <Axis>
+      <Origin>0.0</Origin>
+      <Scale>1.0</Scale>
+    </Axis>
+    <Function xsi:type="LUT1DType">
+      <NoDataValue>0.0</NoDataValue>
+      <Axis>
+        <Origin>0.0</Origin>
+        <Scale>1.0</Scale>
+      </Axis>   
+      <Index>1 11 21 31 41 51 61 </Index>
+      <Value>34.5 34.6 34.7 34.8 34.9 35.0</Value>
+      <Method>Cubic</Method>
+    </Function>
+    <Function xsi:type="Math1DType">
+      <NoDataValue>0.0</NoDataValue>
+      <Axis>
+        <Origin>0.0</Origin>
+        <Scale>1.0</Scale>
+      </Axis>   
+      <Name>sin</Name>
+    </Function>
+  </compose>
+</example>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Data Set Summary Record sequence number" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="4"/>
+	
+	<rec name="input media" type="1" num="3"/>
+	<rec name="Number of input tape identifiers" type="2" num="4"/>	
+	<rec name="skipBytes" type="0" num="80"/>
+    <rec name="Expected ingest start time" type="1" num="21"/>
+	<rec name="Expected ingest stop time" type="1" num="21"/>
+	<rec name="Actual ingest start time" type="1" num="21"/>
+	<rec name="Actual ingest stop time" type="1" num="21"/>
+	<rec name="Processing start time" type="1" num="21"/>
+	<rec name="Processing stop time" type="1" num="21"/>
+	<rec name="skipBytes" type="0" num="160"/>
+	<rec name="Source data quality indicator" type="2" num="4"/>
+	<rec name="Number of missing lines" type="2" num="8"/>
+	<rec name="Number of rejected lines" type="2" num="8"/>
+	<rec name="Number of time inconsistencies" type="2" num="8"/>
+	<rec name="Measured bit error rate" type="5" num="16"/>
+	<rec name="Per cent of frames with CRC errors" type="5" num="16"/>
+	<rec name="Number of date inconsistencies" type="2" num="8"/>
+	<rec name="Number of unexpected PRF changes" type="2" num="8"/>
+	<rec name="Number of delay changes" type="2" num="8"/>
+	<rec name="Number of skipped frames" type="2" num="8"/>
+	<rec name="Range lines rejected before start time" type="2" num="8"/>
+	<rec name="Range lines rejected due to too few frames" type="2" num="8"/>
+	<rec name="Range lines rejected due to too many frames" type="2" num="8"/>
+	<rec name="Frames rejected due to master channel error" type="2" num="8"/>
+	<rec name="Frames rejected due to virtual channel error" type="2" num="8"/>
+	<rec name="Frames rejected due to incorrect recording type" type="2" num="8"/>
+	<rec name="Sensor configuration" type="1" num="10"/>
+	<rec name="Sensor orientation" type="1" num="9"/>
+	<rec name="Frame synch marker" type="1" num="8"/>	
+	<rec name="Range reference function source" type="1" num="12"/>
+	
+	<rec name="Range reference amplitude coefficients1" type="5" num="16"/>
+	<rec name="Range reference amplitude coefficients2" type="5" num="16"/>
+	<rec name="Range reference amplitude coefficients3" type="5" num="16"/>
+	<rec name="Range reference amplitude coefficients4" type="5" num="16"/>
+	<rec name="Range reference phase coefficients1" type="5" num="16"/>
+	<rec name="Range reference phase coefficients2" type="5" num="16"/>
+	<rec name="Range reference phase coefficients3" type="5" num="16"/>
+	<rec name="Range reference phase coefficients4" type="5" num="16"/>
+	<rec name="Error function amplitude coefficients1" type="5" num="16"/>
+	<rec name="Error function amplitude coefficients2" type="5" num="16"/>
+	<rec name="Error function amplitude coefficients3" type="5" num="16"/>
+	<rec name="Error function amplitude coefficients4" type="5" num="16"/>
+	<rec name="Error function phase coefficients1" type="5" num="16"/>
+	<rec name="Error function phase coefficients2" type="5" num="16"/>
+	<rec name="Error function phase coefficients3" type="5" num="16"/>
+	<rec name="Error function phase coefficients4" type="5" num="16"/>
+	
+	<rec name="Pulse bandwidth code" type="2" num="4"/>
+	<rec name="ADC sampling rate" type="1" num="5"/>
+	<rec name="Replica AGC attenuation" type="5" num="16"/>
+	<rec name="Gain correction factor (dB)" type="5" num="16"/>
+	<rec name="Replica energy gain correction (dB)" type="5" num="16"/>
+	<rec name="Orbit data source" type="1" num="11"/>
+	<rec name="Pulse count 1" type="2" num="4"/>
+	<rec name="Pulse count 2" type="2" num="4"/>
+	<rec name="Beam edge detection requested" type="1" num="3"/>
+	<rec name="Beam edge confidence measure" type="5" num="16"/>
+	<rec name="Number of pixels in beam overlap" type="2" num="4"/>
+	
+	<rec name="Number of beams" type="2" num="4"/>
+	<struct nloop="4">
+		<rec name="Beam type" type="1" num="3"/>
+		<rec name="Elevation beam look angle source" type="1" num="9"/>
+		<rec name="Applied elevation beam look angle (deg)" type="5" num="16"/>
+		<rec name="Actual PRF (Hz)" type="5" num="16"/>
+	</struct>
+	
+	<rec name="Number of pixel count updates" type="2" num="4"/>	
+	<struct nloop="20">
+		<rec name="Pixel count update date/time" type="1" num="21"/>
+		<rec name="Count of image pixels in beams1" type="2" num="8"/>
+		<rec name="Count of image pixels in beams2" type="2" num="8"/>
+		<rec name="Count of image pixels in beams3" type="2" num="8"/>
+		<rec name="Count of image pixels in beams4" type="2" num="8"/>
+	</struct>
+	
+	<rec name="Processing window start time (sec)" type="5" num="16"/>
+	<rec name="Processing window end time (sec)" type="5" num="16"/>
+	<rec name="Recording type" type="1" num="9"/>
+	<rec name="Time increment between temperature settings (sec)" type="5" num="16"/>
+	
+	<rec name="Number of temperature settings" type="2" num="4"/>
+	<struct nloop="20">
+		<rec name="Temperature settings1" type="2" num="4"/>
+		<rec name="Temperature settings2" type="2" num="4"/>
+		<rec name="Temperature settings3" type="2" num="4"/>
+		<rec name="Temperature settings4" type="2" num="4"/>
+	</struct>
+	
+	<rec name="Number of image pixels sampled" type="2" num="8"/>
+	<rec name="Per cent zero pixels" type="5" num="16"/>
+	<rec name="Per cent saturated pixels" type="5" num="16"/>
+	<rec name="Image histogram mean intensity" type="5" num="16"/>
+	<rec name="Image cumulative distribution1" type="5" num="16"/>
+	<rec name="Image cumulative distribution2" type="5" num="16"/>
+	<rec name="Image cumulative distribution3" type="5" num="16"/>
+	<rec name="Pre-image calibration gain factor" type="5" num="16"/>
+	<rec name="Post-image calibration gain factor" type="5" num="16"/>
+	<rec name="Time increment between Dopcen estimates (sec)" type="5" num="16"/>
+	<rec name="Number of Doppler centroid estimates" type="2" num="4"/>
+	
+	<struct nloop="20">
+		<rec name="Doppler centroid confidence measure" type="5" num="16"/>
+		<rec name="Doppler centroid reference time (sec)" type="5" num="16"/>
+		<rec name="Doppler centroid coefficients1" type="5" num="16"/>
+		<rec name="Doppler centroid coefficients2" type="5" num="16"/>
+		<rec name="Doppler centroid coefficients3" type="5" num="16"/>
+		<rec name="Doppler centroid coefficients4" type="5" num="16"/>
+	</struct>
+	
+	<rec name="Doppler ambiguity error" type="2" num="4"/>
+	<rec name="Doppler ambiguity confidence measure" type="5" num="16"/>
+	<rec name="Ephemeris orbit data1" type="5" num="16"/>
+	<rec name="Ephemeris orbit data2" type="5" num="16"/>
+	<rec name="Ephemeris orbit data3" type="5" num="16"/>
+	<rec name="Ephemeris orbit data4" type="5" num="16"/>
+	<rec name="Ephemeris orbit data5" type="5" num="16"/>
+	<rec name="Ephemeris orbit data6" type="5" num="16"/>
+	<rec name="Ephemeris orbit data7" type="5" num="16"/>
+	<rec name="Application type" type="1" num="12"/>
+	<rec name="Slow time coefficients1" type="5" num="22"/>
+	<rec name="Slow time coefficients2" type="5" num="22"/>
+	<rec name="Slow time coefficients3" type="5" num="22"/>
+	<rec name="Slow time coefficients4" type="5" num="22"/>
+	<rec name="Slow time coefficients5" type="5" num="22"/>
+	
+	<rec name="Number of SRGR coefficient sets" type="2" num="4"/>
+	<struct nloop="20">
+		<rec name="SRGR update date/time" type="1" num="21"/>
+		<rec name="SRGR coefficients1" type="5" num="16"/>
+		<rec name="SRGR coefficients2" type="5" num="16"/>
+		<rec name="SRGR coefficients3" type="5" num="16"/>
+		<rec name="SRGR coefficients4" type="5" num="16"/>
+		<rec name="SRGR coefficients5" type="5" num="16"/>
+		<rec name="SRGR coefficients6" type="5" num="16"/>
+	</struct>
+	
+	<rec name="SGF product pixel spacing" type="5" num="16"/>
+	<rec name="GICS product required" type="1" num="3"/>
+	<rec name="Work order identifier" type="1" num="8"/>
+	<rec name="Work order entry date" type="1" num="20"/>
+	<rec name="Satellite identifer" type="1" num="10"/>
+	<rec name="User id" type="1" num="20"/>
+	<rec name="Completion message required flag" type="1" num="3"/>
+	<rec name="SGF product scene identifier" type="1" num="15"/>
+	<rec name="Density of SGF product media" type="1" num="4"/>
+	<rec name="SGF product identifier" type="1" num="8"/>
+	<rec name="Incidence angle of first pixel in a line of the SGF product" type="5" num="16"/>
+	<rec name="Incidence angle of last pixel in a line of the SGF product" type="5" num="16"/>
+	<rec name="GICS output product type" type="1" num="3"/>
+	<rec name="Map system identifier" type="1" num="16"/>
+	<rec name="" type="5" num="16"/>
+	
+</ceos>

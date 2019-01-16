@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- NOTE: tag/attribute names must be in lower case -->
+<!--
+This file can be used to set the steps to use in the flow.
+The default values for these is set to False in the code.
+You can use this file as defaults in a directory pointed to
+by an environment variable named $ISCEDB as your defaults,
+or you can put it in the processing directory with more
+the defaults for the current working directory.  If you have
+both, then the one in the $ISCEDB directory is loaded first
+and then the one in the local working directory is loaded.
+Additional configuration parameters can be given in another
+file named isceApp.xml that will be loaded automatically
+without putting it on the command line or else you can give
+it any desired name and put it on the command line.  Exmaples
+in this directory named isceappUAVSAR_Stack.xml and
+isceappALOS_pol.xml give examples."
+-->
+
+<isceApp>
+  <component name="isce">
+    <!-- Processors to run: True/False -->
+    <property name="do preprocess">True</property>
+    <property name="do verifyDEM">True</property>
+    <property name="do pulsetiming">True</property>
+    <property name="do estimateheights">True</property>
+    <property name="do mocomppath">True</property>
+    <property name="do orbit2sch">True</property>
+    <property name="do updatepreprocinfo">True</property>
+    <property name="do formslc">True</property>
+    <property name="do multilookslc">True</property>
+    <property name="do filterslc">False</property>
+    <property name="do polarimetric correction">False</property>
+    <property name="do calculate FR">False</property>
+    <property name="do FR to TEC">False</property>
+    <property name="do TEC to phase">False</property>
+<!--    <property name="do geocodeslc">False</property>  -->
+<!--    <property name="do offsetprf">False</property> -->
+    <property name="do outliers1">False</property>-->
+    <property name="do prepareresamps">True</property>-->
+    <property name="do resamp">False</property>-->
+    <property name="do resamp image">False</property>-->
+    <property name="do crossmul">True</property>
+    <property name="do mocomp baseline">True</property>
+    <property name="do set topoint1">True</property>
+    <property name="do topo">True</property>
+    <property name="do shadecpx2rg">True</property>
+<!--    <property name="do rgoffset">True</property> -->
+    <property name="do rg outliers2">True</property>
+    <property name="do resamp only">True</property>
+    <property name="do set topoint2">True</property>
+    <property name="do correct">True</property>
+    <property name="do coherence">True</property>
+    <property name="do filter interferogram">True</property>
+<!--    <property name="unwrap">True</property> -->
+    <property name="do unwrap">False</property>
+    <property name="do geocode">True</property>
+  </component>
+</isceApp>

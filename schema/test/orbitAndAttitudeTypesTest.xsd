@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<xsd:include schemaLocation="../orbitAndAttitudeTypes.xsd"></xsd:include>
+	<xsd:complexType name="orbitAndAttitudeTypesTestType">
+		<xsd:sequence>
+			<xsd:element name="sv" type="PositionStateVectorType"></xsd:element>
+			<xsd:element name="timestamp" type="xsd:dateTime"></xsd:element>
+			<xsd:element name="orbit" type="OrbitType"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+    <xsd:element name="example" type="orbitAndAttitudeTypesTestType"></xsd:element>
+</xsd:schema>

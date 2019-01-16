@@ -1,0 +1,63 @@
+#!/bin/tcsh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+set curdir = `pwd` 
+echo $curdir
+
+# extract the geom suffix in case it is specified
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`
+set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`
+
+# adding the overwrite_flag, set by default to overwrite files
+if ( "$overwrite_flag" == "" ) then
+    set overwrite_flag = y
+endif
+if ( "$overwrite_flag" != "y" & "$overwrite_flag" != "yes" & "$overwrite_flag" != "n" & "$overwrite_flag" != "no") then
+    set overwrite_flag = y
+    echo "Did not recognize the overwrite option, will set to overwrite files..."
+endif
+if ( "$overwrite_flag" == "no") then
+    set overwrite_flag = n
+endif
+
+
+# setting the filenames 
+set los_file = $curdir/master/geom/los.rdr$geom_suffix
+
+# extracting the enu conversion files
+if ( -f $curdir/e.raw & "$overwrite_flag" == "n" ) then
+    echo east2los file exist and will not be overwritten
+else
+    echo extracting east2los file from isce
+    imageMath.py --eval='sin(rad(a_0))*cos(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/e.raw
+    echo
+endif
+echo
+
+if ( -f $curdir/n.raw & "$overwrite_flag" == "n" ) then
+    echo north2los file exist and will not be overwritten
+else
+    echo extracting north2los file from isce
+    imageMath.py --eval='sin(rad(a_0)) * sin(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/n.raw
+    echo
+endif
+echo
+
+if ( -f $curdir/u.raw & "$overwrite_flag" == "n" ) then
+    echo up2los file exist and will not be overwritten
+else
+    echo extracting up2los file from isce
+    imageMath.py --eval='cos(rad(a_0))' --a=$los_file  -t FLOAT -s BIL -o $curdir/u.raw
+    echo
+endif
+echo
+

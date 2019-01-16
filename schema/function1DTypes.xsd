@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+	<xsd:include schemaLocation="functionTypes.xsd"></xsd:include>
+	<xsd:include schemaLocation="enumTypes.xsd"></xsd:include>
+	<xsd:complexType name="LUT1DType">
+		<xsd:annotation>
+			<xsd:documentation>
+				1d Lookup Table. Allows for interpolation between (x_i,
+				y_i).
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="Function1DType">
+				<xsd:sequence>
+					<xsd:element name="Index" type="DoubleListType"></xsd:element>
+					<xsd:element name="Value" type="DoubleListType"></xsd:element>
+					<xsd:element name="Method" type="InterpolationMethod1D"
+						minOccurs="1" maxOccurs="1">
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="Poly1DType">
+		<xsd:annotation>
+			<xsd:documentation>
+				1D polynomial type. f(x) = a_n * x^n + a_(n-1) * x^(n-1)
+				+ ... + a_0
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="Function1DType">
+				<xsd:sequence>
+					<xsd:element name="Coefficients"
+						type="DoubleListType">
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="Composition1DType">
+		<xsd:annotation>
+			<xsd:documentation>
+				Stores a list of 1D functions to allow cascading - f( g(
+				h(x) ) ) etc
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="Function1DType">
+				<xsd:sequence>
+					<xsd:element name="Function"
+						type="Function1DType" maxOccurs="unbounded" minOccurs="1">
+					</xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+
+	<xsd:complexType name="Math1DType">
+		<xsd:annotation>
+			<xsd:documentation>
+				For generic math operations on single variables like
+				sin, cos, exp, log etc
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexContent>
+			<xsd:extension base="Function1DType">
+				<xsd:sequence>
+					<xsd:element name="Name" type="xsd:string"></xsd:element>
+				</xsd:sequence>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+
+</xsd:schema>

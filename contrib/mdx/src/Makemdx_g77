@@ -1,0 +1,30 @@
+FC = g77
+# FFLAGS = -DM10 -ffixed-line-length-none  -O
+FFLAGS = -DM10 -DIO64 -ffixed-line-length-none  
+
+CC = gcc 
+# CFLAGS = -DM10 -O 
+CFLAGS = -DM10 -DIO64
+
+XINC = -I/usr/X11R6/include/ -I/sw/include/
+XLIB =  -L/sw/lib  -lXm -L/usr/X11R6/lib -lXt -lX11
+LIB = -lm  
+
+LC = g77
+
+XTARGS = mdx
+  
+all: $(XTARGS) 
+
+graphx_mdx.o : graphx_mdx.c
+	$(CC) $(CFLAGS) $(XINC) -c graphx_mdx.c
+
+mdx.o : mdx.F
+	$(FC) $(FFLAGS) -c mdx.F
+
+
+rdf_reader_subs.o : rdf_reader_subs.f
+	$(FC) $(FFLAGS) -c rdf_reader_subs.f
+
+mdx : mdx.o graphx_mdx.o rdf_reader_subs.o
+	$(LC) mdx.o  graphx_mdx.o rdf_reader_subs.o -o mdx  -force_flat_namespace $(XINC) $(XLIB) $(LIB)

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="alos">
+	<rec name="skip" type="0" num="8"/>
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="SAR image data line number" type="4" num="1"/>
+	<rec name="SAR image data record index" type="4" num="1"/>
+	<rec name="Actual count of left-fill pixels" type="4" num="1"/>
+	<rec name="Actual count of data pixels" type="4" num="1"/>
+	<rec name="Actual count of right-fill pixels" type="4" num="1"/>
+	<rec name="Sensor parameters update flag" type="4" num="1"/>
+	<rec name="Sensor acquisition year" type="4" num="1"/>
+	<rec name="Sensor acquisition day of year" type="4" num="1"/>
+	<rec name="Sensor acquisition milliseconds of day" type="4" num="1"/>
+	
+	<rec name="SAR channel indicator" type="6" num="1"/>
+	<rec name="SAR channel code" type="6" num="1"/>
+	<rec name="Transmitted polarization" type="6" num="1"/>
+	<rec name="Received polarization" type="6" num="1"/>
+	
+	<rec name="PRF" type="4" num="1"/>
+	<rec name="Scan ID for SCAN SAR mode" type="4" num="1"/>
+	<rec name="Onboard Range compressed flag" type="6" num="1"/>
+	<rec name="Pulse chirp type designator" type="6" num="1"/>
+	<rec name="Chirp length" type="4" num="1"/>
+	<rec name="Chirp constant coefficient" type="4" num="1"/>
+	<rec name="Chirp linear coefficient" type="4" num="1"/>
+	<rec name="Chirp quadratic coefficient" type="4" num="1"/>
+	<rec name="skip" type="0" num="8"/>
+	
+	<rec name="Receiver gain" type="4" num="1"/>
+	<rec name="Nought line flag" type="4" num="1"/>
+	<rec name="Electronic antenna nadir angle" type="4" num="1"/>
+	<rec name="Mechanical antenna nadir angle" type="4" num="1"/>
+	<rec name="Electronic antenna squint angle" type="4" num="1"/>
+	<rec name="Mechanical antenna squint angle" type="4" num="1"/>
+	
+	<rec name="Slant range to 1st pixel" type="4" num="1"/>
+	<rec name="Date record window time" type="4" num="1"/>
+	<rec name="Corner coordinates" type="4" num="1"/>
+	<rec name="Platform position update flag" type="4" num="1"/>
+	<rec name="Platform latitude" type="4" num="1"/>
+	<rec name="Platform longitude" type="4" num="1"/>
+	<rec name="Platform altitude" type="4" num="1"/>
+	<rec name="Platform speed" type="4" num="1"/>
+	<rec name="Plaform velocity X" type="4" num="1"/>
+	<rec name="Plaform velocity Y" type="4" num="1"/>
+	<rec name="Plaform velocity Z" type="4" num="1"/>
+	<rec name="Plaform acceleration X" type="4" num="1"/>
+	<rec name="Plaform acceleration Y" type="4" num="1"/>
+	<rec name="Plaform acceleration Z" type="4" num="1"/>
+	<rec name="Platform track" type="4" num="1"/>
+	<rec name="Platform heading" type="4" num="1"/>
+	<rec name="Platform pitch" type="4" num="1"/>
+	<rec name="Platform roll" type="4" num="1"/>
+	<rec name="Platform yaw" type="4" num="1"/>
+	<!-- Auxillary data -->
+	<rec name="skip" type="0" num="220"/>
+</ceos>

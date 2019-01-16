@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/>
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Ascii code character" type="1" num="2"/>
+	<rec name="skipBytes" type="0" num="2"/>
+    <rec name="Specification number" type="1" num="12"/>
+    <rec name="Specification revision number" type="1" num="2"/>
+    <rec name="Record format revision number" type="1" num="2"/>
+    <rec name="Software version number" type="1" num="12"/>
+	<rec name="Physical volume ID" type="1" num="16"/>
+    <rec name="Logical volume ID" type="1" num="16"/>
+    <rec name="Volume set ID" type="1" num="16"/>
+	<rec name="skipBytes" type="0" num="6"/>
+    <rec name="Volume number of this volume descriptor record" type="2" num="2"/>
+    <rec name="Number of first file following the volume directory file" type="2" num="4"/>
+    <rec name="Logical volume number in volume set" type="2" num="4"/>
+	<rec name="Physical volume number in volume set" type="2" num="4"/>
+    <rec name="Logical volume preparation date" type="1" num="8"/>
+    <rec name="Logical volume preparation time" type="1" num="8"/>
+    <rec name="Logical volume preparation country" type="1" num="12"/>
+    <rec name="Logical volume preparing agency" type="1" num="8"/>
+    <rec name="Logical volume preparing facility" type="1" num="12"/>
+    <rec name="Number of filepointer records" type="2" num="4"/>
+    <rec name="Number of records" type="2" num="4"/>
+	<rec name="skipBytes" type="0" num="92"/>
+	<rec name="Product ID" type="1" num="8"/>
+	<rec name="skipBytes" type="0" num="92"/>	
+</ceos>

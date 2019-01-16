@@ -1,0 +1,22 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envformslc')
+package = envformslc['PACKAGE']
+project = envformslc['PROJECT']
+subproject = envformslc['SUB_PROJECT']
+build = envformslc['PRJ_SCONS_BUILD'] + '/' + package +  '/' + project + '/' + subproject +'/include'
+envformslc.AppendUnique(CPPPATH = [build])
+listFiles = ['formslcmodule.h','formslcmoduleFortTrans.h']
+envformslc.Install(build,listFiles)
+envformslc.Alias('install',build)

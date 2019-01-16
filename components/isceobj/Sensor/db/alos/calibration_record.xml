@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="alos">
+	<rec name="skipBytes" type="0" num="8"/>
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Calibration Data Record sequence number" type="2" num="4"/>
+	<rec name="Number of valid samples" type="2" num="4"/>
+	<rec name="Start datetime of chirp replica data" type="1" num="17"/>
+	<rec name="Stop datetime of chirp replica" type="1" num="17"/>
+	<rec name="Setting ATT value for Calibrator" type="2" num="4"/>
+	<rec name="ALC of calibrator" type="2" num="1"/>
+	<rec name="AGC or MGC" type="2" num="1"/>
+	<rec name="Range pulse length" type="2" num="4"/>
+	<rec name="Band width" type="2" num="4"/>
+	<rec name="Sampling Frequency" type="2" num="4"/>
+	<rec name="Quantity bit number" type="2" num="4"/>
+	<rec name="Number of chirp replica data groups" type="2" num="4"/>
+	<rec name="Number of chirp replica sample data" type="2" num="4"/>
+	<!-- ... -->
+</ceos>

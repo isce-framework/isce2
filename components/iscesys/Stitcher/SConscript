@@ -1,0 +1,26 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python3
+import os
+
+Import('enviscesys')
+envStitcher = enviscesys.Clone()
+project = 'Stitcher'
+envStitcher['PROJECT'] = project
+package = envStitcher['PACKAGE']
+Export('envStitcher')
+install = os.path.join(envStitcher['PRJ_SCONS_INSTALL'],package,project)
+
+initFile = '__init__.py'
+listFiles = ['Stitcher.py',initFile]
+envStitcher.Install(install,listFiles)
+envStitcher.Alias('install',install)
+envStitcher['HELP_BUILDER'](envStitcher,'__init__.py',install)

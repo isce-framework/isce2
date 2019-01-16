@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+import os
+import sys
+
+Import('envcontrib')
+envsplit = envcontrib.Clone()
+package = envsplit['PACKAGE'] # 'contrib'
+project = 'splitSpectrum'
+envsplit['PROJECT'] = project
+envsplit['SPLITSPECTRUM_OBJ_LIST'] = []
+Export('envsplit')
+
+SConscript('include/SConscript') # Add .h includes
+SConscript('src/SConscript') # Build shared objects to install/components/contrib/splitSpectrum and static library to build/libs
+
+if envsplit['CYTHON3']:
+    print("cython3 found.")
+    SConscript('pyx/SConscript') # Cythonize splitSpectrum.pyx and build Python module ot
+else:
+    print("cython3 is required to build the splitSpectrum bindings.")
+    print("The splitSpectrum bindings will not be built. Please install cython3.")
+
+install_main = os.path.join(envsplit['PRJ_SCONS_INSTALL'], package, project)
+envsplit.Install(install_main,'__init__.py') # Add __init__ that will allow for remote importing from splitSpectrum Python module

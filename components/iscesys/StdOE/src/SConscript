@@ -1,0 +1,19 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envStdOE')
+install = envStdOE['PRJ_LIB_DIR']
+listFiles = ['StdOEDefaults.cpp','StdOEF.cpp','StdOE.cpp']
+libStdOE = envStdOE.Library(target = 'StdOE', source = listFiles)
+envStdOE.Install(install,libStdOE)
+envStdOE.Alias('install',install)

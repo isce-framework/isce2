@@ -1,0 +1,20 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envLineAccessor')
+listFiles = ['ImageAccessor.cpp','LineAccessorF.cpp','LineAccessor.cpp']
+inst = envLineAccessor['PRJ_LIB_DIR']
+envLineAccessor.AppendUnique(LIBPATH = envLineAccessor['PRJ_LIB_DIR'])
+libPath = [envLineAccessor['LIBPATH']]
+libLineAccessor = envLineAccessor.Library(target = 'LineAccessor', source = listFiles)
+envLineAccessor.Install(inst,libLineAccessor)

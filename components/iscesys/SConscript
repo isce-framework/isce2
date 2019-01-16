@@ -1,0 +1,56 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#!/usr/bin/env python
+
+
+import os
+import sys
+Import('envcomponents')
+package = 'components/iscesys'
+enviscesys = envcomponents.Clone()
+enviscesys['PACKAGE'] = package
+install = enviscesys['PRJ_SCONS_INSTALL'] + '/' + package 
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+listFiles = [initFile]
+enviscesys.Install(install,listFiles)
+enviscesys.Alias('install',install)
+Export('enviscesys')
+Compatibility = 'Compatibility/SConscript'
+SConscript(Compatibility)
+DebugLiner = 'DebugLiner/SConscript'
+SConscript(DebugLiner)
+Component = os.path.join('Component','SConscript')
+SConscript(Component)
+StdOEL = 'StdOEL/SConscript'
+SConscript(StdOEL)
+StdOE = 'StdOE/SConscript'
+SConscript(StdOE)
+SConscript('DateTimeUtil/SConscript')
+ImageUtil = 'ImageUtil/SConscript'
+SConscript(ImageUtil)
+ImageApi = 'ImageApi/SConscript'
+SConscript(ImageApi)
+Parsers = 'Parsers/SConscript'
+SConscript(Parsers)
+DictUtils = 'DictUtils/SConscript'
+SConscript(DictUtils)
+Dumpers = 'Dumpers/SConscript'
+SConscript(Dumpers)
+Display = 'Display/SConscript'
+SConscript(Display)
+SConscript('Traits/SConscript')
+SConscript('DataRetriever/SConscript')
+SConscript('Stitcher/SConscript')
+SConscript('DataManager/SConscript')

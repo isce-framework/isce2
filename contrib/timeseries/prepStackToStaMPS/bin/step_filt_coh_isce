@@ -1,0 +1,107 @@
+#!/bin/tcsh -f
+
+# Script which filters an interferogram and uses the filtered interferogram to compute coherence
+# Option an argument "y" can be given to perform this operation for multi-looked data
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+set CURDIR = `pwd` 
+echo $CURDIR
+
+# First argument controls if its multilook data
+if ($#argv == 1) then
+     set multi_look_flag = $argv[1]
+
+     # Check if a valid argument was given
+     if ("$multi_look_flag" != "y"  && "$multi_look_flag" != "n") then
+          echo  first argument needs to be either "y" for multi-look data or "n" for original raw data
+          exit 1
+     endif
+     if ("$multi_look_flag" == "y") then
+          echo "Apply on multi-looked data"
+     endif
+else
+    set multi_look_flag = n
+endif
+
+# check if existing files needs to be overwritten or not
+set input = input_file
+set counter = 1 
+while ($counter  <= 10) 
+    if ( ! -f $input ) then
+        set input = ../$input
+    else
+        @ counter = $counter + 10000
+    endif
+    @ counter = $counter + 1
+end                       
+
+set overwrite = 1
+if ( -f $input ) then
+    set overwrite_flag = `grep overwrite $input | awk '{print $2}'`
+    if ( $overwrite_flag == "n" ) then    
+        # do not overwrite existing the files
+        set overwrite = 0
+        echo Will not overwrite existing files 
+    endif
+endif
+        
+
+
+# default filenames
+set file_in = isce_minrefdem.int
+set file_out = isce_minrefdem_filt.int 
+set file_coh_out = isce_minrefdem_filt.coh
+
+# in case of multi-looked data then get the filename
+if ( "$multi_look_flag" == "y") then
+    set r_looks = `grep range_looks $input | awk '{print $2}'`
+    set ar = `grep aspect_ratio $input | awk '{print $2}'`
+    set a_looks = `grep azimuth_looks $input | awk '{print $2}'`
+    if ( $a_looks != "" ) then
+        echo "az_looks will over-rule the ar to calculate the number of az_looks" 
+    else
+        # computing the azimuth looks based on the aspect ratio
+        @ a_looks = $ar * $r_looks            
+    endif
+    
+    # defining the output name based on the number of looks taken
+    set filename_out = `basename $file_in | cut -d. -f1`
+    set extension_out = `basename $file_in | cut -d. -f2`
+    set file_in = {$filename_out}_{$r_looks}l.{$extension_out}
+    set file_out = {$filename_out}_filt_{$r_looks}l.{$extension_out}
+    set file_coh_out = {$filename_out}_filt_{$r_looks}l.coh
+endif
+
+# retrieve the current slave data folder being processed
+set date = `basename $CURDIR`
+
+# I included to be in the slave data folder, such one can reprocess easily without the need to manually specify the inputs
+# move dir above
+cd ..
+
+# making the interferometric pair
+# skip the run in case the user does not want to overwrite files     
+if ( -f $date/$file_out & -f $date/$file_coh_out & $overwrite == 0 ) then
+    # nothing to be done, file exist and user does not want to overwrite it
+    echo $file_out and $file_coh_out exist, will not overwrite on user request
+else
+    #make sure to update the vrt file as it could have wrong meta data                                 #
+    #    cd $date
+    #   rm ${file_in}.vrt
+    #   isce2gis.py vrt -i $file_in
+    #   cd ..
+
+    echo FilterAndCoherence.py -i $date/$file_in -f $date/$file_out -c $date/$file_coh_out  -s 0.6  >> processing.log
+    echo FilterAndCoherence.py -i $date/$file_in -f $date/$file_out -c $date/$file_coh_out -s 0.6
+    FilterAndCoherence.py -i $date/$file_in -f $date/$file_out -c $date/$file_coh_out -s 0.6
+endif
+

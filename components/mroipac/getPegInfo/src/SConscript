@@ -1,0 +1,19 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009-2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envgetPegInfo')
+install = envgetPegInfo['PRJ_LIB_DIR'] 
+listFiles = ['get_peg_info.F','get_peg_infoState.F','get_peg_infoSetState.F','get_peg_infoAllocateDeallocate.F','get_peg_infoGetState.F']
+lib = envgetPegInfo.Library(target = 'get_peg_info', source = listFiles)
+envgetPegInfo.Install(install,lib)
+envgetPegInfo.Alias('install',install)

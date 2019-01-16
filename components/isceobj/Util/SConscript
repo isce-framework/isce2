@@ -1,0 +1,59 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envisceobj')
+envUtil = envisceobj.Clone()
+project = 'Util'
+package = envUtil['PACKAGE'] = os.path.join(envisceobj['PACKAGE'], project)
+envUtil['PROJECT'] = project
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+    fout = open(initFile,"w")
+    fout.write("#!/usr/bin/env python")
+    fout.close()
+
+install = os.path.join(envUtil['PRJ_SCONS_INSTALL'], package)
+listFiles = ['decorators.py', 'mathModule.py', 'py2to3.py', 'StringUtils.py', initFile]
+envUtil.Install(install,listFiles)
+envUtil.Alias('install',install)
+
+Export('envUtil')
+srcScons = os.path.join('src', 'SConscript')
+SConscript(srcScons,variant_dir = os.path.join(envUtil['PRJ_SCONS_BUILD'],package,'src'))
+includeScons = os.path.join('include', 'SConscript')
+SConscript(includeScons)
+
+offoutliers = os.path.join('offoutliers', 'SConscript')
+SConscript(offoutliers)
+
+geo = os.path.join('geo', 'SConscript')
+SConscript(geo)
+
+estimateoffsets = os.path.join('estimateoffsets', 'SConscript')
+SConscript(estimateoffsets)
+
+simamplitude = os.path.join('simamplitude', 'SConscript')
+SConscript(simamplitude)
+
+denseoffsets = os.path.join('denseoffsets', 'SConscript')
+SConscript(denseoffsets)
+
+hist = os.path.join('histogram', 'SConscript')
+SConscript(hist)
+
+SConscript(os.path.join('Library', 'SConscript'),
+    variant_dir=os.path.join(envUtil['PRJ_SCONS_BUILD'], package, 'Library', 'src'))
+test = os.path.join('test', 'SConscript')
+SConscript(test)
+imutil = os.path.join('ImageUtil','SConscript')
+SConscript(imutil)

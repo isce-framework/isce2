@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envSnaphu')
+package = envSnaphu['PACKAGE']
+project = envSnaphu['PROJECT']
+build = envSnaphu['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envSnaphu.AppendUnique(CPPPATH = [build])
+listFiles = ['snaphumodule.h','snaphu.h','snaphu_cs2types.h']
+envSnaphu.Install(build,listFiles)
+envSnaphu.Alias('install',build)

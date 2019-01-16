@@ -1,0 +1,117 @@
+#!/bin/tcsh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+set curdir = `pwd` 
+echo $curdir
+
+# getting the datatype to be processed
+set datasource = `grep source_data input_file | awk '{print $2}'`
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`
+set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`
+
+# adding the overwrite_flag, set by default to overwrite files
+if ( "$overwrite_flag" == "" ) then
+    set overwrite_flag = y
+endif
+if ( "$overwrite_flag" != "y" & "$overwrite_flag" != "yes" & "$overwrite_flag" != "n" & "$overwrite_flag" != "no") then
+    set overwrite_flag = y
+    echo "Did not recognize the overwrite option, will set to overwrite files..."
+endif
+if ( "$overwrite_flag" == "no") then
+    set overwrite_flag = n
+endif
+
+if ("$datasource" != "slc_stack_burst") then
+    ## default filenames when starting from scratch with isce stack generation:
+    # this is when one start processing with isce from scratch
+    set los_file = $curdir/master/geom/los.rdr$geom_suffix
+    set lon_file = $curdir/master/geom/lon.rdr$geom_suffix
+    set lat_file = $curdir/master/geom/lat.rdr$geom_suffix
+    set dem_file = $curdir/master/geom/z.rdr$geom_suffix
+    # setting the output filenames
+    set heading_file_out = $curdir/heading.raw
+    set incangle_file_out = $curdir/inc_angle.raw
+    set lon_file_out = $curdir/lon.raw
+    set lat_file_out = $curdir/lat.raw
+    set dem_file_out = $curdir/dem.raw
+    ## modification of the height filename for the SLC stack processing:
+    if ("$datasource" == "slc_stack") then
+         set dem_file = $curdir/master/geom/hgt.rdr$geom_suffix
+    endif 
+
+    # extracting the dem
+    if ( -f $dem_file_out & "$overwrite_flag" == "n" ) then
+        echo radar-coded dem file exist and will not be overwritten
+    else
+        echo extracting the radar-coded dem file
+        echo "imageMath.py -e="a_0" --a=$dem_file -o $dem_file_out -s BIL"
+        imageMath.py -e="a_0" --a=$dem_file -o $dem_file_out -s BIL
+        echo
+    endif
+    echo
+
+    # extracting the heading
+    if ( -f $heading_file_out & "$overwrite_flag" == "n" ) then
+         echo heading file and will not be overwritten
+    else
+        echo extracting the heading file
+        echo "imageMath.py -e=''-1*a_1-270'' --a=$los_file -o $heading_file_out -s BIL"
+        imageMath.py -e="-1*a_1-270" --a=$los_file -o $heading_file_out -s BIL
+        gdal_translate -a_nodata -270 -of VRT $heading_file_out $heading_file_out.vrt
+        get_mean_isce.py $heading_file_out > $curdir/heading.1.in
+        echo
+    endif
+    echo  
+
+    # extracting the inc  angles rewrite into stamps format
+    if ( -f $incangle_file_out & "$overwrite_flag" == "n" ) then
+        echo inc angle file exist and will not be overwritten
+    else
+        echo extracting the inc angle file
+        echo "imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL"
+        imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL
+        echo
+    endif
+    echo 
+
+    # getting the LOS conversion 
+    isce_los2stamps_ENU
+
+    # rewriting files into stamps format
+    if ( -f $lon_file_out & "$overwrite_flag" == "n" ) then
+        echo lon file exist and will not be overwritte
+    else
+        echo extracting isce lon file
+        echo "imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL"
+        imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL
+        echo
+    endif
+    echo
+
+    # echo rewriting isce lat into stamps format
+    if ( -f $lat_file_out & "$overwrite_flag" == "n" ) then
+        echo lat file exist and will not be overwritten
+    else
+        echo extracting isce lat file
+        echo "imageMath.py -e="a_0" --a=$lat_file -o $lat_file_out -s BIL"
+        imageMath.py -e="a_0" --a=$lat_file -o $lat_file_out -s BIL
+        echo
+    endif
+    echo
+
+else
+    # this would be the SLC stack burst option
+    echo \# BURST IMPLEMENTATION HERE \#
+    exit 1
+    # for the burst one would need to keep track of the burst numbers, 
+    # might need to re-arrange the code in a list
+endif

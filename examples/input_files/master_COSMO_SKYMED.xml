@@ -1,0 +1,31 @@
+<component>
+    <property name="HDF5">
+        <value>CSKS4_RAW_B_HI_08_HH_RA_FF_20110311162513_20110311162521.h5</value>
+    </property>
+    <property name="OUTPUT">
+        <value>20110311.raw</value>
+    </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for COSMO_SKYMED sensor. The master and slave catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: Multiple Frames
+    ========================
+
+    ISCE can automatically stitch multiple raw data frames before focusing them. Modify your HDF5 entry to a list as shown below:
+
+    <property name="HDF5">
+        <value>['FILE1.h5', 'FILE2.h5']</value>
+    </property>
+
+
+    Note 2: Doppler Centroid
+    =========================
+
+    Extensive metadata including doppler centroid information is provided with Cosmo SkyMed raw data. To use the metadata in the HDF5 file, instead of the centroid derived from the raw data itself; add the following field to "insarApp.xml" (not to the catalog file for each date).
+
+    <property name="doppler method">useDEFAULT</property>
+
+-->

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<component name="Envi">
+    <property name="IMAGEFILE">
+        <value>'ASA_IM__0CNPDE20111119_071443_000000163108_00394_50839_4852.N1'</value> <!-- image file -->
+    </property>
+    <property name="INSTRUMENTFILE">
+        <value>"ASA_INS_AXVIEC20101222_143805_20101022_000000_20141231_235959"</value> <!-- instrument file -->
+    </property>
+    <property name="ORBITFILE">
+        <value>"DOR_POR_AXVF-P20111121_014700_20111118_215526_20111120_002326"</value> <!-- orbitfile -->
+    </property>
+    <property name="OUTPUT">
+        <value>"output.raw"</value> <!-- output raw file -->
+    </property>
+</component>
+

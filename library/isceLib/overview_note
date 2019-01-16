@@ -1,0 +1,145 @@
+Update: 3/15/17
+Author: Joshua Cohen
+
+Migrated LibraryCpp to the official start of isceLib. The library gets built as the static library
+libisce.a (so that it can be linked against using '-lisce' given the LD_LIBRARY_PATH and CPPPATH are
+properly set (note potential conflicts with the isceobj/Util/Library headers on OSX systems given the
+case-insensitiity)), as well as a Python module ('import libIsce' after 'import isce'). For the static
+library, the headers are installed into the build directory's library/isceLib/include/ directory (so
+that you can link against the library outside of the scons build environment). Note that some
+restructuring was done to make the organization cleaner. Now every object in LibraryCpp all sit under
+one src/ directory (and the corresponding headers sit under one include/ directory). The .pyx files
+are still in the pyx/ directory, however now the module .pyx file is simply isceLib.pyx (instead of
+the complicated naming scheme from earlier). Finally the __init__.py file in the top-level isceLib
+directory pulls all objects from .isceLib, which is much simpler than the earlier setup.
+
+Note that this library will be extended in the future (and theoretically will be joined by roipacLib
+and stdprocLib), and is not 100% robust (though the C++ objects are robust for the most part). The
+Python modules will be cleaned up in the future, however they should work as intended!
+
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+Update: 2/15/17
+Author: Joshua Cohen
+
+As of this date, Library has been completely translated (at least the relevant objects, not any standalone
+functions with an unknown purpose) into LibraryCpp. The directory structure is similar to the original
+Library but with a more C-like organization. Additionally, SConscripts have been created and modified
+such that the library builds as a shared-object Python module (automatically through Cython) as well as a
+standard static library to link against with C++. All functions map from Python to the underlying C++
+objects (including those that modify lists and pass Python strings as const char*) and do not throw errors.
+
+Additionally, the directory structure was altered to have an additional directory (pyx/) sitting in the top
+of LibraryCpp that contains all of the .pyx files, since they do not need to be relatively-pathed to their
+corresponding objects in the library. These files (Geometry.pyx, LinAlg.pyx, Orbit.pyx, Poly1d.pyx, and
+Poly2d.pyx) have a "meta" .pyx file called libCombinedLibCpp.pyx that simply includes the other .pyx files.
+This allows for SConscript to simply Cythonize this one file and it will build in the others automatically.
+The naming is awkward, however due to some conventions of scons and Cython being only semi-compatible this
+naming scheme is entirely necessary (see pyx/naming_note for more information).
+
+Finally, there is an __init__.py file in the top level of LibraryCpp that gets built to the ISCE build
+directories. This __init__ allows for the 'from isce.components.isceobj.Util.LibraryCpp import xxx'
+statement to load objects from the library properly. This may be changed in the future (the __init__ file
+is necessary at the moment because the Python objects in the .pyx files only declare __cinit__s and not
+an accompanying __init__, and therefore if you attempt to call 'from libCombinedLibCpp import xxx' in the
+same directory as the library it will fail), but the naming is clean and similar to how other ISCE scripts
+and programs import building blocks.
+
+To manually build the LibraryCpp library, the process is somewhat simpler than below (but letting scons
+handle it automatically is the simplest option currently). To build, the steps are:
+
+  1. In each of Geometry/src, LinAlg/src, Orbit/src, Poly1d/src, Poly2d/src, build each .cpp object into
+     a shared object in the same directory (cleaner) [recommended flags: -shared -fPIC -O3], including
+     headers as needed
+
+  2. In the pyx/ folder, call 'cython libCombinedLibCpp.pyx --cplus' to generate libCombinedLibCpp.cpp
+
+  3. In the pyx/ folder, build the libCombinedLibCpp.cpp into a shared object, including headers as needed
+     (note you will also need to point to the Python.h header in addition to others)
+
+  4. In the top level of LibraryCpp, link all of the shared objects generated into a shared
+     'libCombinedLibCpp.abi3.so' library. This shared library will be importable as a Python module using
+     the __init__.py file that already exists (note: this will only work if you are in a directory higher
+     than LibraryCpp, so my recommendation is to test the manual build at the moment in the Util/ dir).
+
+Theoretically when I add the __init__() functions to the .pyx files the objects in the libCombinedLibCpp
+will be importable without needing the __init__.py in the folder, and the library itself should be
+importable in Python in the LibraryCpp directory itself.
+
+[EDIT: Just updated the .pyx files with __init__ functions (empty) such that manually building the
+library allows for importing individual objects without the __init__.py file. It also means you can
+import from the library in the same directory as the library (i.e. you don't have to go through the
+__init__.py module loader). HOWEVER, if you import directly from the library, the objects are all
+prepend-tagged with 'Py'. So Ellipsoid is really PyEllipsoid, Orbit is really PyOrbit, and so on. So
+if you import from 'isce.components.isceobj.Util.LibraryCpp', the objects do NOT have the Py tag (though
+if you check their type, they have the Py tag object underneath). If you import from the library, they
+are the Py-tagged objects.]
+
+= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = =
+
+Dated: 2/8/2017
+Author: Joshua Cohen
+
+The purpose of this new 'LibraryCpp' is to provide a new, vastly more powerful implementation of the old 'Library'.
+The end goal of this new form is to eventually create a pair of libraries. One library will be linkable to any C++
+code in the framework and provides access directly to the C++ structs/etc in the Library in one clean interface.
+The other library will be importable in Python as a part of the higher-level script framework in ISCE, but will be
+mapped directly to the C++ code underneath, at no extra cost to the user. The goal of this sub-framework is to be
+able to do something like the following:
+
+# Assume you have some Pegtrans object 'ptm', Ellipsoid object 'elp', and Peg object 'peg'...
+ptm.radarToXYZ(elp, peg)
+
+Which not only would be identical calls in Python *and* C++, but all operations happen on a C++ level, making the
+Python version run at C++ speeds! This allows for 'power users' as well as non-code-literate users to access the
+same exact power, features, and results. Simultaneously, the maintenance of the code is much easier as any
+modifications of the algorithms underneath in C++ get rebuilt with the rest of the sub-framework automatically.
+The sub-framework itself shouldn't really need any maintenance, as it really only consists of the .pyx file that
+Cython uses to map the C++ structs to Python. Adding new functions is relatively trivial, as all you need to do is
+add the new function to the .pyx (like adding a forward declaration to a header), and adding the two lines
+to the Py object definition to add the mapped function.
+
+As a proof-of-concept, this current demo has the library built with partial functionality that demos the usage. To
+use it, open Python in a dir other than the Geometry dir*, and run:
+
+    from Geometry import Ellipsoid
+    # You can use multiple constructors here:
+    # e = Ellipsoid() gives an empty Ellipsoid object (a and e2 = 0.)
+    # e = Ellipsoid(x, y) gives an Ellipsoid object with a = x and e2 = y
+    # copy constructor to be mapped soon...
+
+All functions in the Ellipsoid object will then be mapped/accessible, so you can call things like:
+
+    e.rEast(x)
+    e.latLon(...)
+    etc
+
+[NOTE: I cannot guarantee right this second that functions modifying lists/arrays will work, though they should...]
+* If you are in the Geometry dir, you can use 'from Geometry import PyEllipsoid' instead of 'Ellipsoid'. The
+'Ellipsoid' mapping comes from the __init__.py in the Geometry dir, for naming consistency sake with the C++ structs.
+
+Building the library is fairly simple, and requires no special additions other than a single line to call the
+cython builder on the .pyx file. To build everything into the Geometry library:
+
+// In LibraryCpp/LinAlg -
+g++ -shared -fPIC -O3 -Iinclude/ -c src/LinAlg.cpp
+
+// In LibraryCpp/Geometry -
+cython Geometry.pyx --cplus
+g++ -shared -fPIC -O3 -Iinclude/ -I[path-to-Python.h] -c Geometry.cpp
+g++ -shared -fPIC -O3 -Iinclude/ -I../LinAlg/include/ -c src/Ellipsoid.cpp -o src/Ellipsoid.o
+g++ -shared -fPIC -O3 -Iinclude/ -I../LinAlg/include/ -c src/Peg.cpp -o src/Peg.o
+g++ -shared -fPIC -O3 -Iinclude/ -I../LinAlg/include/ -c src/Pegtrans.cpp -o src/Pegtrans.o
+g++ -shared -fPIC -O3 -Iinclude/ -I../LinAlg/include/ -c src/Position.cpp -o src/Position.o
+g++ -shared -fPIC -O3 -Iinclude/ -I../LinAlg/include/ -I[path-to-Python.h] -o Geometry.abi3.so src/*.o Geometry.o ../LinAlg/LinAlg.o
+
+For safety's sake, there's an 'ext/' folder in Geometry/ that I'd highly recommend calling:
+
+// In LibraryCpp/Geometry -
+mv Geometry.pyx Geometry.cpp Geometry.o ext/
+
+So that only Geometry.abi3.so is in the Geometry/ dir.
+
+Testing will continue to add functionality and to make sure that everything runs smoothly and simply! Eventually the
+goal is to have all of Library translated to LibraryCpp in one unified module for Python and C++!
+

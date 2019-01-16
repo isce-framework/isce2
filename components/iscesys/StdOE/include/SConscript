@@ -1,0 +1,21 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envStdOE')
+package = envStdOE['PACKAGE']
+project = envStdOE['PROJECT']
+build = envStdOE['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envStdOE.AppendUnique(CPPPATH = [build])
+listFiles = ['StdOE.h','StdOEF.h','StdOEFFortTrans.h','StdOEmodule.h']
+envStdOE.Install(build,listFiles)
+envStdOE.Alias('install',build)

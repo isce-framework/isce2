@@ -1,0 +1,4 @@
+gcc -o test  -I/Users/agram/tools/ISCE3_latest/build/components/isceobj/Util/Library/include test.c -L/Users/agram/tools/ISCE3_latest/build/libs -lcombinedLib -lm 
+
+
+gfortran -o testf -I/Users/agram/tools/ISCE3_latest/build/mods test.f -L/Users/agram/tools/ISCE3_latest/build/libs -lcombinedLib -lm

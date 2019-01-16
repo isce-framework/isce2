@@ -1,0 +1,31 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009-2012  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('enviscesys')
+envCompatibility = enviscesys.Clone()
+project = 'Compatibility'
+package = envCompatibility['PACKAGE']
+envCompatibility['PROJECT'] = project
+Export('envCompatibility')
+install = os.path.join(envCompatibility['PRJ_SCONS_INSTALL'],package,project)
+
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+listFiles = ['Compatibility.py',initFile]
+envCompatibility.Install(install,listFiles)
+envCompatibility.Alias('install',install)
+

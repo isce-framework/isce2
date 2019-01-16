@@ -1,0 +1,38 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envImageApi')
+envImageApi.AppendUnique(LIBPATH = envImageApi['PRJ_LIB_DIR'])
+libPath = [envImageApi['LIBPATH']]
+#listFiles = ['fortranSrc.F'] 
+#lib = envImageApi.Library(target = 'fortranSrc', source = listFiles)
+#inst = envImageApi['PRJ_LIB_DIR']
+#envImageApi.Install(inst,lib)
+#idir = envImageApi.Alias('install-dir',inst)
+linkLibs = ['Factories','InterleavedAccessor','DataAccessor']
+#linkLibs.extend([envImageApi['LIBS']])#add fortran library gfortran
+driverCC = envImageApi.Program(target = 'driver.ex' , source = 'driver.cpp', LIBS = linkLibs, LIBPATH = libPath)
+#driverF = envImageApi.Program(target = 'driverF.ex' , source = 'driverF.F', LIBS = linkLibs, LIBPATH = libPath)
+envImageApi.NoClean(driverCC)
+#envImageApi.NoClean(driverF)
+#if the destination directory is the same as the current one, there is no need to invoke the Install (which does simply a copy to the specified dir).
+#if the Install is called explicity like 
+# a = envImageApi.Program(source = 'driverCC.cpp', LIBS = linkLibs, LIBPATH = libPath)
+# envImageApi.Install('../test',a)
+# envImageApi.Alias('install','../test')
+#it will give an error because it will try to copy test/driverCC (which is the target "a") in ../test/driverCC which is the same file.
+iloc = envImageApi.Alias('install-local','../test')
+#envImageApi.LoadableModule(target = 'fortranSrc.abi3.so', source = 'fortranSrcmodule.cpp', LIBS = linkLibs, LIBPATH = libPath)
+envImageApi.Alias('install',[iloc])
+
+

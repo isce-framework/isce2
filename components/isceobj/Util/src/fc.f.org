@@ -1,0 +1,29 @@
+c****************************************************************
+
+	real*8 function fc(r_tsp)
+
+       	implicit none
+
+c	INPUT VARIABLES:
+        real*8 r_tsp               !time since periapsis
+	real*8 tpv(3)
+        real*8 pos(3)
+        real*8 vel(3)
+        real*8 los_v(3)
+
+c   	OUTPUT VARIABLES: none
+
+c	LOCAL VARIABLES:
+        real*8 r_sc_look, r_sc_az, r_az
+	common /sc_point/ r_sc_look, r_sc_az
+	common /target/ tpv
+
+	call orrmread1(16,r_tsp,pos,vel,0)
+	call lincomb(-1.d0,pos,1.d0,tpv,los_v)
+	call getangs(pos,vel,los_v,r_az,r_sc_look)
+	fc = r_az - r_sc_az
+	return
+
+        end  
+
+ 

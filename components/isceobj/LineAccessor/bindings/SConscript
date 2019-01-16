@@ -1,0 +1,25 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+#!/usr/bin/env python
+import os
+Import('envLineAccessor')
+package = envLineAccessor['PACKAGE']
+project = envLineAccessor['PROJECT']
+install = envLineAccessor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+envLineAccessor.AppendUnique(LIBPATH = envLineAccessor['PRJ_LIB_DIR'])
+libPath = [envLineAccessor['LIBPATH']]
+linkLibs = ['LineAccessor']
+linkLibs.extend([envLineAccessor['LIBS']])#which fortran and g++ libraries
+lib = envLineAccessor.LoadableModule(target = 'LineAccessor.abi3.so', source = 'LineAccessormodule.cpp', LIBS = linkLibs, LIBPATH = libPath)
+envLineAccessor.Install(install,lib)
+envLineAccessor.Alias('install',install)
+

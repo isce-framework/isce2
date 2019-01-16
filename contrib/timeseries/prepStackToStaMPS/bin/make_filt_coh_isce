@@ -1,0 +1,58 @@
+#!/bin/tcsh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+set nonomatch 
+set WORKDIR = $cwd
+
+# First argument controls if its multilook data
+if ($#argv == 1) then 
+     set multi_look_flag = $argv[1]
+
+     # Check if a valid argument was given
+     if ("$multi_look_flag" != "y"  && "$multi_look_flag" != "n") then
+  	  echo  first argument needs to be either "y" for multi-look data or "n" for original raw data
+          exit 1
+     endif
+     echo "Apply on multi-looked data"
+else
+    set multi_look_flag = n
+endif
+
+# Second argument controls the list to be computed otherwize all the date folders
+if ($#argv == 2) then # DB
+        set list = $argv[2]
+        echo Own list given
+        echo $list
+else
+        set list = make_ifgs.list
+        if (! -e $list) then
+    		\ls -d [0-9]*[0-9] | gawk 'BEGIN {FS="/"} {print $(NF)}' > make_ifgs.list
+        endif
+        echo List generated
+        echo $list
+endif
+
+
+foreach dir(`cat $list`)
+   echo " "
+   echo " " 
+   echo "Entering : $dir"
+   cd $dir
+   step_filt_coh_isce $multi_look_flag
+   cd $WORKDIR
+
+end
+
+# checking if the files are consistent in size
+#ls -lh [0-9]*/cint*filt*raw
+#ls -lh [0-9]*/cint*filt*coh
+

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<xsd:include schemaLocation="listTypes.xsd"></xsd:include>
+	<xsd:complexType name="PositionStateVectorType">
+        <xsd:annotation>
+        	<xsd:documentation>To store an orbit ephemeris state vector - time, position and velocity</xsd:documentation>
+        </xsd:annotation>
+        <xsd:sequence>
+			<xsd:element name="Time" type="xsd:dateTime" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+			<xsd:element name="Position" type="Double3Tuple" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+			<xsd:element name="Velocity" type="Double3Tuple" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="OrbitType">
+		<xsd:annotation>
+			<xsd:documentation>
+				To store a list of state vectors and associated metadata
+			</xsd:documentation>
+		</xsd:annotation>
+		<xsd:sequence>
+			<xsd:element name="StateVectors" type="PositionStateVectorListType">
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="Quality" type="xsd:string"></xsd:attribute>
+		<xsd:attribute name="CoordinateSystem" type="xsd:string">
+			<xsd:annotation>
+				<xsd:documentation>Should be a GDAL compatible string- e.g, EPSG:4326 for the standard WGS84 ellipsoid</xsd:documentation>
+			</xsd:annotation></xsd:attribute>
+	</xsd:complexType>
+
+	<xsd:complexType name="AttitudeStateVectorType">
+		<xsd:sequence>
+			<xsd:element name="Time" type="xsd:dateTime" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+			<xsd:element name="EulerAngles" type="Double3Tuple" minOccurs="1" maxOccurs="1">
+			</xsd:element>
+			<xsd:element name="Quaternions" type="Double4Tuple" minOccurs="1" maxOccurs="1"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="AttitudeType">
+		<xsd:sequence>
+			<xsd:element name="StateVectors" type="AttitudeStateVectorType"></xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="Convention" type="xsd:string"></xsd:attribute>
+		<xsd:attribute name="Quality" type="xsd:string"></xsd:attribute>
+	</xsd:complexType>
+
+
+	<xsd:complexType name="PositionStateVectorListType">
+		<xsd:sequence>
+			<xsd:element name="StateVector" type="PositionStateVectorType" maxOccurs="unbounded"></xsd:element>
+		</xsd:sequence>
+	</xsd:complexType>
+</xsd:schema>

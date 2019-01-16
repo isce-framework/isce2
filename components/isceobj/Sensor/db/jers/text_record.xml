@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="jers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Ascii code character" type="1" num="2"/>
+	<rec name="Continuation flag" type="1" num="2"/>
+	<rec name="Product type specifier" type="1" num="40"/>
+    <rec name="Location and datetime of product creation" type="1" num="60"/>
+    <rec name="Physical volume identification" type="1" num="40"/>
+    <rec name="Scene identification" type="1" num="40"/>
+    <rec name="Scene location" type="1" num="40"/>
+	<rec name="skipBytes" type="0" num="124"/>	
+</ceos>

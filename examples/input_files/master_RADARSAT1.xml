@@ -1,0 +1,61 @@
+<component>
+    <property name="IMAGEFILE">
+        <value>data/20041017.raw</value>
+    </property>
+    <property name="LEADERFILE">
+        <value>data/20041017.ldr</value>
+    </property>
+    <property name="OUTPUT">
+        <value>20041017.raw</value>
+    </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for Radarsat1 sensor. The master and slave catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 0: Experimental support
+    =============================
+
+    Support for Radarsat-1 is currently experimental. ISCE is primarily designed to deal with data from modern sensors with reliable orbit information.
+
+    Note 1: Format and source of data
+    ==================================
+
+    ISCE can currently only handle RADARSAT-1 in CEOS format available from UNAVCO / WInSAR. We do not support ASF's STF format yet.
+
+
+    Note 2: Doppler centroid
+    =========================
+
+    RADARSAT-1 data typically are characterized by non-zero doppler ambiguities. Default ISCE processing assumes that the doppler centroids lie between -0.5 and 0.5 PRF. However, UNAVCO provides a parameter file with the doppler centroid information in it. To use this information, add the following tag to the catalog file
+
+    <property name="PARFILE">
+        <value>data/20041017.par</value>
+    </property>
+
+    and change the doppler method in insarApp.xml to useDEFAULT.
+
+    <property name="doppler method">
+        <value>useDEFAULT</value>
+    </property>
+
+    
+    Note 3: Multiple frames
+    =======================
+
+    ISCE does not support stitching of multiple Radarsat-1 frames currently.
+
+
+    Note 4: JPL NAIF SPICE toolkit
+    ===============================
+
+    Radarsat-1 state vectors are provided in ECI coordinates. Without rebuilding the wheel, we use JPL's NAIF toolbox through the SpiceyPy bindings (see README.txt in the main directory) to handle the coordinate transforms. Make sure you have the SPICE executables (especially mkspk) in your path as well.
+
+
+    Note 5: Offset estimation methods
+    =================================
+
+    The orbit quality for Radarsat-1 is in general poor compared to other sensors. You can modify the default offset estimation method to ampcor or nstage to coregister the images, if the default offsetprf method fails.
+
+-->

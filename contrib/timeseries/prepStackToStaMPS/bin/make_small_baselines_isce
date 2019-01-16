@@ -1,0 +1,183 @@
+#!/bin/tcsh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2016 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# generate the amplitude products
+set amplitude_flag=n
+
+set PRG = `basename "$0"`
+set AUT = "David Bekaert, January 2016"
+echo "$PRG $AUT"
+echo " "
+
+# working directory
+set WORKDIR=$cwd
+
+# checking the list for which the SB needs to be made
+if ($#argv == 1) then
+        set list = $argv[1]
+        echo List given as input
+        echo $list
+else
+        set list = small_baselines.list
+endif
+
+if (! -e $list ) then
+    echo $list file does not exist, you need to generate this first. 
+    echo Do this manually where you provide an interferogram on each line as: master_YYYYMMDD slave_YYYYMMDD  
+    echo Or use some scripts e.g. run:
+    echo \> mt_extract_info_isce \(in case you did not run PS before\)
+    echo \> matlab
+    echo \>\> ps_load_info
+    echo \>\> sb_find or sb_find_delaunay
+    echo
+    exit 1
+endif
+
+# check if the SMALL_BASELINE dir already exists
+if (! -e SMALL_BASELINES) then
+    mkdir SMALL_BASELINES
+endif
+set SB_DIR = $WORKDIR/SMALL_BASELINES
+
+# check if there is a fixed suffix for the slc names
+set slc_suffix = `grep slc_suffix  input_file | awk '{print $2}'`
+if ($slc_suffix != "") then
+    echo SLC has a suffix as: $slc_suffix
+endif
+
+
+# quick check to see if the SM set-up was run before
+if (! -e master) then
+    echo Looks like you did not run the SM processing or SM set-up before.
+    echo 
+    exit 1
+endif
+
+
+# getting the tpye of data, in case the data is already pre-processed as a stack
+set datasource = `grep source_data input_file | awk '{print $2}'`
+if ($datasource == "slc_stack") then
+    echo Looks like an SLC stack is specified
+    # check if there is an slc stack path specified
+    set slc_stack_path = `grep slc_stack_path input_file | awk '{print $2}'`
+    # check the master date 
+    set masterdate = `grep slc_stack_master input_file | awk '{print $2}'`
+    # give message in case not specified
+    if (( "$slc_stack_path" == "" ) || ( "$masterdate" == "" ))  then
+        echo Need to define:
+        echo \- slc_stack_path as the path to the slc\'s
+        echo \- slc_stack_master as the master of the \"NEW\" SM network as YYYYMMDD. This does not need to be the master used to generate the stack
+        echo
+        exit 1
+    endif
+
+    # make sure the slash is added in case the variable is not empty
+    if ($slc_stack_path != "") then    
+        set slc_stack_path = `echo ${slc_stack_path}/`
+        echo Stack path is: $slc_stack_path
+    endif
+
+else
+    # Getting the master date information 
+    basename `ls master/[0-9]*[0-9].slc$slc_suffix` | gawk '{print substr($0,1,8)}' > tmp.master
+    set masterdate = `cat tmp.master`
+    rm tmp.master
+endif
+
+# output the master date
+echo
+echo SM: Master Date = $masterdate 
+echo 
+
+# loop over the set of SB interferogram to be made
+echo Looping over the interferogram list now: 
+set interferogram_number = 1
+while ($interferogram_number  <= `cat $WORKDIR/$list | wc -l`)
+   set interferogram = `cat $WORKDIR/$list | head -$interferogram_number | tail -1`
+   echo $interferogram
+
+   # splitting into master and slave
+   set master = `echo $interferogram | awk '{split($0,a," "); print a[1]'}`
+   set slave =  `echo $interferogram | awk '{split($0,a," "); print a[2]'}`
+
+   # check if the interferogram directoy needs to be made
+   set IFG_DIR = $SB_DIR/$master"_"$slave
+   if (! -e $IFG_DIR) then
+       mkdir $IFG_DIR
+   endif
+    
+   # retrieving the master and slave SLC name
+   if ($datasource == "slc_stack") then
+        # for and pre-processed SLC stack, the structure is YYYYMMDD/YYYYMMDD.slc, with the SM master assumed to be in master/yyyymmdd.slc
+        set master_slc = ${slc_stack_path}$master/$master.slc$slc_suffix
+        set slave_slc = ${slc_stack_path}$slave/$slave.slc$slc_suffix
+    else if ($datasource == "slc_stack_burst") then
+        echo TO BE IMPLEMENTED
+        echo
+        exit 1
+    else
+        # the format when processing the stack using isce2stamps
+        # check if the master of the SB interferogram master is the SM master as these have a different directory  
+        if ($master == $masterdate) then
+            set master_slc = master/$masterdate.slc$slc_suffix
+        else
+            set master_slc = $master/coreg_fine/coreg.slc
+        endif
+        if ($slave == $masterdate) then
+            set slave_slc = master/$masterdate.slc$slc_suffix
+        else  
+            set slave_slc = $slave/coreg_fine/coreg.slc
+        endif
+
+
+   endif
+   set save_ifg = $IFG_DIR/isce_minrefdem.int
+
+   # store the information on how isce will be called
+   echo "imageMath.py -e='a*conj(b)' --a=$master_slc --b=$slave_slc -o $save_ifg -t CFLOAT -s BIP" >> processing_SB.log
+   echo "imageMath.py -e='a*conj(b)' --a=$master_slc --b=$slave_slc -o $save_ifg -t CFLOAT -s BIP"
+   imageMath.py -e='a*conj(b)' --a=$master_slc --b=$slave_slc -o $save_ifg -t CFLOAT -s BIP
+
+
+   # making the amplitude file
+   if ( "$amplitude_flag" == "y") then
+       set save_ampl = $IFG_DIR/isce_minrefdem.amp
+       # making the amplitude for the ifgs, for ISCE the amp is a BIP file typically
+       echo "imageMath.py -e='abs(a);abs(b)' --a=$master_slc --b=$slave_slc -o $save_ampl -t FLOAT -s BIP" >> processing_SB.log
+       echo "imageMath.py -e='abs(a);abs(b)' --a=$master_slc --b=$slave_slc -o $save_ampl -t FLOAT -s BIP"
+       imageMath.py -e='abs(a);abs(b)' --a=$master_slc --b=$slave_slc -o $save_ampl -t FLOAT -s BIP
+   endif
+
+
+   # include a symbolic link for the slave and master slc.
+   # This will be used latter on to get the amplitude information from
+   cd $IFG_DIR
+   if ($datasource == "slc_stack") then
+       ln -s -f $slave_slc slave.slc
+       ln -s -f  $master_slc master.slc
+   else if ($datasource == "slc_stack_burst") then
+       echo TO BE IMPLEMENTED
+       echo
+       exit 1
+   else
+       ln -s -f ../../$slave_slc slave.slc
+       ln -s -f  ../../$master_slc master.slc
+   endif
+   cd $WORKDIR
+
+
+   @ interferogram_number = $interferogram_number + 1
+   echo 
+   echo
+end
+cd $WORKDIR
+

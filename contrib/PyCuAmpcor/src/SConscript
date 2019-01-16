@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+import sys
+
+Import('envPyCuAmpcor')
+package = envPyCuAmpcor['PACKAGE']
+project = envPyCuAmpcor['PROJECT']
+build = envPyCuAmpcor['PRJ_LIB_DIR']
+install = envPyCuAmpcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+listFiles = ['SlcImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
+             'cuArraysPadding.cu', 'cuOverSampler.cu',
+             'cuSincOverSampler.cu', 'cuDeramp.cu',
+             'cuOffset.cu', 'cuCorrNormalization.cu',
+             'cuAmpcorParameter.cu', 'cuCorrTimeDomain.cu',
+             'cuAmpcorController.cu', 'cuCorrFrequency.cu',
+             'cuAmpcorChunk.cu', 'cuEstimateStats.cu']
+
+lib = envPyCuAmpcor.SharedLibrary(target = 'PyCuAmpcor', source= listFiles, SHLIBPREFIX='')
+
+envPyCuAmpcor.Install(build,lib)
+envPyCuAmpcor.Alias('install', build)
+
+
+###custom builder for cython
+cythonBuilder = Builder(action='cython3 $SOURCE --cplus',
+                        suffix='.cpp',
+                        src_suffix='.pyx')
+
+envPyCuAmpcor.Append(BUILDERS = {'Pyx2Cpp':cythonBuilder})
+def cythonPseudoBuilder(env, src, bld, inst):
+    listFiles = env.Pyx2Cpp(src)
+    env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
+    # Need to do a little magic here to auto-detect the Numpy headers for Python 3.x (since this scons runs in a Python 2.x environment)
+    import subprocess
+    # This calls the script indicated in this directory and intercepts the stdout print() response (stripping the newline at the end). We're
+    # okay to use shell here since this is a fixed command being called (i.e. no user input)
+    np_header_path = subprocess.check_output('python3 -c "import numpy; print(numpy.get_include())"', shell=True)[:-1]
+    if sys.version_info[0] == 3:
+        np_header_path = np_header_path.decode('utf-8')
+
+    # Add the Numpy headers to the include path
+    env.Append(CPPFLAGS = ['-I'+np_header_path])
+    listFiles.append('PyCuAmpcor.so')
+    env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = True
+    lib = env.LoadableModule(target='PyCuAmpcor.abi3.so', source=listFiles, CPPDEFINES='GPU_ACC_ENABLED')
+
+    env.Install(inst, lib)
+    env.Alias('install', inst)
+    env.Install(bld, lib)
+    env.Alias('build', bld)
+
+
+envPyCuAmpcor.AddMethod(cythonPseudoBuilder, 'Cython')
+envPyCuAmpcor.Cython('PyCuAmpcor', build, install)

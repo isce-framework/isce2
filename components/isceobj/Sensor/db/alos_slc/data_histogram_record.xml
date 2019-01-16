@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="radarsat">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Record sequence number" type="2" num="4"/>
+    <rec name="SAR channel number" type="2" num="4"/>
+    <rec name="Number of histogram tables sets in this record" type="2" num="8"/>
+	<rec name="Histogram table data set size" type="2" num="8"/>
+	<rec name="Histogram descriptor" type="1" num="32"/>
+	<rec name="Records per table" type="2" num="4"/>
+	<rec name="Table sequence number" type="2" num="4"/>
+	<rec name="Total number of table bins" type="2" num="8"/>
+	<rec name="Data samples in line" type="2" num="8"/>
+	<rec name="Data samples across line" type="2" num="8"/>
+	<rec name="Group size in line" type="2" num="8"/>
+	<rec name="Groups size across line" type="2" num="8"/>
+	<rec name="Samples in line group" type="2" num="8"/>
+	<rec name="Samples across line group" type="2" num="8"/>
+	<rec name="Minimum first bin" type="5" num="16"/>
+	<rec name="Maximum last bin" type="5" num="16"/>
+	
+	<rec name="Mean sample value" type="5" num="16"/>
+	<rec name="Sample standard deviation" type="5" num="16"/>
+	<rec name="Sample value increment" type="5" num="16"/>
+	<rec name="Minimum histogram value" type="5" num="16"/>
+	<rec name="Maximum histogram valuen" type="5" num="16"/>
+	<rec name="Histogram mean value" type="5" num="16"/>
+	<rec name="Histogram standard deviation" type="5" num="16"/>
+	<rec name="Histogram table size" type="2" num="8"/>
+</ceos>

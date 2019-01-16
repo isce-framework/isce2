@@ -1,0 +1,24 @@
+import os
+Import('envisceobj')
+package = envisceobj['PACKAGE']
+project = 'Image'
+install = envisceobj['PRJ_SCONS_INSTALL'] + os.sep + package + os.sep + project
+helpList,installHelp = envisceobj['HELP_BUILDER'](envisceobj,'__init__.py',install)
+envisceobj.Install(installHelp,helpList)
+envisceobj.Alias('install',installHelp)
+
+listFiles = ['StreamImage.py',
+             'DemImage.py',	
+             'OffsetImage.py',	
+             'AmpImage.py',
+             'IntImage.py',
+             'RawImage.py',
+             'RawIQImage.py',
+             'SlcImage.py',
+             'RgImage.py',
+             'BILImage.py',
+             'UnwImage.py',
+             'Image.py',
+             '__init__.py']
+envisceobj.Install(install,listFiles)
+envisceobj.Alias('install',install)

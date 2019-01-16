@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ceos version="1.0" mission="jers">
+	<rec name="skipBytes" type="0" num="8"/> <!-- skip header -->
+	<!--rec name="Record Number" type="4" num="1"/>
+	<rec name="First Record Subtype" type="3" num="1"/>
+	<rec name="Record Type Code" type="3" num="1"/>
+	<rec name="Second Record Subtype" type="3" num="1"/>
+	<rec name="Third Record Subtype" type="3" num="1"/-->
+	<rec name="Record Length" type="4" num="1"/>
+	
+	<rec name="Ascii code character" type="1" num="2"/>
+	<rec name="skipBytes" type="0" num="2"/>
+	<rec name="File Pointer Number" type="2" num="4"/>
+    <rec name="File ID" type="1" num="16"/>
+    <rec name="File class" type="1" num="28"/>
+    <rec name="File class code" type="1" num="4"/>
+    <rec name="File datatype" type="1" num="28"/>
+	<rec name="File datatype Code" type="1" num="4"/>
+	<rec name="Number of records" type="2" num="8"/>
+    <rec name="FirstRecordLength" type="2" num="8"/>
+    <rec name="MaxRecordLength" type="2" num="8"/>
+	<rec name="RecordLengthType" type="1" num="12"/>
+    <rec name="RecordLengthTypeCode" type="1" num="4"/>
+    <rec name="FirstRecordVolumeNumber" type="2" num="2"/>
+    <rec name="FinalRecordVolumeNumber" type="2" num="2"/>
+	<rec name="ReferencedFilePortionStart" type="2" num="8"/>
+	<rec name="ReferencedFilePortionEnd" type="2" num="8"/>
+	<rec name="skipBytes" type="0" num="200"/>	
+</ceos>

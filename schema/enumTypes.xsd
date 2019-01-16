@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema targetNamespace="" elementFormDefault="qualified" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:simpleType name="LookDirection">
+        <xsd:annotation>
+        	<xsd:documentation>To indicate if the radar instrument is looking left or right, w.r.t to the heading of the platform.</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="Left"></xsd:enumeration>
+    		<xsd:enumeration value="Right"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="PassDirection">
+        <xsd:annotation>
+        	<xsd:documentation>Ascending or descending pass</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="Ascending"></xsd:enumeration>
+    		<xsd:enumeration value="Descending"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+
+    <xsd:simpleType name="ImagingMode">
+        <xsd:annotation>
+        	<xsd:documentation>The imaging mode of the radar</xsd:documentation>
+        </xsd:annotation>
+        <xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="Stripmap"></xsd:enumeration>
+    		<xsd:enumeration value="Scansar"></xsd:enumeration>
+    		<xsd:enumeration value="Tops"></xsd:enumeration>
+    		<xsd:enumeration value="StaringSpotlight"></xsd:enumeration>
+    		<xsd:enumeration value="SlidingSpotlight"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="AzimuthGridType">
+    	<xsd:annotation>
+    		<xsd:documentation>
+    			If the image is in native doppler or zero doppler
+    			coordinates
+    		</xsd:documentation>
+    	</xsd:annotation>
+    	<xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="nativeDoppler"></xsd:enumeration>
+    		<xsd:enumeration value="zeroDoppler"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="RangeGridType">
+    	<xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="slantRange"></xsd:enumeration>
+    		<xsd:enumeration value="groundRange"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+
+    <xsd:simpleType name="InterpolationMethod1D">
+    	<xsd:restriction base="xsd:string">
+    		<xsd:enumeration value="NearestNeighbor"></xsd:enumeration>
+    		<xsd:enumeration value="Linear"></xsd:enumeration>
+    		<xsd:enumeration value="Quadratic"></xsd:enumeration>
+    		<xsd:enumeration value="Cubic"></xsd:enumeration>
+    		<xsd:enumeration value="Quartic"></xsd:enumeration>
+    		<xsd:enumeration value="Quintic"></xsd:enumeration>
+    		<xsd:enumeration value="Sinc"></xsd:enumeration>
+    		<xsd:enumeration value="Unknown"></xsd:enumeration>
+    	</xsd:restriction>
+    </xsd:simpleType>
+</xsd:schema>

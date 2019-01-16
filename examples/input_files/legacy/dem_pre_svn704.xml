@@ -1,0 +1,26 @@
+<component>
+    <property name="WIDTH">
+        <value>3601</value>
+    </property>
+    <property name="FILE_NAME">
+        <value>la.dem</value>
+    </property>
+    <property name="FIRST_LONGITUDE">
+        <value>-119</value>
+    </property>
+    <property name="DATA_TYPE">
+        <value>SHORT</value>
+    </property>
+    <property name="DELTA_LATITUDE">
+        <value>-0.000277777777778</value>
+    </property>
+    <property name="ACCESS_MODE">
+        <value>read</value>
+    </property>
+    <property name="DELTA_LONGITUDE">
+        <value>0.000277777777778</value>
+    </property>
+    <property name="FIRST_LATITUDE">
+        <value>35</value>
+    </property>
+</component>

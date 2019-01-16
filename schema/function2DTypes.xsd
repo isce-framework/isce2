@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.example.org/ISCEXMLSchema"
+	xmlns:tns="http://www.example.org/ISCEXMLSchema"
+	elementFormDefault="qualified">
+	<include schemaLocation="functionTypes.xsd"></include>
+	<complexType name="Poly2DType">
+        <annotation>
+        	<documentation>To store 2D polynomials. </documentation>
+        </annotation>
+        <complexContent>
+			<extension base="tns:function2DType">
+				<sequence>
+					<element name="coeffs" type="tns:doubleListType"></element>
+					<element name="orderx" type="int" minOccurs="1"
+						maxOccurs="1">
+					</element>
+					<element name="ordery" type="int" minOccurs="1"
+						maxOccurs="1">
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="LUT2DType">
+        <annotation>
+        	<documentation>This is to store a 2D Lookup Table. E.g, a low resolution raster of baselines etc.</documentation>
+        </annotation>
+        <complexContent>
+			<extension base="tns:function2DType">
+				<sequence>
+					<element name="data" type="string"></element>
+					<element name="width" type="int" minOccurs="1"
+						maxOccurs="1">
+					</element>
+					<element name="length" type="int" minOccurs="1"
+						maxOccurs="1">
+					</element>
+					<element name="methodx" type="string" minOccurs="0"
+						maxOccurs="1">
+					</element>
+					<element name="methody" type="string" minOccurs="0"
+						maxOccurs="1">
+					</element>
+					<element name="methodxy" type="string" minOccurs="0"
+						maxOccurs="1">
+					</element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+
+	<complexType name="Separable2DType">
+        <annotation>
+        	<documentation>To store functions that are separable in two dimensions - f(x) .op. g(y) . </documentation>
+        </annotation>
+        <complexContent>
+			<extension base="tns:function2DType">
+				<sequence>
+					<element name="functionX"
+						type="tns:function1DType">
+					</element>
+					<element name="functionY"
+						type="tns:function1DType">
+					</element>
+					<element name="operation" type="string"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+	
+	<complexType name="TimeTaggedFunctionType">
+		<annotation>
+			<documentation>
+				This is a time-tagged list of 1D functions often used in
+				radar processing - (t_i, f_i(x)) . This is used for
+				storing Doppler, FMrate and slant_range_to_ground_range
+				polynomials/ LUTs.
+			</documentation>
+		</annotation>
+		<complexContent>
+			<extension base="tns:FunctionType">
+				<sequence>
+					<element name="TimeStamp" type="dateTime"></element>
+					<element name="Function" type="tns:Function1DType"></element>
+				</sequence>
+			</extension>
+		</complexContent>
+	</complexType>
+</schema>

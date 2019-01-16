@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+import os
+
+Import('envzerodop')
+envGPUampcor = envzerodop.Clone()
+package = envGPUampcor['PACKAGE']
+project = 'GPUampcor'
+envGPUampcor['PROJECT'] = project
+install = envGPUampcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+
+###Fixing current name clash in isceLib and utilLib
+util_package_path = package.split('/')
+util_package_path = [util_package_path[0],'isceobj','Util','Library','include']
+util_package_path = '/'.join(util_package_path)
+old_lib_path = os.path.join(envGPUampcor['PRJ_SCONS_BUILD'],util_package_path)
+cpp_path = []
+for path in envGPUampcor['CPPPATH']:
+    if path != old_lib_path:
+        cpp_path.append(path)
+envGPUampcor['CPPPATH'] = cpp_path
+
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+    with open(initFile, 'w') as fout:
+        fout.write('#!/usr/bin/env python3')
+
+listFiles = [initFile]
+envGPUampcor.Install(install, listFiles)
+envGPUampcor.Alias('install', install)
+Export('envGPUampcor')
+
+
+build = envGPUampcor['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
+
+envGPUampcor.Install(build,'GPUampcor.pyx')
+envGPUampcor.Alias('install', build)
+
+includeScons = os.path.join('include','SConscript')
+SConscript(includeScons)
+
+cudaScons = 'cuda/SConscript'
+SConscript(cudaScons)
+
+srcScons = os.path.join('src','SConscript')
+SConscript(srcScons,variant_dir = build)

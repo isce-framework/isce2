@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<example xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="orbitAndAttitudeTypesTest.xsd">
+  <sv>
+    <Time>2001-12-30T02:00:00.100000</Time>
+    <Position>100.0 200.0 300.0</Position>
+    <Velocity>1.0e4 -4.3e4 -72.896</Velocity>
+  </sv>
+  <timestamp>2001-12-31T12:00:00.5363565</timestamp>
+  <orbit CoordinateSystem="EPSG:4326" Quality="Precise">
+  	<StateVectors>
+  		<StateVector>
+  			<Time>2001-12-31T12:00:00</Time>
+  			<Position>1.0e6 -2.0e7 3.5e6</Position>
+  			<Velocity>112.45 -167.8989 7.345777e3</Velocity>
+  		</StateVector>
+  		<StateVector>
+  			<Time>2001-12-31T12:00:00</Time>
+  			<Position>1.0e6 -2.0e7 3.5e6</Position>
+  			<Velocity>112.45 -167.8989 7.345777e3</Velocity>
+  		</StateVector>
+  		<StateVector>
+  			<Time>2001-12-31T12:00:00</Time>
+  			<Position>1.0e6 -2.0e7 3.5e6</Position>
+  			<Velocity>112.45 -167.8989 7.345777e3</Velocity>
+  		</StateVector>
+  		<StateVector>
+  			<Time>2001-12-31T12:00:00</Time>
+  			<Position>1.0e6 -2.0e7 3.5e6</Position>
+  			<Velocity>112.45 -167.8989 7.345777e3</Velocity>
+  		</StateVector>
+  	</StateVectors>
+  </orbit>
+</example>

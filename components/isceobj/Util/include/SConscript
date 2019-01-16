@@ -1,0 +1,21 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envUtil')
+package = envUtil['PACKAGE']
+project = envUtil['PROJECT']
+build = os.path.join(envUtil['PRJ_SCONS_BUILD'], package, 'include')
+envUtil.AppendUnique(CPPPATH = [build])
+listFiles = ['config.h','FortChar.h','PowerOfTwo.h','cfft1d_jpl_c.h','utilities.h','errMessage.h']
+envUtil.Install(build,listFiles)
+envUtil.Alias('install',build)

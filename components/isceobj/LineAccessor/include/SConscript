@@ -1,0 +1,20 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                  Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (C) 2009  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#!/usr/bin/env python
+import os
+Import('envLineAccessor')
+package = envLineAccessor['PACKAGE']
+project = envLineAccessor['PROJECT']
+destDir = envLineAccessor['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include/'
+envLineAccessor.AppendUnique(CPPPATH = [destDir])
+listFiles = ['ImageAccessor.h','LineAccessorF.h', 'LineAccessormodule.h','LineAccessormoduleFortTrans.h', 'LineAccessor.h', 'LineAccessorFFortTrans.h']
+envLineAccessor.Install(target = destDir,source = listFiles)
+envLineAccessor.Alias('install',destDir)
+

@@ -1,0 +1,10 @@
+import os
+
+Import('envdoppler')
+package = envdoppler['PACKAGE']
+project = envdoppler['PROJECT']
+build = envdoppler['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/include'
+envdoppler.AppendUnique(CPPPATH = [build])
+listFiles = ['dopplermodule.h','dopplermoduleFortTrans.h']
+envdoppler.Install(build,listFiles)
+envdoppler.Alias('install',build)

@@ -1,0 +1,84 @@
+
+Testing possible unit adding grammar (TBD) using elemet (though UNIT verb would work)
+Pa       [unit] = 1             ! define base unit
+psi (Pa) [unit] = 6894.75729    ! define target unit
+
+
+
+x_km (km) {length}    =     0.001   ! x in km
+x_m (m)      = 1                  ! x in m
+x_nm (nm) = 1e9                   ! x in nm
+
+t_sec (s) {time} = 3600      ! t in seconds
+t_hour (hour) = 1            ! t in hours
+t_min (min) = 60
+
+
+
+Following line test for error condition
+OPERATOR = 
+
+y = 2
+
+Folloing lines change a reserved glyph and put the system to the test
+COMMENT = %
+z34 = 34 % z = 134
+COMMENT = !
+
+Following line is a grammar error with regards to the Bracket class
+error1 ) ( = 10
+
+Following line sets a prefix, and test the affix protocol
+PREFIX = one_
+
+
+level = 0
+
+Now get recursive
+INCLUDE =  rdf2.txt
+SUFFIX = _1
+
+b = -2
+a = -1
+
+Three errors are next
+error2 ( ] = 20
+error3 (()) = 20
+error4 { = cx
+
+
+Cancel affixes
+PREFIX =
+SUFFIX = 
+Change the equals sign
+OPERATOR = %
+
+end1 % one
+end2 % two
+
+Enough of that
+OPERATOR % =
+
+end3 = 1 2 3 4      ! cast to string
+end4 = 1, 2, 3, 4   ! cast to tuple with ','
+
+
+end5 = 1; 2; 3; 4   # cast to string, unless we TBD change ',' to ';'
+end6 = 1; 2; 3; 4   ! cast to string, unless we TBD change ',' to ';'
+
+
+
+Note: the following line makes no-sense
+OPERATOR = !
+You need 3 lines to swap those glyphs
+OPERATOR = %
+COMMENT % =
+OPERATOR % !
+
+flipped_value (am) {length} ! 3.14159 = Now the comment
+SEP = 	;  ! SEP is not in the lexicon, but it  could be
+z = 2
+
+
+
+

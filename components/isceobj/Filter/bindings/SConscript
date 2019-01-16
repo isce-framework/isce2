@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import os
+
+Import('envFilter')
+package = envFilter['PACKAGE']
+project = 'Filter'
+install = os.path.join(envFilter['PRJ_SCONS_INSTALL'],package,project)
+libList = ['filter','gomp']
+envFilter.PrependUnique(LIBS = libList)
+filtermodule = envFilter.LoadableModule(target = 'filter.abi3.so', source = 'filtermodule.cpp', parse_flags='-fopenmp')
+envFilter.Install(install,filtermodule)
+envFilter.Alias('install',install)

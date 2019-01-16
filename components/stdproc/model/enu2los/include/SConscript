@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envenu2los')
+package = envenu2los['PACKAGE']
+project = 'enu2los'
+build = os.path.join(envenu2los['PRJ_SCONS_BUILD'],package,project,'include')
+envenu2los.AppendUnique(CPPPATH = [build])
+listFiles = ['enu2losmodule.h','enu2los.h']
+envenu2los.Install(build,listFiles)
+envenu2los.Alias('install',build)
