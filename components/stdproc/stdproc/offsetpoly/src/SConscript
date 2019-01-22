@@ -37,7 +37,7 @@ Import('envoffsetpoly')
 build = envoffsetpoly['PRJ_LIB_DIR']
 #envoffsetpoly.AppendUnique(FORTRANFLAGS =  '-fopenmp')
 #envoffsetpoly.AppendUnique(F90FLAGS =  '-fopenmp')
-listFiles = ['offsetpolyState.F','offsetpolyGetState.F','offsetpolySetState.F','offsetpolyAllocateDeallocate.F']
+listFiles = ['offsetpoly.f90', 'offsetpolyState.F','offsetpolyGetState.F','offsetpolySetState.F','offsetpolyAllocateDeallocate.F']
 lib = envoffsetpoly.Library(target = 'offsetpoly', source = listFiles)
 envoffsetpoly.Install(build,lib)
 envoffsetpoly.Alias('build',build)
