@@ -12,7 +12,7 @@ THIS IS RESEARCH CODE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS.
 USE AT YOUR OWN RISK.
 
 This software is open source under the terms of the the Apache License. Its export
-classification is 'EAR9 NLR', which entails some restrictions and responsibilities.
+classification is 'EAR99 NLR', which entails some restrictions and responsibilities.
 Please read the accompanying LICENSE.txt and LICENSE-2.0 files.
 
 ISCE is a framework designed for the purpose of processing Interferometric
