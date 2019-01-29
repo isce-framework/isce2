@@ -1,6 +1,9 @@
 *.pyc
 *~
 *.swp
+__pycache__
 .sconf_temp
 .sconsign.dblite
 config.log
+insar.log
+isce.log
