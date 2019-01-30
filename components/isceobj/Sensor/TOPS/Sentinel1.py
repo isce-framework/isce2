@@ -40,7 +40,6 @@ from .BurstSLC import BurstSLC
 from isceobj.Util import Poly1D, Poly2D
 from isceobj.Planet.Planet import Planet
 from isceobj.Orbit.Orbit import StateVector, Orbit
-from isceobj.Orbit.OrbitExtender import OrbitExtender
 from isceobj.Planet.AstronomicalHandbook import Const
 from iscesys.Component.Component import Component
 from iscesys.Component.ProductManager import ProductManager
@@ -822,12 +821,8 @@ class Sentinel1(Component):
 
         #####Orbits provided in annotation files are not InSAR-grade
         #####These also need extensions for interpolation to work
-        orbExt = OrbitExtender(planet=Planet(pname='Earth'))
-        orbExt.configure()
-        newOrb = orbExt.extendOrbit(frameOrbit)
 
-
-        return newOrb
+        return frameOrbit
             
     def extractPreciseOrbit(self, margin=60.0):
         '''
