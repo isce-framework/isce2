@@ -141,6 +141,8 @@ def adjustValidSampleLine_V2(master, slave, minAz=0, maxAz=0, minRng=0, maxRng=0
         else:
             master.numValidSamples = master.numberOfSamples - master.firstValidSample
 
+    master.firstValidSample = np.max([0, master.firstValidSample])
+ 
     print('After: ', master.firstValidSample, master.numValidSamples)
 
     ###Adjust valid lines and first valid line here
