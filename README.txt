@@ -35,7 +35,7 @@ Contents
 1.3 Installing dependencies with provided setup script
 1.4 Hints for installing dependencies by hand.
 1.5 Note On 'python3' Exectuable Convention
-1.6 Separate License required for dependencies for some uses of ISCE
+1.6 License required for dependencies to enable some workflows in ISCE
 2.  Building ISCE
 2.1 Configuration control: SCONS_CONFIG_DIR and SConfigISCE
 2.2 Install ISCE
@@ -50,7 +50,7 @@ Contents
 5.1 Component Names: Family and Instance
 5.2 Component Configuration Files: Locations, Names, Priorities
 5.3 Component Configuration Help
-
+6.  User community Forums
 ================================================================================
 1. Software Dependencies
 ================================================================================
@@ -300,19 +300,20 @@ ISCE application such as 'insarApp.py as "> insarApp.py" rather than as
 "> /path-to-Python3/python insarApp.py".
 
 --------------------------------------------------------------------------------
-1.6 License required for some possibly familiar parts of ISCE
+1.6 License required for dependencies to enable some workflows in ISCE
 --------------------------------------------------------------------------------
 
 Some of the applications, or workflows (such as insarApp.py and isceApp.py),
 in ISCE that may be familiar to users will not work with this open source version
 of ISCE without obtaining licensed components.  WinSAR users who have downloaded
-ISCE from the UNAVCO website have signed the licence agreement and will be given
-access to those licensed components.  Others wanting to use those specific
-workflows and components may be able to sign the agreement through UNAVCO if they
-become members there.  Further instructions will be available for a possible other
-procedure for obtaining a license directly from the supplier of those components.
+ISCE from the UNAVCO website (https://winsar.unavco.org/software/isce) have signed
+the licence agreement and will be given access to those licensed components.  Others
+wanting to use those specific workflows and components may be able to sign the
+agreement through UNAVCO if they become members there.  Further instructions will
+be available for a possible other procedure for obtaining a license directly from
+the supplier of those components.
 
-ISCE also provides workflows that do not require the licensed components that
+ISCE provides workflows that do not require the licensed components that
 may be used effectively and that will be supported going forward by the ISCE team.
 Users that need to work with newly processed data along with older processed data
 may require those licensed components as a convenience unless they also reprocess
@@ -941,6 +942,27 @@ Filename: insarapp_slcs_nstage.xml:
     <property name="ACROSS_GROSS_OFFSET">150</property>
 </component>
 </dummy>
+
+----------------------------------------------------------------------------
+6.  Join the ISCE user Forums for additional help and information from the
+    ISCE user and developer community
+----------------------------------------------------------------------------
+
+Sign up to participate in the ISCE user communities at the following website:
+
+http://earthdef.caltech.edu/account/register
+
+
+After you sign up read helpful information and participate in discussion with
+the user/developer community at the following website:
+
+http://earthdef.caltech.edu/projects/isce_forum/boards
+
+
+For bug reports and technical usage issues use the folowing website:
+
+http://earthdef.caltech.edu/projects/isce_forum/issues
+
 
 ==============================================================================
 END OF FILE
