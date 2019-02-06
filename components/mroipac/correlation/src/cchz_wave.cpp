@@ -168,7 +168,8 @@ int cchz_wave(int flag, DataAccessor* intAcc, DataAccessor* ampAcc, DataAccessor
 
                 cmp[i][j] = conj(dt1) * dt2;
        
-                i1[i][j] = abs(dt1) + 1i * abs(dt2);
+//                i1[i][j] = std::abs(dt1) + 1i * std::abs(dt2);
+                i1[i][j] = std::complex<float>(std::abs(dt1), std::abs(dt2));
             }
         }
     }
@@ -190,7 +191,7 @@ int cchz_wave(int flag, DataAccessor* intAcc, DataAccessor* ampAcc, DataAccessor
                 dt2 = i1[bx-1][j];
 
                 cmp[bx-1][j] = conj(dt1) * dt2;
-                i1[bx-1][j] = abs(dt1) + 1i * abs(dt2);
+                i1[bx-1][j] = std::complex<float>(std::abs(dt1), std::abs(dt2));
             } 
         }
 
