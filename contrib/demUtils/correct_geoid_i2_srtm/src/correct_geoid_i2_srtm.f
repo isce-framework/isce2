@@ -529,13 +529,13 @@ c     PARAMETERS:
 c     INPUT VARIABLES:
 
       integer nmax
-      real*8 p(MAXSIZ)
-      real*8 hc(MAXSIZ)
-      real*8 hs(MAXSIZ)
-      real*8 cc(MAXSIZ)
-      real*8 cs(MAXSIZ)
-      real*8 sinml(MAXSIZ)
-      real*8 cosml(MAXSIZ)
+      real*8 p(*)
+      real*8 hc(*)
+      real*8 hs(*)
+      real*8 cc(*)
+      real*8 cs(*)
+      real*8 sinml(*)
+      real*8 cosml(*)
       real*8 re
       real*8 ang
       real*8 haco
