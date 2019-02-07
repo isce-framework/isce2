@@ -46,10 +46,13 @@ from .reserved import glyphs
 def _unwrap_lines(gline, wrap=glyphs.WRAP):
     """given a read_stream() generator, yield UNWRAPPED RDF lines"""
     while True:
-        line = next(gline)
-        while line.endswith(wrap):
-            line = line[:-len(wrap)] + next(gline)
-        yield line
+        try:
+            line = next(gline)
+            while line.endswith(wrap):
+                line = line[:-len(wrap)] + next(gline)
+            yield line
+        except StopIteration:
+            return
 
 ## file name --> unwrapped lines
 # \param src A file name
