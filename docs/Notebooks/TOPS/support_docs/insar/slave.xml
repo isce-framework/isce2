@@ -1,0 +1,6 @@
+<component>
+    <property name="orbit directory">../../aux/aux_poeorb</property>
+    <property name="auxiliary data directory">../../aux/aux_cal</property>
+    <property name="output directory">slave</property>
+    <property name="safe">['../../slc/S1A_IW_SLC__1SDV_20171111T150004_20171111T150032_019219_0208AF_EE89.zip']</property>
+</component>
