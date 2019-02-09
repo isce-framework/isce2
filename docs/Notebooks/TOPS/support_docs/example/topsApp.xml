@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<topsApp>
+  <component name="topsinsar">
+    <property name="Sensor name">SENTINEL1</property>
+    <component name="master">
+      <catalog>master.xml</catalog>
+    </component>
+    <component name="slave">
+      <catalog>slave.xml</catalog>
+    </component>
+  </component>
+</topsApp>
+<!--
+General Note: Using syntax highlighting makes it easier to read XML file.
+-->
+<!-- This is an xml comment -->
+<!-- An xml comment begins with the 4 characters at the start of this line and
+     end with the 3 characters at the end of this line. -->
+<!-- The rest of this file contains comments only.  -->
+<!--
+    An xml file is structured with content appearing between the tags indicated
+with the symbols '< >' and the matching closing tag symbols '</ >'.  There are
+4 different types of tags used in the 11 lines at the top of this file:
+
+  (1) The tag <topsApp> and its closing tag </topsApp> are required but the
+  name is arbitrary.
+
+  (2) The <property> </property> tags are used for simple properties.  These
+  tags includes a 'name' ('sensor name' in the above example) as an attribute
+  of the tag as well as a value appearing between the opening and closing tags.
+
+  (3) The <component> </component> tags are used for collections of properties
+  belonging to the component indicated by the 'name' attribute of the tag.
+
+  (4) The <catalog> </catalog> has no 'name' attribute and the value given
+  between the tags is the name of another xml file containing the properties
+  for the component.
+
+There are other types of tags that may be used as shown in examples below.
+
+-->
+<!--
+    The 11 lines at the top of this file give the minimal input file for running
+ topsApp.py, but most of the input information is contained in the two xml
+files master.xml and slave.xml sandwiched between the <catalog> tag and the
+</catalog> tag.
+    The master.xml and slave.xml files are different in structure for different
+sensors but identical to each other in structure for a given sensor.  Examples
+of master.xml for each sensor type are given in this directory with names like
+master_tops_sentinel1a.xml. You can use these files as templates for creating your own
+master.xml and slave.xml files.  You can also in-line the contents of those
+files directly in the topsApp.xml file as in the following example for Sentinel-1:
+
+<topsApp>
+  <component name="topsinsar">
+    <component name="master">
+      <property name="orbit directory">/Users/agram/orbit/S1A/precise</property>
+      <property name="auxiliary data directory">/Users/agram/orbit/S1A/aux</property>
+      <property name="output directory">master</property>
+      <property name="swath number">2</property>
+      <property name="safe">../data/S1A_IW_SLC__1SSV_20150119T135944_20150119T140004_004241_005286_4271.SAFE</property>
+    </component>
+    <component name="slave">
+      <property name="orbit directory">/Users/agram/orbit/S1A/precise</property>
+      <property name="auxiliary data directory">/Users/agram/orbit/S1A/aux</property>
+      <property name="region of interest">[35.4, 35.6, -119.6, -119.4]</property>
+      <property name="output directory">slave</property>
+      <property name="swath number">2</property>
+      <property name="safe">../data/S1A_IW_SLC__1SSV_20150212T135943_20150212T140003_004591_005A67_5DEC.SAFE</property>
+    </component>
+  </component>
+</topsApp>
+
+-->
+<!-- <<INPUTS FOR topsApp.py>>
+     This file provides a basic template for setting up interferogram input file for topsApp.py. Only the commonly used options are described here.
+
+     There are three ways of providing basic inputs to topsApp.py. Choose any one to work with. We recommend Method 1.
+
+     Method 1: Using topsApp.xml [Uses in-built configurability]
+
+        >topsApp.py
+            - Automatically looks for topsApp.xml  and loads ISCE Application instance configuration.
+
+    Method 2:  Using topsinsar.xml  [Uses in-built configurabiluty]
+        > topsApp.py
+            - Automatically looks for topsinsar.xml and loads ISCE Application family configuration.
+            - "insarApp" is a specific instance of family "topsinsar". topsApp.py first reads topsinsar.xml to configure object and then reads topsApp.xml. If values are repeated in the two files, topsApp.xml takes precedence over topsinsar.xml .
+
+
+    Method 3 : Using arbitrary xml file with the same structure as below.
+
+        > topsApp.py input.xml [Explicitly force use of specific XML file)
+            -  topsApp.py checks for topsinsar.xml and loads information if available.
+            -  topsApp.py  then checks for topsApp.xml and if available updates/creates configuration.
+            -  topsApp.py then "input.xml" and updates/creates configuration.
+-->
+<!-- <<ISCE XML property formats>>
+     ISCE XML files support two types of property definitions.
+
+    Format 1:
+            <property name="Sensor name">SENTINEL1A</property>
+
+    Format 2:
+             <property name="Sensor name">
+                <value>SENTINEL1A</value>
+             </property>
+-->
+<!--
+
+<topsApp>  This tag name doesn't really matter.
+    <component name="topsinsar">   This component has to be named topsinsar
+
+        Mandatory entries:
+
+        Full list of sensors can be obtained using "topsApp.py -h"
+        <property  name="Sensor name">SENTINEL1A</property>
+
+        Master and slave information are provided through catalogs.
+        The structure of these catalog files are sensor dependent.
+        See "master_TOPS_SENSOR.xml" for examples of different sensors.
+        <component name="master">
+            <catalog>master.xml</catalog> Grabs information from master.xml
+        </component>
+        <component name="slave">
+            <catalog>slave.xml</catalog>  Grabs information from slave.xml
+        </component>
+
+-->
+<!-- Optional entries.
+             These need not be defined by the user.
+             Default values will be used if not provided.
+             Uncomment the <property> tags if you want to use these.-->
+<!-- << DEM >>
+             If not provided, SRTM DEM will be automatically downloaded.
+             See "dem_latest.xml" in examples directory for an example.-->
+<!--
+        <property name="demFilename">dem_latest.dem</property> Grabs information from dem_latest.dem.xml
+-->
+<!--<property name="range looks">2</property>-->
+<!--<property name="azimuth looks">4</property>-->
+
+
+<!--Subsetting the amount of data to be processed.
+To selectively process only some swaths, add the following tag. Note that even if its a single swath provide the entry as a list. This entry overrides the swath number entry in master.xml and slave.xml. If not included, all swaths will be processed. 
+<property name="swaths">[1,2]</property>
+
+To selective process a region, provide a bounding box in SNWE convention (lat/lon)
+This will again override any region of interest in master.xml and slave.xml. If the region of interest is covered by a fewer number of swaths, only those swaths will be processed.
+<property name="region of interest">[32.5, 33,130.4, 132.5]</property>
+-->
+
+
+<!-- Disabling Enhanced Spectral Diversity azimuth offset refinement
+By default, ESD is always performed.
+<property name="do ESD">False</property> -->
+
+
+<!-- <<FILTER STRENGTH>>
+             Goldstein filter length-->
+<!--<property name="filter strength">0.4</property>-->
+<!-- <<PHASE UNWRAPPING>>
+             Phase unwrapping can be optionally turned off.
+             Following unwrappers are currently available:
+             grass, icu, snaphu, snaphu_mcf-->
+<!--<property name="unwrap">True</property>-->
+<!--<property name="unwrapper name">snaphu_mcf</property>-->
+<!-- 2 Stage unwrapping option requires the following tags:-->
+<!--<property name="do unwrap">True</property> -->
+<!--<property name="unwrapper name">snaphu_mcf</property> -->
+<!--<property name="do unwrap 2 stage">True</property> -->
+<!--<property name="unwrapper 2 stage name">MCF</property> -->
+<!-- <<GEOCODING>> -->
+<!-- Creating geocoded coregistered stacks is easy with ISCE.
+             You can specify the exact geocoding bounding box in SNWE format as follows.
+             As long as the same DEM and bounding box are used, all products will be
+             geocoded to the same grid.-->
+<!--<property name="geocode bounding box">[19.1, 19.45, -155.45, -154.7]</property>-->
+<!-- By default ISCE geocodes a long list of products. Once, you are familiar with
+             the product names, you can force ISCE to geocode only products of interest to you.
+             Geocoding parameters for a file named "abc.def" can be controlled using insarapp_geocode_abcdef.xml-->
+<!--<property name="geocode list">['filt_topophase.flat', 'los.rdr', 'topophase.cor', 'phsig.cor']</property>-->
+<!--
+    </component>
+</insarApp>
+-->

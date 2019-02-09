@@ -1,0 +1,6 @@
+<component>
+    <property name="orbit directory">../../aux/aux_poeorb</property>
+    <property name="auxiliary data directory">../../aux/aux_cal</property>
+    <property name="output directory">master</property>
+    <property name="safe">['../../slc/S1B_IW_SLC__1SDV_20171117T145900_20171117T145928_008323_00EBAB_B716.zip','../../slc/S1B_IW_SLC__1SDV_20171117T145926_20171117T145953_008323_00EBAB_AFB8.zip']</property>
+</component>
