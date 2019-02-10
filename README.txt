@@ -380,7 +380,6 @@ code uses for importing isce.
 2.2 Install ISCE
 --------------------------------------------------------------------------------
 
-Untar the file isce.tar.gz
 cd isce
 scons install
 
