@@ -35,6 +35,7 @@ import sys
 if sys.version_info[0] == 2:
     print('Building with scons from python2')
 else:
+    raw_input = input
     print('Building with scons from python3')
 
 if 'SCONS_CONFIG_DIR' in os.environ:
