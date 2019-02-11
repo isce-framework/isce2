@@ -199,6 +199,11 @@ def main(iargs=None):
     meanval = np.mean(val)
     stdval = np.std(val)
 
+    # convert the estimations to meters 
+    medianval = medianval * masterTop.bursts[0].rangePixelSize
+    meanval = meanval * masterTop.bursts[0].rangePixelSize
+    stdval = stdval * masterTop.bursts[0].rangePixelSize
+
     hist, bins = np.histogram(val, 50, normed=1)
     center = 0.5*(bins[:-1] + bins[1:])
 
