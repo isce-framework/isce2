@@ -52,7 +52,7 @@ def isRawSensor(sensor):
     '''
     Check if input data is raw / slc.
     '''
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','ers_envisat_slc']:
         return False
     else:
         return True
@@ -63,7 +63,7 @@ def isZeroDopplerSLC(sensor):
     Check if SLC is zero doppler / native doppler.
     '''
 
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','envisat_slc']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','envisat_slc','ers_envisat_slc']:
         return True
     elif sensor.lower() in ['alos_slc', 'uavsar_rpi']:
         return False
