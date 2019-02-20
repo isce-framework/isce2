@@ -138,7 +138,7 @@ def runPreprocessor(self):
         self._insar.saveProduct(slave.frame, self._insar.slaveRawProduct)
 
     else:
-        print('Master data is in SLC format. Adding _slc to output name.')
+        print('Slave data is in SLC format. Adding _slc to output name.')
         iszerodop = isZeroDopplerSLC(self.slaveSensorName)
         sensor.output =  os.path.join(dirname + '_slc', os.path.basename(dirname)+'.slc')
 
