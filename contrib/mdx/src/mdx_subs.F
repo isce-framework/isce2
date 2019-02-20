@@ -1768,6 +1768,8 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
             else if (a_setname(i_chn) .eq. 'C8-Pha') then
               i_setvfmt(i_chn) = 7
               r_dspwrap(i_chn) = 2.0d0*r_pi
+              i_dspaddr = 0
+              r_dspaddr = 0.
               i_dspmode(i_chn) = 6
               a_dspctbl(i_chn) = 'cmy'
             else if (a_setname(i_chn) .eq. 'C8-I') then
@@ -1783,6 +1785,8 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
             else if (a_setname(i_chn) .eq. 'C2-Pha') then
               i_setvfmt(i_chn) = 11
               r_dspwrap(i_chn) = 2.0d0*r_pi
+              i_dspaddr = 0
+              r_dspaddr = 0.
               i_dspmode(i_chn) = 6
               a_dspctbl(i_chn) = 'cmy'
             else if (a_setname(i_chn) .eq. 'C4-Mag') then
@@ -1790,6 +1794,8 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
             else if (a_setname(i_chn) .eq. 'C4-Pha') then
               i_setvfmt(i_chn) = 13
               r_dspwrap(i_chn) = 2.0d0*r_pi
+              i_dspaddr = 0
+              r_dspaddr = 0.
               i_dspmode(i_chn) = 6
               a_dspctbl(i_chn) = 'cmy'
             else if (a_setname(i_chn) .eq. 'SRTM-dte') then
