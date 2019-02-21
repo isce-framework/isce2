@@ -106,15 +106,14 @@ def main(factoryFile,package,buildDir):
         nameList = []
         for k,v in factoriesInfo.items():
             name = os.path.join(buildDir,k + '.hlp')
+            nameList.append(name)
             v["package"] = package
             if os.path.exists(name):
                 toCmp = json.load(open(name))
                 if not compareDict(toCmp,{k:v}):
                     json.dump({k:v},open(name,'w'),indent=4)
-                    nameList.append(name)
             else:
                 json.dump({k:v},open(name,'w'),indent=4)
-                nameList.append(name)
 
         json.dump(nameList,open(tmpdump,'w'))
     except Exception as e:
