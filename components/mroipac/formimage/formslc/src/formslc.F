@@ -15,7 +15,7 @@
       real*8       slpr, intr, slpa, inta, coefa(2)
       real*8       sloper, interr, slopea, intera
       real*8       dsloper, dinterr, dslopea, dintera
-      real*8       dp1, fr1, slope1, slope2
+      real*8       dp1, fr1, slope1, slope2, chirpbw, denom, cwin, freq
       integer*4    iq, nr_fftf, nr_fftr, npow
       integer*4    i, j, k
       integer*4    nl, nls, ifrst, irec, npts
@@ -312,13 +312,6 @@ c
          end if
       end do
       
-      do i=1,npts
-         win1 = (rhww-rhww1*cos((2.*pi*float(i-1))/float(npts-1)))
-         ref(i)=ref(i)*win1
-         ref1(i)=ref1(i)*win1
-      end do
-
-      
       if(nextend .gt. 0) then
          do i = 1 , npts
             k = i - nextend
@@ -373,6 +366,32 @@ c zero out dc and caltone location
          end if
       end do
 
+c     raised-cosine window in the frequency domain
+
+      chirpbw = pulsedur * slope
+      denom = 2.0d0 / chirpbw
+      do i=1,nr_fftf
+
+         ! Compute frequency
+         if (i .le. (nr_fftf/2)) then
+            freq = ((i - 1.0d0) / nr_fftf) * fs
+         else
+            freq = (((i - 1.0d0) / nr_fftf) - 1.0d0) * fs
+         end if
+
+         ! Raised-cosine window
+         if (abs(freq) .le. (0.5d0 * chirpbw)) then
+             cwin = rhww - rhww1 * cos(2.0d0*pi* (abs(freq) / fs - 0.5d0))
+         else
+             cwin = rhww - rhww1 * cos(2.0d0*pi* (0.5d0 * chirpbw / fs - 0.5d0))
+         end if
+
+         refn2(i) = refn2(i) * max(cwin, 0.0d0)
+         ref(i) = ref(i) * max(cwin, 0.0d0)
+         ref1(i) = ref1(i) * max(cwin, 0.0d0)
+
+      end do
+
 c     scale reference for channel gain, conjugate
 
       gcal=1./nr_fftf
@@ -383,7 +402,6 @@ c     scale reference for channel gain, conjugate
       end do
 
 c     save spectra of reference functions for checking
-
          
 c     
 c     
@@ -674,7 +692,7 @@ c     if first time through, save complex images for file 2
       integer function lastnb(string)
       
       character*(*) string
-      integer ln
+      integer*4 ln
       
       ln = len(string) 
       
@@ -694,7 +712,7 @@ c argument.
       
       implicit none
 
-      integer power, k, number
+      integer*4 power, k, number
       
       k = 0
       power = 0
