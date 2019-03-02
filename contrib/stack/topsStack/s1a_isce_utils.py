@@ -117,7 +117,7 @@ def adjustValidSampleLine_V2(master, slave, minAz=0, maxAz=0, minRng=0, maxRng=0
     print('Before: ', master.firstValidSample, master.numValidSamples)
     print('Offsets : ', minRng, maxRng)
 
-    if (minRng > 0) and (minRng > 0):
+    if (minRng > 0) and (maxRng > 0):
         master.firstValidSample = slave.firstValidSample - int(np.floor(maxRng)-4)
         lastValidSample = master.firstValidSample - 8 + slave.numValidSamples
 
