@@ -1,9 +1,9 @@
 <component>
     <property name="HDF5">
-        <value>CSKS4_SCSB_B_HI_08_HH_RA_FF_20110311162513_20110311162521.h5</value>
+        <value>data/CSKS4_SCSB_B_HI_08_HH_RA_FF_20110311162513_20110311162521.h5</value>
     </property>
     <property name="OUTPUT">
-        <value>20110311.slc</value>
+        <value>20110311</value>
     </property>
 </component>
 
