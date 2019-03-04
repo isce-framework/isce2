@@ -1,12 +1,12 @@
 <component>
     <property name="IMAGEFILE">
-        <value>data/IMG-HH-ALPSRP207310710-H1.0__A</value>
+        <value>data/20091215/IMG-HH-ALPSRP207310710-H1.0__A</value>
     </property>
     <property name="LEADERFILE">
-        <value>data/LED-ALPSRP207310710-H1.0__A</value>
+        <value>data/20091215/LED-ALPSRP207310710-H1.0__A</value>
     </property>
     <property name="OUTPUT">
-        <value>091215.raw</value>
+        <value>20091215</value>
     </property>
 </component>
 

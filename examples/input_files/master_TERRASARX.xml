@@ -2,8 +2,8 @@
 <component>
   <property name="XML">
         path/TSX1_SAR__SSC______SM_S_SRA_20091205T042212_20091205T042220.xml
-    </property>
-  <property name="OUTPUT">20091205.raw</property>
+  </property>
+  <property name="OUTPUT">20091205</property>
 </component>
 <!--
 Shown above is the bare minimum input XML file for TERRASARX sensor.
