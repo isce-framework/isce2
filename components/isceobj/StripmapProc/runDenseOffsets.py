@@ -65,7 +65,7 @@ def estimateOffsetField(master, slave, denseOffsetFileName,
     
     objOffset.offsetImageName = denseOffsetFileName + '.bil'
     objOffset.snrImageName = denseOffsetFileName +'_snr.bil'
-
+    objOffset.covImageName = denseOffsetFileName +'_cov.bil'
 
     objOffset.denseampcor(sar, sim)
 

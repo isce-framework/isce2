@@ -253,6 +253,13 @@ SNR_IMAGE_NAME = Component.Parameter('snrImageName',
         mandatory=False,
         doc = 'File name for output SNR')
 
+COV_IMAGE_NAME = Component.Parameter('covImageName',
+        public_name = 'COV_IMAGE_NAME',
+        default = 'dense_ampcor_cov.bil',
+        type=str,
+        mandatory=False,
+        doc = 'File name for output covariance')
+
 MARGIN = Component.Parameter('margin',
         public_name = 'MARGIN',
         default = 50,
@@ -298,6 +305,7 @@ class DenseAmpcor(Component):
                       BAND2,
                       OFFSET_IMAGE_NAME,
                       SNR_IMAGE_NAME,
+                      COV_IMAGE_NAME,
                       MARGIN,
                       NUMBER_THREADS)
 
@@ -374,10 +382,16 @@ class DenseAmpcor(Component):
         self.locationAcross = np.frombuffer(mp.Array('i', numlen).get_obj(), dtype='i')
         self.locationAcrossOffset = np.frombuffer(mp.Array('f', numlen).get_obj(), dtype='f')
         self.snr = np.frombuffer(mp.Array('f', numlen).get_obj(), dtype='f')
+        self.cov1 = np.frombuffer(mp.Array('f', numlen).get_obj(), dtype='f')
+        self.cov2 = np.frombuffer(mp.Array('f', numlen).get_obj(), dtype='f')
+        self.cov3 = np.frombuffer(mp.Array('f', numlen).get_obj(), dtype='f')
 
         self.locationDownOffset[:] = -10000.0
         self.locationAcrossOffset[:] = -10000.0
         self.snr[:] = 0.0
+        self.cov1[:] = 999.0
+        self.cov2[:] = 999.0
+        self.cov3[:] = 999.0
 
         ###run ampcor on parallel processes
         threads = []
@@ -422,6 +436,9 @@ class DenseAmpcor(Component):
         self.locationDownOffset *= self.scaling_factor
         self.locationAcrossOffset *= self.scaling_factor
         self.snr *= self.scaling_factor
+        self.cov1 *= self.scaling_factor
+        self.cov2 *= self.scaling_factor
+        self.cov3 *= self.scaling_factor
 
         self.write_slantrange_images()
 
@@ -487,6 +504,9 @@ class DenseAmpcor(Component):
                 self.locationAcross[firstind+i] = objAmpcor.locationAcross[j]
                 self.locationAcrossOffset[firstind+i] = objAmpcor.locationAcrossOffset[j]
                 self.snr[firstind+i] = objAmpcor.snrRet[j]
+                self.cov1[firstind+i] = objAmpcor.cov1Ret[j]
+                self.cov2[firstind+i] = objAmpcor.cov2Ret[j]
+                self.cov3[firstind+i] = objAmpcor.cov3Ret[j]
                 j += 1
             else:
                 self.locationDown[firstind+i] = downInd
@@ -494,6 +514,9 @@ class DenseAmpcor(Component):
                 self.locationAcross[firstind+i] = acInd
                 self.locationAcrossOffset[firstind+i] = -10000.
                 self.snr[firstind+i] = 0.
+                self.cov1[firstind+i] = 999.
+                self.cov2[firstind+i] = 999.
+                self.cov3[firstind+i] = 999.
 
         return
 
@@ -518,6 +541,14 @@ class DenseAmpcor(Component):
         if self.locationAcross.ndim == 1:
             self.locationAcross = self.locationAcross.reshape(-1,self.offsetCols)
 
+        if self.cov1.ndim == 1:
+            self.cov1 = self.cov1.reshape(-1,self.offsetCols)
+
+        if self.cov2.ndim == 1:
+            self.cov2 = self.cov2.reshape(-1,self.offsetCols)
+
+        if self.cov3.ndim == 1:
+            self.cov3 = self.cov3.reshape(-1,self.offsetCols)
 
         outdata = np.empty((2*self.offsetLines, self.offsetCols), dtype=np.float32)
         outdata[::2,:] = self.locationDownOffset
@@ -544,7 +575,23 @@ class DenseAmpcor(Component):
         snrImg.setLength(self.offsetLines)
         snrImg.setAccessMode('read')
         snrImg.renderHdr()
-        
+
+        ####Create covariance image
+        covdata = np.empty((3*self.offsetLines, self.offsetCols), dtype=np.float32)
+        covdata[::3,:] = self.cov1
+        covdata[1::3,:] = self.cov2
+        covdata[2::3,:] = self.cov3
+        covdata.tofile(self.covImageName)
+        del covdata
+        covImg = isceobj.createImage()
+        covImg.setDataType('FLOAT')
+        covImg.setFilename(self.covImageName)
+        covImg.setBands(3)
+        covImg.scheme = 'BIL'
+        covImg.setWidth(self.offsetCols)
+        covImg.setLength(self.offsetLines)
+        covImg.setAccessMode('read')
+        covImg.renderHdr()
 
     def checkTypes(self):
         '''Check if the image datatypes are set.'''
