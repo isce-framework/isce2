@@ -1,4 +1,4 @@
-li# ISCE2
+# ISCE2
 
 This is the Interferometric synthetic aperture radar Scientific Computing
 Environment (ISCE).  Its initial development was funded by NASA's Earth Science
