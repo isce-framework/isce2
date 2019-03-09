@@ -804,7 +804,7 @@ class ImageCoordinate(Configurable):
                                          doc="Starting value of the coordinate.")
         self._coordEnd = self.parameter('coordEnd', public_name='endingValue', default=None, units='',
                                          type=float, mandatory=False,
-                                         doc="Starting value of the coordinate.")
+                                         doc="Ending value of the coordinate.")
         self._coordDelta = self.parameter('coordDelta', public_name='delta', default=1, units='',
                                          type=float, mandatory=False,
                                          doc="Coordinate quantization.")

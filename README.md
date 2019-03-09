@@ -168,7 +168,7 @@ ISCE application such as 'stripmapApp.py as "> stripmapApp.py" rather than as
 
 ### License required for dependencies to enable some workflows in ISCE
 
-Some of the applications, or workflows (such as stripmapApp.py and isceApp.py),
+Some of the applications, or workflows (such as insarApp.py and isceApp.py),
 in ISCE that may be familiar to users will not work with this open source version
 of ISCE without obtaining licensed components.  WinSAR users who have downloaded
 ISCE from the UNAVCO website (https://winsar.unavco.org/software/isce) have signed
