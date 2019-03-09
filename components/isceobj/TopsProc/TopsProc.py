@@ -320,6 +320,14 @@ OFFSET_SNR_FILE = Component.Parameter(
         mandatory=False,
         doc='Filename for gross dense offsets SNR. Used in runDenseOffsets.')
 
+OFFSET_COV_FILE = Component.Parameter(
+        'covfile',
+        public_name='Offset covariance filename',
+        default='dense_offsets_cov.bil',
+        type=str,
+        mandatory=False,
+        doc='Filename for gross dense offsets covariance. Used in runDenseOffsets.')
+
 FILT_OFFSET_OUTPUT_FILE = Component.Parameter(
     'filt_offsetfile',
     public_name='Filtered offset filename',
@@ -333,6 +341,7 @@ OFFSET_GEOCODE_LIST = Component.Parameter('off_geocode_list',
         public_name='offset geocode list',
         default = [OFFSET_OUTPUT_FILE,
                    OFFSET_SNR_FILE,
+                   OFFSET_COV_FILE,
                    FILT_OFFSET_OUTPUT_FILE],
         container = list,
         type=str,
@@ -385,6 +394,7 @@ class TopsProc(Component):
                       OFFSET_WIDTH,
                       OFFSET_OUTPUT_FILE,
                       OFFSET_SNR_FILE,
+                      OFFSET_COV_FILE,
                       FILT_OFFSET_OUTPUT_FILE,
                       OFFSET_GEOCODE_LIST)
 
