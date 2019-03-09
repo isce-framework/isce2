@@ -95,6 +95,7 @@ createALOS_SLC = partial(factory_template, 'ALOS_SLC')
 createEnviSAT_SLC = partial(factory_template, 'EnviSAT_SLC')
 createERS_ENVISAT = partial(factory_template, 'ERS_ENVISAT')
 createERS_EnviSAT_SLC = partial(factory_template, 'ERS_EnviSAT_SLC')
+createSICD_RGZERO = partial(factory_template, 'SICD_RGZERO')
 
 SENSORS = {'ALOS' : createALOS,
            'ALOS_SLC' : createALOS_SLC,
@@ -117,7 +118,8 @@ SENSORS = {'ALOS' : createALOS,
            'SENTINEL1' : createSentinel1,
            'ENVISAT_SLC': createEnviSAT_SLC,
            'ERS_ENVISAT' : createERS_ENVISAT,
-           'ERS_ENVISAT_SLC' : createERS_EnviSAT_SLC}
+           'ERS_ENVISAT_SLC' : createERS_EnviSAT_SLC,
+           'SICD_RGZERO' : createSICD_RGZERO}
 
 #These are experimental and can be added in as they become ready
 #           'JERS': createJERS,
