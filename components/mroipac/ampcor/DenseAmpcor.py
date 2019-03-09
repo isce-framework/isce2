@@ -435,7 +435,6 @@ class DenseAmpcor(Component):
         #### Scale images (default is 1.0 to keep as pixel)
         self.locationDownOffset *= self.scaling_factor
         self.locationAcrossOffset *= self.scaling_factor
-        self.snr *= self.scaling_factor
 
         self.write_slantrange_images()
 
