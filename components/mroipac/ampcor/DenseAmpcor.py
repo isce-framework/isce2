@@ -436,9 +436,6 @@ class DenseAmpcor(Component):
         self.locationDownOffset *= self.scaling_factor
         self.locationAcrossOffset *= self.scaling_factor
         self.snr *= self.scaling_factor
-        self.cov1 *= self.scaling_factor
-        self.cov2 *= self.scaling_factor
-        self.cov3 *= self.scaling_factor
 
         self.write_slantrange_images()
 
