@@ -1,6 +1,7 @@
 *.pyc
 *~
 *.swp
+*.DS_Store
 __pycache__
 .sconf_temp
 .sconsign.dblite
