@@ -110,7 +110,7 @@ def main(iargs=None):
                        os.path.join(inps.inputDir, '*.gz'))
     for ALOS_extension in ALOS_extensions:
         # loop over zip/tar files
-        ALOS_filesfolders = glob.glob(ALOS_extension)
+        ALOS_filesfolders = sorted(glob.glob(ALOS_extension))
         for ALOS_infilefolder in ALOS_filesfolders:
             ## the path to the folder/zip
             workdir = os.path.dirname(ALOS_infilefolder)
