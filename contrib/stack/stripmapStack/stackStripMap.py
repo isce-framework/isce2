@@ -20,7 +20,7 @@ defoMax = '2'
 maxNodes = 72
 
 def createParser():
-    parser = argparse.ArgumentParser( description='Preparing the directory structure and config files for stack processing of Sentinel data')
+    parser = argparse.ArgumentParser( description='Preparing the directory structure and config files for stack processing of StripMap data')
 
     parser.add_argument('-s', '--slc_directory', dest='slcDir', type=str, required=True,
             help='Directory with all stripmap SLCs')
@@ -43,7 +43,8 @@ def createParser():
             help='Baseline threshold (max bperp in meters)')
 
     parser.add_argument('-a', '--azimuth_looks', dest='alks', type=str, default='10',
-            help='Number of looks in azimuth (automaticly computed as AspectR*looks when "S" or "sensor" is defined to give approximately square multi-look pixels)')
+            help='Number of looks in azimuth (automaticly computed as AspectR*looks when'
+                 ' "S" or "sensor" is defined to give approximately square multi-look pixels)')
     parser.add_argument('-r', '--range_looks', dest='rlks', type=str, default='10',
             help='Number of looks in range')
     parser.add_argument('-S', '--sensor', dest='sensor', type=str, required=False,
@@ -54,31 +55,38 @@ def createParser():
             help='high band frequency')
     parser.add_argument('-B', '--subband_bandwidth ', dest='bandWidth', type=str, default=None,
             help='sub-band band width')
-    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu'
-       , help='unwrapping method (icu, snaphu, or snaphu2stage)')
-    parser.add_argument('--filter_sigma_x', dest='filterSigmaX', type=str, default='100'
-       , help='filter sigma for gaussian filtering the dispersive and nonDispersive phase')
+    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu',
+            help='unwrapping method (icu, snaphu, or snaphu2stage)')
+    parser.add_argument('--filtStrength', type=float, default=0.5,
+            help='strength of filter applied to the wrapped phase before spatial coherence estimation.')
 
-    parser.add_argument('--filter_sigma_y', dest='filterSigmaY', type=str, default='100.0',
-                    help='sigma of the gaussian filter in Y direction, default=100')
+    iono = parser.add_argument_group('Ionospheric correction', 'Configurationas for ionospheric correction')
+    iono.add_argument('--filter_sigma_x', dest='filterSigmaX', type=str, default='100',
+            help='filter sigma for gaussian filtering the dispersive and nonDispersive phase')
 
-    parser.add_argument('--filter_size_x', dest='filterSizeX', type=str, default='800.0',
-                            help='size of the gaussian kernel in X direction, default = 800')
+    iono.add_argument('--filter_sigma_y', dest='filterSigmaY', type=str, default='100.0',
+            help='sigma of the gaussian filter in Y direction, default=100')
 
-    parser.add_argument('--filter_size_y', dest='filterSizeY', type=str, default='800.0',
-                        help='size of the gaussian kernel in Y direction, default=800')
+    iono.add_argument('--filter_size_x', dest='filterSizeX', type=str, default='800.0',
+            help='size of the gaussian kernel in X direction, default = 800')
 
-    parser.add_argument('--filter_kernel_rotation', dest='filterKernelRotation', type=str, default='0.0',
-                        help='rotation angle of the filter kernel in degrees (default = 0.0)')
+    iono.add_argument('--filter_size_y', dest='filterSizeY', type=str, default='800.0',
+            help='size of the gaussian kernel in Y direction, default=800')
 
-    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='slc'
-       , help='The InSAR processing workflow : (slc, interferogram, ionosphere)')
+    iono.add_argument('--filter_kernel_rotation', dest='filterKernelRotation', type=str, default='0.0',
+            help='rotation angle of the filter kernel in degrees (default = 0.0)')
 
-    parser.add_argument('-z', '--zero', dest='zerodop', action='store_true', default=False, help='Use zero doppler geometry for processing - Default : No')
-    parser.add_argument('--nofocus', dest='nofocus', action='store_true', default=False, help='If input data is already focused to SLCs - Default : do focus')
-    parser.add_argument('-c', '--text_cmd', dest='text_cmd', type=str, default=''
-       , help='text command to be added to the beginning of each line of the run files. Example : source ~/.bash_profile;')
-    parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False, help='Allow App to use GPU when available')
+    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='slc',
+            help='The InSAR processing workflow : (slc, interferogram, ionosphere)')
+
+    parser.add_argument('-z', '--zero', dest='zerodop', action='store_true', default=False,
+            help='Use zero doppler geometry for processing - Default : No')
+    parser.add_argument('--nofocus', dest='nofocus', action='store_true', default=False,
+            help='If input data is already focused to SLCs - Default : do focus')
+    parser.add_argument('-c', '--text_cmd', dest='text_cmd', type=str, default='',
+            help='text command to be added to the beginning of each line of the run files. Example : source ~/.bash_profile;')
+    parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
+            help='Allow App to use GPU when available')
 
     parser.add_argument('--summary', dest='summary', action='store_true', default=False, help='Show summary only')
     return parser
@@ -216,7 +224,7 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
 
     return i
 
-def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs):
+def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, filtStrength):
     # an interferogram stack without ionosphere correction. 
     # coregistration is with geometry + const offset
 
@@ -228,7 +236,7 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pair
     runObj.configure(inps, 'run_' + str(i) + "_igram")
     config_prefix = 'config_igram_'
     low_or_high = "/"
-    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix)    
+    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix, filtStrength=filtStrength)    
     runObj.finalize()
 
 def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs):
@@ -321,7 +329,7 @@ def main(iargs=None):
      slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFlag=False, rubberSheet=False)
 
   elif inps.workflow == 'interferogram':
-     interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs)
+     interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, filtStrength=inps.filtStrength)
 
   elif inps.workflow == 'ionosphere':
      interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs) 

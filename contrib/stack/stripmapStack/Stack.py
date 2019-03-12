@@ -510,7 +510,7 @@ class run(object):
             configName = os.path.join(self.configDir, config_prefix+slave)
             configObj = config(configName)
             configObj.coregSlaveSlc = os.path.join(self.workDir,self.stack_folder,'SLC',slave)
-            configObj.baselineGridFile = os.path.join(self.workDir, self.stack_folder,'baselines', slave,slave )
+            configObj.baselineGridFile = os.path.join(self.workDir, self.stack_folder,'baselines', slave, 'bperp')
             configObj.baselineGrid('[Function-1]')
             configObj.finalize()
             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
@@ -519,7 +519,7 @@ class run(object):
         configName = os.path.join(self.configDir, config_prefix+stackMaster)
         configObj = config(configName)
         configObj.coregSlaveSlc = os.path.join(self.workDir,self.stack_folder,'SLC',stackMaster)        
-        configObj.baselineGridFile = os.path.join(self.workDir, self.stack_folder,'baselines', stackMaster,stackMaster )
+        configObj.baselineGridFile = os.path.join(self.workDir, self.stack_folder,'baselines', stackMaster, 'bperp')
         configObj.baselineGrid('[Function-1]')
         configObj.finalize()
         self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
@@ -551,7 +551,7 @@ class run(object):
             configObj.finalize()
             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
-    def igrams_network(self,  pairs, acuisitionDates, stackMaster,low_or_high, config_prefix):
+    def igrams_network(self,  pairs, acuisitionDates, stackMaster,low_or_high, config_prefix, filtStrength=filtStrength):
 
         for pair in pairs:
              configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
