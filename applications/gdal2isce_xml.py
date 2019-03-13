@@ -106,7 +106,7 @@ if __name__ == '__main__':
     elif sch == 'BAND':
         img.scheme = 'BSQ'
     else:
-        print('Unrecognized interleaving scheme, ' + sch)
+        print('Unrecognized interleaving scheme, {}'.format(sch))
         print('Assuming default, BIP')
         img.scheme = 'BIP'
 
