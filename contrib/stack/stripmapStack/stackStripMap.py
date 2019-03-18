@@ -56,6 +56,11 @@ def createParser():
             help='sub-band band width')
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu'
        , help='unwrapping method (icu, snaphu, or snaphu2stage)')
+
+    parser.add_argument('-f','--filter_strength', dest='filtStrength', type=str, default=filtStrength,
+            help='strength of Goldstein filter applied to the wrapped phase before spatial coherence estimation.'
+                 ' Default: {}'.format(filtStrength))
+
     parser.add_argument('--filter_sigma_x', dest='filterSigmaX', type=str, default='100'
        , help='filter sigma for gaussian filtering the dispersive and nonDispersive phase')
 
