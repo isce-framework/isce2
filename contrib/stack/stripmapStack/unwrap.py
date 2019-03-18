@@ -113,9 +113,19 @@ def extractInfoFromPickle(pckfile, inps):
     data['earthRadius'] = elp.local_radius_of_curvature(llh.lat, hdg)
     
     #azspacing  = burst.azimuthTimeInterval * sv.getScalarVelocity()
-    azres = 20.0 
+    #azres = 20.0 
+    azspacing = sv.getScalarVelocity() / burst.PRF
+    azres = burst.platform.antennaLength / 2.0
+    azfact = azres / azspacing
+
+    burst.getInstrument()
+    rgBandwidth = burst.instrument.pulseLength * burst.instrument.chirpSlope
+    rgres = abs(SPEED_OF_LIGHT / (2.0 * rgBandwidth))
+    rgspacing = burst.instrument.rangePixelSize
+    rgfact = rgres / rgspacing
 
     #data['corrlooks'] = inps.rglooks * inps.azlooks * azspacing / azres
+    data['corrlooks'] = inps.rglooks * inps.azlooks / (azfact * rgfact)
     data['rglooks'] = inps.rglooks
     data['azlooks'] = inps.azlooks
 
@@ -149,7 +159,7 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     altitude   = config['altitude']
     rangeLooks = config['rglooks']
     azimuthLooks = config['azlooks']
-    #corrLooks = config['corrlooks']
+    corrLooks = config['corrlooks']
     maxComponents = 20
 
     snp = Snaphu()
@@ -163,7 +173,7 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     snp.setAltitude(altitude)
     snp.setCorrfile(corfile)
     snp.setInitMethod(initMethod)
-   # snp.setCorrLooks(corrLooks)
+    snp.setCorrLooks(corrLooks)
     snp.setMaxComponents(maxComponents)
     snp.setDefoMaxCycles(defomax)
     snp.setRangeLooks(rangeLooks)
