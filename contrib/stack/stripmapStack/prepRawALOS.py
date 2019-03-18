@@ -27,6 +27,8 @@ def createParser():
             help='output directory where data needs to be unpacked into isce format (for script generation).')
     parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='source ~/.bash_profile;',
             help='text command to be added to the beginning of each line of the run files. Default: source ~/.bash_profile;')
+    parser.add_argument('--dual2single','--fbd2fbs', dest='fbd2fbs', action='store_true',
+            help='resample the FBD acquisitions to FBS. Recommended for "interferogram" workflow without ionosphere.')
     return parser
 
 
@@ -202,8 +204,14 @@ def main(iargs=None):
                     os.makedirs(slcDir)     
                 cmd = 'unpackFrame_ALOS_raw.py -i ' + os.path.abspath(dataDir) + ' -o ' + slcDir      
                 IMG_files = glob.glob(os.path.join(AlosFiles[0],'IMG*'))
-                if len(IMG_files)==1:
-                    cmd = cmd + ' -f  fbs2fbd ' 
+                if inps.fbd2fbs:
+                    #recommended for regular interferometry to use all FBS bandwidth
+                    if len(IMG_files) == 2:
+                        cmd += ' -f fbd2fbs '
+                else:
+                    #used for ionosphere workflow for simplicity
+                    if len(IMG_files) == 1:
+                        cmd = cmd + ' -f  fbs2fbd ' 
                 if len(AlosFiles) > 1:
                     cmd = cmd + ' -m' 
                 print (cmd)
