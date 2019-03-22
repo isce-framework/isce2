@@ -4,9 +4,7 @@ FROM hysds/pge-base:latest
 ENV LANG en_US.UTF-8
 
 # Set ISCE repo
-#ENV ISCE_ORG isce-framework
-ENV ISCE_ORG pymonger
-ENV ISCE_REPO github.com/${ISCE_ORG}/isce2.git
+ENV ISCE_ORG isce-framework
 
 # set to root user
 USER root
@@ -59,7 +57,7 @@ RUN set -ex \
  && cp docker/isce_env.sh $ISCE_INSTALL_ROOT \
  && mkdir -p rpm-build/opt \
  && mv $ISCE_INSTALL_ROOT rpm-build/opt \
- && curl -s https://api.github.com/repos/pymonger/isce2/git/refs/heads/master \
+ && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/master \
     > rpm-build/opt/isce2/version.json \
  && hash=$(cat rpm-build/opt/isce2/version.json | jq -r .object.sha) \
  && short_hash=$(echo $hash | cut -c1-5) \
