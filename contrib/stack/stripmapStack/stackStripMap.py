@@ -238,6 +238,16 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pair
 
 def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs):
 
+    # raise exception for ALOS-1 if --fbd2fbs was used
+    run_unpack_file = os.path.join(inps.workDir, 'run_unPackALOS')
+    if os.path.isfile(run_unpack_file):
+        with open(run_unpack_file, 'r') as f:
+            lines = f.readlines()
+        if any('fbd2fbs' in line for line in lines):
+            msg = 'ALOS-1 FBD mode data exists with fbd2fbs enabled, which is not applicable for ionosphere workflow'
+            msg += '\nsolution: restart from prepRawALOS.py WITHOUT --dual2single/--fbd2fbs option.'
+            raise ValueError(msg)
+
     # an interferogram stack with ionosphere correction.
     # coregistration is with geometry + const offset + rubbersheeting
 

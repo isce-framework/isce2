@@ -192,7 +192,7 @@ def main(iargs=None):
         
 
     # now generate the unpacking script for all the date dirs
-    dateDirs = glob.glob(os.path.join(inps.inputDir,'2*'))
+    dateDirs = sorted(glob.glob(os.path.join(inps.inputDir,'2*')))
     if inps.outputDir is not None:
         f = open(run_unPack,'w')
         for dataDir in dateDirs:
