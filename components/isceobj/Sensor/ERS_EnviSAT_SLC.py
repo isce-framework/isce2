@@ -2,28 +2,15 @@
 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Copyright 2010 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-# http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# 
-# United States Government Sponsorship acknowledged. This software is subject to
-# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
-# (No [Export] License Required except when exporting to an embargoed country,
-# end user, or in support of a prohibited end use). By downloading this software,
-# the user agrees to comply with all applicable U.S. export laws and regulations.
-# The user has the responsibility to obtain export licenses, or other export
-# authority as may be required before exporting this software to any 'EAR99'
-# embargoed foreign country or citizen of those countries.
+# Copyright 2010, by the California Institute of Technology. ALL RIGHTS RESERVED.
+# United States Government Sponsorship acknowledged. Any commercial use must be
+# negotiated with the Office of Technology Transfer at the California Institute of
+# Technology.  This software is subject to U.S. export control laws and regulations
+# and has been classified as EAR99.  By accepting this software, the user agrees to
+# comply with all applicable U.S. export laws and regulations.  User has the
+# responsibility to obtain export licenses, or other export authority as may be
+# required before exporting such information to foreign countries or providing
+# access to foreign persons.
 #
 # Author: Walter Szeliga
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -137,7 +124,7 @@ class ERS_EnviSAT_SLC(Sensor):
 
         self._imageFile = ImageryFile(fileName=self._imageFileName)
         self._imageryFileData = self._imageFile.parse()
-
+        
         self.populateMetadata()
 
     def populateMetadata(self):
@@ -477,6 +464,12 @@ class ImageryFile(BaseEnvisatFile):
 
     def parse(self):
 
+        def getDictByKey(inlist, key):
+            for kk in inlist:
+                if kk['DS_NAME'] == key:
+                    return kk
+            return None
+
         import pprint
         imageryDict = {}
         try:
@@ -488,7 +481,18 @@ class ImageryFile(BaseEnvisatFile):
 
         self.readMPH()
         self.readSPH()
-
+        ## added to read correctly image despite the ESA software version / Marin Govorcin, 04.02.2019
+        self.sqLength = self._extractValue(value = getDictByKey(self.sph['dataSets'], 
+                                        'MDS1 SQ ADS')['DS_SIZE'], type=int)
+        self.procParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'MAIN PROCESSING PARAMS ADS')['DS_SIZE'], type=int)
+        self.doppParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'DOP CENTROID COEFFS ADS')['DS_SIZE'], type=int)
+        self.chirpParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'CHIRP PARAMS ADS')['DS_SIZE'], type=int)
+        self.geoParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'GEOLOCATION GRID ADS')['DS_SIZE'], type=int)
+        
         ####Handling software version change in 6.02
         ver = float(self.mph['SOFTWARE_VER'].strip()[-4:])
 
@@ -502,9 +506,10 @@ class ImageryFile(BaseEnvisatFile):
             self.procParamLength = 10069
             self.geoParamLength = 521*13
         '''
+
         print('ESA Software Version: ', ver)
-        self.procParamLength = 10069 #new ERS envisat format, despite software version 6.0 has new metadata format?
-        self.geoParamLength = 521*13
+        #self.procParamLength = 10069 #new ERS envisat format, despite software version 6.0 has new metadata format?
+        #self.geoParamLength = 521*13
 
         procDict = self.readProcParams()
         doppDict = self.readDopplerParams()
