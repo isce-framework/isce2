@@ -108,8 +108,14 @@ class SICD_RGZERO(Sensor):
         instrument.setRadarWavelength(Const.c/fc)
         instrument.setPulseRepetitionFrequency(prf)
         instrument.setRangePixelSize(rangePixelSize)
-        instrument.setPulseLength(mdict.RadarCollection.Waveform.WFParameters[0].TxPulseLength)
-        instrument.setChirpSlope(mdict.RadarCollection.Waveform.WFParameters[0].TxRFBandwidth / mdict.RadarCollection.Waveform.WFParameters[0].TxPulseLength )
+
+        try:
+            WFParams = mdict.RadarCollection.Waveform.WFParameters[0]
+        except TypeError:
+            WFParams = mdict.RadarCollection.Waveform.WFParameters
+
+        instrument.setPulseLength(WFParams.TxPulseLength)
+        instrument.setChirpSlope(WFParams.TxRFBandwidth / WFParams.TxPulseLength )
         instrument.setRangeSamplingRate(fs)
         instrument.setInPhaseValue(0.)
         instrument.setQuadratureValue(0.)
@@ -197,6 +203,11 @@ class SICD_RGZERO(Sensor):
 
         img = cf.open(self.sicd)
         data = img.read_chip()
+        if self._sicdmeta.SCPCOA.SideOfTrack.startswith('R'):
+            viewarr = data
+        else:
+            viewarr = data[:,::-1]
+        
         data.T.tofile(self.output)
 
         rawImage = isceobj.createSlcImage()
