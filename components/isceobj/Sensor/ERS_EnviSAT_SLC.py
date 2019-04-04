@@ -476,7 +476,13 @@ class ImageryFile(BaseEnvisatFile):
         self.geoParamLength = None
 
     def parse(self):
-
+        
+        def getDictByKey(inlist, key):
+            for kk in inlist:
+                if kk['DS_NAME'] == key:
+                    return kk
+            return None
+        
         import pprint
         imageryDict = {}
         try:
@@ -488,6 +494,16 @@ class ImageryFile(BaseEnvisatFile):
 
         self.readMPH()
         self.readSPH()
+        self.sqLength = self._extractValue(value = getDictByKey(self.sph['dataSets'], 
+                                        'MDS1 SQ ADS')['DS_SIZE'], type=int)
+        self.procParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'MAIN PROCESSING PARAMS ADS')['DS_SIZE'], type=int)
+        self.doppParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'DOP CENTROID COEFFS ADS')['DS_SIZE'], type=int)
+        self.chirpParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'CHIRP PARAMS ADS')['DS_SIZE'], type=int)
+        self.geoParamLength = self._extractValue(value=getDictByKey(self.sph['dataSets'],
+                                        'GEOLOCATION GRID ADS')['DS_SIZE'], type=int)
 
         ####Handling software version change in 6.02
         ver = float(self.mph['SOFTWARE_VER'].strip()[-4:])
@@ -503,8 +519,8 @@ class ImageryFile(BaseEnvisatFile):
             self.geoParamLength = 521*13
         '''
         print('ESA Software Version: ', ver)
-        self.procParamLength = 10069 #new ERS envisat format, despite software version 6.0 has new metadata format?
-        self.geoParamLength = 521*13
+        #self.procParamLength = 10069 #new ERS envisat format, despite software version 6.0 has new metadata format?
+        #self.geoParamLength = 521*13
 
         procDict = self.readProcParams()
         doppDict = self.readDopplerParams()
