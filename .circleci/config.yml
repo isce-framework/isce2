@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  build:
+    docker:
+        - image: hysds/pge-base:latest
+          user: root
+    working_directory: /root
+    steps:
+      - checkout
+
+      - run:
+          name: Install development tools
+          command: |
+            set -ex
+            yum update -y
+            yum groupinstall -y "development tools"
+
+      - run:
+          name: Install ISCE requirements
+          command: |
+            set -ex
+            . /opt/conda/bin/activate root
+            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
+            yum install -y uuid-devel x11-devel motif-devel jq
+            ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
+
