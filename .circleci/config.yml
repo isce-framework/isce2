@@ -1,0 +1,77 @@
+version: 2
+jobs:
+  build:
+    docker:
+        - image: hysds/pge-base:latest
+          user: root
+    steps:
+      - checkout:
+          path: /root/project/src 
+
+      - run:
+          name: Install development tools
+          command: |
+            set -ex
+            pwd
+            yum update -y
+            yum groupinstall -y "development tools"
+
+      - run:
+          name: Install ISCE requirements
+          command: |
+            set -ex
+            pwd
+            . /opt/conda/bin/activate root
+            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
+            yum install -y uuid-devel x11-devel motif-devel jq
+            ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
+            mkdir config build install
+
+      - run:
+          name: Build SConfigISCE and setup dirs
+          command: |
+              set -ex
+              pwd
+              cd config
+              echo "PRJ_SCONS_BUILD = /root/project/build" > SConfigISCE
+              echo "PRJ_SCONS_INSTALL = /root/project/install/isce" >> SConfigISCE
+              echo "LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib" >> SConfigISCE
+              echo "CPPPATH = /opt/conda/include/python3.7m /opt/conda/lib/python3.7/site-packages/numpy/core/include /opt/conda/include /usr/include" >> SConfigISCE
+              echo "FORTRANPATH =  /usr/include /opt/conda/include" >> SConfigISCE
+              echo "FORTRAN = /bin/gfortran" >> SConfigISCE
+              echo "CC = /bin/gcc" >> SConfigISCE
+              echo "CXX = /bin/g++" >> SConfigISCE
+              echo "MOTIFLIBPATH = /usr/lib64" >> SConfigISCE
+              echo "X11LIBPATH = /usr/lib64" >> SConfigISCE
+              echo "MOTIFINCPATH = /usr/include" >> SConfigISCE
+              echo "X11INCPATH = /usr/include" >> SConfigISCE
+              echo "RPATH = /opt/conda/lib /usr/lib64 /usr/lib" >> SConfigISCE
+              echo "LINKFLAGS = -luuid" >> SConfigISCE
+              cat SConfigISCE
+
+      - run:
+          name: Build and Install ISCE
+          command: |
+            set -ex
+            pwd
+            . /opt/conda/bin/activate root
+            cd src
+            export PATH="/opt/conda/bin:$PATH"
+            export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
+            SCONS_CONFIG_DIR=/root/project/config scons install --skipcheck
+
+      - run:
+          name: Test ISCE installation
+          command: |
+              set -ex
+              pwd
+              . /opt/conda/bin/activate root
+              export ISCE_HOME=/root/project/install/isce
+              export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:/opt/conda/bin:$PATH"
+              export PYTHONPATH="/root/project/install:$PYTHONPATH"
+              export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
+              topsApp.py --help --steps
+              stripmapApp.py --help --steps
+              python3 -c "import isce"
+              
+
