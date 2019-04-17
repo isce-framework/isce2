@@ -24,14 +24,15 @@ jobs:
             mkdir config build install
             . /opt/conda/bin/activate root
             conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
-            yum install -y uuid-devel x11-devel motif-devel jq
+            yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran
             ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
             cd /opt/conda/lib
             unlink libuuid.so
             unlink libuuid.so.1
             ln -s /lib64/libuuid.so.1.3.0 libuuid.so
             ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1
-            yum install -y gcc-gfortran
+            cd /lib64
+            test -f libgfortran.so || ln -sv libgfortran.so.*.* libgfortran.so
 
       - run:
           name: Build SConfigISCE and setup dirs
@@ -52,7 +53,6 @@ jobs:
               echo "MOTIFINCPATH = /usr/include" >> SConfigISCE
               echo "X11INCPATH = /usr/include" >> SConfigISCE
               echo "RPATH = /opt/conda/lib /usr/lib64 /usr/lib" >> SConfigISCE
-              echo "LINKFLAGS = -L/lib64 -lgfortran" >> SConfigISCE
               cat SConfigISCE
 
       - run:
