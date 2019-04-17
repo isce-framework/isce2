@@ -24,8 +24,10 @@ listFiles = ['ALOS.py','CEOS.py','COSMO_SkyMed.py','COSMO_SkyMed_SLC.py',
              'ERS.py','EnviSAT.py','Generic.py','JERS.py','Radarsat1.py',
              'Radarsat2.py','TerraSARX.py','Polarimetry.py','Sensor.py',
              'ROI_PAC.py','Sentinel1.py','TanDEMX.py','KOMPSAT5.py',
-             'Risat1.py', 'Risat1_SLC.py', 'UAVSAR_RPI.py', 'UAVSAR_Stack.py', 'UAVSAR_Polsar.py',
-	     'ALOS2.py', 'ERS_SLC.py', 'ALOS_SLC.py', 'EnviSAT_SLC.py', 'ERS_EnviSAT_SLC.py', 'SICD_RGZERO.py','__init__.py']
+             'Risat1.py', 'Risat1_SLC.py', 'UAVSAR_RPI.py', 'UAVSAR_Stack.py',
+             'UAVSAR_Polsar.py', 'ERS_EnviSAT.py',
+	     'ALOS2.py', 'ERS_SLC.py', 'ALOS_SLC.py', 'EnviSAT_SLC.py',
+             'ERS_EnviSAT_SLC.py', 'SICD_RGZERO.py','__init__.py']
 
 helpList,installHelp = envSensor['HELP_BUILDER'](envSensor,'__init__.py',install)
 envSensor.Install(installHelp,helpList)
