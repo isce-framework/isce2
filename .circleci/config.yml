@@ -21,6 +21,7 @@ jobs:
           command: |
             set -ex
             pwd
+            mkdir config build install
             . /opt/conda/bin/activate root
             conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
             yum install -y uuid-devel x11-devel motif-devel jq
@@ -36,7 +37,6 @@ jobs:
             unlink libgfortran.so.4
             ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so
             ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so.4
-            mkdir config build install
 
       - run:
           name: Build SConfigISCE and setup dirs
