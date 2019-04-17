@@ -42,6 +42,23 @@ RUN set -ex \
  && yum install -y uuid-devel x11-devel motif-devel jq \
  && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3
 
+# link system libuuid
+RUN set -ex \
+ && cd /opt/conda/lib \
+ && unlink libuuid.so \
+ && unlink libuuid.so.1 \
+ && ln -s /lib64/libuuid.so.1.3.0 libuuid.so \
+ && ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1
+
+# install libgfortran.so.3
+RUN set -ex \
+ && yum install -y gcc-gfortran \
+ && cd /opt/conda/lib \
+ && unlink libgfortran.so \
+ && unlink libgfortran.so.4 \
+ && ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so \
+ && ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so.4
+
 # copy repo
 COPY . /root/isce2
 
@@ -91,6 +108,16 @@ RUN set -ex \
       netcdf4 \
  && sudo yum update -y \
  && sudo yum install -y uuid-devel x11-devel motif-devel \
+ && cd /opt/conda/lib \
+ && sudo unlink libuuid.so \
+ && sudo unlink libuuid.so.1 \
+ && sudo ln -s /lib64/libuuid.so.1.3.0 libuuid.so \
+ && sudo ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1 \
+ && sudo yum install -y gcc-gfortran \
+ && sudo unlink libgfortran.so \
+ && sudo unlink libgfortran.so.4 \
+ && sudo ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so \
+ && sudo ln -s /lib64/libgfortran.so.3.0.0 libgfortran.so.4 \
  && sudo yum install -y /tmp/isce-2.0-1.x86_64.rpm \
  && sudo yum clean all \
  && sudo rm -rf /var/cache/yum \
