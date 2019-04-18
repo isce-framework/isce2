@@ -93,7 +93,7 @@ createALOS2 = partial(factory_template, 'ALOS2')
 createERS_SLC = partial(factory_template, 'ERS_SLC')
 createALOS_SLC = partial(factory_template, 'ALOS_SLC')
 createEnviSAT_SLC = partial(factory_template, 'EnviSAT_SLC')
-createERS_ENVISAT = partial(factory_template, 'ERS_ENVISAT')
+createERS_ENVISAT = partial(factory_template, 'ERS_EnviSAT')
 createERS_EnviSAT_SLC = partial(factory_template, 'ERS_EnviSAT_SLC')
 createSICD_RGZERO = partial(factory_template, 'SICD_RGZERO')
 
