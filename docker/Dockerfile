@@ -42,6 +42,20 @@ RUN set -ex \
  && yum install -y uuid-devel x11-devel motif-devel jq \
  && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3
 
+# link system libuuid
+RUN set -ex \
+ && cd /opt/conda/lib \
+ && unlink libuuid.so \
+ && unlink libuuid.so.1 \
+ && ln -s /lib64/libuuid.so.1.3.0 libuuid.so \
+ && ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1
+
+# install libgfortran.so.3 and create missing link
+RUN set -ex \
+ && yum install -y gcc-gfortran \
+ && cd /lib64 \
+ && ( test -f libgfortran.so || ln -sv libgfortran.so.*.* libgfortran.so )
+
 # copy repo
 COPY . /root/isce2
 
@@ -90,7 +104,14 @@ RUN set -ex \
       hdf5 \
       netcdf4 \
  && sudo yum update -y \
- && sudo yum install -y uuid-devel x11-devel motif-devel \
+ && sudo yum install -y uuid-devel x11-devel motif-devel gcc-gfortran \
+ && cd /opt/conda/lib \
+ && sudo unlink libuuid.so \
+ && sudo unlink libuuid.so.1 \
+ && sudo ln -s /lib64/libuuid.so.1.3.0 libuuid.so \
+ && sudo ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1 \
+ && cd /lib64 \
+ && ( test -f libgfortran.so || sudo ln -sv libgfortran.so.*.* libgfortran.so ) \
  && sudo yum install -y /tmp/isce-2.0-1.x86_64.rpm \
  && sudo yum clean all \
  && sudo rm -rf /var/cache/yum \

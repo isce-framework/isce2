@@ -36,9 +36,6 @@ X11INCPATH = /usr/include       # path to location of the X11 directory
 # list of paths to search for shared libraries when running programs
 RPATH = /opt/conda/lib /usr/lib64 /usr/lib
 
-# additional linker flags
-LINKFLAGS = -luuid
-
 #Explicitly enable cuda if needed
 ENABLE_CUDA = True
 #CUDA_TOOLKIT_PATH = $YOUR_CUDA_INSTALLATION  #/usr/local/cuda
