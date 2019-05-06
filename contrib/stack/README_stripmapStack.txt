@@ -31,7 +31,7 @@ fixImageXml.py -f -i demLat_S37_S31_Lon_W072_W069.dem.wgs84
 mkdir download 
 cd download
 
-6- Download the data that that you want to process to the downlowd directory.
+6- Download the data that that you want to process to the download directory.
 
 7- once all data have been downloaded, we need to unzip them and move them to different folders and getting ready for unpacking and then SLC generation. 
 This can be done by running the following command in a directory above "download":
