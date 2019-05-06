@@ -67,11 +67,11 @@ def main(iargs=None):
     outputDir = os.path.abspath(inps.output)
 
     #######################################
-    slc_files = glob.glob(os.path.join(inps.input, '*_s'+segment+'_1x1.slc'))
+    slc_files = glob.glob(os.path.join(inps.input, '*_s'+inps.segment+'_1x1.slc'))
     for file in slc_files:
         imgDate = get_Date(file)
         print (imgDate)
-        annFile = file.replace('_s'+segment+'_1x1.slc','')+'.ann'
+        annFile = file.replace('_s'+inps.segment+'_1x1.slc','')+'.ann'
         print (annFile)
         imgDir = os.path.join(outputDir,imgDate)
         if not os.path.exists(imgDir):
