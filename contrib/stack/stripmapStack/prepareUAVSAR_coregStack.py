@@ -81,7 +81,8 @@ def main(iargs=None):
         print (cmd)
         os.system(cmd)
         
-        cmd = 'mv ' + file + ' ' + imgDir
+        slcFile = os.path.join(imgDir, imgDate+'.slc')
+        cmd = 'mv ' + file + ' ' + slcFile
         print(cmd)
         os.system(cmd)
 
@@ -90,7 +91,6 @@ def main(iargs=None):
         os.system(cmd)
 
         shelveFile = os.path.join(imgDir, 'data')
-        slcFile = os.path.join(imgDir, os.path.basename(file))
         write_xml(shelveFile, slcFile)
 
 if __name__ == '__main__':
