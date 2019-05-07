@@ -5,7 +5,7 @@
 import os, imp, sys, glob
 import argparse
 import configparser
-import  datetime
+import datetime
 import numpy as np
 import shelve
 import isce
@@ -575,7 +575,7 @@ class run(object):
              configObj.igram = configObj.outDir+'.int'
              configObj.filtIgram = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.int'
              configObj.coherence = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.cor'
-             configObj.filtStrength = filtStrength
+             #configObj.filtStrength = filtStrength
              configObj.filterCoherence('[Function-2]')
 
              configObj.igram = configObj.filtIgram

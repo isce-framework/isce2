@@ -2,12 +2,14 @@
 
 # David Bekaert
 
-import zipfile
+
 import os
 import glob
 import argparse
-import tarfile
 import shutil
+import tarfile
+import zipfile
+
 
 def createParser():
     '''
@@ -50,6 +52,8 @@ def main(iargs=None):
         print('Done')
     elif completeFlag == False:
         print('Failed')
+    return
+
 
 def uncompressfile(inputFile,outputDir):
     
@@ -89,7 +93,7 @@ def uncompressfile(inputFile,outputDir):
     temp, extension = os.path.splitext(inputFile)    
 
     # File update
-    print('File: ', inputFile, ' to ', outputDir)                                                                                                            
+    print('File: ', inputFile, ' to ', outputDir)
     if extension == '.zip':
         ZIP = zipfile.ZipFile(inputFile)
 
@@ -105,7 +109,7 @@ def uncompressfile(inputFile,outputDir):
 
             # Check if the data is unpacked in its own folder
             folderfiles = glob.glob(os.path.join(outputDir,'*'))
-            if len(folderfiles)==1:
+            while len(folderfiles)==1:
                 # get the sub-folder name only
                 tempdir = os.path.basename(folderfiles[0])
                 if os.path.isdir(folderfiles[0]):
@@ -114,27 +118,30 @@ def uncompressfile(inputFile,outputDir):
                     os.rename(folderfiles[0],tempdir2)
                     os.rmdir(outputDir)
                     os.rename(tempdir2,outputDir)
+                folderfiles = glob.glob(os.path.join(outputDir,'*'))
             return completeFlag
+
     elif extension == '.tar' or extension == '.gz':
         TAR = tarfile.open(inputFile)
-            
+
         # first test the tar is in good condition
         try:
             TAR.extractall(outputDir)
             TAR.close()
             completeFlag = True
 
-            # Check if the data is unpacked in its own folder
+            # Check if the data is unpacked in its own folder or its sub-folders
             folderfiles = glob.glob(os.path.join(outputDir,'*'))
-            if len(folderfiles)==1:
-                # get the sub-folder name only                   
+            while len(folderfiles) == 1:
+                # get the sub-folder name only
                 tempdir = os.path.basename(folderfiles[0])
                 if os.path.isdir(folderfiles[0]):
                     # it seems there is a subfolder, will copy the content in the parent
-                    tempdir2=os.path.join(workdir,tempdir + '.temp')                                                                                
+                    tempdir2 = os.path.join(workdir, tempdir + '.temp')
                     os.rename(folderfiles[0],tempdir2)
                     os.rmdir(outputDir)
                     os.rename(tempdir2,outputDir)
+                folderfiles = glob.glob(os.path.join(outputDir,'*'))
             return completeFlag
         except:
             print('Tar file seems to be corrupted, abord...')

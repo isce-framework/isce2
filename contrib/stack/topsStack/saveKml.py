@@ -151,8 +151,8 @@ def display(file,inps):
        cmap = reverse_colourmap(cmap) 
     cmap.set_bad(alpha=0.0)
  #   cmap.set_under('k', alpha=0)
-    try:     ax.imshow(data, aspect = 'normal', vmax = inps.max, vmin = inps.min, cmap = cmap)
-    except:  ax.imshow(data, aspect = 'normal', cmap = cmap)
+    try:     ax.imshow(data, aspect = 'auto', vmax = inps.max, vmin = inps.min, cmap = cmap)
+    except:  ax.imshow(data, aspect = 'auto', cmap = cmap)
 
     ax.set_xlim([0,width])
     ax.set_ylim([length,0])

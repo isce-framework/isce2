@@ -118,9 +118,11 @@ def runDenseOffsetsCPU(self):
 
     objOffset.offsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile)
     objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
+    objOffset.covImageName = os.path.join(self._insar.mergedDirname, self._insar.covfile)
 
     print('Output dense offsets file name: %s' % (objOffset.offsetImageName))
     print('Output SNR file name: %s' % (objOffset.snrImageName))
+    print('Output covariance file name: %s' % (objOffset.covImageName))
     print('\n======================================')
     print('Running dense ampcor...')
     print('======================================\n')

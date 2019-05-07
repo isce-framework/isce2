@@ -1,12 +1,12 @@
 <component name="master">
     <property name="IMAGEFILE">
-        <value>data/IMG-HH-ALOS2015010600-140902-UBSR1.1__A</value>
+        <value>data/20140902/IMG-HH-ALOS2015010600-140902-UBSR1.1__A</value>
     </property>
     <property name="LEADERFILE">
-        <value>data/LED-ALOS2015010600-140902-UBSR1.1__A</value>
+        <value>data/20140902/LED-ALOS2015010600-140902-UBSR1.1__A</value>
     </property>
     <property name="OUTPUT">
-        <value>20140902.slc</value>
+        <value>20140902</value>
     </property>
 </component>
 
