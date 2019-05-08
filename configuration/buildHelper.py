@@ -100,7 +100,7 @@ def main(factoryFile,package,buildDir):
     try:
         import importlib
         factoryFile = os.path.abspath(factoryFile)
-        mod = importlib.util.find_spec(factoryFile.replace('.py',''))
+        mod = importlib.util.spec_from_file_location('.', factoryFile)
         factModule = mod.loader.load_module()
         factoriesInfo = factModule.getFactoriesInfo()
         nameList = []
