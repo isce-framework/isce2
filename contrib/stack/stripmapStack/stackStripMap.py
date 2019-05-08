@@ -318,7 +318,10 @@ def main(iargs=None):
   if not os.path.exists(runDir):
        os.makedirs(runDir)
 
-  pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates)
+  if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
+    pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=False)
+  else:
+    pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=True)  
   print ('number of pairs: ', len(pairs))
 
   ###If only a summary is requested quit after this

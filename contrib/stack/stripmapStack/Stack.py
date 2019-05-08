@@ -658,7 +658,7 @@ def baselinePair(baselineDir, master, slave):
     print('Baseline at top/bottom: %f %f'%(bObj.pBaselineTop,bObj.pBaselineBottom))
     return (bObj.pBaselineTop+bObj.pBaselineBottom)/2.
 
-def baselineStack(inps,stackMaster,acqDates):
+def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     from collections import OrderedDict
     baselineDir = os.path.join(inps.workDir,'baselines')
     if not os.path.exists(baselineDir):
@@ -671,7 +671,10 @@ def baselineStack(inps,stackMaster,acqDates):
     for slv in acqDates:
         if slv != stackMaster:
             slave = os.path.join(inps.slcDir, slv)
-            baselineDict[slv]=baselinePair(baselineDir, master, slave)
+            if doBaselines:
+                baselineDict[slv]=baselinePair(baselineDir, master, slave)
+            else:
+                baselineDict[slv] = 0.0    # set slave baselines to zero if not calculated
             t = datetime.datetime.strptime(slv, datefmt)
             timeDict[slv] = t - t0
         else:
@@ -680,11 +683,11 @@ def baselineStack(inps,stackMaster,acqDates):
 
     return baselineDict, timeDict
 
-def selectPairs(inps,stackMaster, slaveDates, acuisitionDates):
-    baselineDict, timeDict = baselineStack(inps, stackMaster, acuisitionDates)
+def selectPairs(inps,stackMaster, slaveDates, acuisitionDates,doBaselines=True):
+
+    baselineDict, timeDict = baselineStack(inps, stackMaster, acuisitionDates,doBaselines)
     for slave in slaveDates:
        print (slave,' : ' , baselineDict[slave])
-
     numDates = len(acuisitionDates)
     pairs = []
     for i in range(numDates-1):
