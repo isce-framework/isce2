@@ -97,7 +97,7 @@ jobs:
           command: |
             mkdir images
             SHA1=$(echo $CIRCLE_SHA1 | cut -c1-7)
-            echo 'export TAG="$SHA1"' >> images/env.sh
+            echo "export TAG=$SHA1" >> images/env.sh
             source images/env.sh
             docker build --rm --force-rm -t isce/isce2:$TAG -f docker/Dockerfile .
             cd images
