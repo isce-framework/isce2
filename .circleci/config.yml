@@ -136,6 +136,7 @@ jobs:
     docker:
       - image: docker:stable-git
     steps:
+      - setup_remote_docker
       - run:
           name: Install dependencies
           command: |
