@@ -133,7 +133,7 @@ jobs:
             - "*"
   deploy:
     docker:
-      - image: alpine:latest
+      - image: docker:stable-git
     steps:
       - run:
           name: Install dependencies
