@@ -34,6 +34,7 @@ from isceobj import Constants as CN
 from iscesys.Component.Component import Component, Port
 from zerodop.geo2rdr import geo2rdr
 from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
+from iscesys import DateTimeUtil as DTU
 from isceobj.Util import combinedlibmodule
 from isceobj.Util.Poly1D import Poly1D
 from isceobj.Util.Poly2D import Poly2D
@@ -243,7 +244,7 @@ class Geo2rdr(Component):
             azimuthOffAcc = self.azimuthOffsetImage.getImagePointer()
 
 
-        cOrbit = self.orbit.exportToC()
+        cOrbit = self.orbit.exportToC(reference=self.sensingStart)
         geo2rdr.setOrbit_Py(cOrbit)
 
         #####Output cropped DEM for first band
@@ -393,7 +394,7 @@ class Geo2rdr(Component):
         geo2rdr.setDopplerAccessor_Py(self.polyDopplerAccessor)
         geo2rdr.setPRF_Py(float(self.prf))
         geo2rdr.setRadarWavelength_Py(float(self.radarWavelength))
-        geo2rdr.setSensingStart_Py(float(self.sensingStart))
+        geo2rdr.setSensingStart_Py(DTU.seconds_since_midnight(self.sensingStart))
         geo2rdr.setLength_Py(int(self.length))
         geo2rdr.setWidth_Py(int(self.width))
         geo2rdr.setNumberRangeLooks_Py(int(self.numberRangeLooks))
@@ -424,9 +425,7 @@ class Geo2rdr(Component):
         self.radarWavelength = float(var)
 
     def setSensingStart(self,var):
-        rtime = datetime.datetime.combine(var.date(), datetime.time(0,0,0))
-        secs = (var - rtime).total_seconds()
-        self.sensingStart = float(secs)
+        self.sensingStart = var
 
     def setLength(self,var):
         self.length = int(var)
