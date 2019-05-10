@@ -93,7 +93,7 @@ jobs:
             pip install \
               docker-compose awscli
       - run:
-          name: Build
+          name: Build docker image
           command: |
             mkdir images
             SHA1=$(echo $CIRCLE_SHA1 | cut -c1-7)
@@ -120,7 +120,7 @@ jobs:
             pip install \
               docker-compose awscli
       - run:
-          name: Build
+          name: Build docker image
           command: |
             mkdir images
             echo 'export TAG=$(date -u +%Y%m%d)' >> images/env.sh
