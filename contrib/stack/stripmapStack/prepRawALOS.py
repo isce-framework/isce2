@@ -195,14 +195,14 @@ def main(iargs=None):
     dateDirs = sorted(glob.glob(os.path.join(inps.inputDir,'2*')))
     if inps.outputDir is not None:
         f = open(run_unPack,'w')
-        for dataDir in dateDirs:
-            AlosFiles = glob.glob(os.path.join(dataDir, 'ALP*'))
+        for dateDir in dateDirs:
+            AlosFiles = glob.glob(os.path.join(dateDir, 'ALP*'))
             if len(AlosFiles)>0:
-                acquisitionDate = os.path.basename(dataDir)
+                acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(inps.outputDir, acquisitionDate)
                 if not os.path.exists(slcDir):
                     os.makedirs(slcDir)     
-                cmd = 'unpackFrame_ALOS_raw.py -i ' + os.path.abspath(dataDir) + ' -o ' + slcDir      
+                cmd = 'unpackFrame_ALOS_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 IMG_files = glob.glob(os.path.join(AlosFiles[0],'IMG*'))
                 if inps.fbd2fbs:
                     #recommended for regular interferometry to use all FBS bandwidth

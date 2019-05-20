@@ -171,26 +171,26 @@ def main(iargs=None):
     dateDirs = glob.glob(os.path.join(inputDir,'2*'))
     if outputDir is not None:
         f = open(run_unPack,'w')
-        for dataDir in dateDirs:
-            CSKFiles = glob.glob(os.path.join(dataDir, 'CSK*.h5'))
+        for dateDir in dateDirs:
+            CSKFiles = glob.glob(os.path.join(dateDir, 'CSK*.h5'))
             if len(CSKFiles)>0:
-                acquisitionDate = os.path.basename(dataDir)
+                acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(outputDir, acquisitionDate)
                 if not os.path.exists(slcDir):
                     os.makedirs(slcDir)     
-                cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dataDir) + ' -o ' + slcDir      
+                cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')
     
             """ 
             ##### FOR now lets ptu all scences in single folder
-            CSKFiles = glob.glob(os.path.join(dataDir, 'EL*'))
+            CSKFiles = glob.glob(os.path.join(dateDir, 'EL*'))
             if len(CSKFiles)>0:
-               acquisitionDate = os.path.basename(dataDir)
+               acquisitionDate = os.path.basename(dateDir)
                slcDir = os.path.join(outputDir, acquisitionDate)
                if not os.path.exists(slcDir):
                   os.makedirs(slcDir)     
-               cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dataDir) + ' -o ' + slcDir      
+               cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
 
                if len(CSKFiles) > 1:
                   cmd = cmd + ' -m' 

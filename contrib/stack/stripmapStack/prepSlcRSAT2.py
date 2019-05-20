@@ -161,14 +161,14 @@ def main(iargs=None):
     dateDirs = glob.glob(os.path.join(inputDir,'2*'))
     if outputDir is not None:
         f = open(run_unPack,'w')
-        for dataDir in dateDirs:
-            RSAT2Files = glob.glob(os.path.join(dataDir, 'imagery_HH.tif'))
+        for dateDir in dateDirs:
+            RSAT2Files = glob.glob(os.path.join(dateDir, 'imagery_HH.tif'))
             if len(RSAT2Files)>0:
-                acquisitionDate = os.path.basename(dataDir)
+                acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(outputDir, acquisitionDate)
                 if not os.path.exists(slcDir):
                     os.makedirs(slcDir)     
-                cmd = 'unpackFrame_RSAT2.py -i ' + os.path.abspath(dataDir) + ' -o ' + slcDir      
+                cmd = 'unpackFrame_RSAT2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')
         f.close()
