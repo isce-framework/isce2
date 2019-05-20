@@ -14,24 +14,25 @@ def cmdLineParse():
     Command line parser.
     '''
 
-    parser = argparse.ArgumentParser(description='Unpack CSK SLC data and store metadata in pickle file.')
+    parser = argparse.ArgumentParser(description='Unpack ALOS2 SLC data and store metadata in pickle file.')
     parser.add_argument('-i','--input', dest='h5dir', type=str,
-            required=True, help='Input CSK directory')
+            required=True, help='Input ALOS2 directory')
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output SLC directory')
     parser.add_argument('-d', '--deskew', dest='deskew', action='store_true',
             default=False, help='To read in for deskewing data later')
-
+    parser.add_argument('-p', '--polarization', dest='polarization', type=str,
+            default='HH', help='polarization in case if quad or full pol data exists. Deafult: HH')
     return parser.parse_args()
 
 
-def unpack(hdf5, slcname, deskew=False):
+def unpack(hdf5, slcname, deskew=False, polarization='HH'):
     '''
     Unpack HDF5 to binary SLC file.
     '''
 
-    imgname = glob.glob(os.path.join(hdf5,'IMG*'))[0]
-    ldrname = glob.glob(os.path.join(hdf5, 'LED*'))[0]
+    imgname = glob.glob(os.path.join(hdf5, '*/IMG-{}*'.format(polarization)))[0]
+    ldrname = glob.glob(os.path.join(hdf5, '*/LED*'))[0]
     if not os.path.isdir(slcname):
         os.mkdir(slcname)
 
@@ -94,4 +95,7 @@ if __name__ == '__main__':
     if inps.h5dir.endswith('/'):
         inps.h5dir = inps.h5dir[:-1]
 
-    obj = unpack(inps.h5dir, inps.slcdir, deskew=inps.deskew)
+    obj = unpack(inps.h5dir, inps.slcdir,
+                 deskew=inps.deskew,
+                 polarization=inps.polarization)
+

@@ -1,5 +1,7 @@
 # ISCE2
 
+[![CircleCI](https://circleci.com/gh/isce-framework/isce2.svg?style=svg)](https://circleci.com/gh/isce-framework/isce2)
+
 This is the Interferometric synthetic aperture radar Scientific Computing
 Environment (ISCE).  Its initial development was funded by NASA's Earth Science
 Technology Office (ESTO) under the Advanced Information Systems Technology
