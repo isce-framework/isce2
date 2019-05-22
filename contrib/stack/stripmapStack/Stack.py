@@ -632,31 +632,38 @@ class workflow(object):
 
 ##############################
 
-def baselinePair(baselineDir, master, slave):
+def baselinePair(baselineDir, master, slave,doBaselines=True):
     
-    try:
-        mdb = shelve.open( os.path.join(master, 'raw'), flag='r')
-        sdb = shelve.open( os.path.join(slave, 'raw'), flag='r')
-    except:
-        mdb = shelve.open( os.path.join(master, 'data'), flag='r')
-        sdb = shelve.open( os.path.join(slave, 'data'), flag='r')
+    if doBaselines: # open files to calculate baselines
+        try:
+            mdb = shelve.open( os.path.join(master, 'raw'), flag='r')
+            sdb = shelve.open( os.path.join(slave, 'raw'), flag='r')
+        except:
+            mdb = shelve.open( os.path.join(master, 'data'), flag='r')
+            sdb = shelve.open( os.path.join(slave, 'data'), flag='r')
 
-    mFrame = mdb['frame']
-    sFrame = sdb['frame']
+        mFrame = mdb['frame']
+        sFrame = sdb['frame']
 
 
-    bObj = Baseline()
-    bObj.configure()
-    bObj.wireInputPort(name='masterFrame', object=mFrame)
-    bObj.wireInputPort(name='slaveFrame', object=sFrame)
-    bObj.baseline()    
+        bObj = Baseline()
+        bObj.configure()
+        bObj.wireInputPort(name='masterFrame', object=mFrame)
+        bObj.wireInputPort(name='slaveFrame', object=sFrame)
+        bObj.baseline()    # calculate baseline from orbits
+        pBaselineBottom = bObj.pBaselineBottom
+        pBaselineTop = bObj.pBaselineTop
+    else:       # set baselines to zero if not calculated
+        pBaselineBottom = 0.0
+        pBaselineTop = 0.0
+        
     baselineOutName = os.path.basename(master) + "_" + os.path.basename(slave) + ".txt"
     f = open(os.path.join(baselineDir, baselineOutName) , 'w')
-    f.write("PERP_BASELINE_BOTTOM " + str(bObj.pBaselineBottom) + '\n')
-    f.write("PERP_BASELINE_TOP " + str(bObj.pBaselineTop) + '\n')
+    f.write("PERP_BASELINE_BOTTOM " + str(pBaselineBottom) + '\n')
+    f.write("PERP_BASELINE_TOP " + str(pBaselineTop) + '\n')
     f.close()
-    print('Baseline at top/bottom: %f %f'%(bObj.pBaselineTop,bObj.pBaselineBottom))
-    return (bObj.pBaselineTop+bObj.pBaselineBottom)/2.
+    print('Baseline at top/bottom: %f %f'%(pBaselineTop,pBaselineBottom))
+    return (pBaselineTop+pBaselineBottom)/2.
 
 def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     from collections import OrderedDict
@@ -671,10 +678,7 @@ def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     for slv in acqDates:
         if slv != stackMaster:
             slave = os.path.join(inps.slcDir, slv)
-            if doBaselines:
-                baselineDict[slv]=baselinePair(baselineDir, master, slave)
-            else:
-                baselineDict[slv] = 0.0    # set slave baselines to zero if not calculated
+            baselineDict[slv]=baselinePair(baselineDir, master, slave, doBaselines)
             t = datetime.datetime.strptime(slv, datefmt)
             timeDict[slv] = t - t0
         else:
