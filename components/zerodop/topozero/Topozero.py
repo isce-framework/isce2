@@ -120,7 +120,7 @@ class Topo(Component):
 
         self.setState()
 
-        cOrbit = self.orbit.exportToC()
+        cOrbit = self.orbit.exportToC(reference=self.sensingStart)
         topozero.setOrbit_Py(cOrbit)
         topozero.topo_Py(self.demAccessor, self.polyDopplerAccessor, self.slantRangeAccessor)
         combinedlibmodule.freeCOrbit(cOrbit)

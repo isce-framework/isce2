@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import os, imp, sys
+import os, sys
+import importlib
 import argparse
 import configparser
 
@@ -22,7 +23,7 @@ class ConfigParser:
     # Setting up and reading config 
     Config = configparser.ConfigParser()
     Config.optionxform = str
-    Config.readfp(content)
+    Config.read_file(content)
 
     # Reading the function sequence followed by input parameters 
     # followed by the function parameters
@@ -157,14 +158,12 @@ class ConfigParser:
 
     # If any of the following calls raises an exception,
     # there's a problem we can't handle -- let the caller handle it.
-    fp, pathname, description = imp.find_module(name)
+    spec = importlib.util.find_spec(name)
 
     try:
-      return imp.load_module(name, fp, pathname, description)
-    finally:
-      # Since we may exit via an exception, close fp explicitly.
-      if fp:
-        fp.close()
+      return spec.loader.load_module()
+    except ImportError:
+      print('module {} not found'.format(name))
 
 # Check existence of the input file
 def  check_if_files_exist(Files, ftype='input'):
