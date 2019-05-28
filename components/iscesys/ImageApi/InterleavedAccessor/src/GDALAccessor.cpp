@@ -98,7 +98,7 @@ GDALAccessor::getStream (char * dataLine, int & numEl)
     int ypos0 = LastPosition / LineWidth;
     int xpos0 = LastPosition % LineWidth;
     LastPosition += numEl;
-    int ypos1 = (LastPosition - 1) / LineWidth;
+    int ypos1 = (LastPosition - std::streampos(1)) / LineWidth;
     if (LastPosition * SizeV >= FileSize)
     {
 	numEl -= LastPosition % LineWidth;
