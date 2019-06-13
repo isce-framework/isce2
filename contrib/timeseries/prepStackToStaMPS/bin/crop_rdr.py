@@ -157,7 +157,7 @@ if __name__ == '__main__':
    print('Lines: ' + str(min_LinePixel[0]) + '\t' + str(max_LinePixel[0]))
    print('Pixels: ' + str(min_LinePixel[1]) + '\t' + str(max_LinePixel[1])) 
 
-   print('gdalwarp -to SRC_METHOD=NO_GEOTRANSFORM -of envi -te ' + str(min_LinePixel[1]) + ' ' + str(min_LinePixel[0]) + ' ' + str(max_LinePixel[1]) + ' ' +  str(max_LinePixel[0]) + ' FILE FILE_NEW')
+   print('gdalwarp -to SRC_METHOD=NO_GEOTRANSFORM -of envi -te ' + str(min_LinePixel[1]) + ' ' + str(min_LinePixel[0]) + ' ' + str(max_LinePixel[1]) + ' ' +  str(max_LinePixel[0]) + ' ')
 #   print('gdalwarp -to SRC_METHOD=NO_GEOTRANSFORM -of envi -co INTERLEAVE=BIP -te ' + str(min_LinePixel[1]) + ' ' + str(min_LinePixel[0]) + ' ' + str(max_LinePixel[1]) + ' ' +  str(max_LinePixel[0]))
    print('gdal_translate -srcwin ' +  str(min_LinePixel[1]) + ' ' + str(min_LinePixel[0]) + ' ' + str(max_LinePixel[1]-min_LinePixel[1]) + ' ' + str(max_LinePixel[0]-min_LinePixel[0]) + ' -of envi -co INTERLEAVE=BIP ' )
 
