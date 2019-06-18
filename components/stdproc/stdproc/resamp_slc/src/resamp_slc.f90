@@ -21,7 +21,7 @@
       integer i, j, k
       integer int_az_off
       integer i_na
-      integer ith, thnum
+      integer ith, thnum, ithorig
         
       integer ii, jj
       integer chipi, chipj
@@ -82,6 +82,7 @@
       !$OMP END MASTER
       !$OMP END PARALLEL
 
+      ithorig = ith
       ith = min(ith,8)
       print *, 'Number of threads: ', ith
       call omp_set_num_threads(ith)
@@ -283,6 +284,8 @@
           deallocate(rout)
       endif
 
+      !Reset number of threads
+      call omp_set_num_threads(ithorig)
       end
       
 

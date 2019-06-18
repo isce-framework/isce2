@@ -145,7 +145,7 @@ PyObject * cpxlooks_C(PyObject* self, PyObject* args)
             }
             for(int j = 0; j < na; ++j)
             {
-                b[j] = b[j] + a[j]*pow(pha,j+1)*pow(phd,lineToGet);
+                b[j] = b[j] + a[j]*pow(pha,j+1.0f)*pow(phd,lineToGet*1.0f);
             }
         }
         if(eofReached)

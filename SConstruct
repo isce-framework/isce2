@@ -141,12 +141,13 @@ else:
 gdal_version = os.popen('gdal-config --version').read()
 print('GDAL version: {0}'.format(gdal_version))
 try:
+    gdal_majorversion = int(gdal_version.split('.')[0])
     gdal_subversion = int(gdal_version.split('.')[1])
 except:
     raise Exception('gdal-config not found. GDAL does not appear to be installed ... cannot proceed. If you have installed gdal, ensure that you have path to gdal-config in your environment')
 
 env['GDALISCXX11'] = None
-if gdal_subversion >= 3:
+if (gdal_majorversion > 2) or (gdal_subversion >= 3):
     env['GDALISCXX11'] = 'True' 
 
 
