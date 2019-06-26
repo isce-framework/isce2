@@ -1,0 +1,35 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Giangi Sacco
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2019  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envcontrib')
+envDSU = envcontrib.Clone()
+project = 'downsample_unwrapper'
+package = envDSU['PACKAGE']
+envDSU['PROJECT'] = project
+Export('envDSU')
+
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python")
+	fout.close()
+
+install = os.path.join(envDSU['PRJ_SCONS_INSTALL'],package,project)
+
+helpList,installHelp = envDSU['HELP_BUILDER'](envDSU,'__init__.py',install)
+envDSU.Install(installHelp,helpList)
+envDSU.Alias('install',installHelp)
+
+listFiles = ['downsample_unwrapper.py','run_unwrap_snaphu.py',initFile]
+envDSU.Install(install,listFiles)
+envDSU.Alias('install',install)
