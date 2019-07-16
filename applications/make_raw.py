@@ -167,7 +167,7 @@ class make_raw(Component, FrameMixin):
 
         startHeight = sv0.calculateHeight(ellipsoid)
         midHeight = sv1.calculateHeight(ellipsoid)
-        if 'uav' in self.sensor.family.lower():
+        if ('uav' in self.sensor.family.lower()) and (hasattr(self.sensor, 'platformHeight')):
             self.spacecraftHeight = self.sensor.platformHeight
         else:
             self.spacecraftHeight = startHeight
