@@ -218,6 +218,10 @@ class ALOS(Sensor):
             prf = self.leaderFile.sceneHeaderRecord.metadata[
                 'Pulse Repetition Frequency']/1000.
 
+            ###Fix for quad pol data
+            if prf > 3000:
+                prf = prf / 2.0
+
             print('LEADER PRF: ', prf)
             beamNumber = self.leaderFile.sceneHeaderRecord.metadata[
                 'Antenna beam number']
