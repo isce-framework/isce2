@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os, sys
-import importlib
+from importlib import util as importlibutil
 import argparse
 import configparser
 
@@ -95,7 +95,7 @@ class ConfigParser:
 
     # If any of the following calls raises an exception,
     # there's a problem we can't handle -- let the caller handle it.
-    spec = importlib.util.find_spec(name)
+    spec = importlibutil.find_spec(name)
 
     try:
       return spec.loader.load_module()
