@@ -98,9 +98,9 @@ def main(factoryFile,package,buildDir):
 #    import isce
     import filecmp
     try:
-        import importlib
+        from importlib import util
         factoryFile = os.path.abspath(factoryFile)
-        mod = importlib.util.spec_from_file_location('.', factoryFile)
+        mod = util.spec_from_file_location('.', factoryFile)
         factModule = mod.loader.load_module()
         factoriesInfo = factModule.getFactoriesInfo()
         nameList = []
