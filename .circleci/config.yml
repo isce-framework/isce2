@@ -208,7 +208,7 @@ workflows:
               ignore: /.*/
       - deploy:
           requires:
-            - build
+            - build-release
           filters:
             tags:
               only: /^v.*/
