@@ -80,16 +80,6 @@ POLARIZATION = Component.Parameter(
     doc='polarization channel of the UAVSAR slc file to be processed'
 )
 
-class DummySink(object):
-    def write(self, data):
-        pass
-
-    def __enter__(self):
-        return self
-
-    def __exit__(*x):
-        pass
-
 from .Sensor import Sensor
 class UAVSAR_HDF5_SLC(Sensor):
     """
@@ -263,14 +253,8 @@ class UAVSAR_HDF5_SLC(Sensor):
         ds = fid['/science/LSAR/SLC/swaths/' + self.frequency + '/' + self.polarization]
         nLines = ds.shape[0]
 
-        # if TypeError is raised (e.g. complex32), force casting to complex64
-        try:
-            _ = ds.dtype
-            sink = DummySink()
-        except TypeError:
-            sink = ds.astype(np.complex64)
-
-        with sink:
+        # force casting to complex64
+        with ds.astype(np.complex64):
             with open(self.output, 'wb') as fout:
                 for ii in range(nLines):
                     ds[ii, :].tofile(fout)
