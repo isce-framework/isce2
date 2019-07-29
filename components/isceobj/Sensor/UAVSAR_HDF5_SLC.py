@@ -80,6 +80,16 @@ POLARIZATION = Component.Parameter(
     doc='polarization channel of the UAVSAR slc file to be processed'
 )
 
+class DummySink(object):
+    def write(self, data):
+        pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(*x):
+        pass
+
 from .Sensor import Sensor
 class UAVSAR_HDF5_SLC(Sensor):
     """
@@ -188,7 +198,10 @@ class UAVSAR_HDF5_SLC(Sensor):
 
         referenceUTC = file['/science/LSAR/SLC/swaths/zeroDopplerTime'].attrs['units'].decode('utf-8')
         referenceUTC = referenceUTC.replace('seconds since ','')
-        referenceUTC = datetime.datetime.strptime(referenceUTC,'%Y-%m-%d %H:%M:%S')
+        format_str = '%Y-%m-%d %H:%M:%S'
+        if '.' in referenceUTC:
+            format_str += '.%f'
+        referenceUTC = datetime.datetime.strptime(referenceUTC, format_str)
 
         relStart = file['/science/LSAR/SLC/swaths/zeroDopplerTime'][0]
         relEnd = file['/science/LSAR/SLC/swaths/zeroDopplerTime'][-1]
@@ -222,7 +235,10 @@ class UAVSAR_HDF5_SLC(Sensor):
 
         referenceUTC = file['/science/LSAR/SLC/swaths/zeroDopplerTime'].attrs['units'].decode('utf-8')
         referenceUTC = referenceUTC.replace('seconds since ','')
-        t0 = datetime.datetime.strptime(referenceUTC,'%Y-%m-%d %H:%M:%S')
+        format_str = '%Y-%m-%d %H:%M:%S'
+        if '.' in referenceUTC:
+            format_str += '.%f'
+        t0 = datetime.datetime.strptime(referenceUTC, format_str)
         t = file['/science/LSAR/SLC/metadata/orbit/time']
         position = file['/science/LSAR/SLC/metadata/orbit/position']
         velocity = file['/science/LSAR/SLC/metadata/orbit/velocity']
@@ -247,9 +263,17 @@ class UAVSAR_HDF5_SLC(Sensor):
         ds = fid['/science/LSAR/SLC/swaths/' + self.frequency + '/' + self.polarization]
         nLines = ds.shape[0]
 
-        with open(self.output, 'wb') as fout:
-            for ii in range(nLines):
-                ds[ii,:].astype(np.complex64).tofile(fout)
+        # if TypeError is raised (e.g. complex32), force casting to complex64
+        try:
+            _ = ds.dtype
+            sink = DummySink()
+        except TypeError:
+            sink = ds.astype(np.complex64)
+
+        with sink:
+            with open(self.output, 'wb') as fout:
+                for ii in range(nLines):
+                    ds[ii, :].tofile(fout)
 
         fid.close()
   
