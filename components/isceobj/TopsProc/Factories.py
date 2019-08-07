@@ -50,7 +50,7 @@ def createUnwrapper(other, do_unwrap = None, unwrapperName = None,
     elif unwrapperName.lower() == 'snaphu':
         from .runUnwrapSnaphu import runUnwrap
     elif unwrapperName.lower() == 'snaphu_mcf':
-        from .runUnwrapSnaphu import runUnwrap
+        from .runUnwrapSnaphu import runUnwrapMcf as runUnwrap
     elif unwrapperName.lower() == 'downsample_snaphu':
         from .run_downsample_unwrapper import runUnwrap
     elif unwrapperName.lower() == 'icu':
