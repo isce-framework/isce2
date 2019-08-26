@@ -21,6 +21,7 @@ c  get alos position and times
       integer*1 indata(32768)
       integer statb(13),stat
       integer numdata,rowPos,colPos,eof
+      integer*4 unpackBytes
 c  read the leader file descriptor record
       
       !!!!!!!!!!!!!!!!!!
@@ -106,12 +107,9 @@ c  read in the raw data file line by line
       do i=1,nlines
          ! jng ierr=ioread(ichandata,indata,len)
          call getLineSequential(rawAccessor,indata,eof)
-	   iyear=iand(indata(40),255)*256*256*256+iand(indata(39),255)*256*256+
-     $     iand(indata(38),255)*256+iand(indata(37),255)
-         idoy=iand(indata(44),255)*256*256*256+iand(indata(43),255)*256*256+
-     $     iand(indata(42),255)*256+iand(indata(41),255)
-         ims=iand(indata(48),255)*256*256*256+iand(indata(47),255)*256*256+
-     $     iand(indata(46),255)*256+iand(indata(45),255)
+         iyear = unpackBytes(indata(40), indata(39), indata(38), indata(37))
+         idoy  = unpackBytes(indata(44), indata(43), indata(42), indata(41))
+         ims   = unpackBytes(indata(48), indata(47), indata(46), indata(45))
          ddate(2) = ims*1000.0 !we save days in the year and microsec in the day
          ddate(1) = 1.*idoy
          call setLineSequential(auxAccessor,ddate)  
@@ -144,3 +142,9 @@ c      print *,val
       return
 
       end
+
+      integer*4 function unpackBytes(i1, i2, i3, i4)
+      integer*4                      i1, i2, i3, i4
+      unpackBytes = iand(i1, 255)*256*256*256 + iand(i2, 255)*256*256 +
+     $              iand(i3, 255)*256         + iand(i4, 255)
+      end function
