@@ -106,12 +106,12 @@ c  read in the raw data file line by line
       do i=1,nlines
          ! jng ierr=ioread(ichandata,indata,len)
          call getLineSequential(rawAccessor,indata,eof)
-	   iyear=iand(indata(40),255)*256*256*256+iand(indata(39),255)*256*256+
-     $     iand(indata(38),255)*256+iand(indata(37),255)
-         idoy=iand(indata(44),255)*256*256*256+iand(indata(43),255)*256*256+
-     $     iand(indata(42),255)*256+iand(indata(41),255)
-         ims=iand(indata(48),255)*256*256*256+iand(indata(47),255)*256*256+
-     $     iand(indata(46),255)*256+iand(indata(45),255)
+         iyear=iand(indata(40),255_1)*256*256*256+iand(indata(39),255_1)*256*256+
+     $         iand(indata(38),255_1)*256        +iand(indata(37),255_1)
+         idoy =iand(indata(44),255_1)*256*256*256+iand(indata(43),255_1)*256*256+
+     $         iand(indata(42),255_1)*256        +iand(indata(41),255_1)
+         ims  =iand(indata(48),255_1)*256*256*256+iand(indata(47),255_1)*256*256+
+     $         iand(indata(46),255_1)*256        +iand(indata(45),255_1)
          ddate(2) = ims*1000.0 !we save days in the year and microsec in the day
          ddate(1) = 1.*idoy
          call setLineSequential(auxAccessor,ddate)  
