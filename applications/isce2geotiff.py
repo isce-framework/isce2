@@ -10,8 +10,7 @@ import numpy as np
 import os
 import argparse
 import tempfile
-from isce.applications import gdal_calc
-#import pdb; pdb.set_trace()
+
 
 try:
     from osgeo import gdal, ogr
@@ -127,7 +126,13 @@ if __name__ == '__main__':
         vrtname = inps.infile+'.vrt'
         invrtname = inps.outfile+'.phs.tif'
         tifoutname = inps.outfile+'.wrapped.tif'
-        gdal_calc.Calc('numpy.angle(A)', A=vrtname, outfile = invrtname,NoDataValue=0, overwrite=True)
+        cmd = 'gdal_calc.py --type Float32 -A {0} --calc="numpy.angle(A)" --outfile={1} --NoDataValue=0.0 --overwrite'.format(vrtname, invrtname)
+        print(cmd)
+        
+        flag = os.system(cmd)
+
+        if flag:
+           raise Exception('Failed: %s'%(cmd))
 
     else:
     #####Build Unwrapped VRT 
