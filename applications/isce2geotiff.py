@@ -4,15 +4,17 @@
 # Added option to clip interferogram tiff with water shapefile mask
 # Added export to KML
 # Usage isce2geotiff.py -i /fullpath/filt_topophase_unw(unwrapped)/flat(wrapped).geo -o /fullpath/output_name -c 0 3.13 (color limits) -wrap (flag when converting wrapped intfg) -mask /fullpath/mask.shp (use water shapefile to mask water areas) -kml /fullpath/kml_output_name -b 1 (band 1 when using filt_topophase.unw.geo)
+#ToDO: Resolve problem with alpha layer
 
 import numpy as np
 import os
 import argparse
 import tempfile
+from isce.applications import gdal_calc
 #import pdb; pdb.set_trace()
 
 try:
-    from osgeo import gdal
+    from osgeo import gdal, ogr
     gdal.UseExceptions()
 except ImportError:
     raise Exception('gdal python bindings are needed for this script to work.')
@@ -101,7 +103,7 @@ if __name__ == '__main__':
         print(folderpath)
         inname = inps.infile
         if folderpath == 'interferogram':
-            cmd = 'cd ..; isce2gis.py vrt -i {0}'.format(inname)
+            cmd = 'cd ..; isce2gis.py vrt -i {0}'.format(inname) #see how to change it with // from isce.applications import isce2gis, isce2gis.isce2vrt('inname')
         else:
             cmd = 'isce2gis.py vrt -i {0}'.format(inname)
         print(cmd)
@@ -120,23 +122,16 @@ if __name__ == '__main__':
         plt_cmap = False
 
     #####Build Wrapped VRT
+    outvrtname = inps.outfile+'.vrt'
     if inps.wrap:
         vrtname = inps.infile+'.vrt'
         invrtname = inps.outfile+'.phs.tif'
-        outvrtname = inps.outfile+'.vrt'
         tifoutname = inps.outfile+'.wrapped.tif'
-        cmd = 'gdal_calc.py --type Float32 -A {0} --calc="numpy.angle(A)" --outfile={1} --NoDataValue=0.0 --overwrite'.format(vrtname, invrtname)
-        print(cmd)
-        
-        flag = os.system(cmd)
-
-        if flag:
-           raise Exception('Failed: %s'%(cmd))
+        gdal_calc.Calc('numpy.angle(A)', A=vrtname, outfile = invrtname,NoDataValue=0, overwrite=True)
 
     else:
     #####Build Unwrapped VRT 
         invrtname = inps.infile+'.vrt'
-        outvrtname = inps.outfile+'.vrt'
         tifoutname = inps.outfile+'.unwrapped.tif'
         if os.path.exists(outvrtname):
            print('VRT file already exists. Cleaning it ....')
@@ -146,25 +141,17 @@ if __name__ == '__main__':
     if os.path.exists(tifoutname):
         print('TIF file already exists. Cleaning it ....')
         os.remove(tifoutname)
-    cmd = 'gdaldem color-relief {0} {1} {2} -alpha -b {3} -of VRT'.format(invrtname, cmap, outvrtname, inps.band+1)
-    print(cmd)
-    print(inps.band)
 
-    flag = os.system(cmd)
-
-    if flag:
-        raise Exception('Failed: %s'%(cmd))
+    outvrtname = gdal.DEMProcessing('',invrtname,'color-relief', colorFilename = cmap, format = 'MEM', addAlpha =True, options = ['-b', str(inps.band+1), '-of','VRT']) 
 
     ###Build geotiff
     if os.path.exists(tifoutname):
         print('TIF file already exists. Cleaning it ....')
         os.remove(tifoutname)
-    cmd = 'gdal_translate {0} {1}'.format(outvrtname, tifoutname)
-
-    flag = os.system(cmd)
-
-    if flag:
-        raise Exception('Failed: %s'%(cmd))
+    print('Creating TIF file:', tifoutname)
+    ds = gdal.Translate(tifoutname,outvrtname)
+    ds = None	
+    
 
    ####Use water mask to Crop RGB tiff
     if inps.mask is None:
@@ -182,11 +169,9 @@ if __name__ == '__main__':
         kml = None
     else:
         kmloutname = inps.kml+'.kmz'
-        cmd = 'gdal_translate -of KMLSUPEROVERLAY {0} {1} -co format=png'.format(tifoutname,kmloutname)
-        print(cmd)
-        flag = os.system(cmd)
-        if flag:
-           raise Exception('Failed: {0}'.format(cmd))
+        kmloptions = gdal.TranslateOptions(gdal.ParseCommandLine("-of KMLSUPEROVERLAY -co format=png"))
+        print('Creating KML file:', kmloutname)
+        gdal.Translate(kmloutname,tifoutname, options = kmloptions)
 
         
 
