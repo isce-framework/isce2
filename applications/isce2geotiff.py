@@ -11,7 +11,6 @@ import os
 import argparse
 import tempfile
 
-
 try:
     from osgeo import gdal, ogr
     gdal.UseExceptions()
@@ -126,7 +125,8 @@ if __name__ == '__main__':
         vrtname = inps.infile+'.vrt'
         invrtname = inps.outfile+'.phs.tif'
         tifoutname = inps.outfile+'.wrapped.tif'
-        cmd = 'gdal_calc.py --type Float32 -A {0} --calc="numpy.angle(A)" --outfile={1} --NoDataValue=0.0 --overwrite'.format(vrtname, invrtname)
+        cmd = 'gdal_calc.py --type Float32 -A {0} --calc="numpy.angle(A)" --NoDataValue=0.0  --outfile={1} --overwrite'.format(vrtname, invrtname)
+        #gdal_calc.Calc('numpy.angle(A)', A=vrtname, outfile = invrtname,NoDataValue=0, overwrite=True)
         print(cmd)
         
         flag = os.system(cmd)
