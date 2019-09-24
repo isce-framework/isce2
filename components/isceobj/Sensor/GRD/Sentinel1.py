@@ -261,11 +261,10 @@ class Sentinel1(Component):
 
         self.validateUserInputs()
 
-        #if self.xml.startswith('/vsizip'): #Read from zip file
-        if len(self.xml)>0:
+        if self.xml.startswith('/vsizip'): #Read from zip file
             try:
                 parts = self.xml.split(os.path.sep)
-                zipname = os.path.join('/',*(parts[:-3]))
+                zipname = os.path.join(*(parts[2:-3]))
                 fname = os.path.join(*(parts[-3:]))
 
                 with zipfile.ZipFile(zipname, 'r') as zf:
@@ -292,8 +291,7 @@ class Sentinel1(Component):
         
         ####Read in the orbits
         if self.orbitFile:
-            #orb = self.extractPreciseOrbit()
-            orb = self.extractOrbit()
+            orb = self.extractPreciseOrbit()
         else:
             orb = self.extractOrbit()
 
@@ -425,12 +423,10 @@ class Sentinel1(Component):
 
         nsp = "{http://www.esa.int/safe/sentinel-1.0}"
 
-        #if self.manifest.startswith('/vsizip'):
-        if len(self.manifest)>0:
-
+        if self.manifest.startswith('/vsizip'):
             import zipfile    
             parts = self.manifest.split(os.path.sep)
-            zipname = os.path.join('/',*(parts[:-2]))
+            zipname = os.path.join(*(parts[2:-2]))
             fname = os.path.join(*(parts[-2:]))
 
             try:
@@ -521,12 +517,12 @@ class Sentinel1(Component):
             frameOrbit.addStateVector(vec)
 
 
-        #orbExt = OrbitExtender(planet=Planet(pname='Earth'))
-        #orbExt.configure()
-        #newOrb = orbExt.extendOrbit(frameOrbit)
+        orbExt = OrbitExtender(planet=Planet(pname='Earth'))
+        orbExt.configure()
+        newOrb = orbExt.extendOrbit(frameOrbit)
 
 
-        return frameOrbit#newOrb
+        return newOrb
             
     def extractPreciseOrbit(self):
         '''
@@ -586,11 +582,10 @@ class Sentinel1(Component):
         if self.calibrationXml is None:
             raise Exception('No calibration file provided')
 
-        #if self.calibrationXml.startswith('/vsizip'):
-        if len(self.calibrationXml)>0:
+        if self.calibrationXml.startswith('/vsizip'):
             import zipfile
             parts = self.calibrationXml.split(os.path.sep)
-            zipname = os.path.join('/',*(parts[:-4]))
+            zipname = os.path.join(*(parts[2:-4]))
             fname = os.path.join(*(parts[-4:]))
             
             try:
@@ -728,8 +723,7 @@ class Sentinel1(Component):
 
         print('Extracting normalized image ....')
 
-        #src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
-        src = gdal.Open('/vsizip//'+self.tiff.strip(), gdal.GA_ReadOnly)
+        src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
         band = src.GetRasterBand(1)
 
         if self.product.numberOfSamples != src.RasterXSize:
