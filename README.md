@@ -623,7 +623,8 @@ between three files as follows:
     <property name="OUTPUT">20061231</property>
 </component>
 ```
-#### rtcApp.xml
+#### rtcApp.xml 
+The inputs are Sentinel GRD zipfiles
 ```xml
 <rtcApp>
     <constant name="dir">/Users/data/sentinel1 </constant>
