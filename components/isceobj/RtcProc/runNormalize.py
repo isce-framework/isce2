@@ -34,7 +34,7 @@ def runNormalize(self):
             inname = os.path.join( self._grd.outputFolder, filenameWithLooks('beta_{0}.img'.format(pol), azlooks, rglooks))
 
         incname = os.path.join(self._grd.geometryFolder, self._grd.incFileName)
-        outname = os.path.join(self._grd.outputFolder, filenameWithLooks('gamma_{0}'.format(pol), azlooks, rglooks))
+        outname = os.path.join(self._grd.outputFolder, filenameWithLooks('gamma_{0}'.format(pol)+'.img', azlooks, rglooks))
         maskname = os.path.join(self._grd.geometryFolder, self._grd.slMaskFileName)
 
         cmd = "imageMath.py --e='a*cos(b_0*PI/180.)/cos(b_1*PI/180.) * (c==0)' --a={beta} --b={inc} --c={mask} -o {out} -t FLOAT -s BIL"
