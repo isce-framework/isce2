@@ -633,9 +633,9 @@ The inputs are Sentinel GRD zipfiles
         <property name="sensor name">sentinel1</property>
         <component name="master">
         <property name="safe">$dir$/rtcApp/data/S1A_IW_GRDH_1SDV_20181221T225104_20181221T225129_025130_02C664_B46C.zip</property>
-            <property name="orbit directory">$dir$/orbits</property>
-            <property name="output directory">$dir$/rtcApp/output</property>
-            <property name="polarization">[VV, VH]</property>
+        <property name="orbit directory">$dir$/orbits</property>
+        <property name="output directory">$dir$/rtcApp/output</property>
+        <property name="polarization">[VV, VH]</property>
         </component>
     </component>
 </rtcApp>
