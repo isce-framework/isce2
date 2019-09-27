@@ -283,24 +283,21 @@ class Sentinel1(Component):
         self.populateMetadata()
         self.populateBbox()
 
-        ####Tru and locate an orbit file
+        ####Try and locate an orbit file
         if self.orbitFile is None:
             if self.orbitDir is not None:
                 self.orbitFile = self.findOrbitFile()
+                print('Found this orbitfile: %s' %self.orbitFile)
 
-        
         ####Read in the orbits
-        if self.orbitFile:
-            try:
-                orb = self.extractPreciseOrbit()
-            except:
-                pass
+        if '_POEORB_' in self.orbitFile:
+            orb = self.extractPreciseOrbit()
+        elif '_RESORB_' in self.orbitFile:
             orb = self.extractOrbit()
-
+        
         self.product.orbit.setOrbitSource('Header')
         for sv in orb:
             self.product.orbit.addStateVector(sv)
-
 
         self.populateIPFVersion()
         self.extractBetaLUT()
@@ -465,38 +462,40 @@ class Sentinel1(Component):
 
         datefmt = "%Y%m%dT%H%M%S"
         types = ['POEORB', 'RESORB']
+        filelist = []
         match = []
-        timeStamp = self.product.sensingMid
-
+        timeStamp = self.product.sensingStart+(self.product.sensingStop - self.product.sensingStart)/2.
+        
         for orbType in types:
             files = glob.glob( os.path.join(self.orbitDir, 'S1A_OPER_AUX_' + orbType + '_OPOD*'))
-            
+            filelist.extend(files)
             ###List all orbit files
-            for result in files:
-                fields = result.split('_')
-                taft = datetime.datetime.strptime(fields[-1][0:15], datefmt)
-                tbef = datetime.datetime.strptime(fields[-2][1:16], datefmt)
-                
-                #####Get all files that span the acquisition
-                if (tbef <= timeStamp) and (taft >= timeStamp):
-                    tmid = tbef + 0.5 * (taft - tbef)
-                    match.append((result, abs((timeStamp-tmid).total_seconds())))
 
-                #####Return the file with the image is aligned best to the middle of the file
-                if len(match) != 0:
-                    bestmatch = min(match, key = lambda x: x[1])
-                    return bestmatch[0]
+        for result in filelist:
+            fields = result.split('_')
+            taft = datetime.datetime.strptime(fields[-1][0:15], datefmt)
+            tbef = datetime.datetime.strptime(fields[-2][1:16], datefmt)
+            print(taft, tbef)
+                
+            #####Get all files that span the acquisition
+            if (tbef <= timeStamp) and (taft >= timeStamp):
+                tmid = tbef + 0.5 * (taft - tbef)
+                match.append((result, abs((timeStamp-tmid).total_seconds())))
+            #####Return the file with the image is aligned best to the middle of the file
+            if len(match) != 0:
+                bestmatch = min(match, key = lambda x: x[1])
+                return bestmatch[0]
 
        
-            if len(match) == 0:
-                 raise Exception('No suitable orbit file found. If you want to process anyway - unset the orbitdir parameter')
+        if len(match) == 0:
+            raise Exception('No suitable orbit file found. If you want to process anyway - unset the orbitdir parameter')
 
     def extractOrbit(self):
         '''
         Extract orbit information from xml node.
         '''
         node = self._xml_root.find('generalAnnotation/orbitList')
-
+        
         print('Extracting orbit from annotation XML file')
         frameOrbit = Orbit()
         frameOrbit.configure()
@@ -530,11 +529,11 @@ class Sentinel1(Component):
         except IOError as strerr:
             print("IOError: %s" % strerr)
             return
-        #_xml_root = ElementTree(file=fp).getroot()
-       
-        node = self._xml_root.find('Data_Block/List_of_OSVs')
 
-        print('Extracting orbit from Orbit File: ', self.orbitFile)
+        _xml_root = ElementTree.ElementTree(file=fp).getroot()
+
+        node = _xml_root.find('Data_Block/List_of_OSVs')
+
         orb = Orbit()
         orb.configure()
 
