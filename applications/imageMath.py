@@ -315,7 +315,7 @@ def main(args, files):
 
 
     #####Determine unique images from the bandList
-    fileList = IML.bandsToFiles(bandList, logger) #[a,b,c]
+    fileList = IML.bandsToFiles(bandList, logger)
 
 
     ######Create input memmaps
