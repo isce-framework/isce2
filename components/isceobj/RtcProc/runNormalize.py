@@ -9,12 +9,15 @@ import mroipac
 from .runTopo import filenameWithLooks
 from .runLooks import takeLooks
 import os
+import itertools
 import numpy as np
 from isceobj.Util.decorators import use_api
+from applications import imageMath
 
 logger = logging.getLogger('isce.grdsar.looks')
 
-
+class Dummy:
+    pass
 
 def runNormalize(self):
     '''
@@ -33,16 +36,25 @@ def runNormalize(self):
         else:
             inname = os.path.join( self._grd.outputFolder, filenameWithLooks('beta_{0}.img'.format(pol), azlooks, rglooks))
 
-        incname = os.path.join(self._grd.geometryFolder, self._grd.incFileName)
+        basefolder, output = os.path.split(self._grd.outputFolder)
+        incname = os.path.join(basefolder, self._grd.geometryFolder, self._grd.incFileName)
         outname = os.path.join(self._grd.outputFolder, filenameWithLooks('gamma_{0}'.format(pol)+'.img', azlooks, rglooks))
-        maskname = os.path.join(self._grd.geometryFolder, self._grd.slMaskFileName)
+        maskname = os.path.join(basefolder, self._grd.geometryFolder, self._grd.slMaskFileName)
 
-        cmd = "imageMath.py --e='a*cos(b_0*PI/180.)/cos(b_1*PI/180.) * (c==0)' --a={beta} --b={inc} --c={mask} -o {out} -t FLOAT -s BIL"
+        args = imageMath.createNamespace()
+        args.equation = 'a*cos(b_0*PI/180.)/cos(b_1*PI/180.) * (c==0)'
+        args.dtype = np.float32
+        args.scheme = 'BIL'
+        args.out = outname
+        #args.debug = True
 
-        cmdrun = cmd.format(inc = incname,
-                            beta = inname,
-                            out = outname,
-                            mask = maskname)
-        status = os.system(cmdrun)
-            
+        files = Dummy()
+        files.a = inname
+        files.b = incname
+        files.c = maskname
+
+
+
+        imageMath.main(args, files)
+
     return
