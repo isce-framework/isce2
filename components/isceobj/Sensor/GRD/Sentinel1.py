@@ -261,10 +261,10 @@ class Sentinel1(Component):
 
         self.validateUserInputs()
 
-        if self.xml.startswith('/vsizip'): #Read from zip file
+        if '.zip' in self.xml:
             try:
                 parts = self.xml.split(os.path.sep)
-                zipname = os.path.join(*(parts[2:-3]))
+                zipname = os.path.join('/',*(parts[:-3]))
                 fname = os.path.join(*(parts[-3:]))
 
                 with zipfile.ZipFile(zipname, 'r') as zf:
@@ -283,22 +283,21 @@ class Sentinel1(Component):
         self.populateMetadata()
         self.populateBbox()
 
-        ####Tru and locate an orbit file
+        ####Try and locate an orbit file
         if self.orbitFile is None:
             if self.orbitDir is not None:
                 self.orbitFile = self.findOrbitFile()
+                print('Found this orbitfile: %s' %self.orbitFile)
 
-        
         ####Read in the orbits
-        if self.orbitFile:
+        if '_POEORB_' in self.orbitFile:
             orb = self.extractPreciseOrbit()
-        else:
+        elif '_RESORB_' in self.orbitFile:
             orb = self.extractOrbit()
-
+        
         self.product.orbit.setOrbitSource('Header')
         for sv in orb:
             self.product.orbit.addStateVector(sv)
-
 
         self.populateIPFVersion()
         self.extractBetaLUT()
@@ -423,10 +422,11 @@ class Sentinel1(Component):
 
         nsp = "{http://www.esa.int/safe/sentinel-1.0}"
 
-        if self.manifest.startswith('/vsizip'):
+        if '.zip' in self.manifest:
+
             import zipfile    
             parts = self.manifest.split(os.path.sep)
-            zipname = os.path.join(*(parts[2:-2]))
+            zipname = os.path.join('/',*(parts[:-2]))
             fname = os.path.join(*(parts[-2:]))
 
             try:
@@ -462,38 +462,40 @@ class Sentinel1(Component):
 
         datefmt = "%Y%m%dT%H%M%S"
         types = ['POEORB', 'RESORB']
+        filelist = []
         match = []
-        timeStamp = self.product.sensingMid
-
+        timeStamp = self.product.sensingStart+(self.product.sensingStop - self.product.sensingStart)/2.
+        
         for orbType in types:
             files = glob.glob( os.path.join(self.orbitDir, 'S1A_OPER_AUX_' + orbType + '_OPOD*'))
-            
+            filelist.extend(files)
             ###List all orbit files
-            for result in files:
-                fields = result.split('_')
-                taft = datetime.datetime.strptime(fields[-1][0:15], datefmt)
-                tbef = datetime.datetime.strptime(fields[-2][1:16], datefmt)
-                
-                #####Get all files that span the acquisition
-                if (tbef <= timeStamp) and (taft >= timeStamp):
-                    tmid = tbef + 0.5 * (taft - tbef)
-                    match.append((result, abs((timeStamp-tmid).total_seconds())))
 
-                #####Return the file with the image is aligned best to the middle of the file
-                if len(match) != 0:
-                    bestmatch = min(match, key = lambda x: x[1])
-                    return bestmatch[0]
+        for result in filelist:
+            fields = result.split('_')
+            taft = datetime.datetime.strptime(fields[-1][0:15], datefmt)
+            tbef = datetime.datetime.strptime(fields[-2][1:16], datefmt)
+            print(taft, tbef)
+                
+            #####Get all files that span the acquisition
+            if (tbef <= timeStamp) and (taft >= timeStamp):
+                tmid = tbef + 0.5 * (taft - tbef)
+                match.append((result, abs((timeStamp-tmid).total_seconds())))
+            #####Return the file with the image is aligned best to the middle of the file
+            if len(match) != 0:
+                bestmatch = min(match, key = lambda x: x[1])
+                return bestmatch[0]
 
        
-            if len(match) == 0:
-                 raise Exception('No suitable orbit file found. If you want to process anyway - unset the orbitdir parameter')
+        if len(match) == 0:
+            raise Exception('No suitable orbit file found. If you want to process anyway - unset the orbitdir parameter')
 
     def extractOrbit(self):
         '''
         Extract orbit information from xml node.
         '''
         node = self._xml_root.find('generalAnnotation/orbitList')
-
+        
         print('Extracting orbit from annotation XML file')
         frameOrbit = Orbit()
         frameOrbit.configure()
@@ -516,13 +518,7 @@ class Sentinel1(Component):
             vec.setVelocity(vel)
             frameOrbit.addStateVector(vec)
 
-
-        orbExt = OrbitExtender(planet=Planet(pname='Earth'))
-        orbExt.configure()
-        newOrb = orbExt.extendOrbit(frameOrbit)
-
-
-        return newOrb
+        return frameOrbit
             
     def extractPreciseOrbit(self):
         '''
@@ -534,11 +530,10 @@ class Sentinel1(Component):
             print("IOError: %s" % strerr)
             return
 
-        _xml_root = ElementTree(file=fp).getroot()
-       
+        _xml_root = ElementTree.ElementTree(file=fp).getroot()
+
         node = _xml_root.find('Data_Block/List_of_OSVs')
 
-        print('Extracting orbit from Orbit File: ', self.orbitFile)
         orb = Orbit()
         orb.configure()
 
@@ -582,10 +577,10 @@ class Sentinel1(Component):
         if self.calibrationXml is None:
             raise Exception('No calibration file provided')
 
-        if self.calibrationXml.startswith('/vsizip'):
+        if '.zip' in self.calibrationXml:
             import zipfile
             parts = self.calibrationXml.split(os.path.sep)
-            zipname = os.path.join(*(parts[2:-4]))
+            zipname = os.path.join('/',*(parts[:-4]))
             fname = os.path.join(*(parts[-4:]))
             
             try:
@@ -723,7 +718,7 @@ class Sentinel1(Component):
 
         print('Extracting normalized image ....')
 
-        src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
+        src = gdal.Open('/vsizip//'+self.tiff.strip(), gdal.GA_ReadOnly)
         band = src.GetRasterBand(1)
 
         if self.product.numberOfSamples != src.RasterXSize:

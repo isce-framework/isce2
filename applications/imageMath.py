@@ -293,6 +293,7 @@ def main(args, files):
 
     #######Determine number of input and output bands
     bandList = []
+    iMath['equations'] = []
     for ii,expr in enumerate(args.equation.split(';')):
 
         #####Now parse the equation to get the file names used
@@ -319,7 +320,11 @@ def main(args, files):
 
     ######Create input memmaps
     for ii,infile in enumerate(fileList):
-        fstr, files = parseInputFile(infile, files)
+        if type(files) == list:
+            fstr, files = parseInputFile(infile, files)
+        else:
+            fstr = getattr(files, infile)
+
         logger.debug('Input string for File %d: %s: %s'%(ii, infile, fstr))
 
         if len(fstr.split(';')) > 1:
@@ -341,8 +346,9 @@ def main(args, files):
         if bbox is not None:
             iMath['bboxes'].append(bbox)
 
-    if len(files):
-        raise IOError('Unused input variables set:\n'+ ' '.join(files))
+    if type(files) == list:
+        if len(files):
+            raise IOError('Unused input variables set:\n'+ ' '.join(files))
 
     #######Some debugging
     logger.debug('List of available bands: ' + str(iMath['inBands'].keys()))
