@@ -8,6 +8,7 @@ import glob
 from isceobj.Util import Poly1D
 from isceobj.Planet.AstronomicalHandbook import Const
 import os
+from datetime import datetime
 
 def cmdLineParse():
     '''
@@ -22,48 +23,44 @@ def cmdLineParse():
 
     return parser.parse_args()
 
-
 def unpack(hdf5, slcname):
     '''
     Unpack HDF5 to binary SLC file.
     '''
 
-    imgname = glob.glob(os.path.join(hdf5,'DAT*'))[0]
-    ldrname = glob.glob(os.path.join(hdf5, 'LEA*'))[0]
+    if os.listdir(hdf5)[0].endswith('.E1'): #ERS1
+        fname = glob.glob(os.path.join(hdf5,'SAR*.E1'))[0]
+        orbitDir = '/home/mgovorcin/Working_dir/Ston_Slano1996/INSAR/orbits/ODR/ERS1/dgm-e04/' #ERS1
+
+    elif os.listdir(hdf5)[0].endswith('.E2'):
+        fname = glob.glob(os.path.join(hdf5,'SAR*.E2'))[0] #ERS2
+        if datetime.strptime(os.path.basename(fname)[14:22],'%Y%m%d').date()>datetime(2003,8,8).date():
+            orbitDir = '/home/mgovorcin/Working_dir/Ston_Slano1996/INSAR/orbits/ODR/ERS2/' #ERS2
+        else:
+            orbitDir = '/home/mgovorcin/Working_dir/Ston_Slano1996/INSAR/orbits/ODR/ERS2/dgm-e04/' #ERS2
+ 
+    print(fname)
+
     if not os.path.isdir(slcname):
         os.mkdir(slcname)
 
     date = os.path.basename(slcname)
-    obj = createSensor('ERS_SLC')
+    obj = createSensor('ERS_ENVISAT_SLC')
     obj.configure()
-    obj._leaderFile = ldrname
-    obj._imageFile = imgname
+    obj._imageFileName = fname
+    obj._orbitDir = orbitDir
     obj._orbitType = 'ODR'
-    obj._orbitDir = '/Users/agram/orbit/ODR/ERS2'
     obj.output = os.path.join(slcname, date+'.slc')
 
-    print(obj._leaderFile)
-    print(obj._imageFile)
-    print(obj.output)
     obj.extractImage()
     obj.frame.getImage().renderHdr()
 
 
-    coeffs = obj.doppler_coeff
-#    coeffs = [0.,0.]
-    dr = obj.frame.getInstrument().getRangePixelSize()
-    r0 = obj.frame.getStartingRange()
-
-    print(coeffs)
-    poly = Poly1D.Poly1D()
-    poly.initPoly(order=len(coeffs)-1)
-    poly.setCoeffs(coeffs)
-
+    obj.extractDoppler()
 
     pickName = os.path.join(slcname, 'data')
     with shelve.open(pickName) as db:
         db['frame'] = obj.frame
-        db['doppler'] = poly 
 
 
 if __name__ == '__main__':

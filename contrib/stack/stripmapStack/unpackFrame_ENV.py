@@ -46,38 +46,11 @@ def unpack(hdf5, slcname):
     obj.frame.getImage().renderHdr()
 
 
-    ######Numpy polynomial manipulation
-    pc = obj._dopplerCoeffs[::-1]
-    
-    inds = np.linspace(0, obj.frame.numberOfSamples-1, len(pc) + 1)+1
-    rng = obj.frame.getStartingRange() + inds * obj.frame.instrument.getRangePixelSize()
-    dops = np.polyval(pc, 2*rng/Const.c-obj._dopplerTime)
-
-    print('Near range doppler: ', dops[0])
-    print('Far range doppler: ', dops[-1])
-   
-    dopfit = np.polyfit(inds, dops, len(pc)-1)
-    
-    poly = Poly1D.Poly1D()
-    poly.initPoly(order=len(pc)-1)
-    poly.setCoeffs(dopfit[::-1])
-
-    print('Poly near range doppler: ', poly(1))
-    print('Poly far range doppler: ', poly(obj.frame.numberOfSamples))
-
-#    width = obj.frame.getImage().getWidth()
-#    midrange = r0 + 0.5 * width * dr
-#    dt = datetime.timedelta(seconds = midrange / Const.c)
-
-#    obj.frame.sensingStart = obj.frame.sensingStart - dt
-#    obj.frame.sensingStop = obj.frame.sensingStop - dt
-#    obj.frame.sensingMid = obj.frame.sensingMid - dt
-
+    obj.extractDoppler()
 
     pickName = os.path.join(slcname, 'data')
     with shelve.open(pickName) as db:
         db['frame'] = obj.frame
-        db['doppler'] = poly 
 
 
 if __name__ == '__main__':
