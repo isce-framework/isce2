@@ -139,7 +139,7 @@ def main(iargs=None):
                 direction = np.sign(np.dot( np.cross(targxyz-mxyz, sxyz-mxyz), mvel))
                 Bperp[ii,jj] = direction*perp
     
-            Bperp.tofile(fid)
+        Bperp.tofile(fid)
     fid.close()
    
     ####Write XML
