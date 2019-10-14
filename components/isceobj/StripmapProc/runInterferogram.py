@@ -1,13 +1,77 @@
+
 #
 # Author: Heresh Fattahi, 2017
-#
+# Modified by V. Brancato (10.2019)
+#         (Included flattening when rubbersheeting in range is turned on
 
 import isceobj
 import logging
 from components.stdproc.stdproc import crossmul
 from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 import os
+import gdal
+import numpy as np
+
 logger = logging.getLogger('isce.insar.runInterferogram')
+
+# Added by V. Brancato 10.09.2019
+def write_xml(fileName,width,length,bands,dataType,scheme):
+
+    img = isceobj.createImage()
+    img.setFilename(fileName)
+    img.setWidth(width)
+    img.setLength(length)
+    img.setAccessMode('READ')
+    img.bands = bands
+    img.dataType = dataType
+    img.scheme = scheme
+    img.renderHdr()
+    img.renderVRT()
+    
+    return None
+
+    	    
+def compute_FlatEarth(self,width,length):
+    from imageMath import IML
+    import logging
+    
+    # If rubbersheeting has been performed add back the range sheet offsets
+    
+    info = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
+    radarWavelength = info.getInstrument().getRadarWavelength()
+    rangePixelSize = info.getInstrument().getRangePixelSize()
+    fact = 4 * np.pi* rangePixelSize / radarWavelength
+
+    cJ = np.complex64(-1j)
+
+    # Open the range sheet offset
+    rngOff = os.path.join(self.insar.offsetsDirname, self.insar.rangeOffsetFilename )
+    
+    print(rngOff)
+    if os.path.exists(rngOff):
+       rng2 = np.memmap(rngOff, dtype=np.float64, mode='r', shape=(length,width))
+    else:
+       print('No range offsets provided')
+       rng2 = np.zeros((length,width))
+    
+    # Open the interferogram
+    ifgFilename= os.path.join(self.insar.ifgDirname, self.insar.ifgFilename)
+    ds = gdal.Open(ifgFilename+'.full',gdal.GA_ReadOnly)
+    intf = ds.GetRasterBand(1).ReadAsArray()
+    ds = None
+    
+    intf *= np.exp(cJ*fact*rng2)
+    
+    del rng2
+       
+    # Write the interferogram
+    intf.tofile(ifgFilename+'.full')
+    write_xml(ifgFilename+'.full',width,length,1,"CFLOAT","BIL")
+    
+    intf=None
+    return 
+    
+    
 
 def multilook(infile, outname=None, alks=5, rlks=15):
     '''
@@ -66,8 +130,8 @@ def computeCoherence(slc1name, slc2name, corname, virtual=True):
     slc2.finalizeImage()
     return
 
-
-def generateIgram(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
+# Modified by V. Brancato on 10.09.2019 (added self)
+def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     objSlc1 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc1, objSlc1)
     objSlc1.setAccessMode('read')
@@ -79,8 +143,13 @@ def generateIgram(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     objSlc2.createImage()
 
     slcWidth = imageSlc1.getWidth()
-    intWidth = int(slcWidth / rgLooks)
-
+    
+    
+    if not self.doRubbersheetingRange:
+     intWidth = int(slcWidth/rgLooks)    # Modified by V. Brancato intWidth = int(slcWidth / rgLooks)
+    else:
+     intWidth = int(slcWidth)
+    
     lines = min(imageSlc1.getLength(), imageSlc2.getLength())
 
     if '.flat' in resampName:
@@ -93,7 +162,7 @@ def generateIgram(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     resampInt = resampName
 
     objInt = isceobj.createIntImage()
-    objInt.setFilename(resampInt)
+    objInt.setFilename(resampInt+'.full')
     objInt.setWidth(intWidth)
     imageInt = isceobj.createIntImage()
     IU.copyAttributes(objInt, imageInt)
@@ -101,21 +170,41 @@ def generateIgram(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     objInt.createImage()
 
     objAmp = isceobj.createAmpImage()
-    objAmp.setFilename(resampAmp)
+    objAmp.setFilename(resampAmp+'.full')
     objAmp.setWidth(intWidth)
     imageAmp = isceobj.createAmpImage()
     IU.copyAttributes(objAmp, imageAmp)
     objAmp.setAccessMode('write')
     objAmp.createImage()
+    
+    if not self.doRubbersheetingRange:
+       print('Rubbersheeting in range is off, interferogram is already flattened')
+       objCrossmul = crossmul.createcrossmul()
+       objCrossmul.width = slcWidth
+       objCrossmul.length = lines
+       objCrossmul.LooksDown = azLooks
+       objCrossmul.LooksAcross = rgLooks
 
-    objCrossmul = crossmul.createcrossmul()
-    objCrossmul.width = slcWidth
-    objCrossmul.length = lines
-    objCrossmul.LooksDown = azLooks
-    objCrossmul.LooksAcross = rgLooks
-
-    objCrossmul.crossmul(objSlc1, objSlc2, objInt, objAmp)
-
+       objCrossmul.crossmul(objSlc1, objSlc2, objInt, objAmp)
+    else:
+     # Modified by V. Brancato 10.09.2019 (added option to add Range Rubber sheet Flat-earth back)
+       print('Rubbersheeting in range is on, removing flat-Earth phase')
+       objCrossmul = crossmul.createcrossmul()
+       objCrossmul.width = slcWidth
+       objCrossmul.length = lines
+       objCrossmul.LooksDown = 1
+       objCrossmul.LooksAcross = 1
+       objCrossmul.crossmul(objSlc1, objSlc2, objInt, objAmp)
+       
+       # Remove Flat-Earth component
+       compute_FlatEarth(self,intWidth,lines)
+       
+       # Perform Multilook
+       multilook(resampInt+'.full', outname=resampInt, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
+       multilook(resampAmp+'.full', outname=resampAmp, alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
+       
+       os.system('rm ' + resampInt+'.full* ' + resampAmp + '.full* ')
+       # End of modification 
     for obj in [objInt, objAmp, objSlc1, objSlc2]:
         obj.finalizeImage()
 
@@ -142,7 +231,7 @@ def subBandIgram(self, masterSlc, slaveSlc, subBandDir):
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
 
-    generateIgram(img1, img2, interferogramName, azLooks, rgLooks)
+    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks)
     
     return interferogramName
 
@@ -185,7 +274,7 @@ def runFullBandInterferogram(self):
     masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
     masterSlc =  masterFrame.getImage().filename
    
-    if self.doRubbersheeting:    
+    if (self.doRubbersheetingRange | self.doRubbersheetingAzimuth):    
         slaveSlc = os.path.join(self._insar.coregDirname, self._insar.fineCoregFilename)
     else:
         slaveSlc = os.path.join(self._insar.coregDirname, self._insar.refinedCoregFilename)
@@ -212,19 +301,19 @@ def runFullBandInterferogram(self):
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
 
-    generateIgram(img1, img2, interferogramName, azLooks, rgLooks)
+    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks)
 
 
     ###Compute coherence
-    cohname = os.path.join(self.insar.ifgDirname, self.insar.correlationFilename)
-    computeCoherence(masterSlc, slaveSlc, cohname+'.full')
-    multilook(cohname+'.full', outname=cohname, alks=azLooks, rlks=rgLooks)
+    #cohname = os.path.join(self.insar.ifgDirname, self.insar.correlationFilename)
+    #computeCoherence(masterSlc, slaveSlc, cohname+'.full')
+    #multilook(cohname+'.full', outname=cohname, alks=azLooks, rlks=rgLooks)
 
 
     ###Multilook relevant geometry products
-    for fname in [self.insar.latFilename, self.insar.lonFilename, self.insar.losFilename]:
-        inname =  os.path.join(self.insar.geometryDirname, fname)
-        multilook(inname + '.full', outname= inname, alks=azLooks, rlks=rgLooks)
+    #for fname in [self.insar.latFilename, self.insar.lonFilename, self.insar.losFilename]:
+    #    inname =  os.path.join(self.insar.geometryDirname, fname)
+    #    multilook(inname + '.full', outname= inname, alks=azLooks, rlks=rgLooks)
 
 def runInterferogram(self, igramSpectrum = "full"):
 
