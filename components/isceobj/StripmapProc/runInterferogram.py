@@ -56,19 +56,14 @@ def compute_FlatEarth(self,width,length):
     
     # Open the interferogram
     ifgFilename= os.path.join(self.insar.ifgDirname, self.insar.ifgFilename)
-    ds = gdal.Open(ifgFilename+'.full',gdal.GA_ReadOnly)
-    intf = ds.GetRasterBand(1).ReadAsArray()
-    ds = None
-    
-    intf *= np.exp(cJ*fact*rng2)
+    intf = np.memmap(ifgFilename+'.full',dtype=np.complex64,mode='r+',shape=(length,width))
+   
+    for ll in range(length):
+        intf[ll,:] *= np.exp(cJ*fact*rng2[ll,:])
     
     del rng2
+    del intf
        
-    # Write the interferogram
-    intf.tofile(ifgFilename+'.full')
-    write_xml(ifgFilename+'.full',width,length,1,"CFLOAT","BIL")
-    
-    intf=None
     return 
     
     
@@ -203,7 +198,7 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
        multilook(resampInt+'.full', outname=resampInt, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
        multilook(resampAmp+'.full', outname=resampAmp, alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
        
-       os.system('rm ' + resampInt+'.full* ' + resampAmp + '.full* ')
+       #os.system('rm ' + resampInt+'.full* ' + resampAmp + '.full* ')
        # End of modification 
     for obj in [objInt, objAmp, objSlc1, objSlc2]:
         obj.finalizeImage()
@@ -305,15 +300,15 @@ def runFullBandInterferogram(self):
 
 
     ###Compute coherence
-    #cohname = os.path.join(self.insar.ifgDirname, self.insar.correlationFilename)
-    #computeCoherence(masterSlc, slaveSlc, cohname+'.full')
-    #multilook(cohname+'.full', outname=cohname, alks=azLooks, rlks=rgLooks)
+    cohname = os.path.join(self.insar.ifgDirname, self.insar.correlationFilename)
+    computeCoherence(masterSlc, slaveSlc, cohname+'.full')
+    multilook(cohname+'.full', outname=cohname, alks=azLooks, rlks=rgLooks)
 
 
-    ###Multilook relevant geometry products
-    #for fname in [self.insar.latFilename, self.insar.lonFilename, self.insar.losFilename]:
-    #    inname =  os.path.join(self.insar.geometryDirname, fname)
-    #    multilook(inname + '.full', outname= inname, alks=azLooks, rlks=rgLooks)
+    ##Multilook relevant geometry products
+    for fname in [self.insar.latFilename, self.insar.lonFilename, self.insar.losFilename]:
+        inname =  os.path.join(self.insar.geometryDirname, fname)
+        multilook(inname + '.full', outname= inname, alks=azLooks, rlks=rgLooks)
 
 def runInterferogram(self, igramSpectrum = "full"):
 
