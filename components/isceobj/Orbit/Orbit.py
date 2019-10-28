@@ -1061,7 +1061,7 @@ class Orbit(Component):
         ###This wont break the old interface but could cause 
         ###issues at midnight crossing
         if reference is None:
-            reference = self.minTime()
+            reference = self.minTime
 
         refEpoch = reference.replace(hour=0, minute=0, second=0, microsecond=0)
 
