@@ -78,3 +78,6 @@ SConscript(rfi)
 SConscript('PyCuAmpcor/SConscript')
 SConscript('splitSpectrum/SConscript')
 SConscript('alos2proc/SConscript')
+
+if os.path.exists('geoAutorift'):
+    SConscript('geoAutorift/SConscript')
