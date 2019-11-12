@@ -325,14 +325,21 @@ AZIMUTH_OFFSET_FILENAME = Component.Parameter('azimuthOffsetFilename',
                                 doc='')
 
 
-
+# Modified by V. Brancato 10.07.2019
 AZIMUTH_RUBBERSHEET_FILENAME = Component.Parameter('azimuthRubbersheetFilename',
                                 public_name='azimuth Rubbersheet Image Name',
                                 default = 'azimuth_sheet.off',
                                 type=str,
                                 mandatory=False,
                                 doc='')
-
+				
+RANGE_RUBBERSHEET_FILENAME = Component.Parameter('rangeRubbersheetFilename',
+                                public_name='range Rubbersheet Image Name',
+                                default = 'range_sheet.off',
+                                type=str,
+                                mandatory=False,
+                                doc='')
+# End of modification
 MISREG_FILENAME = Component.Parameter('misregFilename',
                                 public_name='misreg file name',
                                 default='misreg',
@@ -346,14 +353,21 @@ DENSE_OFFSET_FILENAME = Component.Parameter('denseOffsetFilename',
                                 type=str,
                                 mandatory=False,
                                 doc='file name of dense offsets computed from cross correlating two SLC images')
-
+# Modified by V. Brancato 10.07.2019
 FILT_AZIMUTH_OFFSET_FILENAME = Component.Parameter('filtAzimuthOffsetFilename',
                                 public_name='filtered azimuth offset filename',
                                 default='filtAzimuth.off',
                                 type=str,
                                 mandatory=False,
                                 doc='Filtered azimuth dense offsets')
-
+				
+FILT_RANGE_OFFSET_FILENAME = Component.Parameter('filtRangeOffsetFilename',
+                                public_name='filtered range offset filename',
+                                default='filtRange.off',
+                                type=str,
+                                mandatory=False,
+                                doc='Filtered range dense offsets')
+# End of modification
 DISPERSIVE_FILENAME = Component.Parameter('dispersiveFilename',
                                 public_name = 'dispersive phase filename',
                                 default='dispersive.bil',
@@ -470,8 +484,10 @@ class StripmapProc(Component, FrameMixin):
                       LOS_FILENAME,
                       RANGE_OFFSET_FILENAME,
                       AZIMUTH_OFFSET_FILENAME,
-                      AZIMUTH_RUBBERSHEET_FILENAME,
-                      FILT_AZIMUTH_OFFSET_FILENAME,
+                      AZIMUTH_RUBBERSHEET_FILENAME, # Added by V. Brancato 10.07.2019
+                      RANGE_RUBBERSHEET_FILENAME,   # Added by V. Brancato 10.07.2019
+                      FILT_AZIMUTH_OFFSET_FILENAME, # Added by V. Brancato 10.07.2019
+                      FILT_RANGE_OFFSET_FILENAME,   # Added by V. Brancato 10.07.2019
                       DENSE_OFFSET_FILENAME,
                       MISREG_FILENAME,
                       DISPERSIVE_FILENAME,
