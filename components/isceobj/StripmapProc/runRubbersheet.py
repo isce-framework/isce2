@@ -168,6 +168,7 @@ def runRubbersheet(self):
     # filtAzOffsetFile to it.
     resampleOffset(filtAzOffsetFile, geometryAzimuthOffset, sheetOffset)
 
+    print("I'm here")
     return None
 
 

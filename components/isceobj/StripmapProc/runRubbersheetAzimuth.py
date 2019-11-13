@@ -2,6 +2,9 @@
 # Author: Heresh Fattahi
 # Copyright 2017
 #
+# Modified by V. Brancato
+# Included offset filtering with no SNR
+#
 
 import isce
 import isceobj
@@ -20,28 +23,36 @@ def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     off_rg = ds.GetRasterBand(2).ReadAsArray()
     ds = None
     
-    off_az_copy = np.copy(off_az)
-    off_rg_copy = np.copy(off_rg)
+    # Remove missing values from ampcor 
+    off_rg[np.where(off_rg < -9999)]=0
+    off_az[np.where(off_az < -9999)]=0
     
-    # Compute MAD
-    off_azm = ndimage.median_filter(off_az,filterSize)
-    off_rgm = ndimage.median_filter(off_rg,filterSize)
     
-    metric_rg = np.abs(off_rgm-off_rg)
-    metric_az = np.abs(off_azm-off_az)
+    # Store the offsets in a complex variable
+    off = off_rg + 1j*off_az
 
-    idx = np.where((metric_rg > 3) | (metric_az > 3))
+    # Mask the azimuth offsets based on the MAD
+    mask = off_masking(off,filterSize,thre=3) 
     
+    xoff_masked = np.ma.array(off.real,mask=mask)
+    yoff_masked = np.ma.array(off.imag,mask=mask)
     
-    # Remove missing values in the offset map
-    off_az_copy[np.where(off_az_copy<-9999)]=np.nan
-    off_az_copy[idx]=np.nan
+    # Delete unused variables
+    mask = None
+    off = None
     
+    # Remove residual noisy spots with a median filter on the azimuth offmap
+    yoff_masked.mask = yoff_masked.mask | \
+            (ndimage.median_filter(xoff_masked.filled(fill_value=0),3) == 0) | \
+            (ndimage.median_filter(yoff_masked.filled(fill_value=0),3) == 0)
     
-    # Fill the offsets with smoothed values
-    off_az_filled = fill_with_smoothed(off_az_copy,filterSize)
+    # Fill the data by iteratively using smoothed values    
+    data = yoff_masked.data
+    data[yoff_masked.mask]=np.nan
     
-    # Median filter the offsets 
+    off_az_filled = fill_with_smoothed(data,filterSize)
+    
+    # Apply median filter to smooth the azimuth offset map
     off_az_filled = ndimage.median_filter(off_az_filled,filterSize)
     
     # Save the filtered offsets
@@ -63,8 +74,18 @@ def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     img.scheme = 'BIP'
     img.renderHdr()
 
-    return None
+    
+    return 
 
+
+def off_masking(off,filterSize,thre=2):
+    # Define the mask to fill the offsets
+    vram = ndimage.median_filter(off.real, filterSize)
+    vazm = ndimage.median_filter(off.imag, filterSize)
+
+    mask =  (np.abs(off.real-vram) > thre) | (np.abs(off.imag-vazm) > thre) | (off.imag == 0) | (off.real == 0)
+
+    return mask
 
 def fill(data, invalid=None):
     """
@@ -139,11 +160,11 @@ def fill_with_smoothed(off,filterSize):
     loop = 0
     cnt2=1
     
-    while (loop<100):
+    while (cnt2!=0 & loop<100):
        loop += 1
        idx2= np.isnan(off_2filt)
        cnt2 = np.sum(np.count_nonzero(np.isnan(off_2filt)))
-       
+       print(cnt2)
        if cnt2 != 0:
           off_filt= convolve(off_2filt,kernel,boundary='extend',nan_treatment='interpolate')
           off_2filt[idx2]=off_filt[idx2]
