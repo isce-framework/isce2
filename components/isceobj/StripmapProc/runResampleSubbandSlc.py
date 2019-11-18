@@ -61,9 +61,11 @@ def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregD
     if not self.doRubbersheetingRange:
        print('Rubber sheeting in range is turned off, flattening the interferogram during resampling')
        flatten = True
+       print(flatten)
     else:
        print('Rubber sheeting in range is turned on, flattening the interferogram during interferogram formation')
        flatten=False
+       print(flatten)
 # end of Modification
        
     rObj.flatten = flatten

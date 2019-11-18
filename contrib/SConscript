@@ -79,5 +79,5 @@ SConscript('PyCuAmpcor/SConscript')
 SConscript('splitSpectrum/SConscript')
 SConscript('alos2proc/SConscript')
 
-if os.path.exists('geoAutorift'):
-    SConscript('geoAutorift/SConscript')
+if os.path.exists('geo_autoRIFT'):
+    SConscript('geo_autoRIFT/SConscript')
