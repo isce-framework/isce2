@@ -10,9 +10,10 @@ import isce
 import isceobj
 from osgeo import gdal
 from scipy import ndimage
-from astropy.convolution import convolve
 import numpy as np
 import os
+from astropy.convolution import convolve
+
 
 def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     # Masking the offsets with a data-based approach
@@ -23,27 +24,36 @@ def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     off_rg = ds.GetRasterBand(2).ReadAsArray()
     ds = None
     
-    off_az_copy = np.copy(off_az)
-    off_rg_copy = np.copy(off_rg)
-    
-    # Compute MAD
-    off_azm = ndimage.median_filter(off_az,filterSize)
-    off_rgm = ndimage.median_filter(off_rg,filterSize)
-    
-    metric_rg = np.abs(off_rgm-off_rg)
-    metric_az = np.abs(off_azm-off_az)
-    
-    
-    idx = np.where((metric_rg > 3) | (metric_az > 3))
-    
-    # Remove missing data in the offset map
-    off_rg_copy[np.where(off_rg_copy<-9999)]=np.nan
-    off_rg_copy[idx]=np.nan
+    # Remove values reported as missing data (no value data from ampcor)
+    off_rg[np.where(off_rg < -9999)]=0
+    off_az[np.where(off_az < -9999)]=0
+ 
+    # Store the offsets in a complex variable
+    off = off_rg + 1j*off_az
 
-    # Fill the offsets with smoothed values
-    off_rg_filled = fill_with_smoothed(off_rg_copy,filterSize)
+    # Mask the offset based on MAD
+    mask = off_masking(off,filterSize,thre=3) 
     
-    # Median filter the offsets 
+    xoff_masked = np.ma.array(off.real,mask=mask)
+    yoff_masked = np.ma.array(off.imag,mask=mask)
+    
+    # Delete not used variables
+    mask = None
+    off = None
+    
+    # Remove residual noisy spots with a median filter on the range offmap
+    xoff_masked.mask =  xoff_masked.mask | \
+            (ndimage.median_filter(xoff_masked.filled(fill_value=0),3) == 0) | \
+            (ndimage.median_filter(yoff_masked.filled(fill_value=0),3) == 0)
+    
+    # Fill the range offset map iteratively with smoothed values
+    
+    data = xoff_masked.data
+    data[xoff_masked.mask]=np.nan
+    
+    off_rg_filled = fill_with_smoothed(data,filterSize)
+    
+    # Apply the median filter on the offset
     off_rg_filled = ndimage.median_filter(off_rg_filled,filterSize)
     
     # Save the filtered offsets
@@ -64,8 +74,17 @@ def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     img.dataType = 'FLOAT'
     img.scheme = 'BIP'
     img.renderHdr()
+    
+    return 
 
-    return None
+def off_masking(off,filterSize,thre=2):
+    vram = ndimage.median_filter(off.real, filterSize)
+    vazm = ndimage.median_filter(off.imag, filterSize)
+
+    mask =  (np.abs(off.real-vram) > thre) | (np.abs(off.imag-vazm) > thre) | (off.imag == 0) | (off.real == 0)
+
+    return mask
+
 
 def fill(data, invalid=None):
     """
@@ -95,11 +114,11 @@ def fill_with_smoothed(off,filterSize):
     loop = 0
     cnt2=1
     
-    while (loop<100):
+    while (cnt2 !=0 & loop<100):
        loop += 1
        idx2= np.isnan(off_2filt)
        cnt2 = np.sum(np.count_nonzero(np.isnan(off_2filt)))
-       
+       print(cnt2)
        if cnt2 != 0:
           off_filt= convolve(off_2filt,kernel,boundary='extend',nan_treatment='interpolate')
           off_2filt[idx2]=off_filt[idx2]
@@ -251,6 +270,9 @@ def runRubbersheetRange(self):
     resampleOffset(filtRgOffsetFile, geometryRangeOffset, RgsheetOffset)
 
     return None
+
+
+
 
 
 
