@@ -195,7 +195,6 @@ __device__ float2 partialSums(const float v, volatile float* shmem, const int st
     return make_float2(Sum, Sum2);
 } 
 
-__forceinline__ __device__ int __mul(const int a, const int b) { return a*b; }
 
 template<const int Nthreads2>
 __global__ void cuCorrNormalize_kernel(
@@ -232,7 +231,7 @@ __global__ void cuCorrNormalize_kernel(
         templateSum += templateD[i];
     }
     templateSum = sumReduceBlock<Nthreads>(templateSum, shmem);
-
+    __syncthreads();
     
     float templateSum2 = 0.0f;
     for (int i = tid; i < templateSize; i += Nthreads)
@@ -241,11 +240,12 @@ __global__ void cuCorrNormalize_kernel(
             templateSum2 += t*t;
         }
     templateSum2 = sumReduceBlock<Nthreads>(templateSum2, shmem);
+    __syncthreads();
 
     //if(tid ==0) printf("template sum %d %g %g \n", imageIdx, templateSum, templateSum2);
     /*********/
 
-    shmem[tid] = shmem[tid + Nthreads] = 0.0f;
+    shmem[tid] = shmem[tid + Nthreads] = shmem[tid + 2*Nthreads] = 0.0f;
     __syncthreads();
     
     float imageSum  = 0.0f;
@@ -281,7 +281,7 @@ __global__ void cuCorrNormalize_kernel(
         if (tid < resultNY)
         {
             const int         ix = iaddr/imageNY;
-            const int       addr = __mul(ix-templateNX, resultNY);
+            const int       addr = (ix-templateNX)*resultNY;
             
             //printf("test norm %d %d %d %d %f\n", tid, ix, addr, addr+tid, resultD[addr + tid]);
             
