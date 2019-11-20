@@ -6,7 +6,7 @@ package = envPyCuAmpcor['PACKAGE']
 project = envPyCuAmpcor['PROJECT']
 build = envPyCuAmpcor['PRJ_LIB_DIR']
 install = envPyCuAmpcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
-listFiles = ['SlcImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
+listFiles = ['GDALImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
              'cuArraysPadding.cu', 'cuOverSampler.cu',
              'cuSincOverSampler.cu', 'cuDeramp.cu',
              'cuOffset.cu', 'cuCorrNormalization.cu',
