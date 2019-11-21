@@ -258,33 +258,34 @@ def runUnwrapIcu(infile, outfile):
     unwImage.finalizeImage()
     unwImage.renderHdr()
 
-def runUnwrap2Stage(unwrappedIntFilename,connectedComponentsFilename,unwrapped2StageFilename, unwrapper_2stage_name=None, solver_2stage=None):                                                                                            
+def runUnwrap2Stage(unwrappedIntFilename,connectedComponentsFilename,unwrapped2StageFilename,
+                    unwrapper_2stage_name=None, solver_2stage=None):
   
-      if unwrapper_2stage_name is None:
-          unwrapper_2stage_name = 'REDARC0'
-  
-      if solver_2stage is None:
-          # If unwrapper_2state_name is MCF then solver is ignored
-          # and relaxIV MCF solver is used by default
-          solver_2stage = 'pulp'
-  
-      print('Unwrap 2 Stage Settings:')
-      print('Name: %s'%unwrapper_2stage_name)
-      print('Solver: %s'%solver_2stage)
-  
-      inpFile = unwrappedIntFilename
-      ccFile  = connectedComponentsFilename
-      outFile = unwrapped2StageFilename
-  
-      # Hand over to 2Stage unwrap
-      unw = UnwrapComponents()
-      unw.setInpFile(inpFile)
-      unw.setConnCompFile(ccFile)
-      unw.setOutFile(outFile)
-      unw.setSolver(solver_2stage)
-      unw.setRedArcs(unwrapper_2stage_name)
-      unw.unwrapComponents()
-      return
+    if unwrapper_2stage_name is None:
+        unwrapper_2stage_name = 'REDARC0'
+
+    if solver_2stage is None:
+        # If unwrapper_2state_name is MCF then solver is ignored
+        # and relaxIV MCF solver is used by default
+        solver_2stage = 'pulp'
+
+    print('Unwrap 2 Stage Settings:')
+    print('Name: %s'%unwrapper_2stage_name)
+    print('Solver: %s'%solver_2stage)
+
+    inpFile = unwrappedIntFilename
+    ccFile  = connectedComponentsFilename
+    outFile = unwrapped2StageFilename
+
+    # Hand over to 2Stage unwrap
+    unw = UnwrapComponents()
+    unw.setInpFile(inpFile)
+    unw.setConnCompFile(ccFile)
+    unw.setOutFile(outFile)
+    unw.setSolver(solver_2stage)
+    unw.setRedArcs(unwrapper_2stage_name)
+    unw.unwrapComponents()
+    return
 
 
 def main(iargs=None):
@@ -303,24 +304,26 @@ def main(iargs=None):
 
     if inps.method != 'icu':
     
-       masterShelveDir = os.path.join(interferogramDir , 'masterShelve')
-       if not os.path.exists(masterShelveDir):
-          os.makedirs(masterShelveDir)
+        masterShelveDir = os.path.join(interferogramDir , 'masterShelve')
+        if not os.path.exists(masterShelveDir):
+            os.makedirs(masterShelveDir)
 
-       inps.master = os.path.dirname(inps.master)
-       cpCmd='cp ' + os.path.join(inps.master, 'data*') +' '+masterShelveDir
-       os.system(cpCmd)
-       pckfile = os.path.join(masterShelveDir,'data')
-       print(pckfile)
-       metadata = extractInfoFromPickle(pckfile, inps)
+        inps.master = os.path.dirname(inps.master)
+        cpCmd='cp ' + os.path.join(inps.master, 'data*') +' '+masterShelveDir
+        os.system(cpCmd)
+        pckfile = os.path.join(masterShelveDir,'data')
+        print(pckfile)
+        metadata = extractInfoFromPickle(pckfile, inps)
+
     ########
     print ('unwrapping method : ' , inps.method)
     if inps.method == 'snaphu':
-       if inps.nomcf: 
-           fncall =  runUnwrap
-       else:
-           fncall = runUnwrapMcf
-       fncall(inps.intfile, inps.unwprefix + '_snaphu.unw', inps.cohfile, metadata, defomax=inps.defomax)
+        if inps.nomcf: 
+            fncall =  runUnwrap
+        else:
+            fncall = runUnwrapMcf
+        fncall(inps.intfile, inps.unwprefix + '_snaphu.unw', inps.cohfile, metadata, defomax=inps.defomax)
+
     elif inps.method == 'snaphu2stage':
         if inps.nomcf: 
             fncall =  runUnwrap
@@ -329,11 +332,12 @@ def main(iargs=None):
         fncall(inps.intfile, inps.unwprefix + '_snaphu.unw', inps.cohfile, metadata, defomax=inps.defomax)
 
         # adding in the two-stage
-        runUnwrap2Stage(inps.unwprefix + '_snaphu.unw', inps.unwprefix + '_snaphu.unw.conncomp',inps.unwprefix + '_snaphu2stage.unw')
-
+        runUnwrap2Stage(inps.unwprefix + '_snaphu.unw',
+                        inps.unwprefix + '_snaphu.unw.conncomp',
+                        inps.unwprefix + '_snaphu2stage.unw')
 
     elif inps.method == 'icu':
-       runUnwrapIcu(inps.intfile, inps.unwprefix + '_icu.unw')
+        runUnwrapIcu(inps.intfile, inps.unwprefix + '_icu.unw')
 
 
 if __name__ == '__main__':
