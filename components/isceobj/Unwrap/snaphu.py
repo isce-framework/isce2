@@ -54,7 +54,7 @@ class snaphu(Component):
         self.azimuthLooks = obj.insar.topo.numberAzimuthLooks
 
         azres = obj.insar.masterFrame.platform.antennaLength/2.0
-        azfact = obj.insar.topo.numberAzimuthLooks *azres / obj.insar.topo.azimuthSpacing
+        azfact = azres / obj.insar.topo.azimuthSpacing
 
         rBW = obj.insar.masterFrame.instrument.pulseLength * obj.insar.masterFrame.instrument.chirpSlope
         rgres = abs(SPEED_OF_LIGHT / (2.0 * rBW))
