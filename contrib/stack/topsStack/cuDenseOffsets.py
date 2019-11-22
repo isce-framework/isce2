@@ -115,7 +115,7 @@ def estimateOffsetField(master, slave, inps=None):
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = PyCuAmpcor()
+    objOffset = PyCuAmpcor.PyCuAmpcor()
 
     objOffset.algorithm = 0
     objOffset.deviceID = inps.gpuid  # -1:let system find the best GPU
