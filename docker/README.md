@@ -14,3 +14,7 @@
    ```
    docker build --rm --force-rm -t hysds/isce_giant -f docker/Dockerfile .
    ```
+   For cuda version:
+   ```
+   docker build --rm --force-rm -t hysds/isce_giant -f docker/Dockerfile.cuda .
+   ```
