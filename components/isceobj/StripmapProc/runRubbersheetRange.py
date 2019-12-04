@@ -2,6 +2,9 @@
 # Author: Heresh Fattahi
 # Copyright 2017
 #
+# Modified by V. Brancato (10.12.2019)
+# Including offset filtering with no SNR masking
+#
 
 import isce
 import isceobj
@@ -9,6 +12,79 @@ from osgeo import gdal
 from scipy import ndimage
 import numpy as np
 import os
+from astropy.convolution import convolve
+
+
+def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
+    # Masking the offsets with a data-based approach
+    
+    # Open the offsets
+    ds = gdal.Open(denseOffsetFile+'.vrt',gdal.GA_ReadOnly)
+    off_az = ds.GetRasterBand(1).ReadAsArray()
+    off_rg = ds.GetRasterBand(2).ReadAsArray()
+    ds = None
+    
+    # Remove values reported as missing data (no value data from ampcor)
+    off_rg[np.where(off_rg < -9999)]=0
+    off_az[np.where(off_az < -9999)]=0
+ 
+    # Store the offsets in a complex variable
+    off = off_rg + 1j*off_az
+
+    # Mask the offset based on MAD
+    mask = off_masking(off,filterSize,thre=3) 
+    
+    xoff_masked = np.ma.array(off.real,mask=mask)
+    yoff_masked = np.ma.array(off.imag,mask=mask)
+    
+    # Delete not used variables
+    mask = None
+    off = None
+    
+    # Remove residual noisy spots with a median filter on the range offmap
+    xoff_masked.mask =  xoff_masked.mask | \
+            (ndimage.median_filter(xoff_masked.filled(fill_value=0),3) == 0) | \
+            (ndimage.median_filter(yoff_masked.filled(fill_value=0),3) == 0)
+    
+    # Fill the range offset map iteratively with smoothed values
+    
+    data = xoff_masked.data
+    data[xoff_masked.mask]=np.nan
+    
+    off_rg_filled = fill_with_smoothed(data,filterSize)
+    
+    # Apply the median filter on the offset
+    off_rg_filled = ndimage.median_filter(off_rg_filled,filterSize)
+    
+    # Save the filtered offsets
+    length, width = off_rg_filled.shape
+
+    # writing the masked and filtered offsets to a file
+    print ('writing masked and filtered offsets to: ', outName)
+
+    ##Write array to offsetfile
+    off_rg_filled.tofile(outName)
+
+    # write the xml file
+    img = isceobj.createImage()
+    img.setFilename(outName)
+    img.setWidth(width)
+    img.setAccessMode('READ')
+    img.bands = 1
+    img.dataType = 'FLOAT'
+    img.scheme = 'BIP'
+    img.renderHdr()
+    
+    return 
+
+def off_masking(off,filterSize,thre=2):
+    vram = ndimage.median_filter(off.real, filterSize)
+    vazm = ndimage.median_filter(off.imag, filterSize)
+
+    mask =  (np.abs(off.real-vram) > thre) | (np.abs(off.imag-vazm) > thre) | (off.imag == 0) | (off.real == 0)
+
+    return mask
+
 
 def fill(data, invalid=None):
     """
@@ -31,13 +107,33 @@ def fill(data, invalid=None):
                                     return_indices=True)
     return data[tuple(ind)]
 
-
+def fill_with_smoothed(off,filterSize):
+    
+    off_2filt=np.copy(off)
+    kernel = np.ones((filterSize,filterSize),np.float32)/(filterSize*filterSize)
+    loop = 0
+    cnt2=1
+    
+    while (cnt2 !=0 & loop<100):
+       loop += 1
+       idx2= np.isnan(off_2filt)
+       cnt2 = np.sum(np.count_nonzero(np.isnan(off_2filt)))
+       print(cnt2)
+       if cnt2 != 0:
+          off_filt= convolve(off_2filt,kernel,boundary='extend',nan_treatment='interpolate')
+          off_2filt[idx2]=off_filt[idx2]
+          idx3 = np.where(off_filt == 0)
+          off_2filt[idx3]=np.nan
+          off_filt=None
+    
+    return off_2filt
+    
 def mask_filter(denseOffsetFile, snrFile, band, snrThreshold, filterSize, outName):
     #masking and Filtering
 
     ##Read in the offset file
     ds = gdal.Open(denseOffsetFile + '.vrt', gdal.GA_ReadOnly)
-    Offset = ds.GetRasterBand(1).ReadAsArray()
+    Offset = ds.GetRasterBand(band).ReadAsArray()
     ds = None
 
     ##Read in the SNR file
@@ -138,10 +234,10 @@ def resampleOffset(maskedFiltOffset, geometryOffset, outName):
 
     return None
 
-def runRubbersheet(self):
+def runRubbersheetRange(self):
 
-    if not self.doRubbersheeting:
-        print('Rubber sheeting not requested ... skipping')
+    if not self.doRubbersheetingRange:
+        print('Rubber sheeting in azimuth not requested ... skipping')
         return
 
     # denseOffset file name computeed from cross-correlation
@@ -149,26 +245,35 @@ def runRubbersheet(self):
     snrFile = denseOffsetFile + "_snr.bil"
     denseOffsetFile = denseOffsetFile + ".bil"
 
-    # we want the azimuth offsets only which are the first band
-    band = [1]
+    # we want the range offsets only which are the first band
+    band = [2]
     snrThreshold = self.rubberSheetSNRThreshold
     filterSize = self.rubberSheetFilterSize
-    filtAzOffsetFile = os.path.join(self.insar.denseOffsetsDirname, self._insar.filtAzimuthOffsetFilename)
+    filtRgOffsetFile = os.path.join(self.insar.denseOffsetsDirname, self._insar.filtRangeOffsetFilename)
 
     # masking and median filtering the dense offsets
-    mask_filter(denseOffsetFile, snrFile, band, snrThreshold, filterSize, filtAzOffsetFile)
+    if not self.doRubbersheetingRange:
+       print('Rubber sheeting in range is off, applying SNR-masking for the offsets maps')
+       mask_filter(denseOffsetFile, snrFile, band[0], snrThreshold, filterSize, filtRgOffsetFile)
+    else:
+       print('Rubber sheeting in range is on, applying a data-based offsets-masking')
+       mask_filterNoSNR(denseOffsetFile,filterSize,filtRgOffsetFile)
 
-    # azimuth offsets computed from geometry
+    # range offsets computed from geometry
     offsetsDir = self.insar.offsetsDirname
-    geometryAzimuthOffset = os.path.join(offsetsDir, self.insar.azimuthOffsetFilename)
-    sheetOffset = os.path.join(offsetsDir, self.insar.azimuthRubbersheetFilename)
+    geometryRangeOffset = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+    RgsheetOffset = os.path.join(offsetsDir, self.insar.rangeRubbersheetFilename)
 
-    # oversampling the filtAzOffsetFile to the same size of geometryAzimuthOffset
-    # and then update the geometryAzimuthOffset by adding the oversampled 
-    # filtAzOffsetFile to it.
-    resampleOffset(filtAzOffsetFile, geometryAzimuthOffset, sheetOffset)
+    # oversampling the filtRgOffsetFile to the same size of geometryRangeOffset
+    # and then update the geometryRangeOffset by adding the oversampled 
+    # filtRgOffsetFile to it.
+    resampleOffset(filtRgOffsetFile, geometryRangeOffset, RgsheetOffset)
 
-    print("I'm here")
     return None
+
+
+
+
+
 
 

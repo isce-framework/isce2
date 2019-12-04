@@ -14,7 +14,8 @@ import shelve
 
 logger = logging.getLogger('isce.insar.runResampleSubbandSlc')
 
-def resampleSlc(masterFrame, slaveFrame, imageSlc2, radarWavelength, coregDir,
+# Modified by V. Brancato 10.14.2019 added "self" as input parameter of resampleSLC
+def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregDir,
                 azoffname, rgoffname, azpoly = None, rgpoly = None, misreg=False):
     logger.info("Resampling slave SLC")
 
@@ -56,8 +57,17 @@ def resampleSlc(masterFrame, slaveFrame, imageSlc2, radarWavelength, coregDir,
     width = rngImg.getWidth()
     length = rngImg.getLength()
 
-
-    flatten = True
+# Modified by V. Brancato on 10.14.2019 (if Rubbersheeting in range is turned on, flatten the interferogram during cross-correlation)
+    if not self.doRubbersheetingRange:
+       print('Rubber sheeting in range is turned off, flattening the interferogram during resampling')
+       flatten = True
+       print(flatten)
+    else:
+       print('Rubber sheeting in range is turned on, flattening the interferogram during interferogram formation')
+       flatten=False
+       print(flatten)
+# end of Modification
+       
     rObj.flatten = flatten
     rObj.outputWidth = width
     rObj.outputLines = length
@@ -105,15 +115,25 @@ def runResampleSubbandSlc(self, misreg=False):
     masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
     slaveFrame = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
 
-    if self.doRubbersheeting:
-        print('Using rubber sheeted offsets for resampling sub-bands')
+# Modified by V. Brancato 10.14.2019
+
+    if self.doRubbersheetingAzimuth:
+        print('Using rubber in azimuth sheeted offsets for resampling sub-bands')
         azoffname = os.path.join( self.insar.offsetsDirname, self.insar.azimuthRubbersheetFilename)
 
     else:
         print('Using refined offsets for resampling sub-bands')
         azoffname = os.path.join( self.insar.offsetsDirname, self.insar.azimuthOffsetFilename)
     
-    rgoffname = os.path.join( self.insar.offsetsDirname, self.insar.rangeOffsetFilename)
+    if self.doRubbersheetingRange:
+       print('Using rubber in range sheeted offsets for resampling sub-bands')
+       rgoffname = os.path.join( self.insar.offsetsDirname, self.insar.rangeRubbersheetFilename)
+    else:
+       print('Using refined offsets for resampling sub-bands')
+       rgoffname = os.path.join( self.insar.offsetsDirname, self.insar.rangeOffsetFilename)
+# ****************** End of Modification
+     
+   # rgoffname = os.path.join( self.insar.offsetsDirname, self.insar.rangeOffsetFilename)
     azpoly = self.insar.loadProduct( os.path.join(self.insar.misregDirname, self.insar.misregFilename) + '_az.xml')
     rgpoly = self.insar.loadProduct( os.path.join(self.insar.misregDirname, self.insar.misregFilename) + '_rg.xml')
 
@@ -124,7 +144,7 @@ def runResampleSubbandSlc(self, misreg=False):
     wvlL = self.insar.lowBandRadarWavelength
     coregDir = os.path.join(self.insar.coregDirname, self.insar.lowBandSlcDirname)
     
-    lowbandCoregFilename = resampleSlc(masterFrame, slaveFrame, imageSlc2, wvlL, coregDir,
+    lowbandCoregFilename = resampleSlc(self,masterFrame, slaveFrame, imageSlc2, wvlL, coregDir,
                 azoffname, rgoffname, azpoly=azpoly, rgpoly=rgpoly,misreg=False)
 
     imageSlc2 = os.path.join(self.insar.splitSpectrumDirname, self.insar.highBandSlcDirname,
@@ -132,7 +152,7 @@ def runResampleSubbandSlc(self, misreg=False):
     wvlH = self.insar.highBandRadarWavelength
     coregDir = os.path.join(self.insar.coregDirname, self.insar.highBandSlcDirname)
 
-    highbandCoregFilename = resampleSlc(masterFrame, slaveFrame, imageSlc2, wvlH, coregDir, 
+    highbandCoregFilename = resampleSlc(self,masterFrame, slaveFrame, imageSlc2, wvlH, coregDir, 
                     azoffname, rgoffname, azpoly=azpoly, rgpoly=rgpoly, misreg=False)
 
     self.insar.lowBandSlc2 = lowbandCoregFilename

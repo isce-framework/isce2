@@ -242,14 +242,20 @@ FILTER_STRENGTH = Application.Parameter('filterStrength',
                                       mandatory=False,
                                       doc='')
 
-
-DO_RUBBERSHEETING = Application.Parameter('doRubbersheeting',
-                                      public_name='do rubbersheeting',
+############################################## Modified by V.Brancato 10.07.2019
+DO_RUBBERSHEETINGAZIMUTH = Application.Parameter('doRubbersheetingAzimuth', 
+                                      public_name='do rubbersheetingAzimuth',
                                       default=False,
                                       type=bool,
                                       mandatory=False,
                                       doc='')
-
+DO_RUBBERSHEETINGRANGE = Application.Parameter('doRubbersheetingRange', 
+                                      public_name='do rubbersheetingRange',
+                                      default=False,
+                                      type=bool,
+                                      mandatory=False,
+                                      doc='')
+#################################################################################
 RUBBERSHEET_SNR_THRESHOLD = Application.Parameter('rubberSheetSNRThreshold',
                                       public_name='rubber sheet SNR Threshold',
                                       default = 5.0,
@@ -533,7 +539,8 @@ class _RoiBase(Application, FrameMixin):
                       GEOCODE_BOX,
                       REGION_OF_INTEREST,
                       HEIGHT_RANGE,
-                      DO_RUBBERSHEETING,
+                      DO_RUBBERSHEETINGRANGE, #Modified by V. Brancato 10.07.2019
+                      DO_RUBBERSHEETINGAZIMUTH,  #Modified by V. Brancato 10.07.2019
                       RUBBERSHEET_SNR_THRESHOLD,
                       RUBBERSHEET_FILTER_SIZE,
                       DO_DENSEOFFSETS,
@@ -724,7 +731,8 @@ class _RoiBase(Application, FrameMixin):
         self.runResampleSlc = StripmapProc.createResampleSlc(self)
         self.runRefineSlaveTiming = StripmapProc.createRefineSlaveTiming(self)
         self.runDenseOffsets = StripmapProc.createDenseOffsets(self)
-        self.runRubbersheet = StripmapProc.createRubbersheet(self)
+        self.runRubbersheetRange = StripmapProc.createRubbersheetRange(self) #Modified by V. Brancato 10.07.2019
+        self.runRubbersheetAzimuth =StripmapProc.createRubbersheetAzimuth(self) #Modified by V. Brancato 10.07.2019
         self.runResampleSubbandSlc = StripmapProc.createResampleSubbandSlc(self)
         self.runInterferogram = StripmapProc.createInterferogram(self)
         self.runFilter = StripmapProc.createFilter(self)
@@ -774,8 +782,11 @@ class _RoiBase(Application, FrameMixin):
                     args=('refined',))
 
         self.step('dense_offsets', func=self.runDenseOffsets)
-
-        self.step('rubber_sheet', func=self.runRubbersheet)
+######################################################################## Modified by V. Brancato 10.07.2019
+        self.step('rubber_sheet_range', func=self.runRubbersheetRange)
+	
+        self.step('rubber_sheet_azimuth',func=self.runRubbersheetAzimuth)
+#########################################################################
 
         self.step('fine_resample', func=self.runResampleSlc,
                     args=('fine',))
@@ -852,10 +863,14 @@ class _RoiBase(Application, FrameMixin):
 
         # run dense offsets
         self.runDenseOffsets()
-
-        # adding the azimuth offsets computed from cross correlation to geometry offsets
-        self.runRubbersheet()
-
+	
+############ Modified by V. Brancato 10.07.2019
+        # adding the azimuth offsets computed from cross correlation to geometry offsets 
+        self.runRubbersheetAzimuth()
+       
+        # adding the range offsets computed from cross correlation to geometry offsets 
+        self.runRubbersheetRange()
+####################################################################################
         # resampling using rubbersheeted offsets
         # which include geometry + constant range + constant azimuth
         # + dense azimuth offsets
