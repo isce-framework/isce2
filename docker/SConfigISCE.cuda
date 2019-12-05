@@ -17,13 +17,13 @@ CPPPATH = /opt/conda/include/python3.7m /opt/conda/lib/python3.7/site-packages/n
 FORTRANPATH =  /usr/include /opt/conda/include
 
 # The location of your Fortran compiler. If not specified it will use the system one
-FORTRAN = /bin/gfortran
+FORTRAN = /opt/gcc7/bin/gfortran
 
 # The location of your C compiler. If not specified it will use the system one
-CC = /bin/gcc
+CC = /opt/gcc7/bin/gcc
 
 # The location of your C++ compiler. If not specified it will use the system one
-CXX = /bin/g++
+CXX = /opt/gcc7/bin/g++
 
 #libraries needed for mdx display utility
 MOTIFLIBPATH = /usr/lib64       # path to libXm.dylib
@@ -38,4 +38,4 @@ RPATH = /opt/conda/lib /usr/lib64 /usr/lib
 
 #Explicitly enable cuda if needed
 ENABLE_CUDA = True
-CUDA_TOOLKIT_PATH = /usr/local/cuda
+#CUDA_TOOLKIT_PATH = $YOUR_CUDA_INSTALLATION  #/usr/local/cuda
