@@ -192,7 +192,9 @@ the older data with the same workflows available in this open source release.
 
 ## Building ISCE
 
-### Configuration control
+### SCons (recommended)
+
+#### Configuration control
 
 Scons requires that configuration information be present in a directory
 specified by the environment variable SCONS\_CONFIG\_DIR.  First, create a
@@ -252,7 +254,7 @@ and the install files.  Also, in the following the capitalization of 'isce' as
 lower case does matter.  This is the case-sensitive package name that Python
 code uses for importing isce.
 
-### Install ISCE
+#### Install ISCE
 
 cd isce
 scons install
@@ -273,7 +275,7 @@ This will build the necessary components and install them into the location
 specified in the configuration file as PRJ\_SCONS\_INSTALL.
 
 
-#### Note about compiling ISCE after an unsuccessful build.
+##### Note about compiling ISCE after an unsuccessful build.
 
 When building ISCE, scons will check the list of header files and libraries that
 ISCE requires.  Scons will cache the results of this dependency checking.  So,
@@ -289,6 +291,24 @@ directory containing the SConstruct file):
 ```
 
 and then try "scons install" again.
+
+### CMake (experimental)
+Make sure you have the following prerequisites:
+* CMake ≥ 3.12
+* GCC ≥ 4.8  (with C++11 support)
+* Python ≥ 3.5
+* Cython
+* FFTW 3
+* GDAL
+
+```sh
+git clone https://github.com/isce-framework/isce2
+cd isce2
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/my/isce/install/location
+make install
+```
 
 ### Setup Your Environment
 
