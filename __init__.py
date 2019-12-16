@@ -25,13 +25,9 @@
 # Author: Giangi Sacco
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
-from __future__ import print_function
-
-from .version import release_version, release_svn_revision, release_date
-from .version import svn_revision
+from .release_history import release_version, release_svn_revision, release_date
+svn_revision = release_svn_revision
+version = release_history # compatibility alias
 
 __version__ = release_version
 
