@@ -35,7 +35,7 @@ import os
 Import('envmdx')
 envmdx.Append( CCFLAGS=['-DSUN','-DIO64','-I'+envmdx['MOTIFINCPATH'],'-I'+envmdx['X11INCPATH']] )
 envmdx.PrependUnique( LIBPATH=[envmdx['MOTIFLIBPATH'],envmdx['X11LIBPATH']] )
-envmdx.Append( FORTRANFLAGS=['-DSUN','-DIO64','-DGFORTRAN'] )
+envmdx.Append( FORTRANFLAGS=['-DSUN','-DIO64'] )
 
 listFiles = ['graphx_mdx.c','rdf_reader_subs.f','mdx_subs.F']
 build = envmdx['PRJ_LIB_DIR']
