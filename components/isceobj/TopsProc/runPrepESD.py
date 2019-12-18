@@ -8,7 +8,6 @@ import numpy as np
 import os
 import isceobj
 import logging
-import scipy.signal as SS
 from isceobj.Util.ImageUtil import ImageLib as IML
 import datetime
 import pprint
@@ -177,6 +176,7 @@ def createCoherence(intfile, win=5):
     '''
     Compute coherence using scipy convolve 2D.
     '''
+    import scipy.signal as SS
 
     corfile = os.path.splitext(intfile)[0] + '.cor'
     filt = np.ones((win,win))/ (1.0*win*win)

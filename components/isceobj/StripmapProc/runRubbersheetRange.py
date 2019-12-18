@@ -9,15 +9,14 @@
 import isce
 import isceobj
 from osgeo import gdal
-from scipy import ndimage
 import numpy as np
 import os
-from astropy.convolution import convolve
-
 
 def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     # Masking the offsets with a data-based approach
-    
+
+    from scipy import ndimage
+
     # Open the offsets
     ds = gdal.Open(denseOffsetFile+'.vrt',gdal.GA_ReadOnly)
     off_az = ds.GetRasterBand(1).ReadAsArray()
@@ -78,6 +77,9 @@ def mask_filterNoSNR(denseOffsetFile,filterSize,outName):
     return 
 
 def off_masking(off,filterSize,thre=2):
+
+    from scipy import ndimage
+
     vram = ndimage.median_filter(off.real, filterSize)
     vazm = ndimage.median_filter(off.imag, filterSize)
 
@@ -100,6 +102,8 @@ def fill(data, invalid=None):
     Output:
         Return a filled array.
     """
+    from scipy import ndimage
+
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,
@@ -108,7 +112,9 @@ def fill(data, invalid=None):
     return data[tuple(ind)]
 
 def fill_with_smoothed(off,filterSize):
-    
+
+    from astropy.convolution import convolve
+
     off_2filt=np.copy(off)
     kernel = np.ones((filterSize,filterSize),np.float32)/(filterSize*filterSize)
     loop = 0
@@ -130,6 +136,8 @@ def fill_with_smoothed(off,filterSize):
     
 def mask_filter(denseOffsetFile, snrFile, band, snrThreshold, filterSize, outName):
     #masking and Filtering
+
+    from scipy import ndimage
 
     ##Read in the offset file
     ds = gdal.Open(denseOffsetFile + '.vrt', gdal.GA_ReadOnly)
@@ -235,6 +243,8 @@ def resampleOffset(maskedFiltOffset, geometryOffset, outName):
     return None
 
 def runRubbersheetRange(self):
+
+    from scipy import ndimage
 
     if not self.doRubbersheetingRange:
         print('Rubber sheeting in azimuth not requested ... skipping')

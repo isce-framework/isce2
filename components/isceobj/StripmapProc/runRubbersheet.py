@@ -6,7 +6,6 @@
 import isce
 import isceobj
 from osgeo import gdal
-from scipy import ndimage
 import numpy as np
 import os
 
@@ -24,6 +23,9 @@ def fill(data, invalid=None):
     Output:
         Return a filled array.
     """
+
+    from scipy import ndimage
+
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,
@@ -34,6 +36,8 @@ def fill(data, invalid=None):
 
 def mask_filter(denseOffsetFile, snrFile, band, snrThreshold, filterSize, outName):
     #masking and Filtering
+
+    from scipy import ndimage
 
     ##Read in the offset file
     ds = gdal.Open(denseOffsetFile + '.vrt', gdal.GA_ReadOnly)

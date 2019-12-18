@@ -9,7 +9,6 @@ from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
 import gdal
 
-from scipy import ndimage
 try:
     import cv2
 except ImportError:
@@ -296,6 +295,8 @@ def fill(data, invalid=None):
     Output:
         Return a filled array.
     """
+    from scipy import ndimage
+
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,
