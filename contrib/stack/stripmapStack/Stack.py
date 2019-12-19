@@ -65,6 +65,8 @@ class config(object):
         self.f.write('master : ' + self.slcDir +'\n')
         self.f.write('dem : ' + self.dem +'\n')
         self.f.write('output : ' + self.geometryDir +'\n')
+        self.f.write('alks : ' + self.alks +'\n')
+        self.f.write('rlks : ' + self.rlks +'\n')
         if self.nativeDoppler:
             self.f.write('native : True\n')
         if self.useGPU:
