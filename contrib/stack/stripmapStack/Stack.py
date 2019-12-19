@@ -197,6 +197,8 @@ class config(object):
         self.f.write('nomcf : ' + self.noMCF + '\n')
         self.f.write('master : ' + self.master + '\n')
         self.f.write('defomax : ' + self.defoMax + '\n')
+        self.f.write('alks : ' + self.alks + '\n')
+        self.f.write('rlks : ' + self.rlks + '\n')
         self.f.write('method : ' + self.unwMethod + '\n')
         self.f.write('##########################'+'\n')
 
