@@ -250,7 +250,7 @@ int takeLookscpx(DataAccessor *IAIn, DataAccessor* IAout, int ld, int la)
 
             for(int j = 0; j < nfull; j++)
             {
-                bdbl[j] += ain[j];
+                bdbl[j] += complex<double>(ain[j].real(), ain[j].imag());
             }
 
         }
