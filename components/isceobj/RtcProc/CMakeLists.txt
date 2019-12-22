@@ -1,0 +1,10 @@
+InstallSameDir(
+    __init__.py
+    Factories.py
+    RtcProc.py
+    runLooks.py
+    runNormalize.py
+    runPreprocessor.py
+    runTopo.py
+    runVerifyDEM.py
+    )

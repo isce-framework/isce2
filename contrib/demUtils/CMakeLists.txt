@@ -1,0 +1,27 @@
+Python_add_library(correct_geoid_i2_srtm MODULE
+    correct_geoid_i2_srtm/bindings/correct_geoid_i2_srtmmodule.cpp
+    correct_geoid_i2_srtm/src/correct_geoid_i2_srtm.f
+    correct_geoid_i2_srtm/src/correct_geoid_i2_srtmState.f
+    correct_geoid_i2_srtm/src/correct_geoid_i2_srtmSetState.f
+    )
+target_include_directories(correct_geoid_i2_srtm PUBLIC
+    correct_geoid_i2_srtm/include
+    )
+target_link_libraries(correct_geoid_i2_srtm PUBLIC
+    DataAccessor_static
+    stdoel_static
+    utilLib
+    )
+
+InstallSameDir(
+    correct_geoid_i2_srtm
+    __init__.py
+    correct_geoid_i2_srtm/Correct_geoid_i2_srtm.py
+    correct_geoid_i2_srtm/egm96geoid.dat
+    demstitcher/DemStitcher.py
+    demstitcher/DemStitcherV3.py
+    swbdstitcher/SWBDStitcher.py
+    upsampledem/UpsampleDem.py
+    watermask/test/mask.py
+    watermask/WaterMask.py
+    )

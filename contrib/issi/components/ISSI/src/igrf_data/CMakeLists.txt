@@ -1,0 +1,18 @@
+InstallSameDir(
+    dgrf00.dat
+    dgrf45.dat
+    dgrf50.dat
+    dgrf55.dat
+    dgrf60.dat
+    dgrf65.dat
+    dgrf70.dat
+    dgrf75.dat
+    dgrf80.dat
+    dgrf85.dat
+    dgrf90.dat
+    dgrf95.dat
+    igrf05.dat
+    igrf05full.dat
+    igrf05s.dat
+    igrf10.dat
+    )

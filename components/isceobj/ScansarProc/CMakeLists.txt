@@ -1,0 +1,10 @@
+InstallSameDir(
+    __init__.py
+    Factories.py
+    SConscript
+    ScansarProc.py
+    runCommonRangeSpectra.py
+    runEqualizeSlcs.py
+    runEstimateBurstSync.py
+    runPreprocessor.py
+    )
