@@ -400,6 +400,45 @@ def runMultilook(in_dir, out_dir, alks, rlks):
     return out_dir
 
 
+def runMultilookGdal(in_dir, out_dir, alks, rlks):
+    print('generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks))
+    import gdal
+
+    # create 'geom_master' directory
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+        print('create directory: {}'.format(out_dir))
+
+    # multilook files one by one
+    for fbase in ['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']:
+        fname = '{}.rdr'.format(fbase)
+        in_file = os.path.join(in_dir, fname)
+        out_file = os.path.join(out_dir, fname)
+
+        if os.path.isfile(in_file):
+            ds = gdal.Open(in_file, gdal.GA_ReadOnly)
+            in_wid = ds.RasterXSize
+            in_len = ds.RasterYSize
+
+            out_wid = int(in_wid / rlks)
+            out_len = int(in_len / alks)
+            src_wid = out_wid * rlks
+            src_len = out_len * alks
+
+            cmd = 'gdal_translate -of ENVI -a_nodata 0 -outsize {ox} {oy} '.format(ox=out_wid, oy=out_len)
+            cmd += ' -srcwin 0 0 {sx} {sy} {fi} {fo} '.format(sx=src_wid, sy=src_len, fi=in_file, fo=out_file)
+            print(cmd)
+            os.system(cmd)
+
+            # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
+            # to facilitate the number of looks extraction
+            # the file path inside .xml file is not, but should, updated
+            shutil.copy(in_file+'.xml', out_file+'.full.xml')
+            shutil.copy(in_file+'.vrt', out_file+'.full.vrt')
+
+    return out_dir
+
+
 def extractInfo(frame, inps):
     '''
     Extract relevant information only.
@@ -490,7 +529,8 @@ def main(iargs=None):
     # write multilooked geometry files in "geom_master" directory, same level as "Igrams"
     if inps.rlks * inps.rlks > 1:
         out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_master')
-        runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
+        runMultilookGdal(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
+        #runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
 
     return
 
