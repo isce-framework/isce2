@@ -159,7 +159,6 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarW
         resampInt = resampName
     else:
         resampInt = resampName + ".full"
-        #resampAmp = resampAmp + ".full"
 
     objInt = isceobj.createIntImage()
     objInt.setFilename(resampInt)
