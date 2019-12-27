@@ -265,7 +265,7 @@ RUBBERSHEET_SNR_THRESHOLD = Application.Parameter('rubberSheetSNRThreshold',
 
 RUBBERSHEET_FILTER_SIZE = Application.Parameter('rubberSheetFilterSize',
                                       public_name='rubber sheet filter size',
-                                      default = 8,
+                                      default = 9,
                                       type = int,
                                       mandatory = False,
                                       doc = '')

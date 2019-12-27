@@ -56,7 +56,7 @@ def compute_FlatEarth(self,ifgFilename,width,length,radarWavelength):
     
     # Open the interferogram
     #ifgFilename= os.path.join(self.insar.ifgDirname, self.insar.ifgFilename)
-    intf = np.memmap(ifgFilename+'.full',dtype=np.complex64,mode='r+',shape=(length,width))
+    intf = np.memmap(ifgFilename,dtype=np.complex64,mode='r+',shape=(length,width))
    
     for ll in range(length):
         intf[ll,:] *= np.exp(cJ*fact*rng2[ll,:])
@@ -155,10 +155,14 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarW
     else:
         resampAmp += '.amp'
 
-    resampInt = resampName
+    if not self.doRubbersheetingRange:
+        resampInt = resampName
+    else:
+        resampInt = resampName + ".full"
+        #resampAmp = resampAmp + ".full"
 
     objInt = isceobj.createIntImage()
-    objInt.setFilename(resampInt+'.full')
+    objInt.setFilename(resampInt)
     objInt.setWidth(intWidth)
     imageInt = isceobj.createIntImage()
     IU.copyAttributes(objInt, imageInt)
@@ -166,7 +170,7 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarW
     objInt.createImage()
 
     objAmp = isceobj.createAmpImage()
-    objAmp.setFilename(resampAmp+'.full')
+    objAmp.setFilename(resampAmp)
     objAmp.setWidth(intWidth)
     imageAmp = isceobj.createAmpImage()
     IU.copyAttributes(objAmp, imageAmp)
@@ -196,8 +200,8 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarW
        compute_FlatEarth(self,resampInt,intWidth,lines,radarWavelength)
        
        # Perform Multilook
-       multilook(resampInt+'.full', outname=resampInt, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
-       multilook(resampAmp+'.full', outname=resampAmp, alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
+       multilook(resampInt, outname=resampName, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
+       multilook(resampAmp, outname=resampAmp.replace(".full",""), alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
        
        #os.system('rm ' + resampInt+'.full* ' + resampAmp + '.full* ')
        # End of modification 
