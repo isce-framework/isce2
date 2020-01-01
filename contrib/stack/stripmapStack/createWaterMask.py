@@ -40,6 +40,7 @@ def createParser():
                       help='output filename of water mask in radar coordinates')
     return parser
 
+
 def cmdLineParse(iargs = None):
     '''
     Command line parser.
@@ -85,10 +86,11 @@ def download_waterMask(bbox, dem_file):
     #inps.waterBodyGeo = sw.defaultName(inps.bbox)
     sw.outputFile = os.path.join(out_dir, sw.defaultName(bbox))
     sw._noFilling = False
-    #sw._fillingValue = -1.0
-    sw._fillingValue = 0.0
+    sw._fillingValue = -1.0    #fill pixels without DEM data with value of -1, same as water body
+    #sw._fillingValue = 0.0
     sw.stitch(bbox[0:2], bbox[2:])
     return sw.outputFile
+
 
 def geo2radar(geo_file, rdr_file, lat_file, lon_file):
     #inps.waterBodyRadar = inps.waterBodyGeo + '.rdr'
@@ -100,6 +102,7 @@ def geo2radar(geo_file, rdr_file, lat_file, lon_file):
 
 #imageMath.py -e='a*b' --a=filt_20100911_20101027.int --b=watermask.14alks_4rlks.msk -o filt_20100911_20101027_masked.int -t cfloat -s BIL
 
+
 def main(iargs=None):
 
     inps = cmdLineParse(iargs)
@@ -107,6 +110,7 @@ def main(iargs=None):
     if inps.latName and inps.lonName:
         geo2radar(geo_file, inps.outfile, inps.latName, inps.lonName)
     return
+
 
 if __name__ == '__main__' :
   ''' 
