@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
+
+import os
 import argparse
+import shelve
+import datetime
+import shutil
+import numpy as np
 import isce
 import isceobj
-import numpy as np
-import shelve
-import os
-import datetime 
-import shutil
 from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.Util.Poly2D import Poly2D
 from mroipac.looks.Looks import Looks
-
 
 def createParser():
     '''
@@ -48,7 +48,7 @@ class Dummy(object):
 
 
 def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
-    
+
     from isceobj.Planet.Planet import Planet
     from zerodop.GPUtopozero.GPUtopozero import PyTopozero
     from isceobj import Constants as CN
@@ -84,14 +84,14 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         omethod = 2 # LEGENDRE INTERPOLATION
     else:
         omethod = 0 # HERMITE INTERPOLATION
-        
+
     # tracking doppler specifications
     if nativedop and (dop is not None):
         try:
             coeffs = dop._coeffs
         except:
             coeffs = dop
-        
+
         polyDoppler = Poly2D()
         polyDoppler.setWidth(width)
         polyDoppler.setLength(length)
@@ -109,10 +109,10 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         polyDoppler.createPoly2D()
 
 
-    # dem 
+    # dem
     demImage.setCaster('read','FLOAT')
     demImage.createImage()
-    
+
     # slant range file
     slantRangeImage = Poly2D()
     slantRangeImage.setWidth(width)
@@ -130,12 +130,12 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     dataType = 'DOUBLE'
     latImage.initImage(latFilename,accessMode,width,dataType)
     latImage.createImage()
-    
+
     # lon file
     lonImage = isceobj.createImage()
     lonImage.initImage(lonFilename,accessMode,width,dataType)
     lonImage.createImage()
-    
+
     # LOS file
     losImage = isceobj.createImage()
     dataType = 'FLOAT'
@@ -144,7 +144,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     losImage.initImage(losFilename,accessMode,width,dataType,bands=bands,scheme=scheme)
     losImage.setCaster('write','DOUBLE')
     losImage.createImage()
-    
+
     # height file
     heightImage = isceobj.createImage()
     dataType = 'DOUBLE'
@@ -158,7 +158,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         incImage.initImage(incFilename,accessMode,width,dataType,bands=bands,scheme=scheme)
         incImage.createImage()
         incImagePtr = incImage.getImagePointer()
-        
+
         maskImage = isceobj.createImage()
         dataType = 'BYTE'
         bands = 1
@@ -168,7 +168,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     else:
         incImagePtr = 0
         maskImagePtr = 0
-    
+
     # initalize planet
     elp = Planet(pname='Earth').ellipsoid
 
@@ -214,14 +214,14 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     topo.set_orbitBasis(1) # Is this ever different?
     topo.createOrbit() # Initializes the empty orbit to the right allocated size
     count = 0
-    
+
     for sv in info.orbit.stateVectors.list:
         td = DTU.seconds_since_midnight(sv.getTime())
         pos = sv.getPosition()
         vel = sv.getVelocity()
         topo.set_orbitVector(count,td,pos[0],pos[1],pos[2],vel[0],vel[1],vel[2])
         count += 1
-    
+
     # run topo
     topo.runTopo()
 
@@ -244,13 +244,13 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
 
     # los file
     descr = '''Two channel Line-Of-Sight geometry image (all angles in degrees). Represents vector drawn from target to platform.
-                Channel 1: Incidence angle measured from vertical at target (always +ve). 
+                Channel 1: Incidence angle measured from vertical at target (always +ve).
                 Channel 2: Azimuth angle measured from North in Anti-clockwise direction.'''
     losImage.setImageType('bil')
     losImage.addDescription(descr)
     losImage.finalizeImage()
     losImage.renderHdr()
-    
+
     # dem/ height file
     demImage.finalizeImage()
 
@@ -259,7 +259,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         descr = '''Two channel angle file.
                 Channel 1: Angle between ray to target and the vertical at the sensor
                 Channel 2: Local incidence angle accounting for DEM slope at target'''
-                
+
         incImage.addDescription(descr)
         incImage.finalizeImage()
         incImage.renderHdr()
@@ -268,7 +268,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         maskImage.addDescription(descr)
         maskImage.finalizeImage()
         maskImage.renderHdr()
-        
+
         if slantRangeImage:
             try:
                 slantRangeImage.finalizeImage()
@@ -276,7 +276,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
                 pass
 
 
-def runTopoCPU(info, demImage, dop=None, 
+def runTopoCPU(info, demImage, dop=None,
         nativedop=False, legendre=False):
     from zerodop.topozero import createTopozero
     from isceobj.Planet.Planet import Planet
@@ -298,7 +298,7 @@ def runTopoCPU(info, demImage, dop=None,
     topo.numberRangeLooks = info.numberRangeLooks
     topo.numberAzimuthLooks = info.numberAzimuthLooks
     topo.lookSide = info.lookSide
-    topo.sensingStart = info.sensingStart + datetime.timedelta(seconds = ((info.numberAzimuthLooks - 1) /2) / info.prf) 
+    topo.sensingStart = info.sensingStart + datetime.timedelta(seconds = ((info.numberAzimuthLooks - 1) /2) / info.prf)
     topo.rangeFirstSample = info.rangeFirstSample + ((info.numberRangeLooks - 1)/2) * info.slantRangePixelSpacing
 
     topo.demInterpolationMethod='BIQUINTIC'
@@ -331,9 +331,10 @@ def runTopoCPU(info, demImage, dop=None,
     topo.topo()
     return
 
+
 def runSimamp(outdir, hname='z.rdr'):
     from iscesys.StdOEL.StdOELPy import create_writer
-    
+
     #####Run simamp
     stdWriter = create_writer("log","",True,filename='sim.log')
     objShade = isceobj.createSimamplitude()
@@ -461,9 +462,9 @@ def extractInfo(frame, inps):
     info.prf = frame.PRF
     info.radarWavelength = frame.radarWavelegth
     info.orbit = frame.getOrbit()
-    
-    info.width = frame.getNumberOfSamples() 
-    info.length = frame.getNumberOfLines() 
+
+    info.width = frame.getNumberOfSamples()
+    info.length = frame.getNumberOfLines()
 
     info.sensingStop = frame.getSensingStop()
     info.outdir = inps.outdir
@@ -472,7 +473,7 @@ def extractInfo(frame, inps):
 
 
 def main(iargs=None):
-    
+
     inps = cmdLineParse(iargs)
 
     # see if the user compiled isce with GPU enabled
@@ -502,9 +503,7 @@ def main(iargs=None):
         doppler = db['doppler']
     except:
         doppler = frame._dopplerVsPixel
-
     db.close()
-
 
 
     ####Setup dem
@@ -521,7 +520,6 @@ def main(iargs=None):
     info.heightFilename = os.path.join(info.outdir, 'hgt.rdr')
     info.incFilename = os.path.join(info.outdir, 'incLocal.rdr')
     info.maskFilename = os.path.join(info.outdir, 'shadowMask.rdr')
-
 
     runTopo(info,demImage,dop=doppler,nativedop=inps.nativedop, legendre=inps.legendre)
     runSimamp(os.path.dirname(info.heightFilename),os.path.basename(info.heightFilename))
@@ -540,4 +538,3 @@ if __name__ == '__main__':
     Main driver.
     '''
     main()
-
