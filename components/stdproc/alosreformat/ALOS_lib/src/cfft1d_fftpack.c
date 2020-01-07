@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <complex.h>
-#include <malloc.h>
 /************************************************************************
 * cfft1d is a subroutine used to call and initialize perflib Fortran FFT *
 * routines.                                                             *
