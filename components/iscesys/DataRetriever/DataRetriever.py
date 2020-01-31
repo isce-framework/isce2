@@ -37,8 +37,7 @@ import isce
 import zipfile
 import os
 import sys
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 import shutil
 from urllib import request
@@ -325,8 +324,4 @@ class DataRetriever(Component):
         # logger not defined until baseclass is called
 
         if not self.logger:
-            logging.config.fileConfig(
-                os.path.join(os.environ['ISCE_HOME'], 'defaults',
-                'logging', 'logging.conf')
-            )
             self.logger = logging.getLogger('isce.iscesys.DataRetriever')

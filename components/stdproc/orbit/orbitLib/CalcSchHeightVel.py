@@ -29,19 +29,14 @@
 
 
 
-import os
 import logging
 import math
-import logging.config
 
 from iscesys.Compatibility import Compatibility
 
 from isceobj.Planet import Planet
 from isceobj import Constants as CN
 from iscesys.Component.Component import Component, Port
-
-logging.config.fileConfig(os.path.join(os.environ['ISCE_HOME'], 'defaults',
-    'logging', 'logging.conf'))
 
 RANGE_SAMPLING_RATE = Component.Parameter('rangeSamplingRate',
                                           public_name='range sampling rate',

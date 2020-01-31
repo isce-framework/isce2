@@ -41,8 +41,7 @@ import datetime
 import os
 import sys
 import math
-import logging
-import logging.config
+from isce import logging
 
 import isce
 import isceobj
@@ -1439,10 +1438,6 @@ class IsceApp(Application, FrameMixin):
         os.chdir(self.outputDir) ##change working directory to given output directory
 
         ##read configfile only here so that log path is in output directory
-        logging.config.fileConfig(
-            os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
-                'logging.conf')
-        )
         logger = logging.getLogger('isce.isceProc')
         logger.info(self.intromsg)
         self._isce.dataDirectory = self.outputDir
