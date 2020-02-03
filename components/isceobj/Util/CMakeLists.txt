@@ -127,9 +127,12 @@ target_include_directories(combinedLib INTERFACE
     ${CMAKE_CURRENT_BINARY_DIR}
     )
 
-InstallSameDir(
+install(TARGETS
     utilLib
     combinedLib
+    LIBRARY DESTINATION lib)
+
+InstallSameDir(
     combinedlibmodule
     offoutliers
     __init__.py
