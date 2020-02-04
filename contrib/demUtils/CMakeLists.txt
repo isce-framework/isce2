@@ -13,7 +13,12 @@ target_link_libraries(correct_geoid_i2_srtm PUBLIC
     utilLib
     )
 
+Python_add_library(demStitch MODULE
+    demstitcher/bindings/demStitch.c
+    )
+
 InstallSameDir(
+    demStitch
     correct_geoid_i2_srtm
     __init__.py
     correct_geoid_i2_srtm/Correct_geoid_i2_srtm.py
