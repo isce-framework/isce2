@@ -1,5 +1,6 @@
 add_subdirectory(db)
 add_subdirectory(TOPS)
+add_subdirectory(ScanSAR)
 
 set(installfiles
     alos
