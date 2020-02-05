@@ -43,8 +43,7 @@ import os
 import sys
 import math
 import urllib.request, urllib.parse, urllib.error
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 
 import xml.etree.ElementTree as ET
@@ -1013,10 +1012,6 @@ class DemStitcher(Component):
         # logger not defined until baseclass is called
 
         if not self.logger:
-            logging.config.fileConfig(
-                os.path.join(os.environ['ISCE_HOME'], 'defaults',
-                'logging', 'logging.conf')
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.DemStitcher')
 
     url = property(getUrl,setUrl)

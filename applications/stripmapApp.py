@@ -35,10 +35,8 @@
 
 from __future__ import print_function
 import time
-import os
 import sys
-import logging
-import logging.config
+from isce import logging
 
 import isce
 import isceobj
@@ -49,11 +47,6 @@ from iscesys.Component.Configurable import SELF
 import isceobj.StripmapProc as StripmapProc
 from isceobj.Scene.Frame import FrameMixin
 from isceobj.Util.decorators import use_api
-
-logging.config.fileConfig(
-    os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
-        'logging.conf')
-)
 
 logger = logging.getLogger('isce.insar')
 

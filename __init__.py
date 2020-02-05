@@ -32,7 +32,12 @@ version = release_history # compatibility alias
 __version__ = release_version
 
 import sys, os
-isce_path = os.path.split(os.path.abspath(__file__))[0]
+isce_path = os.path.dirname(os.path.abspath(__file__))
+
+import logging
+from logging.config import fileConfig as _fc
+_fc(os.path.join(isce_path, 'defaults', 'logging', 'logging.conf'))
+
 sys.path.insert(1,isce_path)
 sys.path.insert(1,os.path.join(isce_path,'applications'))
 sys.path.insert(1,os.path.join(isce_path,'components'))
