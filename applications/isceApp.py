@@ -1437,7 +1437,6 @@ class IsceApp(Application, FrameMixin):
             sys.exit("Could not find the output directory: %s" % self.outputDir)
         os.chdir(self.outputDir) ##change working directory to given output directory
 
-        ##read configfile only here so that log path is in output directory
         logger = logging.getLogger('isce.isceProc')
         logger.info(self.intromsg)
         self._isce.dataDirectory = self.outputDir
