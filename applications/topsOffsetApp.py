@@ -30,10 +30,8 @@
 
 
 import time
-import os
 import sys
-import logging
-import logging.config
+from isce import logging
 
 import isce
 import isceobj
@@ -41,11 +39,6 @@ from isceobj import TopsProc
 from isce.applications.topsApp import TopsInSAR
 from iscesys.Component.Application import Application
 from isceobj.Util.decorators import use_api
-
-logging.config.fileConfig(
-    os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
-        'logging.conf')
-)
 
 logger = logging.getLogger('isce.insar')
 

@@ -1,2 +1,2 @@
-nvcc -arch=sm_35 -Xcompiler -fPIC -o gpu-topo.o -c Topo.cu
+nvcc -Xcompiler -fPIC -o gpu-topo.o -c Topo.cu
 cp -f gpu-topo.o ..

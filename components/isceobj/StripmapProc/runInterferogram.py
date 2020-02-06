@@ -31,14 +31,14 @@ def write_xml(fileName,width,length,bands,dataType,scheme):
     return None
 
     	    
-def compute_FlatEarth(self,width,length):
+def compute_FlatEarth(self,ifgFilename,width,length,radarWavelength):
     from imageMath import IML
     import logging
     
     # If rubbersheeting has been performed add back the range sheet offsets
     
     info = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
-    radarWavelength = info.getInstrument().getRadarWavelength()
+    #radarWavelength = info.getInstrument().getRadarWavelength() 
     rangePixelSize = info.getInstrument().getRangePixelSize()
     fact = 4 * np.pi* rangePixelSize / radarWavelength
 
@@ -55,8 +55,8 @@ def compute_FlatEarth(self,width,length):
        rng2 = np.zeros((length,width))
     
     # Open the interferogram
-    ifgFilename= os.path.join(self.insar.ifgDirname, self.insar.ifgFilename)
-    intf = np.memmap(ifgFilename+'.full',dtype=np.complex64,mode='r+',shape=(length,width))
+    #ifgFilename= os.path.join(self.insar.ifgDirname, self.insar.ifgFilename)
+    intf = np.memmap(ifgFilename,dtype=np.complex64,mode='r+',shape=(length,width))
    
     for ll in range(length):
         intf[ll,:] *= np.exp(cJ*fact*rng2[ll,:])
@@ -126,7 +126,8 @@ def computeCoherence(slc1name, slc2name, corname, virtual=True):
     return
 
 # Modified by V. Brancato on 10.09.2019 (added self)
-def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
+# Modified by V. Brancato on 11.13.2019 (added radar wavelength for low and high band flattening
+def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarWavelength):
     objSlc1 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc1, objSlc1)
     objSlc1.setAccessMode('read')
@@ -154,10 +155,13 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     else:
         resampAmp += '.amp'
 
-    resampInt = resampName
+    if not self.doRubbersheetingRange:
+        resampInt = resampName
+    else:
+        resampInt = resampName + ".full"
 
     objInt = isceobj.createIntImage()
-    objInt.setFilename(resampInt+'.full')
+    objInt.setFilename(resampInt)
     objInt.setWidth(intWidth)
     imageInt = isceobj.createIntImage()
     IU.copyAttributes(objInt, imageInt)
@@ -165,7 +169,7 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     objInt.createImage()
 
     objAmp = isceobj.createAmpImage()
-    objAmp.setFilename(resampAmp+'.full')
+    objAmp.setFilename(resampAmp)
     objAmp.setWidth(intWidth)
     imageAmp = isceobj.createAmpImage()
     IU.copyAttributes(objAmp, imageAmp)
@@ -192,11 +196,11 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
        objCrossmul.crossmul(objSlc1, objSlc2, objInt, objAmp)
        
        # Remove Flat-Earth component
-       compute_FlatEarth(self,intWidth,lines)
+       compute_FlatEarth(self,resampInt,intWidth,lines,radarWavelength)
        
        # Perform Multilook
-       multilook(resampInt+'.full', outname=resampInt, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
-       multilook(resampAmp+'.full', outname=resampAmp, alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
+       multilook(resampInt, outname=resampName, alks=azLooks, rlks=rgLooks)  #takeLooks(objAmp,azLooks,rgLooks)
+       multilook(resampAmp, outname=resampAmp.replace(".full",""), alks=azLooks, rlks=rgLooks)  #takeLooks(objInt,azLooks,rgLooks)
        
        #os.system('rm ' + resampInt+'.full* ' + resampAmp + '.full* ')
        # End of modification 
@@ -206,7 +210,7 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     return imageInt, imageAmp
 
 
-def subBandIgram(self, masterSlc, slaveSlc, subBandDir):
+def subBandIgram(self, masterSlc, slaveSlc, subBandDir,radarWavelength):
 
     img1 = isceobj.createImage()
     img1.load(masterSlc + '.xml')
@@ -226,7 +230,7 @@ def subBandIgram(self, masterSlc, slaveSlc, subBandDir):
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
 
-    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks)
+    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks,radarWavelength)
     
     return interferogramName
 
@@ -259,9 +263,9 @@ def runSubBandInterferograms(self):
     slaveHighBandSlc = os.path.join(coregDir , os.path.basename(slaveSlc))
     ##########
 
-    interferogramName = subBandIgram(self, masterLowBandSlc, slaveLowBandSlc, self.insar.lowBandSlcDirname)
+    interferogramName = subBandIgram(self, masterLowBandSlc, slaveLowBandSlc, self.insar.lowBandSlcDirname,self.insar.lowBandRadarWavelength)
 
-    interferogramName = subBandIgram(self, masterHighBandSlc, slaveHighBandSlc, self.insar.highBandSlcDirname)
+    interferogramName = subBandIgram(self, masterHighBandSlc, slaveHighBandSlc, self.insar.highBandSlcDirname,self.insar.highBandRadarWavelength)
     
 def runFullBandInterferogram(self):
     logger.info("Generating interferogram")
@@ -295,8 +299,11 @@ def runFullBandInterferogram(self):
         os.makedirs(ifgDir)
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
-
-    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks)
+    
+    info = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
+    radarWavelength = info.getInstrument().getRadarWavelength()
+    
+    generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks,radarWavelength)
 
 
     ###Compute coherence

@@ -35,8 +35,7 @@ import sys
 import math
 from html.parser import HTMLParser
 import urllib.request, urllib.parse, urllib.error
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 import zipfile
 import os
@@ -979,10 +978,6 @@ class MaskStitcher(Component):
         # logger not defined until baseclass is called
 
         if not self.logger:
-            logging.config.fileConfig(
-                os.path.join(os.environ['ISCE_HOME'], 'defaults',
-                'logging', 'logging.conf')
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.MaskStitcher')
 
     utl = property(getUrl,setUrl)
