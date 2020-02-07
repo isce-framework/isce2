@@ -9,9 +9,6 @@ import shutil
 import datetime
 import numpy as np
 import numpy.matlib
-import scipy.signal as ss
-from scipy import interpolate
-from scipy.interpolate import interp1d
 
 import isceobj
 import logging
@@ -638,6 +635,7 @@ def cal_coherence(inf, win=5, edge=0):
 
           4: keep all samples
     '''
+    import scipy.signal as ss
 
     if win % 2 != 1:
         raise Exception('window size must be odd!')
@@ -1682,6 +1680,9 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
     output: first lines > 0, last lines < 0
     '''
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
+
     Vs = np.linalg.norm(burst.orbit.interpolateOrbit(burst.sensingMid, method='hermite').getVelocity())
     Ks =   2 * Vs * burst.azimuthSteeringRate / burst.radarWavelength 
 
@@ -1830,6 +1831,7 @@ def adaptive_gaussian(ionos, wgt, size_max, size_min):
     size_max: maximum window size
     size_min: minimum window size
     '''
+    import scipy.signal as ss
 
     length = (ionos.shape)[0]
     width = (ionos.shape)[1]
@@ -1892,6 +1894,8 @@ def filt_gaussian(self, ionParam):
     currently not implemented.
     a less accurate method is to use ionsphere without any projection
     '''
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
@@ -2659,5 +2663,3 @@ def runIon(self):
     #esd_noion(self, ionParam)
 
     return
-
-    

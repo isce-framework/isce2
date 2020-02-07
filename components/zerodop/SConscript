@@ -37,6 +37,6 @@ if envzerodop['CYTHON3'] and envzerodop['GPU_ACC_ENABLED']:
     SConscript('GPUtopozero/SConscript')
     SConscript('GPUgeo2rdr/SConscript')
     SConscript('GPUresampslc/SConscript')
-    SConscript('GPUampcor/SConscript')
+#SConscript('GPUampcor/SConscript')
 #SConscript('unw2hgt/SConscript')
 #SConscript('bistaticunw2hgt/SConscript')

@@ -75,6 +75,7 @@ def runResampleSlc(self, kind='coarse'):
     if kind in ['coarse', 'refined']:
         azname = os.path.join(offsetsDir, self.insar.azimuthOffsetFilename)
         rgname = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+        flatten = True
     else:
         azname = os.path.join(offsetsDir, self.insar.azimuthRubbersheetFilename)
         if self.doRubbersheetingRange:
