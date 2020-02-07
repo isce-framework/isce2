@@ -73,8 +73,7 @@ def makeOnePlot(filename, pos):
     minx = np.clip(np.min(pos[:,2])-win, 0, npix-1)
     maxx = np.clip(np.max(pos[:,2])+win, 0, npix-1)
 
-
-    box = np.power(np.abs(data[miny:maxy, minx:maxx]), 0.4)
+    box = np.power(np.abs(data[int(miny):int(maxy), int(minx):int(maxx)]), 0.4)
 
     plt.figure('CR analysis')
 
@@ -104,7 +103,7 @@ def getAzRg(frame,llh):
     pol._normRange = frame.instrument.rangePixelSize
     pol.initPoly(azimuthOrder=0, rangeOrder=len(coeffs)-1, coeffs=[coeffs])
 
-    taz, rgm = frame.orbit.geo2rdr(list(llh), side=frame.instrument.platform.pointingDirection, 
+    taz, rgm = frame.orbit.geo2rdr(list(llh)[1:], side=frame.instrument.platform.pointingDirection,
                 doppler=pol, wvl=frame.instrument.getRadarWavelength())
 
     line = (taz - frame.sensingStart).total_seconds() * frame.PRF 
@@ -145,7 +144,7 @@ if __name__ == '__main__':
 #    frame.startingRange = frame.startingRange + 100.0
 
     ###Load CRS positions
-    llhs = np.loadtxt(inps.posfile)
+    llhs = np.loadtxt(inps.posfile, delimiter=',')
 
 
     crs = []

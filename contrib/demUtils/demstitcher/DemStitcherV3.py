@@ -39,8 +39,7 @@ from ctypes import cdll
 import os
 import sys
 import urllib.request, urllib.error, urllib.parse
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher as DS
 #Parameters definitions
@@ -291,7 +290,4 @@ class DemStitcher(DS):
         #it's /srtm/version2_1/SRTM(1,3)
         self._remove = ['.jpg','.xml']
         if not self.logger:
-            logging.config.fileConfig(
-            os.environ['ISCE_HOME'] + '/library/applications/logging.conf'
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.DemStitcherV3')
