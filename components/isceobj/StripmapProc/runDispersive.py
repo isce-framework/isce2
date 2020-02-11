@@ -8,13 +8,10 @@ import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
 import gdal
-<<<<<<< HEAD
 from scipy.ndimage import median_filter
 from astropy.convolution import convolve
-from scipy import ndimage
 import numpy as np
-=======
->>>>>>> upstream/master
+
 
 try:
     import cv2
