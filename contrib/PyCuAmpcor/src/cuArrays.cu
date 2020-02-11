@@ -154,8 +154,21 @@
 		file.write((char *)data, size*count*sizeof(float2));
 		file.close();
 	}
+
+	template<>
+	void cuArrays<float3>::outputToFile(std::string fn, cudaStream_t stream)
+	{
+		float *data;
+		data = (float *)malloc(size*count*sizeof(float3));
+		checkCudaErrors(cudaMemcpyAsync(data, devData, size*count*sizeof(float3), cudaMemcpyDeviceToHost, stream));
+		std::ofstream file;  
+		file.open(fn.c_str(),  std::ios_base::binary);
+		file.write((char *)data, size*count*sizeof(float3));
+		file.close();
+	}
 	
 	template class cuArrays<float>;
 	template class cuArrays<float2>;
+    template class cuArrays<float3>;
 	template class cuArrays<int2>;
     template class cuArrays<int>;

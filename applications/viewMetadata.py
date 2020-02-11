@@ -27,14 +27,7 @@
 # Author: Walter Szeliga
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
-import os
-import logging
-import logging.config
-logging.config.fileConfig(os.path.join(os.environ['ISCE_HOME'], 'defaults',
-    'logging', 'logging.conf'))
+from isce import logging
 from iscesys.Compatibility import Compatibility
 Compatibility.checkPythonVersion()
 from iscesys.Component.FactoryInit import FactoryInit

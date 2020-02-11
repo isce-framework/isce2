@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 
@@ -28,7 +28,7 @@ if envPyCuAmpcor['GPU_ACC_ENABLED']:
 
     if not os.path.exists(initFile):
         with open(initFile, 'w') as fout:
-            fout.write("#!/usr/bin/env python")
+            fout.write("#!/usr/bin/env python3")
 
     listFiles = [initFile]
     envPyCuAmpcor.Install(install, listFiles)

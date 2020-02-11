@@ -8,10 +8,13 @@ import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
 import gdal
+<<<<<<< HEAD
 from scipy.ndimage import median_filter
 from astropy.convolution import convolve
 from scipy import ndimage
 import numpy as np
+=======
+>>>>>>> upstream/master
 
 try:
     import cv2
@@ -299,6 +302,8 @@ def fill(data, invalid=None):
     Output:
         Return a filled array.
     """
+    from scipy import ndimage
+
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,

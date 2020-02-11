@@ -39,9 +39,8 @@ from ctypes import cdll
 import numpy as np
 import os
 import sys
-import logging
+from isce import logging
 import math
-import logging.config
 import urllib.request, urllib.parse, urllib.error
 from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher
@@ -315,9 +314,6 @@ class SWBDStitcher(DemStitcher):
         #it's /srtm/version2_1/SRTM(1,3)
         self._remove = ['.jpg','.xml']
         if not self.logger:
-            logging.config.fileConfig(
-            os.environ['ISCE_HOME'] + '/library/applications/logging.conf'
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.SWBDStitcher')
 
         self.parameter_list = self.parameter_list + super(DemStitcher,self).parameter_list

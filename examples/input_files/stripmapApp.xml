@@ -12,7 +12,8 @@
         <value>/Users/fattahi/process/test_roiApp/Alos_Maule_T116/demLat_S39_S35_Lon_W074_W071.dem.wgs84</value>
     </property>
     <!--
-    <property name="do rubbersheeting">True</property>
+      <property name="do rubbersheetingAzimuth">True</property>
+      <property name="do rubbersheetingRange">False</property>
     -->
     <property name="do denseoffsets">True</property>
     <property name="do split spectrum">True</property>

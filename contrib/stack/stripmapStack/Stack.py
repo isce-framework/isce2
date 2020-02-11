@@ -65,6 +65,8 @@ class config(object):
         self.f.write('master : ' + self.slcDir +'\n')
         self.f.write('dem : ' + self.dem +'\n')
         self.f.write('output : ' + self.geometryDir +'\n')
+        self.f.write('alks : ' + self.alks +'\n')
+        self.f.write('rlks : ' + self.rlks +'\n')
         if self.nativeDoppler:
             self.f.write('native : True\n')
         if self.useGPU:
@@ -72,7 +74,18 @@ class config(object):
         else:
             self.f.write('useGPU : False\n')
         self.f.write('##########################'+'\n')
-    
+
+    def createWaterMask(self, function):
+
+        self.f.write('##########################'+'\n')
+        self.f.write(function+'\n')
+        self.f.write('createWaterMask : '+'\n')
+        self.f.write('dem_file : ' + self.dem +'\n')
+        self.f.write('lat_file : ' + self.latFile +'\n')
+        self.f.write('lon_file : ' + self.lonFile +'\n')
+        self.f.write('output : ' + self.waterMaskFile + '\n')
+        self.f.write('##########################'+'\n')
+
     def geo2rdr(self, function):
 
         self.f.write('##########################'+'\n')
@@ -197,6 +210,8 @@ class config(object):
         self.f.write('nomcf : ' + self.noMCF + '\n')
         self.f.write('master : ' + self.master + '\n')
         self.f.write('defomax : ' + self.defoMax + '\n')
+        self.f.write('alks : ' + self.alks + '\n')
+        self.f.write('rlks : ' + self.rlks + '\n')
         self.f.write('method : ' + self.unwMethod + '\n')
         self.f.write('##########################'+'\n')
 
@@ -307,8 +322,7 @@ class run(object):
              self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
  
     def master_focus_split_geometry(self, stackMaster, config_prefix, split=False, focus=True, native=True):
-  	########
-  	# focusing master and producing geometry files
+        """focusing master and producing geometry files"""
         configName = os.path.join(self.configDir, config_prefix + stackMaster)
         configObj = config(configName)
         configObj.configure(self)
@@ -325,11 +339,19 @@ class run(object):
         counter += 1
 
         if split:
-             configObj.slc = os.path.join(configObj.slcDir,stackMaster+self.raw_string+'.slc')
-             configObj.outDir = configObj.slcDir
-             configObj.shelve = os.path.join(configObj.slcDir, 'data')
-             configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
-        
+            configObj.slc = os.path.join(configObj.slcDir,stackMaster+self.raw_string+'.slc')
+            configObj.outDir = configObj.slcDir
+            configObj.shelve = os.path.join(configObj.slcDir, 'data')
+            configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
+            counter += 1
+
+        # generate water mask in radar coordinates
+        configObj.latFile = os.path.join(self.workDir, 'geom_master/lat.rdr')
+        configObj.lonFile = os.path.join(self.workDir, 'geom_master/lon.rdr')
+        configObj.waterMaskFile = os.path.join(self.workDir, 'geom_master/waterMask.rdr')
+        configObj.createWaterMask('[Function-{0}]'.format(counter))
+        counter += 1
+
         configObj.finalize()
         del configObj
         self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')

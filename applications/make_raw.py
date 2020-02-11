@@ -27,16 +27,8 @@
 # Author: Walter Szeliga
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
-import os
-import logging
-import logging.config
-logging.config.fileConfig(os.path.join(os.environ['ISCE_HOME'], 'defaults',
-    'logging', 'logging.conf'))
-
 import isce
+from isce import logging
 from iscesys.Compatibility import Compatibility
 from iscesys.Component.Component import Component, Port
 from isceobj.Planet.Ellipsoid import Ellipsoid
