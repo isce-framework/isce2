@@ -14,4 +14,7 @@ if(TARGET Motif::Motif AND TARGET X11::Xt AND TARGET X11::X11)
         X11::Xt
         X11::X11
         )
+    install(TARGET mdx
+            RUNTIME DESTINATION bin
+            )
 endif()
