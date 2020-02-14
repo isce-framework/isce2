@@ -3,21 +3,12 @@
 #
 #
 import logging
-import os
+import os,gdal
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
-import gdal
-from scipy.ndimage import median_filter
-from astropy.convolution import convolve
-import numpy as np
 
 
-try:
-    import cv2
-except ImportError:
-    print('OpenCV2 does not appear to be installed / is not importable.')
-    print('OpenCV2 is needed for this step. You may experience failures ...')
 
 
 logger = logging.getLogger('isce.insar.runDispersive')
@@ -205,6 +196,9 @@ def iterativeFilter(self,dataIn, mask, Sig_dataIn, iteration, Sx, Sy, sig_x, sig
     return dataF, Sig_dataF
 
 def Filter(data, Sig_data, Sx, Sy, sig_x, sig_y, theta=0.0):
+    
+    import cv2
+
     kernel = Gaussian_kernel(Sx, Sy, sig_x, sig_y) #(800, 800, 15.0, 100.0)
     kernel = rotate(kernel , theta)
 
@@ -264,6 +258,8 @@ def rotate(k , theta):
 
 def fill_with_smoothed(off,filterSize):
     
+    from astropy.convolution import convolve
+    
     off_2filt=np.copy(off)
     kernel = np.ones((filterSize,filterSize),np.float32)/(filterSize*filterSize)
     loop = 0
@@ -286,6 +282,8 @@ def fill_with_smoothed(off,filterSize):
 
 
 def fill(data, invalid=None):
+    
+    from scipy import ndimage
     """
     Replace the value of invalid 'data' cells (indicated by 'invalid')
     by the value of the nearest valid data cell
@@ -299,8 +297,6 @@ def fill(data, invalid=None):
     Output:
         Return a filled array.
     """
-    from scipy import ndimage
-
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,
@@ -310,7 +306,9 @@ def fill(data, invalid=None):
 
 
 def getMask(self, maskFile,std_iono):
-   
+    
+    from scipy.ndimage import median_filter
+    
     ifgDirname = os.path.join(self.insar.ifgDirname, self.insar.lowBandSlcDirname)
     lowBandIgram = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename )
     lowBandCor = os.path.join(ifgDirname ,self.insar.coherenceFilename)
