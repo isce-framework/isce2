@@ -1,4 +1,8 @@
-if(TARGET Motif::Motif AND TARGET X11::Xt AND TARGET X11::X11)
+if(TARGET Motif::Motif
+   AND TARGET X11::X11
+   AND TARGET X11::Xau
+   AND TARGET X11::Xt
+   )
     add_executable(mdx
         src/graphx_mdx.c
         src/rdf_reader_subs.f
@@ -11,8 +15,9 @@ if(TARGET Motif::Motif AND TARGET X11::Xt AND TARGET X11::X11)
     endif()
     target_link_libraries(mdx PUBLIC
         Motif::Motif
-        X11::Xt
         X11::X11
+        X11::Xau
+        X11::Xt
         )
     install(TARGETS mdx
             RUNTIME DESTINATION bin

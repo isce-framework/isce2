@@ -9,6 +9,7 @@ Python_add_library(libalos2proc MODULE
 target_include_directories(libalos2proc PUBLIC include)
 target_link_libraries(libalos2proc PUBLIC
     FFTW::Float
+    OpenMP::OpenMP_C
     )
 
 InstallSameDir(

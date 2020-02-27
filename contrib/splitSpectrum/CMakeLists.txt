@@ -6,7 +6,7 @@ if(CYTHON_EXECUTABLE AND TARGET GDAL::GDAL)
         src/splitRangeSpectrum.cc
         )
     target_include_directories(splitSpectrum PUBLIC include)
-    target_link_libraries(splitSpectrum PUBLIC GDAL::GDAL)
+    target_link_libraries(splitSpectrum PUBLIC GDAL::GDAL FFTW::Float OpenMP::OpenMP_CXX)
 
     InstallSameDir(splitSpectrum)
 endif()
