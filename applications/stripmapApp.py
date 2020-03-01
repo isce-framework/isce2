@@ -384,6 +384,13 @@ RENDERER = Application.Parameter(
     )
                                         )
 
+DISPERSIVE_FILTER_FILLING_METHOD = Application.Parameter('dispersive_filling_method',
+                                            public_name = 'dispersive filter filling method',
+                                            default='nearest_neighbour',
+                                            type=str,
+                                            mandatory=False,
+                                            doc='method to fill the holes left by masking the ionospheric phase estimate')
+					    
 DISPERSIVE_FILTER_KERNEL_XSIZE = Application.Parameter('kernel_x_size',
                                       public_name='dispersive filter kernel x-size',
                                       default=800,
@@ -439,7 +446,6 @@ DISPERSIVE_FILTER_COHERENCE_THRESHOLD = Application.Parameter('dispersive_filter
                                       type=float,
                                       mandatory=False,
                                       doc='Coherence threshold to generate a mask file which gets used in the iterative filtering of the dispersive and non-disperive phase')
-
 #Facility declarations
 
 MASTER = Application.Facility(
@@ -548,6 +554,7 @@ class _RoiBase(Application, FrameMixin):
                       PICKLE_LOAD_DIR,
                       RENDERER,
                       DO_DISPERSIVE,
+                      DISPERSIVE_FILTER_FILLING_METHOD,
                       DISPERSIVE_FILTER_KERNEL_XSIZE,
                       DISPERSIVE_FILTER_KERNEL_YSIZE,
                       DISPERSIVE_FILTER_KERNEL_SIGMA_X,
