@@ -493,15 +493,9 @@ class Sentinel1(Component):
             offset = np.int(np.rint((aslice.product.bursts[0].burstStartUTC - t0).total_seconds() / burstStartInterval.total_seconds()))
 
             for kk in range(aslice.product.numberOfBursts):
-                #####Overwrite previous copy if one exists
+                #####Skip appending if burst also exists from previous scene
                 if (offset+kk) < len(self.product.bursts):
-                    self.product.bursts[offset+kk] = aslice.product.bursts[kk]
-
-                    ####Keep track of tiff src files
-                    if len(self.tiff):
-                        self._tiffSrc[offset+kk] = aslice.tiff[0]
-
-                    self._elevationAngleVsTau[offset+kk] = aslice._elevationAngleVsTau[kk]
+                    continue
 
                 elif (offset+kk) == len(self.product.bursts):
                     self.product.bursts.append(aslice.product.bursts[kk])
