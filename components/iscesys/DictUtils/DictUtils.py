@@ -81,7 +81,7 @@ class DictUtils:
             spare = []
        
         # dict1 is the one to update
-        for k2,v2 in dict2.items():
+        for k2,v2 in dict(dict2).items():
             if DictUtils.keyIsIn(k2,dict1):
                 if isinstance(v2,dict):#if is a dict keep going down the node
                     DictUtils.updateDictionary(dict1[k2],v2,replace,spare)
