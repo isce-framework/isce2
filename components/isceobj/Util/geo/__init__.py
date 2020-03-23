@@ -45,10 +45,6 @@ ellipsoid        oblate ellipsoid of revolution (e.g, WGS84) with all the
   See mainpage.txt for a complete dump of geo's philosophy-- otherwise,
   use the docstrings.
 """
-import os
-isce_path  = os.getenv("ISCE_HOME")
 
 ## \namespace geo  Vector- and Affine-spaces, on Earth
 __all__ = ['euclid', 'coordinates', 'ellipsoid', 'charts', 'affine', 'motion']
-
-

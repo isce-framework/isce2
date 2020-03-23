@@ -35,10 +35,8 @@
 
 from __future__ import print_function
 import time
-import os
 import sys
-import logging
-import logging.config
+from isce import logging
 
 import isce
 import isceobj
@@ -49,11 +47,6 @@ from iscesys.Component.Configurable import SELF
 import isceobj.StripmapProc as StripmapProc
 from isceobj.Scene.Frame import FrameMixin
 from isceobj.Util.decorators import use_api
-
-logging.config.fileConfig(
-    os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
-        'logging.conf')
-)
 
 logger = logging.getLogger('isce.insar')
 
@@ -265,7 +258,7 @@ RUBBERSHEET_SNR_THRESHOLD = Application.Parameter('rubberSheetSNRThreshold',
 
 RUBBERSHEET_FILTER_SIZE = Application.Parameter('rubberSheetFilterSize',
                                       public_name='rubber sheet filter size',
-                                      default = 8,
+                                      default = 9,
                                       type = int,
                                       mandatory = False,
                                       doc = '')
@@ -391,6 +384,13 @@ RENDERER = Application.Parameter(
     )
                                         )
 
+DISPERSIVE_FILTER_FILLING_METHOD = Application.Parameter('dispersive_filling_method',
+                                            public_name = 'dispersive filter filling method',
+                                            default='nearest_neighbour',
+                                            type=str,
+                                            mandatory=False,
+                                            doc='method to fill the holes left by masking the ionospheric phase estimate')
+					    
 DISPERSIVE_FILTER_KERNEL_XSIZE = Application.Parameter('kernel_x_size',
                                       public_name='dispersive filter kernel x-size',
                                       default=800,
@@ -446,7 +446,6 @@ DISPERSIVE_FILTER_COHERENCE_THRESHOLD = Application.Parameter('dispersive_filter
                                       type=float,
                                       mandatory=False,
                                       doc='Coherence threshold to generate a mask file which gets used in the iterative filtering of the dispersive and non-disperive phase')
-
 #Facility declarations
 
 MASTER = Application.Facility(
@@ -555,6 +554,7 @@ class _RoiBase(Application, FrameMixin):
                       PICKLE_LOAD_DIR,
                       RENDERER,
                       DO_DISPERSIVE,
+                      DISPERSIVE_FILTER_FILLING_METHOD,
                       DISPERSIVE_FILTER_KERNEL_XSIZE,
                       DISPERSIVE_FILTER_KERNEL_YSIZE,
                       DISPERSIVE_FILTER_KERNEL_SIGMA_X,
