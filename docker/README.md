@@ -12,9 +12,9 @@
    ```
 1. Build image:
    ```
-   docker build --rm --force-rm -t hysds/isce_giant -f docker/Dockerfile .
+   docker build --rm --force-rm -t hysds/isce2 -f docker/Dockerfile .
    ```
    For cuda version:
    ```
-   docker build --rm --force-rm -t hysds/isce_giant -f docker/Dockerfile.cuda .
+   docker build --rm --force-rm -t hysds/isce2-cuda -f docker/Dockerfile.cuda .
    ```
