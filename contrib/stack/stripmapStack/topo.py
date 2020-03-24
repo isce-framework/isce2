@@ -401,7 +401,8 @@ def runMultilook(in_dir, out_dir, alks, rlks):
     return out_dir
 
 
-def runMultilookGdal(in_dir, out_dir, alks, rlks):
+def runMultilookGdal(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr',
+                     fbase_list=['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']):
     print('generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks))
     import gdal
 
@@ -411,10 +412,9 @@ def runMultilookGdal(in_dir, out_dir, alks, rlks):
         print('create directory: {}'.format(out_dir))
 
     # multilook files one by one
-    for fbase in ['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']:
-        fname = '{}.rdr'.format(fbase)
-        in_file = os.path.join(in_dir, fname)
-        out_file = os.path.join(out_dir, fname)
+    for fbase in fbase_list:
+        in_file = os.path.join(in_dir, '{}{}'.format(fbase, in_ext))
+        out_file = os.path.join(out_dir, '{}{}'.format(fbase, out_ext))
 
         if os.path.isfile(in_file):
             ds = gdal.Open(in_file, gdal.GA_ReadOnly)
@@ -434,8 +434,9 @@ def runMultilookGdal(in_dir, out_dir, alks, rlks):
             # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
             # to facilitate the number of looks extraction
             # the file path inside .xml file is not, but should, updated
-            shutil.copy(in_file+'.xml', out_file+'.full.xml')
-            shutil.copy(in_file+'.vrt', out_file+'.full.vrt')
+            if in_file != out_file+'.full':
+                shutil.copy(in_file+'.xml', out_file+'.full.xml')
+                shutil.copy(in_file+'.vrt', out_file+'.full.vrt')
 
     return out_dir
 
