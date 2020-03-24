@@ -32,10 +32,16 @@ def createParser():
                              'and (0,360) or (-180,180) for longitudes.')
     parser.add_argument('-d','--dem_file', dest='demName', type=str, default=None,
                       help='DEM file in geo coordinates, i.e. demLat*.dem.wgs84.')
+
     parser.add_argument('-l', '--lat_file', dest='latName', type=str, default=None, 
                       help='pixel by pixel lat file in radar coordinate')
     parser.add_argument('-L', '--lon_file', dest='lonName', type=str, default=None, 
                       help='pixel by pixel lat file in radar coordinate')
+
+    parser.add_argument('--fill', dest='fillValue', type=int, default=-1, choices={-1,0},
+                      help='fill value for pixels with missing data. Default: -1.\n'
+                           '-1 for water body\n'
+                           ' 0 for land')
     parser.add_argument('-o', '--output', dest='outfile', type=str,
                       help='output filename of water mask in radar coordinates')
     return parser
@@ -73,7 +79,7 @@ def dem2bbox(dem_file):
     return bbox
 
 
-def download_waterMask(bbox, dem_file):
+def download_waterMask(bbox, dem_file, fill_value=-1):
     out_dir = os.getcwd()
     # update out_dir and/or bbox if dem_file is input
     if dem_file:
@@ -86,8 +92,7 @@ def download_waterMask(bbox, dem_file):
     #inps.waterBodyGeo = sw.defaultName(inps.bbox)
     sw.outputFile = os.path.join(out_dir, sw.defaultName(bbox))
     sw._noFilling = False
-    sw._fillingValue = -1.0    #fill pixels without DEM data with value of -1, same as water body
-    #sw._fillingValue = 0.0
+    sw._fillingValue = fill_value
     sw.stitch(bbox[0:2], bbox[2:])
     return sw.outputFile
 
@@ -106,7 +111,7 @@ def geo2radar(geo_file, rdr_file, lat_file, lon_file):
 def main(iargs=None):
 
     inps = cmdLineParse(iargs)
-    geo_file = download_waterMask(inps.bbox, inps.demName)    
+    geo_file = download_waterMask(inps.bbox, inps.demName, inps.fillValue)
     if inps.latName and inps.lonName:
         geo2radar(geo_file, inps.outfile, inps.latName, inps.lonName)
     return
