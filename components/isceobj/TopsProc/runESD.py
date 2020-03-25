@@ -24,6 +24,8 @@ def runESD(self, debugPlot=True):
 
     extraOffset = self.extraESDCycles * np.pi * 2
 
+    val = np.array([])
+
     for swath in swathList:
 
         if self._insar.numberOfCommonBursts[swath-1] < 2:
@@ -53,7 +55,6 @@ def runESD(self, debugPlot=True):
                 os.remove(ff)
 
 
-        val = []
         lineCount = 0
         for ii in range(minBurst, maxBurst):
             intname = os.path.join(esddir, 'overlap_IW%d_%02d.%dalks_%drlks.int'%(swath,ii+1, alks,rlks))
