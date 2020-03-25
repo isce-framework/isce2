@@ -430,11 +430,16 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
     #############################
     i=0
 
+    if not updateStack:
+        i += 1
+        runObj = run()
+        runObj.configure(inps, 'run_' + str(i) + "_unpack_topo_master")
+        runObj.unpackStackMasterSLC(safe_dict)
+        runObj.finalize()
+
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_unpack_slc_topo_master")
-    if not updateStack:
-        runObj.unpackStackMasterSLC(safe_dict)
+    runObj.configure(inps, 'run_' + str(i) + "_unpack_slave_slc")
     runObj.unpackSlavesSLC(stackMasterDate, slaveDates, safe_dict)
     runObj.finalize()
    

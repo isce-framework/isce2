@@ -34,6 +34,8 @@ import sys
 import os
 import argparse
 from contrib.demUtils import createDemStitcher
+
+
 def main():
     #if not argument provided force the --help flag
     if(len(sys.argv) == 1):
@@ -132,8 +134,12 @@ def main():
                 print('Could not create a stitched DEM. Some tiles are missing')
             else:
                 if(args.correct):
-                    ds.correct()
                     #ds.correct(args.output,args.source,width,min(lat[0],lat[1]),min(lon[0],lon[1]))
+                    demImg = ds.correct()
+                    # replace filename with full path including dir in which file is located
+                    demImg.filename = os.path.abspath(os.path.join(args.dir, demImg.filename))
+                    demImg.setAccessMode('READ')
+                    demImg.renderHdr()
         else:
             print('Error. The --bbox (or -b) option must be specified when --action stitch is used')
             raise ValueError

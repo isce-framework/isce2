@@ -4,52 +4,80 @@
 # Copyright 2016
 #
             
-import numpy as np
-import argparse
 import os   
-import isce
-import isceobj
+import argparse
+import numpy as np
+from scipy import ndimage
+import matplotlib.pyplot as plt
 import gdal
 from gdalconst import GA_ReadOnly
-from scipy import ndimage
+
+# suppress the DEBUG message
+import logging
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.WARNING)
+
+import isce
+import isceobj
+from isceobj.Util.ImageUtil import ImageLib as IML
 
 
 GDAL2NUMPY_DATATYPE = {
-    
-1 : np.uint8,
-2 : np.uint16,
-3 : np.int16,
-4 : np.uint32,
-5 : np.int32,
-6 : np.float32,
-7 : np.float64,
-10: np.complex64,
-11: np.complex128,
-
+    1 : np.uint8,
+    2 : np.uint16,
+    3 : np.int16,
+    4 : np.uint32,
+    5 : np.int32,
+    6 : np.float32,
+    7 : np.float64,
+    10: np.complex64,
+    11: np.complex128,
 }   
+
+
+EXAMPLE = '''example:
+  MaskAndFilter.py -d offset.bip -s offset_snr.bip
+  MaskAndFilter.py -d offset.bip -s offset_snr.bip --plot
+'''
+
 
 def createParser():
     '''     
     Command line parser.
     '''
            
-    parser = argparse.ArgumentParser( description='filters the densOffset, oversamples it and adds back to the geometry offset')
+    parser = argparse.ArgumentParser(description='Mask and filter the densOffset',
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     epilog=EXAMPLE)
     parser.add_argument('-d', '--dense_offset', dest='denseOffset', type=str, required=True,
             help='The dense offsets file obtained from cross correlation or any other approach')
     parser.add_argument('-s', '--snr', dest='snr', type=str, required=True,
             help='The SNR of the dense offsets obtained from cross correlation or any other approach')
     parser.add_argument('-n', '--filter_size', dest='filterSize', type=int, default=8,
-            help='The size of the median filter')
+            help='Size of the median filter (default: %(default)s).')
     parser.add_argument('-t', '--snr_threshold', dest='snrThreshold', type=float, default=5,
-            help='The snr threshold used to mask the offset')
+            help='Min SNR used in the offset (default: %(default)s).')
+
+    # output
     parser.add_argument('-A', '--output_azimuth_offset', dest='outAzimuth', type=str, default='filtAzimuth.off',
-            help='The azimuth offsets after rubber sheeting')
+            help='File name of the azimuth offsets after rubber sheeting (default: %(default)s).')
     parser.add_argument('-R', '--output_range_offset', dest='outRange', type=str, default='filtRange.off',
-            help='The range offsets after rubber sheeting')
+            help='File name of the range offsets after rubber sheeting (default: %(default)s).')
     parser.add_argument('-o', '--output_directory', dest='outDir', type=str, default='./',
-            help='Output directory')
-    parser.add_argument('-p', '--plot', dest='plot', action='store_true', default=False,
-            help='plot the offsets before and after masking and filtering')
+            help='Output directory (default: %(default)s).')
+
+    # plot
+    plot = parser.add_argument_group('plot')
+    plot.add_argument('-p', '--plot', dest='plot', action='store_true', default=False,
+                      help='plot the offsets before and after masking and filtering')
+    plot.add_argument('-v', dest='vlim', nargs=2, type=float, default=(-0.05, 0.05),
+                      help='display range for offset (default: %(default)s).')
+    plot.add_argument('--v-snr', dest='vlim_snr', nargs=2, type=float, default=(0, 100),
+                      help='display range for offset SNR (default: %(default)s).')
+    plot.add_argument('--figsize', dest='figsize', nargs=2, type=float, default=(18, 5),
+                      help='figure size in inch (default: %(default)s).')
+    plot.add_argument('--save', dest='fig_name', type=str, default=None,
+                      help='save figure as file')
 
     return parser
 
@@ -58,7 +86,7 @@ def cmdLineParse(iargs = None):
     return parser.parse_args(args=iargs)
 
 
-def read(file, processor='ISCE' , bands=None , dataType=None):
+def read(file, processor='ISCE', bands=None, dataType=None):
     ''' raeder based on GDAL.
        
     Args:
@@ -73,10 +101,13 @@ def read(file, processor='ISCE' , bands=None , dataType=None):
     Returns:
         * data : A numpy array with dimensions : number_of_bands * length * width
     '''
-
+    # generate ENVI hdr file and fix the file path in xml
+    file = os.path.abspath(file)
     if processor == 'ISCE':
-        cmd = 'isce2gis.py envi -i ' + file
-        os.system(cmd)
+        img, dataname, metaname = IML.loadImage(file)
+        img.filename = file
+        img.setAccessMode('READ')
+        img.renderHdr()
 
     dataset = gdal.Open(file,GA_ReadOnly)
 
@@ -97,23 +128,22 @@ def read(file, processor='ISCE' , bands=None , dataType=None):
     # Fill the array with the Raster bands
     idx=0
     for i in bands:
-       band=dataset.GetRasterBand(i)
-       data[idx,:,:] = band.ReadAsArray()
-       idx+=1
+        band=dataset.GetRasterBand(i)
+        data[idx,:,:] = band.ReadAsArray()
+        idx+=1
 
     dataset = None
     return data
 
 
 def write(raster, fileName, nbands, bandType):
-
-    ############
     # Create the file
     driver = gdal.GetDriverByName( 'ENVI' )
     dst_ds = driver.Create(fileName, raster.shape[1], raster.shape[0], nbands, bandType )
     dst_ds.GetRasterBand(1).WriteArray( raster, 0 ,0 )
-    
     dst_ds = None
+    return
+
 
 def fill(data, invalid=None):
     """
@@ -132,40 +162,46 @@ def fill(data, invalid=None):
     if invalid is None: invalid = np.isnan(data)
 
     ind = ndimage.distance_transform_edt(invalid,
-                                    return_distances=False,
-                                    return_indices=True)
+                                         return_distances=False,
+                                         return_indices=True)
     return data[tuple(ind)]
 
-def mask_filter(inps, band, outName, plot=False):
-    #masking and Filtering
-    Offset = read(inps.denseOffset, bands=band) 
-    Offset = Offset[0,:,:]
 
+def mask_filter(inps, band, outName):
+    """masking and Filtering"""
+
+    # read offset
+    offset = read(inps.denseOffset, bands=band) 
+    offset = offset[0,:,:]
+
+    # read SNR
     snr = read(inps.snr, bands=[1])
     snr = snr[0,:,:]
+    snr[np.isnan(snr)] = 0
 
-    # Masking the dense offsets based on SNR
-    print ('masking the dense offsets with SNR threshold: ', inps.snrThreshold)
-    Offset[snr<inps.snrThreshold] = 0
+    # mask the offset based on SNR
+    print('masking the dense offsets with SNR threshold: {}'.format(inps.snrThreshold))
+    offset1 = np.array(offset)
+    offset1[snr < inps.snrThreshold] = np.nan
 
-    ############
-    Offset[snr<inps.snrThreshold]=np.nan
-    Offset = fill(Offset)
-    ############
+    # fill the hole in offset with nearest data
+    print('fill the masked out region with nearest data')
+    offset2 = fill(offset1)
 
-    # Median filtering the masked offsets
-    print ('Filtering with median filter with size : ', inps.filterSize)
-    Offset = ndimage.median_filter(Offset, size=inps.filterSize)
-    length, width = Offset.shape
+    # median filtering
+    print('filtering with median filter with size : ', inps.filterSize)
+    offset3 = ndimage.median_filter(offset2, size=inps.filterSize)
+    length, width = offset3.shape
 
-    # writing the masked and filtered offsets to a file
-    print ('writing masked and filtered offsets to: ', outName)
-    write(Offset, outName, 1, 6)
+    # write data to file
+    print('writing masked and filtered offsets to: ', outName)
+    write(offset3, outName, 1, 6)
 
-    # write the xml file
+    # write the xml/vrt/hdr file
     img = isceobj.createImage()
     img.setFilename(outName)
     img.setWidth(width)
+    img.setLength(length)
     img.setAccessMode('READ')
     img.bands = 1
     img.dataType = 'FLOAT'
@@ -175,103 +211,72 @@ def mask_filter(inps, band, outName, plot=False):
     img.renderVRT()
     #img.finalizeImage()
 
-    ################################
-    if plot:
-       import matplotlib.pyplot as plt
-       fig = plt.figure()
+    return [snr, offset, offset1, offset2, offset3]
 
-       ax=fig.add_subplot(1,2,1)
-       # cax=ax.imshow(azOffset[800:,:], vmin=-2, vmax=4)
-       cax=ax.imshow(Offset, vmin=-2, vmax=4)
-       ax.set_title('''Offset''')
-    
-       ax=fig.add_subplot(1,2,2)
-    #ax.imshow(azOffset_filt[800:,:], vmin=-2, vmax=4)
-       ax.imshow(Offset_filt, vmin=-2, vmax=4)
-       ax.set_title('''Offset filt''')
-       plt.show()
 
-def getShape(file):
-    
-    dataset = gdal.Open(file,GA_ReadOnly) 
-    return dataset.RasterYSize, dataset.RasterXSize
+def plot_mask_and_filtering(az_list, rg_list, inps=None):
 
-def resampleOffset(maskedFiltOffset, geometryOffset, resampledOffset, outName):
-    
-    length, width = getShape(geometryOffset)
-    print('oversampling the filtered and masked offsets to the width and length:', width, ' ', length ) 
-    cmd = 'gdal_translate -of ENVI  -outsize  ' + str(width) + ' ' + str(length) + ' ' + maskedFiltOffset + ' ' + resampledOffset
-    os.system(cmd)
+    fig, axs = plt.subplots(nrows=2, ncols=5, figsize=inps.figsize, sharex=True, sharey=True)
+    titles = ['SNR', 'offset', 'offset (mask)', 'offset (mask/fill)', 'offset (mask/fill/filter)']
 
-    img = isceobj.createImage()
-    img.setFilename(resampledOffset)
-    img.setWidth(width)
-    img.setAccessMode('READ')
-    img.bands = 1
-    img.dataType = 'FLOAT'
-    img.scheme = 'BIP'
-    #img.createImage()
-    img.renderHdr()
-    img.renderVRT()
-    #img.finalizeImage()
+    # plot SNR
+    im0 = axs[0,0].imshow(az_list[0], vmin=inps.vlim_snr[0], vmax=inps.vlim_snr[1], cmap='RdBu')
+    im0 = axs[1,0].imshow(rg_list[0], vmin=inps.vlim_snr[0], vmax=inps.vlim_snr[1], cmap='RdBu')
+    axs[0,0].set_title('SNR', fontsize=12)
 
-    print ('Adding the dense offsets to the geometry offsets. Output: ', outName)
-    cmd = "imageMath.py -e='a+b' -o " + outName + " -t float  --a=" + geometryOffset + " --b=" + resampledOffset
-    os.system(cmd)
+    # label
+    axs[0,0].set_ylabel('azimuth', fontsize=12)
+    axs[1,0].set_ylabel('range', fontsize=12)
+
+    # plot offset
+    for i in range(1,len(az_list)):
+        im1 = axs[0,i].imshow(az_list[i], vmin=inps.vlim[0], vmax=inps.vlim[1], cmap='jet')
+        im1 = axs[1,i].imshow(rg_list[i], vmin=inps.vlim[0], vmax=inps.vlim[1], cmap='jet')
+        axs[0,i].set_title(titles[i], fontsize=12)
+    fig.tight_layout()
+
+    # colorbar
+    fig.subplots_adjust(bottom=0.15)
+    cax0 = fig.add_axes([0.09, 0.1, 0.08, 0.015])
+    cbar0 = plt.colorbar(im0, cax=cax0, orientation='horizontal')
+    cax0.yaxis.set_ticks_position('left')
+
+    #fig.subplots_adjust(right=0.93)
+    cax1 = fig.add_axes([0.57, 0.1, 0.08, 0.015])
+    cbar1 = plt.colorbar(im1, cax=cax1,  orientation='horizontal')
+    cbar1.set_label('pixel', fontsize=12)
+
+    # save figure to file
+    if inps.fig_name is not None:
+        inps.fig_name = os.path.abspath(inps.fig_name)
+        print('save figure to file {}'.format(inps.fig_name))
+        plt.savefig(inps.fig_name, bbox_inches='tight', transparent=True, dpi=300)
+    plt.show()
+    return
 
 
 def main(iargs=None):
 
-        inps = cmdLineParse(iargs)
-        #######################
-        # working on the azimuth offsets
-        #######################
-        #cmd = 'isce2gis.py envi -i ' + inps.geometryAzimuthOffset
-        #os.system(cmd)
-        
-        if not os.path.exists(inps.outDir):
-            os.makedirs(inps.outDir)
+    inps = cmdLineParse(iargs)
 
-        #######################
-        # masking the dense offsets based on SNR and median filter the masked offsets
-        maskedFiltOffset = os.path.join(inps.outDir, inps.outAzimuth)
-        mask_filter(inps, band=[1], outName = maskedFiltOffset, plot=inps.plot)
+    if not os.path.exists(inps.outDir):
+        os.makedirs(inps.outD)
 
-        cmd = 'isce2gis.py envi -i ' + maskedFiltOffset
-        os.system(cmd)
-        #######################
-        # resampling the masked and filtered dense offsets to the same 
-        # grid size of the geometry offsets and adding back to the 
-        # geometry offsets
-      #  outAzimuth = os.path.join(inps.outDir, inps.outAzimuth) 
+    #######################
+    # masking the dense offsets based on SNR and median filter the masked offs
 
-      #  resampledDenseOffset = os.path.join(inps.outDir, 'filtAzOff_resampled.bil')
-      #  resampleOffset(maskedFiltOffset, inps.geometryAzimuthOffset, resampledDenseOffset, outAzimuth)
-        
-        #######################
-           
-        #######################
-        # working on the range offsets
-        #######################
-        #cmd = 'isce2gis.py envi -i ' + inps.geometryRangeOffset
-        #os.system(cmd)
-        
-        if not os.path.exists(inps.outDir):
-            os.makedirs(inps.outDir)
-        #######################
-        # masking the dense offsets based on SNR and median filter the masked offsets
+    # azimuth offsets
+    inps.outAzimuth = os.path.join(inps.outDir, inps.outAzimuth)
+    az_list = mask_filter(inps, band=[1], outName=inps.outAzimuth)
 
-        maskedFiltOffset = os.path.join(inps.outDir, inps.outRange)
-        mask_filter(inps, band=[2], outName = maskedFiltOffset, plot=inps.plot)
+    # range offsets
+    inps.outRange = os.path.join(inps.outDir, inps.outRange)
+    rg_list = mask_filter(inps, band=[2], outName=inps.outRange)
 
-        cmd = 'isce2gis.py envi -i ' + maskedFiltOffset
-        os.system(cmd)
-        #######################
-        # resampling the masked and filtered dense offsets to the same grid size of the geometry offsets
-        #outRange = os.path.join(inps.outDir, inps.outRange)
-
-        #resampledDenseOffset = os.path.join(inps.outDir, 'filtRngOff_resampled.bil')
-        #resampleOffset(maskedFiltOffset, inps.geometryRangeOffset, resampledDenseOffset, outRange)
+    # plot result
+    if inps.plot:
+        plot_mask_and_filtering(az_list, rg_list, inps)
+    return
 
 
 if __name__ == '__main__':

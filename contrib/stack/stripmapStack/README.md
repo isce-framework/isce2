@@ -29,7 +29,6 @@ d) fix the path of the file in the xml file of the DEM by using fixImageXml.py.
 mkdir DEM; cd DEM
 dem.py -a stitch -b -37 -31 -72 -69 -r -s 1 -c
 rm demLat*.dem demLat*.dem.xml demLat*.dem.vrt
-fixImageXml.py -f -i demLat*.dem.wgs84
 cd ..
 ```
 

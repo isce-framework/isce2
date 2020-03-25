@@ -57,7 +57,6 @@ Download of DEM (need to use wgs84 version) using the ISCE DEM download script.
 mkdir DEM; cd DEM
 dem.py -a stitch -b 18 20 -100 -97 -r -s 1 –c
 rm demLat*.dem demLat*.dem.xml demLat*.dem.vrt
-fixImageXml.py -f -i demLat*.dem.wgs84             #Updating DEM’s wgs84 xml to include full path to the DEM
 cd ..
 ```
 
