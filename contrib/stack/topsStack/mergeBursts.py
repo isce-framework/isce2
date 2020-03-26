@@ -390,8 +390,7 @@ def main(iargs=None):
         fileList.append([os.path.join(inps.dirname, 'IW{0}'.format(swath), namePattern[0] + '_%02d.%s'%(x,namePattern[1])) for x in range(minBurst, maxBurst+1)])
 
     mergedir = os.path.dirname(inps.outfile)
-    if not os.path.isdir(mergedir):
-        os.makedirs(mergedir)
+    os.makedirs(mergedir, exist_ok=True)
     
     suffix = '.full'
     if (inps.numberRangeLooks == 1) and (inps.numberAzimuthLooks==1):
