@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envalos2procF')
+build = os.path.join(envalos2procF['PRJ_SCONS_BUILD'], envalos2procF['PACKAGE'], 'alos2proc_f', 'include')
+envalos2procF.AppendUnique(CPPPATH = [build])
+envalos2procF.Install(build, ['alos2proc_f.h'])
+envalos2procF.Alias('install',build)
