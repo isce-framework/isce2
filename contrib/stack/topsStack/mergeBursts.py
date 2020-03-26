@@ -12,7 +12,6 @@ import isceobj
 import datetime
 import logging
 import argparse
-import pathlib
 from isceobj.Util.ImageUtil import ImageLib as IML
 from isceobj.Util.decorators import use_api
 import s1a_isce_utils as ut
