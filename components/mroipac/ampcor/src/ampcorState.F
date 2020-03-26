@@ -33,4 +33,7 @@
 !c we only know the max number of rows. at the end of the ampcor we can get it        
         integer numRowTable
         
+        integer winsize_filt
+        integer i_covs_filt
+
       end module ampcorState
