@@ -87,21 +87,15 @@ one same command and one same input file to process all acquistion modes
 ###########################################
 
 1. ALOS-2 data
-* UNZIP: for each acquistion date, unpack data of all frames to a directory. 
-
-* POLARIZATION:  Usually there are multiple polarizations in the data. Normally we only process HH 
-polarization, so you can only extract HH polarizations from the zip files to save space. If you 
-want to process other polarizations, extract those polarization instead and set "master polarization" 
-and "slave polarization" in the input file.
-
-* FRAME: If there are equal number of frames to be processed in master and slave directories, there 
-is no need to set frame numbers. If not, see input file on how to set them.
+For each acquistion date, unpack data of all frames to a directory. There are usually multiple polarizations 
+in the data. Normally we only process HH polarization, so you can only extract HH polarizations from the 
+zip files to save space. If you want to process other polarizations, extract those polarization instead.
 
 2. DEM and water body
 If you only process one InSAR pair, there is no need to download DEM and water body. The program will
 do it for you. However, if you want to process a stack of interferograms, we recommend downloading DEM
-and water body by youself and set the parameters in the input file; otherwise, the program will download
-DEM and water body each time it processes a pair. See input file about how to download DEM and water
+and water body by yourself and set the parameters in the input file; otherwise, the program will download
+DEM and water body each time it processes a pair. See input file on how to download DEM and water
 body.
 
 
@@ -113,13 +107,52 @@ body.
 can be found in "examples/input_files/alos2" in the package. Normally you only need alos2App.py to 
 process all kinds of InSAR combinations.
 
-In addition, check the example input files in the folder "examples/input_files/alos2/example_input_files", 
+2. Set the following parameters in the input file:
+    <property name="master directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150405</property>
+    <property name="slave directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
+
+    <!--optional, see input file on how to set these-->
+    <property name="master frames">[3055]</property>
+    <property name="slave frames">[3055]</property>
+
+    <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="water body">/net/kraken/nobak/cunrenl/z_common_data/insarzd_test_dataset/gorkha/wbd/swbdLat_N22_N33_Lon_E078_E092.wbd</property>
+
+
+3. If you want to process a stack of interferograms, you can geocode the products to the same area by 
+setting the following parameters:
+
+    <!--=========================================================================================
+    This is a four-element list [s, n, w, e], e.g. [26.24, 30.04, 33.45, 37.79].
+    ==========================================================================================-->
+    <property name="geocode bounding box">None</property>
+
+If you want to do more customized processing, explore all other available parameters in the input file.
+
+
+4. If it still does not work, check the example input files in folder "examples/input_files/alos2/example_input_files", 
 which includes all possible InSAR combinations.
 
-2. If you want to process a stack of interferograms, you can geocode the products to the same area by 
-setting "geocode bounding box" in the input file.
+To find the acquisition mode code, check the unpacked ALOS-2 product. For example, in the following
+file name
 
-3. Explore all other available parameters in the input file.
+IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                             ^^^
+FBD (indicated by ^) is the acquisition mode code. Here is the list of acquistion modes:
+
+ Operation Mode   |   Mode (AUIG2)  |    Mode (in file name)
+--------------------------------------------------------------
+   spotlight      |       SPT       |    SBS
+--------------------------------------------------------------
+   stripmap       |       SM1       |    UBS, UBD
+                  |       SM2       |    HBS, HBD, HBQ
+                  |       SM3       |    FBS, FBD, FBQ
+--------------------------------------------------------------
+   ScanSAR        |       WD1       |    WBS, WBD, WWS, WWD
+                  |       WD2       |    VBS, VBD
+
+Note that, in ScanSAR-stripmap interferometry, ScanSAR must be master!
 
 
 ###########################################

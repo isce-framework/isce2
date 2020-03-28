@@ -3,6 +3,28 @@
   <component name="alos2burstinsar">
 
 
+    <!--Note that, in ScanSAR-stripmap interferometry, ScanSAR must be master! see section 
+    2. SET PARAMETERS in 'alos2_tutorial.txt' to determine if you are doing ScanSAR-stripmap 
+    interferometry-->
+    <property name="master directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150405</property>
+    <property name="slave directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
+    <!--Normally no need to set frame numbers, but if master and slave frames do not meet the following 
+    one-to-one correspondence, you need to set frame numbers here. See instructions below on how to find 
+    and set frame numbers.
+
+    Master Data Folder               Slave Data Folder
+       Frame ****     .............     Frame ****
+       Frame ****     .............     Frame ****
+       Frame ****     .............     Frame ****
+       Frame ****     .............     Frame ****
+    -->
+    <property name="master frames">[3055]</property>
+    <property name="slave frames">[3055]</property>
+
+
+    <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="water body">/net/kraken/nobak/cunrenl/z_common_data/insarzd_test_dataset/gorkha/wbd/swbdLat_N22_N33_Lon_E078_E092.wbd</property>
 
 
 
@@ -10,10 +32,14 @@
 
 
 <!--=====================================================================================================
-                                    instructions for alos2burstApp.py
+                                    instructions for alos2App.py/alos2burstApp.py
 
-alos2App.py and alos2burstApp.py implement a number of techniques and algorithms described in the 
-following papers.
+This is the input file of alos2App.py/alos2burstApp.py. Below are all parameters users can set. 
+Instructions on how to set these parameters are also provided. Parameter default values are shown in the 
+brackets. Remove the first four characters and the last three characters in a parameter line to set a 
+parameter value.
+
+For the techinques and algorithms implemented in the software, refer to:
 
 1. ScanSAR or multi-mode InSAR processing
 C. Liang and E. J. Fielding, "Interferometry with ALOS-2 full-aperture ScanSAR data," 
@@ -28,12 +54,10 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2725-273
 C. Liang, Z. Liu, E. J. Fielding, and R. Bürgmann, "InSAR time series analysis of L-band wide-swath SAR 
 data acquired by ALOS-2," 
 IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-4506, Aug. 2018.
-
-Below are all parameters users can set. Parameter default values are shown in the brackets. Remove the
-first four characters and the last three characters in a parameter line to set a parameter value.
 ======================================================================================================-->
 
 
+    <!--Note that, in ScanSAR-stripmap interferometry, ScanSAR must be master!-->
     <!--<property name="master directory">None</property>-->
     <!--<property name="slave directory">None</property>-->
 
@@ -178,7 +202,7 @@ first four characters and the last three characters in a parameter line to set a
     <!--<property name="geocode file list">None</property>-->
 
     <!--=========================================================================================
-    This is a four-element list [s, n, w, e].
+    This is a four-element list [s, n, w, e], e.g. [26.24, 30.04, 33.45, 37.79].
     ==========================================================================================-->
     <!--<property name="geocode bounding box">None</property>-->
 
