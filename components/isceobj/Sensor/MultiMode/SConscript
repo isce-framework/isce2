@@ -1,0 +1,31 @@
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+#                                 Walter Szeliga
+#                        NASA Jet Propulsion Laboratory
+#                      California Institute of Technology
+#                        (c) 2010  All Rights Reserved
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+#!/usr/bin/env python
+import os
+
+Import('envSensor')
+envMultiMode = envSensor.Clone()
+project = 'MultiMode'
+package = envMultiMode['PACKAGE']
+envMultiMode['PROJECT'] = project
+envMultiMode['SENSOR_SCONS_INSTALL'] = os.path.join(
+    envMultiMode['PRJ_SCONS_INSTALL'], package, 'Sensor',project)
+install = envMultiMode['SENSOR_SCONS_INSTALL']
+
+listFiles = ['__init__.py','ALOS2.py','Frame.py','Swath.py','Track.py']
+
+helpList,installHelp = envMultiMode['HELP_BUILDER'](envMultiMode,'__init__.py',install)
+
+envMultiMode.Install(installHelp,helpList)
+envMultiMode.Alias('install',installHelp)
+
+envMultiMode.Install(install,listFiles)
+envMultiMode.Alias('install',install)

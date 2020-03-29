@@ -473,7 +473,7 @@ def subband(self, ionParam):
                 
                 #subband
                 rg_filter(tmpFilename,
-                          burst.numberOfSamples,
+                          #burst.numberOfSamples,
                           2,
                           [os.path.join(lowerDir, tmpFilename2), os.path.join(upperDir, tmpFilename2)],
                           [ionParam.rgBandwidthSub / rangeSamplingRate, ionParam.rgBandwidthSub / rangeSamplingRate],

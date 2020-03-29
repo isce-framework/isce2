@@ -724,3 +724,27 @@ PyObject * getCov3_C(PyObject* self, PyObject* args)
         delete [] vectorV;
         return Py_BuildValue("N",list);
 }
+
+
+
+PyObject* setWinsizeFilt_C(PyObject* self, PyObject* args)
+{
+  int factor;
+  if( !PyArg_ParseTuple(args,"i",&factor) )
+  {
+    return NULL;
+  }
+  setWinsizeFilt_f(&factor);
+  return Py_BuildValue("i",0);
+}
+
+PyObject* setOversamplingFactorFilt_C(PyObject* self, PyObject* args)
+{
+  int factor;
+  if( !PyArg_ParseTuple(args,"i",&factor) )
+  {
+    return NULL;
+  }
+  setOversamplingFactorFilt_f(&factor);
+  return Py_BuildValue("i",0);
+}

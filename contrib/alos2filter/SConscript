@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+#Cunren Liang, 2015-2018
+
+import os
+
+Import('envcontrib')
+envalos2filter = envcontrib.Clone()
+package = envcontrib['PACKAGE']
+project = 'alos2filter'
+Export('envalos2filter')
+
+
+
+
+srcScons = os.path.join('src','SConscript')
+varDir = os.path.join(envalos2filter['PRJ_SCONS_BUILD'],package,project,'src')
+SConscript(srcScons, variant_dir = varDir)
+
+
+install = os.path.join(envcontrib['PRJ_SCONS_INSTALL'],package,project)
+listFiles = ['__init__.py','alos2filter.py']
+envcontrib.Install(install,listFiles)
+envcontrib.Alias('install',install)
+
