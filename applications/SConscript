@@ -78,9 +78,8 @@ listFiles = ['mdx.py',
              'wbd.py',
 	     'downsampleDEM.py',
 	     'gdal2isce_xml.py',
-           'alos2App.py',
-           'alos2burstApp.py',
-             'scansarApp.py',
+             'alos2App.py',
+             'alos2burstApp.py',
              'wbd_with_correction.py']
 #             'isce2he5.py']
 
