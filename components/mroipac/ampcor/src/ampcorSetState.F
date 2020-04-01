@@ -198,3 +198,16 @@
           r_scaley = var
        end
       
+       subroutine setWinsizeFilt(winsize_filt_val)
+          use ampcorState
+          implicit none
+          integer winsize_filt_val
+          winsize_filt = winsize_filt_val
+       end
+
+       subroutine setOversamplingFactorFilt(i_covs_filt_val)
+          use ampcorState
+          implicit none
+          integer i_covs_filt_val
+          i_covs_filt = i_covs_filt_val
+       end

@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+
+import os
+
+Import('envalos2procF')
+build = envalos2procF['PRJ_LIB_DIR']
+
+listFiles = ['bilinear.f', 'curvature.f', 'interp.f', 'lincomb.f', 'matvec.f',
+             'rect.f', 'convert_sch_to_xyz.f', 'enubasis.f', 'intpcoefnorm.f',
+             'look_coord_conv.f', 'norm.f', 'rect_with_looks.f', 'tranmat.f',
+             'cross.f', 'fitoff.f', 'latlon.f', 'matmat.f', 'radar_to_xyz.f',
+             'schbasis.f', 'cbind.f90']
+
+lib = envalos2procF.Library(target = 'libalos2proc_f', source = listFiles, SHLIBPREFIX='')
+envalos2procF.Install(build,lib)
+envalos2procF.Alias('install',build)
