@@ -35,8 +35,8 @@ import os
 
 import isce
 import isceobj
-from isceobj.TopsProc.runBurstIfg import computeCoherence
 logger = logging.getLogger('isce.tops.runFilter')
+
 
 def runFilter(infile, outfile, filterStrength):
     from mroipac.filter.Filter import Filter
@@ -64,6 +64,7 @@ def runFilter(infile, outfile, filterStrength):
     intImage.finalizeImage()
     filtImage.finalizeImage()
 
+
 def runFilter_gaussian(infile, outfile, filterStrength):
     from isceobj import Filter
     
@@ -90,7 +91,7 @@ def runFilter_gaussian(infile, outfile, filterStrength):
     
     intImage.finalizeImage()
     filtImage.finalizeImage()
-   
+
 
 def estCoherence(outfile, corfile):
     from mroipac.icu.Icu import Icu
@@ -123,6 +124,32 @@ def estCoherence(outfile, corfile):
     phsigImage.finalizeImage()
 
 
+def estCpxCoherence(slc1_file, slc2_file, cpx_coh_file, alks=3, rlks=9):
+    from isceobj.TopsProc.runBurstIfg import computeCoherence
+    from mroipac.looks.Looks import Looks
+
+    # calculate complex coherence in full resolution
+    computeCoherence(slc1_file, slc2_file, cpx_coh_file)
+
+    # multilook
+    print('Multilooking {0} ...'.format(cpx_coh_file))
+
+    inimg = isceobj.createImage()
+    inimg.load(cpx_coh_file + '.xml')
+
+    outname = os.path.splitext(inimg.filename)[0]
+    lkObj = Looks()
+    lkObj.setDownLooks(alks)
+    lkObj.setAcrossLooks(rlks)
+    lkObj.setInputImage(inimg)
+    lkObj.setOutputFilename(outname)
+    lkObj.looks()
+
+    # remove full resolution coherence file
+    ret=os.system('rm '+cpx_coh_file)
+    return
+
+
 def createParser():
     '''
     Create command line parser.
@@ -139,7 +166,8 @@ def createParser():
             dest='filterstrength')
     parser.add_argument('--slc1', type=str, help="SLC 1", dest='slc1')
     parser.add_argument('--slc2', type=str, help="SLC 2", dest='slc2')
-    parser.add_argument('--cc','--complex_coh',type=str, default='fine.cori.full',help='complex coherence file',dest='cpx_cohfile')
+    parser.add_argument('--cc','--complex_coh',type=str, default='fine.cor.full', help='complex coherence file',
+            dest='cpx_cohfile')
     parser.add_argument('-r','--range_looks',type=int, default=9, help= 'range looks', dest='numberRangelooks')
     parser.add_argument('-z','--azimuth_looks',type=int, default=3, help= 'azimuth looks', dest='numberAzlooks')
     return parser
@@ -158,31 +186,14 @@ def main(iargs=None):
     runFilter(inps.infile, inps.filtfile, inps.filterstrength)
 
     estCoherence(inps.filtfile, inps.cohfile)
+
     if inps.slc1 and inps.slc2:
-        computeCoherence(inps.slc1,inps.slc2,inps.cpx_cohfile)
-        from mroipac.looks.Looks import Looks
+        estCpxCoherence(inps.slc1, inps.slc2, inps.cpx_cohfile,
+                        alks=inps.numberAzlooks,
+                        rlks=inps.numberRangelooks)
 
-        print('Multilooking {0} ...'.format(inps.cpx_cohfile))
-        
-        infile=inps.cpx_cohfile
-        inimg = isceobj.createImage()
-        inimg.load(infile + '.xml')
+    return
 
-        alks=inps.numberAzlooks
-        rlks=inps.numberRangelooks
-        
-        spl = os.path.splitext(inimg.filename)
-        #ext = '.{0}alks_{1}rlks'.format(alks, rlks)
-        #outname = spl[0] + ext + spl[1]
-        outname=spl[0]
-        lkObj = Looks()
-        lkObj.setDownLooks(alks)
-        lkObj.setAcrossLooks(rlks)
-        lkObj.setInputImage(inimg)
-        lkObj.setOutputFilename(outname)
-        lkObj.looks()
-        fullfilename=inps.cpx_cohfile
-        ret=os.system('rm '+fullfilename)
 if __name__ == '__main__':
     
     main()
