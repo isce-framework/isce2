@@ -39,8 +39,9 @@ from ctypes import cdll
 import numpy as np
 import os
 import sys
-from isce import logging
+import logging
 import math
+import logging.config
 import urllib.request, urllib.parse, urllib.error
 from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher
@@ -51,6 +52,12 @@ URL = Component.Parameter('_url',
     type = str,
     mandatory = False,
     doc = "Url for the high resolution water body mask")
+
+NODATA = Component.Parameter('_nodata',
+    public_name = 'nodata',default = 0,
+    type = int,
+    mandatory = False,
+    doc = "Nodata value for missing tiles")
 
 KEEP_WBDS = Component.Parameter('_keepWbds',
     public_name='keepWbds',
@@ -228,7 +235,7 @@ class SWBDStitcher(DemStitcher):
             syntTileCreated = False
             #check and send a warning if the full region is not available
             if not self._succeded in self._downloadReport.values():
-                self.logger.warning('The full region of interested is not available. Missing region is assumed to be land')
+                self.logger.warning('The full region of interested is not available. Missing region is assumed to be  %s'%(str(self._nodata)))
             for k,v in self._downloadReport.items():
                 if v == self._failed:#symlink each missing file to the reference one created in createFillingFile
                     if not syntTileCreated:#create the synthetic Tile the first time around
@@ -239,7 +246,7 @@ class SWBDStitcher(DemStitcher):
 
         if unzip:
             mmap = np.memmap(outname,np.int8,'w+',shape=(nLat*tileSize,nLon*tileSize))
-            mmap[:,:] = 0
+            mmap[:,:] = self._nodata
             decompressedList = []
             pos = 0
             for i in range(nLat):
@@ -298,7 +305,8 @@ class SWBDStitcher(DemStitcher):
 
     parameter_list = (
                       URL,
-                      KEEP_WBDS
+                      KEEP_WBDS,
+                      NODATA,
                      )
 
     family = 'swbdstitcher'
@@ -314,6 +322,9 @@ class SWBDStitcher(DemStitcher):
         #it's /srtm/version2_1/SRTM(1,3)
         self._remove = ['.jpg','.xml']
         if not self.logger:
+            logging.config.fileConfig(
+            os.environ['ISCE_HOME'] + '/library/applications/logging.conf'
+            )
             self.logger = logging.getLogger('isce.contrib.demUtils.SWBDStitcher')
 
         self.parameter_list = self.parameter_list + super(DemStitcher,self).parameter_list
