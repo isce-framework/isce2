@@ -18,7 +18,7 @@ def cmdLineParse():
             help = 'Input image for which the XML file needs to be fixed.')
 
     fname = parser.add_mutually_exclusive_group(required=True)
-    fname.add_argument('-f', '--full', action='store_false',
+    fname.add_argument('-f', '--full', action='store_true',
             help = 'Replace filename with full path including dir in which file is located')
     fname.add_argument('-b', '--base', action='store_true',
             help = 'Replace filename with basename to use in current directory')

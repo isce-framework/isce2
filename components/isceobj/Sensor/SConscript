@@ -56,4 +56,4 @@ SConscript(os.path.join('src', 'SConscript'),
     variant_dir = os.path.join(install, 'src'))
 SConscript(os.path.join('TOPS','SConscript'))
 SConscript(os.path.join('GRD', 'SConscript'))
-SConscript(os.path.join('ScanSAR', 'SConscript'))
+SConscript(os.path.join('MultiMode', 'SConscript'))
