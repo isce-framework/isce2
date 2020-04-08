@@ -1,60 +1,66 @@
 #!/usr/bin/env python3
 
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Copyright  2012 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-# http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# 
-# United States Government Sponsorship acknowledged. This software is subject to
-# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
-# (No [Export] License Required except when exporting to an embargoed country,
-# end user, or in support of a prohibited end use). By downloading this software,
-# the user agrees to comply with all applicable U.S. export laws and regulations.
-# The user has the responsibility to obtain export licenses, or other export
-# authority as may be required before exporting this software to any 'EAR99'
-# embargoed foreign country or citizen of those countries.
 #
-# Author: Eric Gurrola
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Author: Cunren Liang
+# Copyright 2020
+#
 
 
 import sys
 import isce
-from isceobj.InsarProc.runCreateWbdMask import runCreateWbdMask
+from isceobj.Alos2Proc.runDownloadDem import download_wbd
 
-class INSAR:
-    def __init__(self):
-        self.applyWaterMask = True
-        self.wbdImage = None
 
-class SELF:
-    def __init__(me, snwe):
-        me.geocode_bbox = snwe
-        me.insar = INSAR()
+def download_wbd_old(snwe):
+    '''
+    for keeping the option of the old wbd.py
+    '''
 
-class INFO:
-    def __init__(self, snwe):
-        self.extremes = snwe
-    def getExtremes(x):
-        return self.extremes
+    from isceobj.InsarProc.runCreateWbdMask import runCreateWbdMask
 
-if __name__=="__main__":
-    if len(sys.argv) < 5:
-        print("Usage: wbd.py s n w e")
-        print("where s, n, w, e are latitude, longitude bounds in degrees")
-        sys.exit(0)
-    snwe = list(map(float,sys.argv[1:]))
+    class INSAR:
+        def __init__(self):
+            self.applyWaterMask = True
+            self.wbdImage = None
+
+    class SELF:
+        def __init__(me, snwe):
+            me.geocode_bbox = snwe
+            me.insar = INSAR()
+
+    class INFO:
+        def __init__(self, snwe):
+            self.extremes = snwe
+        def getExtremes(x):
+            return self.extremes
+
     self = SELF(snwe)
     info = INFO(None)
     runCreateWbdMask(self,info)
+
+
+if __name__=="__main__":
+
+    if len(sys.argv) < 5:
+        print()
+        print("usage: wbd.py s n w e [c]")
+        print("  s: south latitude bounds in degrees")
+        print("  n: north latitude bounds in degrees")
+        print("  w: west longitude bounds in degrees")
+        print("  e: east longitude bounds in degrees")
+        print("  c: whether correct missing water body tiles problem")
+        print("       0: False")
+        print("       1: True (default)")
+        sys.exit(0)
+
+    doCorrection = True
+    if len(sys.argv) >= 6:
+    	if int(sys.argv[5]) == 0:
+    		doCorrection = False
+ 
+    snwe = list(map(float,sys.argv[1:5]))
+
+    if doCorrection:
+        download_wbd(snwe[0], snwe[1], snwe[2], snwe[3])
+    else:
+    	download_wbd_old(snwe)
