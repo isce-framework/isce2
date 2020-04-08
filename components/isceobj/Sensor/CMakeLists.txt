@@ -1,6 +1,5 @@
 add_subdirectory(db)
 add_subdirectory(TOPS)
-add_subdirectory(ScanSAR)
 add_subdirectory(MultiMode)
 
 set(installfiles
