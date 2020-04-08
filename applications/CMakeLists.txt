@@ -23,7 +23,6 @@ set(files
     upsampleDem.py
     waterMask.py
     wbd.py
-    wbd_with_correction.py
     wbdStitcher.py
     )
 

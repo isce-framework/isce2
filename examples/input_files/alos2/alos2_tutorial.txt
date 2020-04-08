@@ -115,13 +115,18 @@ process all kinds of InSAR combinations.
     <property name="master frames">[3055]</property>
     <property name="slave frames">[3055]</property>
 
+    <!--optional, see input file on how to set these-->
     <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
     <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
     <property name="water body">/net/kraken/nobak/cunrenl/z_common_data/insarzd_test_dataset/gorkha/wbd/swbdLat_N22_N33_Lon_E078_E092.wbd</property>
 
 
-3. If you want to process a stack of interferograms, you can geocode the products to the same area by 
-setting the following parameters:
+3. For processing a stack of interferograms, 
+
+  1. set "dem for coregistration", "dem for geocoding" and "water body" so that the program won't download 
+  them multiple times.
+
+  2. geocode the products to the same area for time series analysis by setting the following parameter:
 
     <!--=========================================================================================
     This is a four-element list [s, n, w, e], e.g. [26.24, 30.04, 33.45, 37.79].

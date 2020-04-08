@@ -598,7 +598,14 @@ class Sentinel1(Component):
             burst.numberOfSamples = samples
             burst.numberOfLines = lines
             burst.startingRange = startingRange
-            burst.trackNumber = (orbitnumber-73)%175 + 1  ###Appears to be standard for S1A
+
+            if mission == 'S1A':
+                burst.trackNumber = (orbitnumber-73)%175 + 1
+            elif mission == 'S1B':
+                burst.trackNumber = (orbitnumber-27)%175 + 1
+            else:
+                raise ValueError('Encountered unknown mission id {0}'.format(mission))
+
             burst.orbitNumber = orbitnumber 
             burst.frameNumber = 1  #S1A doesnt appear to have a frame system
             burst.polarization = polarization
