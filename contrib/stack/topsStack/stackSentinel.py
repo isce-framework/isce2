@@ -430,11 +430,16 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
     #############################
     i=0
 
+    if not updateStack:
+        i += 1
+        runObj = run()
+        runObj.configure(inps, 'run_' + str(i) + "_unpack_topo_master")
+        runObj.unpackStackMasterSLC(safe_dict)
+        runObj.finalize()
+
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_unpack_slc_topo_master")
-    if not updateStack:
-        runObj.unpackStackMasterSLC(safe_dict)
+    runObj.configure(inps, 'run_' + str(i) + "_unpack_slave_slc")
     runObj.unpackSlavesSLC(stackMasterDate, slaveDates, safe_dict)
     runObj.finalize()
    
@@ -505,12 +510,14 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
 def correlationStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack):
 
     #############################
-    i = slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates,stackMasterDate, slaveDates, safe_dict, updateStack)
+
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_merge_master")
-    runObj.mergeMaster(stackMasterDate, virtual = 'False')
+    runObj.configure(inps, 'run_' + str(i) + "_merge_master_slave_slc")
+    runObj.mergeMaster(stackMasterDate, virtual = 'True')
+    runObj.mergeSlaveSLC(slaveDates, virtual = 'True')
     runObj.finalize()
 
     i+=1
@@ -532,6 +539,13 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe
 
     i+=1
     runObj = run()
+    runObj.configure(inps, 'run_' + str(i) + "_merge_master_slave_slc")
+    runObj.mergeMaster(stackMasterDate, virtual = 'True')
+    runObj.mergeSlaveSLC(slaveDates, virtual = 'True')
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_merge_burst_igram") 
     runObj.burstIgram_mergeBurst(acquisitionDates, safe_dict, pairs)
     runObj.finalize()
@@ -548,12 +562,6 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe
     runObj.unwrap(pairs)
     runObj.finalize()
 
-    i+=1
-    runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_merge_master_slave_slc")
-    runObj.mergeMaster(stackMasterDate, virtual = 'True')
-    runObj.mergeSlaveSLC(slaveDates, virtual = 'True')
-    runObj.finalize()
 
 def offsetStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack):
 

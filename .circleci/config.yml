@@ -72,7 +72,7 @@ jobs:
               set -ex
               pwd
               . /opt/conda/bin/activate root
-              export ISCE_HOME=/root/project/install/isce
+              ISCE_HOME=/root/project/install/isce
               export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:/opt/conda/bin:$PATH"
               export PYTHONPATH="/root/project/install:$PYTHONPATH"
               export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"

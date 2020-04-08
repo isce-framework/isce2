@@ -32,10 +32,7 @@ from __future__ import print_function
 import os
 import sys
 import operator
-import logging
-import logging.config
-logging.config.fileConfig(os.path.join(os.environ['ISCE_HOME'], 'defaults',
-    'logging', 'logging.conf'))
+from isce import logging
 from iscesys.DictUtils.DictUtils import DictUtils as DU
 from iscesys.Compatibility import Compatibility
 Compatibility.checkPythonVersion()
