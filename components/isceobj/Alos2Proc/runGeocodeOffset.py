@@ -35,7 +35,7 @@ def runGeocodeOffset(self):
     demFile = os.path.abspath(self._insar.demGeo)
 
     denseOffsetDir = 'dense_offset'
-    os.makedirs(denseOffsetDirm, exist_ok=True)
+    os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
     masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)
