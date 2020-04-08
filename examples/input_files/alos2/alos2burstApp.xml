@@ -21,7 +21,10 @@
     <property name="master frames">[3055]</property>
     <property name="slave frames">[3055]</property>
 
-
+    <!--optional, see instructions below on how to get DEM and water body. If you only process one 
+    interferogram, you can choose not to set these and the program will download them for you. If you 
+    process a stack of interferograms, it's better to set these so that the program won't download them 
+    multiple times. -->
     <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
     <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
     <property name="water body">/net/kraken/nobak/cunrenl/z_common_data/insarzd_test_dataset/gorkha/wbd/swbdLat_N22_N33_Lon_E078_E092.wbd</property>
@@ -103,10 +106,12 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
     cd ../
 
-    #water body. ATTENTION: DON'T USE wbd.py TO DOWNLOAD WATER BODY!!!
+    #water body
+    #do correct missing water body tiles problem here!!! check usage of wbd.py for more details,
+    #or simply follow the commands below
     mkdir wbd_1_arcsec
     cd wbd_1_arcsec
-    wbd_with_correction.py 29 37 125 133
+    wbd.py 29 37 125 133
     fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f
     cd ../
     ==========================================================================================-->
