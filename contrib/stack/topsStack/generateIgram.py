@@ -125,12 +125,11 @@ def main(iargs=None):
     for swath in swathList:
         IWstr = 'IW{0}'.format(swath)
         if inps.overlap:
-            ifgdir = os.path.join(inps.interferogram, 'overlap', 'IW{0}'.format(swath))
+            ifgdir = os.path.join(inps.interferogram, 'overlap', IWstr)
         else:
-            ifgdir = os.path.join(inps.interferogram, 'IW{0}'.format(swath))
-            
-        if not os.path.exists(ifgdir):
-                os.makedirs(ifgdir)
+            ifgdir = os.path.join(inps.interferogram, IWstr)
+
+        os.makedirs(ifgdir, exist_ok=True)
 
     ####Load relevant products
         if inps.overlap:

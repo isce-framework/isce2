@@ -391,7 +391,7 @@ def main(iargs=None):
 
     mergedir = os.path.dirname(inps.outfile)
     os.makedirs(mergedir, exist_ok=True)
-    
+
     suffix = '.full'
     if (inps.numberRangeLooks == 1) and (inps.numberAzimuthLooks==1):
         suffix=''

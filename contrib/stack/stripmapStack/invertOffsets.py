@@ -272,8 +272,7 @@ def writeDateOffsets(inps, h5File):
         d = dateList[i].decode("utf-8")
         d = datetime.datetime(*time.strptime(d,"%Y-%m-%d %H:%M:%S")[0:6]).strftime('%Y%m%d')
         outDir = os.path.join(inps.output, d)
-        if not os.path.exists(outDir):
-           os.makedirs(outDir)
+        os.makedirs(outDir, exist_ok=True)
         outName = os.path.join(outDir , d + '.bil')
         write(ds[i,:,:], outName, 1, 6)
  #       outName = os.path.join(outDir , d + '_snr.bil')
@@ -351,8 +350,7 @@ def getChunks(Ny,Nx, chunk_y, chunk_x):
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  if not os.path.exists(inps.output):
-      os.makedirs(inps.output)
+  os.makedirs(inps.output, exist_ok=True)
 
   h5File = write2h5(inps) 
 

@@ -285,15 +285,13 @@ class run(object):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
         self.runDir = os.path.join(self.workDir, 'run_files')
-        if not os.path.exists(self.runDir):
-            os.makedirs(self.runDir)
+        os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
         self.configDir = os.path.join(self.workDir,'configs')
-        if not os.path.exists(self.configDir):
-            os.makedirs(self.configDir)
+        os.makedirs(self.configDir, exist_ok=True)
 
         # passing argument of started from raw
         if inps.nofocus is  False:
@@ -690,8 +688,7 @@ def baselinePair(baselineDir, master, slave,doBaselines=True):
 def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     from collections import OrderedDict
     baselineDir = os.path.join(inps.workDir,'baselines')
-    if not os.path.exists(baselineDir):
-        os.makedirs(baselineDir)
+    os.makedirs(baselineDir, exist_ok=True)
     baselineDict = OrderedDict()
     timeDict = OrderedDict()
     datefmt = '%Y%m%d'

@@ -416,10 +416,7 @@ def runDispersive(self):
         highBandIgram += '.unw'
 
     outputDir = self.insar.ionosphereDirname
-    if os.path.isdir(outputDir):
-        logger.info('Ionosphere directory {0} already exists.'.format(outputDir))
-    else:
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     outDispersive = os.path.join(outputDir, self.insar.dispersiveFilename)
     sigmaDispersive = outDispersive + ".sig"

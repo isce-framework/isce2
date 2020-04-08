@@ -20,8 +20,7 @@ def runFrameOffset(self):
     slaveTrack = self._insar.loadTrack(master=False)
 
     mosaicDir = 'insar'
-    if not os.path.exists(mosaicDir):
-        os.makedirs(mosaicDir)
+    os.makedirs(mosaicDir, exist_ok=True)
     os.chdir(mosaicDir)
 
     if len(masterTrack.frames) > 1:

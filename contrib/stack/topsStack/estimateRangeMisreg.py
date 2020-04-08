@@ -208,8 +208,7 @@ def main(iargs=None):
     center = 0.5*(bins[:-1] + bins[1:])
 
     outputDir = os.path.dirname(inps.output)
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     try:
         import matplotlib as mpl

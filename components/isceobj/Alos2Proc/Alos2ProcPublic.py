@@ -985,10 +985,8 @@ def resampleBursts(masterSwath, slaveSwath,
     import numpy.matlib
     from contrib.alos2proc.alos2proc import resamp
 
-    if not os.path.exists(slaveBurstResampledDir):
-        os.makedirs(slaveBurstResampledDir)
-    if not os.path.exists(interferogramDir):
-        os.makedirs(interferogramDir)
+    os.makedirs(slaveBurstResampledDirm, exist_ok=True)
+    os.makedirs(interferogramDirm, exist_ok=True)
 
     #get burst file names
     masterBurstSlc = [masterBurstPrefix+'_%02d.slc'%(i+1) for i in range(masterSwath.numberOfBursts)]

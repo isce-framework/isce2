@@ -57,8 +57,7 @@ def main(iargs=None):
 
     baselineDir = os.path.dirname(inps.baselineFile)
     if baselineDir != '':
-        if not os.path.exists(baselineDir):
-            os.makedirs(baselineDir)
+        os.makedirs(baselineDir, exist_ok=True)
 
 
     with shelve.open(os.path.join(inps.master, 'data'), flag='r') as mdb:

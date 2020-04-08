@@ -90,10 +90,7 @@ def runDenseOffsets(self):
     slaveSlc = os.path.join(self.insar.coregDirname, self._insar.refinedCoregFilename )
 
     dirname = self.insar.denseOffsetsDirname
-    if os.path.isdir(dirname):
-        logger.info('dense offsets directory {0} already exists.'.format(dirname))
-    else:
-        os.makedirs(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
     denseOffsetFilename = os.path.join(dirname , self.insar.denseOffsetFilename)
 

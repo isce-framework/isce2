@@ -245,8 +245,7 @@ def runPrepESD(self):
 
         ####Create ESD output directory
         esddir = self._insar.esdDirname
-        if not os.path.isdir(esddir):
-            os.makedirs(esddir)
+        os.makedirs(esddir, exist_ok=True)
 
         ####Overlap offsets directory
         offdir = os.path.join( self._insar.coarseOffsetsDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))

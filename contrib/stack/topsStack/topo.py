@@ -92,11 +92,7 @@ def main(iargs=None):
     
         ###Check if geometry directory already exists.
         dirname = os.path.join(inps.geom_masterDir, 'IW{0}'.format(swath))
-
-        if os.path.isdir(dirname):
-            print('Geometry directory {0} already exists.'.format(dirname))
-        else:
-            os.makedirs(dirname)
+        os.makedirs(dirname, exist_ok=True)
 
         for ind in range(master.numberOfBursts):
             inputs.append((dirname, demImage, master, ind))

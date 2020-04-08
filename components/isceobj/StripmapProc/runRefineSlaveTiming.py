@@ -144,11 +144,7 @@ def runRefineSlaveTiming(self):
     print ('*************************************')
 
     misregDir = self.insar.misregDirname
-
-    if os.path.isdir(misregDir):
-        logger.info('mis-registration directory {0} already exists.'.format(misregDir))
-    else:
-        os.makedirs(misregDir)
+    os.makedirs(misregDir, exist_ok=True)
  
     outShelveFile = os.path.join(misregDir, self.insar.misregFilename)
     odb = shelve.open(outShelveFile)

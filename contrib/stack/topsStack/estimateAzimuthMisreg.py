@@ -174,8 +174,7 @@ def main(iargs=None):
 #    slaveTimingCorrection = medianval * master.bursts[0].azimuthTimeInterval
 
     outputDir = os.path.dirname(inps.output)
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     with open(inps.output, 'w') as f:
          f.write('median : '+str(medianval) +'\n')

@@ -105,18 +105,8 @@ def runSubsetOverlaps(self):
         outdir = os.path.join(self._insar.geometryDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
         submasterdir = os.path.join(self._insar.masterSlcProduct, self._insar.overlapsSubDirname, 'IW{0}'.format(swath)) 
 
-
-        if os.path.isdir(outdir):
-            logger.info('Overlap directory {0} already exists'.format(outdir))
-        else:
-            os.makedirs(outdir)
-
-
-        if os.path.isdir(submasterdir):
-            logger.info('Submaster Overlap directory {0} already exists'.format(submasterdir))
-        else:
-            os.makedirs(submasterdir)
-
+        os.makedirs(outdir, exist_ok=True)
+        os.makedirs(submasterdir, exist_ok=True)
 
         ###Azimuth time interval
         dt = mFrame.bursts[0].azimuthTimeInterval        

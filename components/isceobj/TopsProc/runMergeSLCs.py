@@ -28,8 +28,7 @@ def runMergeSLCs(self):
     mSlcList = [os.path.join(self._insar.masterSlcProduct, 'burst_%02d.slc'%(x+1)) for x in range(minBurst, maxBurst)]
     sSlcList = [os.path.join(self._insar.fineCoregDirname, 'burst_%02d.slc'%(x+1)) for x in range(minBurst, maxBurst)]
     mergedir = self._insar.mergedDirname
-    if not os.path.isdir(mergedir):
-        os.makedirs(mergedir)
+    os.makedirs(mergedir, exist_ok=True)
 
     suffix = '.full'
     if (self.numberRangeLooks == 1) and (self.numberAzimuthLooks==1):

@@ -25,8 +25,7 @@ def runGeocodeSd(self):
     demFile = os.path.abspath(self._insar.demGeo)
 
     sdDir = 'sd'
-    if not os.path.exists(sdDir):
-        os.makedirs(sdDir)
+    os.makedirs(sdDir, exist_ok=True)
     os.chdir(sdDir)
 
     if self.geocodeListSd == None:
