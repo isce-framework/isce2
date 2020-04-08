@@ -29,4 +29,7 @@ cython_add_module(alos2proc_f
 target_include_directories(alos2proc_f PUBLIC include)
 target_link_libraries(alos2proc_f PUBLIC FFTW::Float OpenMP::OpenMP_Fortran)
 
-InstallSameDir(alos2proc_f)
+InstallSameDir(
+    alos2proc_f
+    __init__.py
+    )
