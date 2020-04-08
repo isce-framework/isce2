@@ -1,5 +1,7 @@
 set(files
     __init__.py
+    alos2App.py
+    alos2burstApp.py
     dataTileManager.py
     dem.py
     demdb.py
@@ -22,6 +24,7 @@ set(files
     upsampleDem.py
     waterMask.py
     wbd.py
+    wbd_with_correction.py
     wbdStitcher.py
     )
 

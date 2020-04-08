@@ -632,8 +632,8 @@ class DenseAmpcor(Component):
         if self.searchWindowSizeHeight >= 2*self.windowSizeHeight :
             raise ValueError('Search Window Size Height should be < 2 * Window Size Height')
 
-        if self.zoomWindowSize >= min(self.searchWindowSizeWidth, self.searchWindowSizeHeight):
-            raise ValueError('Zoom window size should be <= Search window size')
+        if self.zoomWindowSize > min(self.searchWindowSizeWidth*2+1, self.searchWindowSizeHeight*2+1):
+            raise ValueError('Zoom window size should be <= Search window size * 2 + 1')
 
         if self._stdWriter is None:
             self._stdWriter = create_writer("log", "", True, filename="denseampcor.log")

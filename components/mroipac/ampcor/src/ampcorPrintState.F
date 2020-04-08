@@ -26,7 +26,9 @@
          write(6,*) "r_covth       = ",r_covth
          write(6,*) "l_debug       = ",l_debug
          write(6,*) "l_display     = ",l_display
-   
+
+         write(6,*) "winsize_filt  = ",winsize_filt
+         write(6,*) "i_covs_filt   = ",i_covs_filt
          return
        end
          

@@ -1,6 +1,8 @@
 add_subdirectory(Util)
 add_subdirectory(Sensor)
 
+add_subdirectory(Alos2Proc)
+add_subdirectory(Alos2burstProc)
 add_subdirectory(Attitude)
 add_subdirectory(Catalog)
 add_subdirectory(Constants)

@@ -5,6 +5,10 @@ Python_add_library(libalos2proc MODULE
     src/mbf.c
     src/lib_array.c
     src/lib_func.c
+    src/resamp.c
+    src/mosaicsubswath.c
+    src/look.c
+    src/extract_burst.c
     )
 target_include_directories(libalos2proc PUBLIC include)
 target_link_libraries(libalos2proc PUBLIC

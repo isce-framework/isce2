@@ -1,0 +1,23 @@
+#!/usr/bin/env python
+
+import os
+
+Import('envalos2filter')
+
+install = os.path.join(envalos2filter['PRJ_SCONS_INSTALL'], envalos2filter['PACKAGE'], 'alos2filter')
+listFiles = ['psfilt1.c']
+
+# -shared
+# -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -lm
+# -lfftw3f_threads -lfftw3f -lpthread -fopenmp -O3 
+
+#envalos2proc.Append(CFLAGS=['-D_LARGEFILE64_SOURCE', '-D_FILE_OFFSET_BITS=64', '-lm', '-shared', '-fopenmp', '-O3'])
+#envalos2proc.Append(LIBS=['fftw3f', 'fftw3f_threads', 'pthread'])
+
+lib = envalos2filter.LoadableModule(target = 'libalos2filter.so', source = listFiles, parse_flags='-fopenmp')
+envalos2filter.Install(install,lib)
+envalos2filter.Alias('install',install)
+
+
+
+

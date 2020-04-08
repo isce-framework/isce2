@@ -1,0 +1,19 @@
+InstallSameDir(
+    __init__.py
+    Factories.py
+    Alos2burstProc.py
+    runPreprocessor.py
+    runExtractBurst.py
+    runCoregGeom.py
+    runCoregCc.py
+    runCoregSd.py
+    runSwathOffset.py
+    runSwathMosaic.py
+    runFrameOffset.py
+    runFrameMosaic.py
+    runIonSubband.py
+    runLookSd.py
+    runFiltSd.py
+    runUnwrapSnaphuSd.py
+    runGeocodeSd.py
+    )
