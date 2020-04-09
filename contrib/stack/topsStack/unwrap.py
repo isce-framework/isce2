@@ -38,9 +38,11 @@ from isceobj.Constants import SPEED_OF_LIGHT
 import argparse
 import os
 import pickle
-import sys
+import gdal
+import numpy as np
 #import shelve
 import s1a_isce_utils as ut
+from isceobj.Util.ImageUtil import ImageLib as IML
 
 def createParser():
     '''
@@ -69,6 +71,9 @@ def createParser():
     
     parser.add_argument('-m', '--method', dest='method', type=str, default='icu',
             help='unwrapping method')
+
+    parser.add_argument('--rmfilter', action='store_true', default=False,
+            help='remove the effect of filtering from final unwrapped interferograms')
 
     return parser
 
@@ -276,6 +281,53 @@ def runUnwrapIcu(infile, outfile):
     #unwImage.finalizeImage()
     unwImage.renderHdr()
 
+
+def remove_filter(intfile, filtfile, unwfile):
+
+    outunw = os.path.abspath(unwfile).split('filt_')
+    outunw = outunw[0] + outunw[1]
+
+    ds_unw = gdal.Open(unwfile + ".vrt", gdal.GA_ReadOnly)
+    unw_phase = ds_unw.ReadAsArray()
+
+    bands, length, width = unw_phase.shape
+    print(bands, length, width)
+    outfile = IML.memmap(outunw, mode='write', nchannels=2,
+                         nxx=width, nyy=length, scheme='BIL', dataType='f')
+
+    outfile.bands[0][:, :] = unw_phase[0, :, :]
+
+    ds_filt = gdal.Open(filtfile + ".vrt", gdal.GA_ReadOnly)
+    filt_phase = np.angle(ds_filt.ReadAsArray())
+
+    integer_jumps = unw_phase[1, :, :] - filt_phase
+
+    del unw_phase, filt_phase
+
+    ds_int = gdal.Open(intfile + ".vrt", gdal.GA_ReadOnly)
+    int_phase = np.angle(ds_int.ReadAsArray())
+
+    out_phase = integer_jumps + int_phase
+
+    del int_phase, integer_jumps
+
+    outfile.bands[1][:, :] = out_phase[:, :]
+    
+    unwImage = isceobj.Image.createImage()
+    unwImage.setFilename(outunw)
+    unwImage.setWidth(width)
+    unwImage.setLength(length)
+    unwImage.imageType = 'unw'
+    unwImage.bands = 2
+    unwImage.scheme = 'BIL'
+    unwImage.dataType = 'FLOAT'
+    unwImage.setAccessMode('read')
+    #unwImage.createImage()
+    unwImage.renderHdr()
+    #unwImage.finalizeImage()
+
+    return
+
 def main(iargs=None):
     '''
     The main driver.
@@ -284,6 +336,7 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
     interferogramDir = os.path.dirname(inps.intfile)
     print ('unwrapping method : ' , inps.method)
+    '''
     if inps.method == 'snaphu':
        if inps.nomcf: 
            fncall =  runUnwrap
@@ -297,6 +350,14 @@ def main(iargs=None):
 
     elif inps.method == 'icu':
        runUnwrapIcu(inps.intfile, inps.unwfile)
+    '''
+
+    if inps.rmfilter:
+        filtfile = os.path.abspath(inps.intfile)
+        intfile = filtfile.split('filt_')
+        intfile = intfile[0] + intfile[1]
+
+        remove_filter(intfile, filtfile, inps.unwfile)
 
 
 if __name__ == '__main__':
