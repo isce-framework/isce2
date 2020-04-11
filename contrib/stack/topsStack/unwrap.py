@@ -336,7 +336,7 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
     interferogramDir = os.path.dirname(inps.intfile)
     print ('unwrapping method : ' , inps.method)
-    '''
+    
     if inps.method == 'snaphu':
        if inps.nomcf: 
            fncall =  runUnwrap
@@ -350,7 +350,7 @@ def main(iargs=None):
 
     elif inps.method == 'icu':
        runUnwrapIcu(inps.intfile, inps.unwfile)
-    '''
+    
 
     if inps.rmfilter:
         filtfile = os.path.abspath(inps.intfile)
