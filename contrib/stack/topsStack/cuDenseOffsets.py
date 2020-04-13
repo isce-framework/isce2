@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
-# author: Minyan Zhong 
+# author: Minyan Zhong
 
-import numpy as np 
+import numpy as np
 import argparse
 import os
 import isce
@@ -13,7 +13,7 @@ from isceobj.Location.Offset import OffsetField
 from iscesys.StdOEL.StdOELPy import create_writer
 #from mroipac.ampcor.DenseAmpcor import DenseAmpcor
 
-from PyCuAmpcor import PyCuAmpcor
+from contrib.PyCuAmpcor import PyCuAmpcor
 from grossOffsets import grossOffsets
 
 #from isceobj.Utils.denseoffsets import denseoffsets
@@ -115,18 +115,18 @@ def estimateOffsetField(master, slave, inps=None):
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = PyCuAmpcor()
-    
+    objOffset = PyCuAmpcor.PyCuAmpcor()
+
     objOffset.algorithm = 0
     objOffset.deviceID = inps.gpuid  # -1:let system find the best GPU
-    objOffset.nStreams =   2 #cudaStreams 
+    objOffset.nStreams =   2 #cudaStreams
     objOffset.derampMethod = inps.deramp
     print(objOffset.derampMethod)
 
-    objOffset.masterImageName = master
+    objOffset.masterImageName = master + '.vrt'
     objOffset.masterImageHeight = length
     objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave
+    objOffset.slaveImageName = slave + '.vrt'
     objOffset.slaveImageHeight = length
     objOffset.slaveImageWidth = width
 
@@ -150,10 +150,10 @@ def estimateOffsetField(master, slave, inps=None):
     # window size
     objOffset.windowSizeHeight = inps.winhgt
     objOffset.windowSizeWidth = inps.winwidth
-    
+
     print(objOffset.windowSizeHeight)
     print(objOffset.windowSizeWidth)
- 
+
     # search range
     objOffset.halfSearchRangeDown = inps.srchgt
     objOffset.halfSearchRangeAcross = inps.srcwidth
@@ -162,7 +162,7 @@ def estimateOffsetField(master, slave, inps=None):
     # starting pixel
     objOffset.masterStartPixelDownStatic = inps.margin
     objOffset.masterStartPixelAcrossStatic = inps.margin
- 
+
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
@@ -171,7 +171,7 @@ def estimateOffsetField(master, slave, inps=None):
     objOffset.corrSufaceOverSamplingMethod = 0
     objOffset.corrSurfaceOverSamplingFactor = inps.oversample
     #objOffset.rawDataOversamplingFactor = 4
-    
+
     # output filenames
     objOffset.offsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '.bip'
     objOffset.grossOffsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '_gross.bip'
@@ -197,19 +197,19 @@ def estimateOffsetField(master, slave, inps=None):
         objOffset.numberWindowDownInChunk = 5
         objOffset.numberWindowAcrossInChunk = 5
         objOffset.mmapSize = 16
-    
+
         objOffset.setupParams()
-        
+
         ## Set Gross Offset ###
-    
+
         if inps.gross == 0:
             objOffset.setConstantGrossOffset(0, 0)
         else:
-    
+
             print("Setting up grossOffset...")
-    
+
             objGrossOff = grossOffsets()
-            
+
             objGrossOff.setXSize(width)
             objGrossOff.setYize(length)
             objGrossOff.setMargin(inps.margin)
@@ -224,46 +224,46 @@ def estimateOffsetField(master, slave, inps=None):
             objGrossOff.setLosFile(inps.los)
             objGrossOff.setMasterFile(inps.masterxml)
             objGrossOff.setbTemp(inps.bTemp)
-            
 
-     
+
+
             grossDown, grossAcross = objGrossOff.runGrossOffsets()
-        
+
             # change nan to 0
             grossDown = np.nan_to_num(grossDown)
             grossAcross = np.nan_to_num(grossAcross)
-        
+
             print("Before plotting the gross offsets (min and max): ", np.nanmin(grossDown),np.nanmax(grossDown))
             print("Before plotting the gross offsets (min and max): ", np.rint(np.nanmin(grossDown)),np.rint(np.nanmax(grossDown)))
-        
+
             grossDown = np.int32(np.rint(grossDown.ravel()))
             grossAcross = np.int32(np.rint(grossAcross.ravel()))
-        
+
             print(np.amin(grossDown), np.amax(grossDown))
             print(np.amin(grossAcross), np.amax(grossAcross))
-        
+
             print(grossDown.shape)
             print(grossDown.shape)
-        
+
             objOffset.setVaryingGrossOffset(grossDown, grossAcross)
             #objOffset.setVaryingGrossOffset(np.zeros(shape=grossDown.shape,dtype=np.int32), np.zeros(shape=grossAcross.shape,dtype=np.int32))
-       
-        # check 
+
+        # check
         objOffset.checkPixelInImageRange()
-    
+
         # Run the code
         print('Running PyCuAmpcor')
-         
+
         objOffset.runAmpcor()
-    
+
         print('Finished')
-    
+
         sar.finalizeImage()
         sim.finalizeImage()
-     
+
         # Finalize the results
         # offsetfield
-       
+
         outImg = isceobj.createImage()
         outImg.setDataType('FLOAT')
         outImg.setFilename(offsetImageName)
@@ -273,8 +273,8 @@ def estimateOffsetField(master, slave, inps=None):
         outImg.setLength(objOffset.numberWindowDown)
         outImg.setAccessMode('read')
         outImg.renderHdr()
-    
-    
+
+
         # gross offsetfield
         outImg = isceobj.createImage()
         outImg.setDataType('FLOAT')
@@ -285,7 +285,7 @@ def estimateOffsetField(master, slave, inps=None):
         outImg.setLength(objOffset.numberWindowDown)
         outImg.setAccessMode('read')
         outImg.renderHdr()
-    
+
         # snr
         snrImg = isceobj.createImage()
         snrImg.setFilename(snrImageName)
@@ -297,8 +297,8 @@ def estimateOffsetField(master, slave, inps=None):
         snrImg.renderHdr()
 
     return objOffset
-            
-def main(iargs=None):        
+
+def main(iargs=None):
 
     inps = cmdLineParse(iargs)
     outDir = os.path.dirname(inps.outprefix)
@@ -308,5 +308,5 @@ def main(iargs=None):
     objOffset = estimateOffsetField(inps.master, inps.slave, inps)
 
 if __name__ == '__main__':
-    
+
     main()

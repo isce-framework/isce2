@@ -178,7 +178,8 @@ def main(iargs=None):
 
         minBurst = max(minSlave, minMaster)
         maxBurst = min(maxSlave, maxMaster)
-        maxBurst = maxBurst - 1 ###For overlaps
+        #maxBurst = maxBurst - 1 ###For overlaps
+        maxBurst = maxBurst + 1
 
         for pair in [(masterTop,slaveTop), (masterBottom,slaveBottom)]:
             for ii in range(minBurst,maxBurst):
