@@ -180,13 +180,11 @@ def main(iargs=None):
         os.remove(inps.outfile)
 
     outDir = os.path.dirname(inps.outfile)
-    if not os.path.exists(outDir):
-        os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
     if inps.metamaster is not None:
         masterShelveDir = os.path.join(outDir, 'masterShelve')
-        if not os.path.exists(masterShelveDir):
-            os.makedirs(masterShelveDir)
+        os.makedirs(masterShelveDir, exist_ok=True)
 
         cmd = 'cp ' + inps.metamaster + '/data* ' + masterShelveDir
         os.system(cmd)
@@ -194,8 +192,7 @@ def main(iargs=None):
 
     if inps.metaslave is not None:
         slaveShelveDir = os.path.join(outDir, 'slaveShelve')
-        if not os.path.exists(slaveShelveDir):
-            os.makedirs(slaveShelveDir)
+        os.makedirs(slaveShelveDir, exist_ok=True)
         cmd = 'cp ' + inps.metaslave + '/data* ' + slaveShelveDir
         os.system(cmd)
 

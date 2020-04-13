@@ -91,8 +91,7 @@ def main(iargs=None):
     img2 = isceobj.createImage()
     img2.load(inps.slave + '.xml')
 
-    if not os.path.exists(os.path.dirname(inps.prefix)):
-       os.makedirs(os.path.dirname(inps.prefix))
+    os.makedirs(os.path.dirname(inps.prefix), exist_ok=True)
 
     run(img1, img2, inps.prefix, inps.azlooks, inps.rglooks)
 

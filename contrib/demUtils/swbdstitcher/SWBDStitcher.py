@@ -131,11 +131,7 @@ class SWBDStitcher(DemStitcher):
 
         delta = 1/3600.0
 
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
 
         width = self.getDemWidth(lon,1)
         image.initImage(outname,'read',width,'BYTE')
@@ -168,12 +164,8 @@ class SWBDStitcher(DemStitcher):
         else:
             self._downloadDir = downloadDir
 
-        if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+        if downloadDir is not None:
+            os.makedirs(downloadDir, exist_ok=True)
         for fileNow in listFile:
             url = self.getFullHttp(source)
             opener = urllib.request.URLopener()

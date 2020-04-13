@@ -27,13 +27,11 @@ def runRdrDemOffset(self):
     demFile = os.path.abspath(self._insar.dem)
 
     insarDir = 'insar'
-    if not os.path.exists(insarDir):
-        os.makedirs(insarDir)
+    os.makedirs(insarDir, exist_ok=True)
     os.chdir(insarDir)
 
     rdrDemDir = 'rdr_dem_offset'
-    if not os.path.exists(rdrDemDir):
-        os.makedirs(rdrDemDir)
+    os.makedirs(rdrDemDir, exist_ok=True)
     os.chdir(rdrDemDir)
 
     ##################################################################################################

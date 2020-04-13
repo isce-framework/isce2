@@ -224,12 +224,7 @@ def cropFrame(frame, limits, outdir, israw=False):
     suffix = os.path.splitext(inname)[1]
     outname = os.path.join(outdir, os.path.basename(inname)) #+ suffix
     outdirname = os.path.dirname(outname)
-
-    if os.path.isdir(outdirname):
-        print('Output directory already exists. Will be overwritten ....')
-    else:
-        os.makedirs(outdirname)
-        print('Creating {0} directory.'.format(outdirname))
+    os.makedirs(outdirname, exist_ok=True)
 
     indata = IML.mmapFromISCE(inname, logging)
     indata.bands[0][ymin:ymax,xmin*factor:xmax*factor].tofile(outname)

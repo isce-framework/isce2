@@ -96,20 +96,18 @@ def main(iargs=None):
 
                 # put failed files in a seperate directory
                 if not successflag_unzip:
-                    if not os.path.isdir(os.path.join(workdir,'FAILED_FILES')):
-                        os.makedirs(os.path.join(workdir,'FAILED_FILES'))
+                    os.makedirs(os.path.join(workdir,'FAILED_FILES'), exist_ok=True)
                     os.rename(CSK_infilefolder,os.path.join(workdir,'FAILED_FILES','.'))
                 else:
                     # check if file needs to be removed or put in archive folder
-                    if rmfile:                                                                                                                                   
+                    if rmfile:
                         os.remove(CSK_infilefolder)
                         print('Deleting: ' + CSL_infilefolder)
                     else:
-                        if not os.path.isdir(os.path.join(workdir,'ARCHIVED_FILES')):
-                            os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'))
+                        os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'), exist_ok=True)
                         cmd  = 'mv ' + CSK_infilefolder + ' ' + os.path.join(workdir,'ARCHIVED_FILES','.')
                         os.system(cmd)
-                                                                                                                                      
+
         # loop over the different CSK folders and make sure the folder names are consistent.
         # this step is not needed unless the user has manually unzipped data before.
         CSK_folders = glob.glob(os.path.join(inputDir, 'EL*'))
@@ -138,9 +136,8 @@ def main(iargs=None):
         if successflag:
             # move the file into the date folder
             SLC_dir = os.path.join(workdir,imgDate,'')
-            if not os.path.isdir(SLC_dir):
-                os.makedirs(SLC_dir)
-                
+            os.makedirs(SLC_dir, exist_ok=True)
+
             # check if the folder already exist in that case overwrite it
             CSK_folder_out = os.path.join(SLC_dir,os.path.basename(CSK_folder))
             if os.path.isdir(CSK_folder_out):
@@ -176,8 +173,7 @@ def main(iargs=None):
             if len(CSKFiles)>0:
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(outputDir, acquisitionDate)
-                if not os.path.exists(slcDir):
-                    os.makedirs(slcDir)     
+                os.makedirs(slcDir, exist_ok=True)
                 cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')
@@ -188,8 +184,7 @@ def main(iargs=None):
             if len(CSKFiles)>0:
                acquisitionDate = os.path.basename(dateDir)
                slcDir = os.path.join(outputDir, acquisitionDate)
-               if not os.path.exists(slcDir):
-                  os.makedirs(slcDir)     
+               os.makedirs(slcDir, exist_ok=True)
                cmd = 'unpackFrame_CSK_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
 
                if len(CSKFiles) > 1:

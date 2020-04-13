@@ -193,8 +193,7 @@ def runPreprocessor(self):
     for i, (masterFrame, slaveFrame) in enumerate(zip(self._insar.masterFrames, self._insar.slaveFrames)):
         #frame number starts with 1
         frameDir = 'f{}_{}'.format(i+1, masterFrame)
-        if not os.path.exists(frameDir):
-            os.makedirs(frameDir)
+        os.makedirs(frameDir, exist_ok=True)
         os.chdir(frameDir)
 
         #attach a frame to master and slave
@@ -210,8 +209,7 @@ def runPreprocessor(self):
             print('processing frame {} swath {}'.format(masterFrame, j))
 
             swathDir = 's{}'.format(j)
-            if not os.path.exists(swathDir):
-                os.makedirs(swathDir)
+            os.makedirs(swathDir, exist_ok=True)
             os.chdir(swathDir)
 
             #attach a swath to master and slave

@@ -303,8 +303,7 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
     outDir = os.path.dirname(inps.outprefix)
     print(inps.outprefix)
-    if not os.path.exists(outDir):
-         os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
     objOffset = estimateOffsetField(inps.master, inps.slave, inps)
 

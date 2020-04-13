@@ -22,8 +22,7 @@ def runRectRangeOffset(self):
     slaveTrack = self._insar.loadTrack(master=False)
 
     insarDir = 'insar'
-    if not os.path.exists(insarDir):
-        os.makedirs(insarDir)
+    os.makedirs(insarDir, exist_ok=True)
     os.chdir(insarDir)
 
 

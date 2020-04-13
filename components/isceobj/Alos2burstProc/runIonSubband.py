@@ -59,8 +59,7 @@ def runIonSubband(self):
     ############################################################
     #create and enter 'ion' directory
     #after finishing each step, we are in this directory
-    if not os.path.exists(ionDir['ion']):
-        os.makedirs(ionDir['ion'])
+    os.makedirs(ionDir['ion'], exist_ok=True)
     os.chdir(ionDir['ion'])
 
     #create insar processing directories
@@ -71,12 +70,10 @@ def runIonSubband(self):
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
                 fullDir = os.path.join(subbandDir, frameDir, swathDir)
-                if not os.path.exists(fullDir):
-                    os.makedirs(fullDir)
+                os.makedirs(fullDir, exist_ok=True)
 
     #create ionospheric phase directory
-    if not os.path.exists(ionDir['ionCal']):
-        os.makedirs(ionDir['ionCal'])
+    os.makedirs(ionDir['ionCal'])
 
 
     ############################################################
@@ -100,10 +97,8 @@ def runIonSubband(self):
                 slcDir = os.path.join('../', frameDir, swathDir, burstPrefix)
                 slcLowerDir = os.path.join(ionDir['subband'][0], frameDir, swathDir, burstPrefix)
                 slcUpperDir = os.path.join(ionDir['subband'][1], frameDir, swathDir, burstPrefix)
-                if not os.path.exists(slcLowerDir):
-                    os.makedirs(slcLowerDir)
-                if not os.path.exists(slcUpperDir):
-                    os.makedirs(slcUpperDir)
+                os.makedirs(slcLowerDir, exist_ok=True)
+                os.makedirs(slcUpperDir, exist_ok=True)
                 for k in range(swath.numberOfBursts):
                     print('processing burst: %02d'%(k+1))
                     slc = os.path.join(slcDir, burstPrefix+'_%02d.slc'%(k+1))
@@ -208,8 +203,7 @@ def runIonSubband(self):
             os.chdir(frameDir)
 
             mosaicDir = 'mosaic'
-            if not os.path.exists(mosaicDir):
-                os.makedirs(mosaicDir)
+            os.makedirs(mosaicDir, exist_ok=True)
             os.chdir(mosaicDir)
 
             if self._insar.endingSwath-self._insar.startingSwath+1 == 1:
@@ -289,8 +283,7 @@ def runIonSubband(self):
         os.chdir(ionDir['subband'][k])
 
         mosaicDir = 'insar'
-        if not os.path.exists(mosaicDir):
-            os.makedirs(mosaicDir)
+        os.makedirs(mosaicDir, exist_ok=True)
         os.chdir(mosaicDir)
 
         numberOfFrames = len(masterTrack.frames)
@@ -374,8 +367,7 @@ def runIonSubband(self):
         os.chdir(ionDir['subband'][k])
 
         insarDir = ionDir['insar']
-        if not os.path.exists(insarDir):
-            os.makedirs(insarDir)
+        os.makedirs(insarDir, exist_ok=True)
         os.chdir(insarDir)
 
         rangePixelSize = self._insar.numberRangeLooks1 * masterTrack.rangePixelSize

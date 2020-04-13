@@ -232,8 +232,7 @@ def main(iargs=None):
         else:
             outdir = os.path.join(inps.coregdir, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outdir):
-           os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
         if os.path.exists(str(inps.misreg_az)):
             with open(inps.misreg_az, 'r') as f:

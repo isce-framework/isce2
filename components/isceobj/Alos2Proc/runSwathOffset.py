@@ -29,8 +29,7 @@ def runSwathOffset(self):
         os.chdir(frameDir)
 
         mosaicDir = 'mosaic'
-        if not os.path.exists(mosaicDir):
-            os.makedirs(mosaicDir)
+        os.makedirs(mosaicDir, exist_ok=True)
         os.chdir(mosaicDir)
 
         if not (

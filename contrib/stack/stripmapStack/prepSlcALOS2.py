@@ -130,8 +130,7 @@ def main(iargs=None):
                 # put failed files in a seperate directory
                 if not successflag_unzip:
                     dir_failed = os.path.join(workdir,'FAILED_FILES')
-                    if not os.path.isdir(dir_failed):
-                        os.makedirs(dir_failed)
+                    os.makedirs(dir_failed, exist_ok=True)
                     cmd = 'mv {} {}'.format(fname, dir_failed)
                     os.system(cmd)
                 else:
@@ -141,8 +140,7 @@ def main(iargs=None):
                         print('Deleting: ' + fname)
                     else:
                         dir_archive = os.path.join(workdir,'ARCHIVED_FILES')
-                        if not os.path.isdir(dir_archive):
-                            os.makedirs(dir_archive)
+                        os.makedirs(dir_archive, exist_ok=True)
                         cmd = 'mv {} {}'.format(fname, dir_archive)
                         os.system(cmd)
 
@@ -177,9 +175,8 @@ def main(iargs=None):
         if successflag:
             # move the file into the date folder
             SLC_dir = os.path.join(workdir,imgDate,'')
-            if not os.path.isdir(SLC_dir):
-                os.makedirs(SLC_dir)
-                
+            os.makedirs(SLC_dir, exist_ok=True)
+
             # check if the folder already exist in that case overwrite it
             ALOS_folder_out = os.path.join(SLC_dir,os.path.basename(ALOS_folder))
             if os.path.isdir(ALOS_folder_out):
@@ -203,8 +200,7 @@ def main(iargs=None):
             if len(AlosFiles)>0:
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(inps.outputDir, acquisitionDate)
-                if not os.path.exists(slcDir):
-                    os.makedirs(slcDir)     
+                os.makedirs(slcDir, exist_ok=True)
                 cmd = 'unpackFrame_ALOS2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')

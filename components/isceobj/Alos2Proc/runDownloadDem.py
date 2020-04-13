@@ -31,8 +31,7 @@ def runDownloadDem(self):
     #get 1 arcsecond dem for coregistration
     if self.dem == None:
         demDir = 'dem_1_arcsec'
-        if not os.path.exists(demDir):
-            os.makedirs(demDir)
+        os.makedirs(demDir, exist_ok=True)
         os.chdir(demDir)
 
         downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
@@ -52,8 +51,7 @@ def runDownloadDem(self):
     #get 3 arcsecond dem for geocoding
     if self.demGeo == None:
         demGeoDir = 'dem_3_arcsec'
-        if not os.path.exists(demGeoDir):
-            os.makedirs(demGeoDir)
+        os.makedirs(demGeoDir, exist_ok=True)
         os.chdir(demGeoDir)
 
         downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
@@ -73,8 +71,7 @@ def runDownloadDem(self):
     #get water body for masking interferogram
     if self.wbd == None:
         wbdDir = 'wbd_1_arcsec'
-        if not os.path.exists(wbdDir):
-            os.makedirs(wbdDir)
+        os.makedirs(wbdDir, exist_ok=True)
         os.chdir(wbdDir)
 
         #cmd = 'wbd.py {}'.format(bboxStr)

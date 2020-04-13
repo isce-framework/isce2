@@ -319,11 +319,9 @@ def main(iargs=None):
   # getting the acquisitions
   acquisitionDates, stackMasterDate, slaveDates = get_dates(inps)
   configDir = os.path.join(inps.workDir,'configs')
-  if not os.path.exists(configDir):
-       os.makedirs(configDir)
+  os.makedirs(configDir, exist_ok=True)
   runDir = os.path.join(inps.workDir,'run_files')
-  if not os.path.exists(runDir):
-       os.makedirs(runDir)
+  os.makedirs(runDir, exist_ok=True)
 
   if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
     pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=False)

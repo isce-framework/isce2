@@ -223,10 +223,7 @@ def subBandIgram(self, masterSlc, slaveSlc, subBandDir,radarWavelength):
 
     ifgDir = os.path.join(self.insar.ifgDirname, subBandDir)
 
-    if os.path.isdir(ifgDir):
-        logger.info('Interferogram directory {0} already exists.'.format(ifgDir))
-    else:
-        os.makedirs(ifgDir)
+    os.makedirs(ifgDir, exist_ok=True)
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
 

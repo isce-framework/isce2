@@ -452,12 +452,8 @@ class MaskStitcher(Component):
         else:
             self._downloadDir = downloadDir
 
-        if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+        if downloadDir is not None:
+            os.makedirs(downloadDir, exist_ok=True)
         if region:
             regionList = region
         #region unknown, so try all of them
@@ -664,11 +660,7 @@ class MaskStitcher(Component):
 
         demImage = createDemImage()
 
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
 
         width = self._width
         demImage.initImage(outname,'read',width)
@@ -732,11 +724,7 @@ class MaskStitcher(Component):
         demImage = self.createImage(lat,lon,outname)
 
         dict = {'WIDTH':demImage.width,'LENGTH':demImage.length,'X_FIRST':demImage.coord1.coordStart,'Y_FIRST':demImage.coord2.coordStart,'X_STEP':demImage.coord1.coordDelta,'Y_STEP':-demImage.coord2.coordDelta,'X_UNIT':'degrees','Y_UNIT':'degrees'}
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
         extension = '.rsc'
         outfile = os.path.join(self._downloadDir,outname + extension)
         fp = open(outfile,'w')

@@ -168,8 +168,7 @@ def runBurstIfg(self):
             continue
     
         ifgdir = os.path.join(self._insar.fineIfgDirname, 'IW{0}'.format(swath))
-        if not os.path.exists(ifgdir):
-            os.makedirs(ifgdir)
+        os.makedirs(ifgdir, exist_ok=True)
 
         ####Load relevant products
         master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))

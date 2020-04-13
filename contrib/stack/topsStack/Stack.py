@@ -267,22 +267,19 @@ class run(object):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
         self.runDir = os.path.join(self.work_dir, 'run_files')
-        if not os.path.exists(self.runDir):
-            os.makedirs(self.runDir)
+        os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
         self.config_path = os.path.join(self.work_dir,'configs')
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
 
         self.runf= open(self.run_outname,'w')
 
     def unpackSLC(self, acquisitionDates, safe_dict):
         swath_path = self.work_dir
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
 
         for slcdate in acquisitionDates:
             configName = os.path.join(self.config_path,'config_'+slcdate)
@@ -303,8 +300,7 @@ class run(object):
 
     def unpackStackMasterSLC(self, safe_dict):
         swath_path = self.work_dir
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
         configName = os.path.join(self.config_path,'config_master')
         configObj = config(configName)
         configObj.configure(self)

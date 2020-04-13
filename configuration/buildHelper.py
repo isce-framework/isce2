@@ -7,11 +7,7 @@ tmpdump = 'tmpdump.json'
 def createHelp(env,factoryFile,installDir):
     #jng: try to have scons handle all the creation but could not figure out how
     #     so handled dir creation manually
-    try:
-        os.makedirs(env['HELPER_BUILD_DIR'])
-    except:
-        # already exists
-        pass
+    os.makedirs(env['HELPER_BUILD_DIR'], exist_ok=True)
     try:
         #one could probably also use __import__ but needs to make sure the
         #the cwd is prepended to the sys.path otherwise if factoryFile = __init__.py

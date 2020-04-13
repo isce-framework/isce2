@@ -59,9 +59,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     ## TODO GPU does not support shadow and layover and local inc file generation
     full = False
 
-
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     # define variables to be used later on
     r0 = info.rangeFirstSample + ((info.numberRangeLooks - 1)/2) * info.slantRangePixelSpacing
@@ -281,8 +279,7 @@ def runTopoCPU(info, demImage, dop=None,
     from zerodop.topozero import createTopozero
     from isceobj.Planet.Planet import Planet
 
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     #####Run Topo
     planet = Planet(pname='Earth')
@@ -366,9 +363,7 @@ def runMultilook(in_dir, out_dir, alks, rlks):
     from iscesys.Parsers.FileParserFactory import createFileParser
     FP = createFileParser('xml')
 
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-        print('create directory: {}'.format(out_dir))
+    os.makedirs(out_dir, exist_ok=True)
 
     for fbase in ['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']:
         fname = '{}.rdr'.format(fbase)
@@ -407,9 +402,7 @@ def runMultilookGdal(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr',
     import gdal
 
     # create 'geom_master' directory
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-        print('create directory: {}'.format(out_dir))
+    os.makedirs(out_dir, exist_ok=True)
 
     # multilook files one by one
     for fbase in fbase_list:

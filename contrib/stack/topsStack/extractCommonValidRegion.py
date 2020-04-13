@@ -99,8 +99,7 @@ def main(iargs=None):
 
         print('writing ', os.path.join(stackDir , 'IW{0}.xml'.format(swath)))
         ut.saveProduct(topMaster, os.path.join(stackDir , 'IW{0}.xml'.format(swath)))
-        if not os.path.exists(os.path.join(stackDir ,'IW{0}'.format(swath))):
-            os.makedirs(os.path.join(stackDir ,'IW{0}'.format(swath)))
+        os.makedirs(os.path.join(stackDir ,'IW{0}'.format(swath)), exist_ok=True)
 
 
 if __name__ == '__main__':
