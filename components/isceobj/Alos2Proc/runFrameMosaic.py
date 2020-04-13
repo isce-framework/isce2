@@ -24,8 +24,7 @@ def runFrameMosaic(self):
     slaveTrack = self._insar.loadTrack(master=False)
 
     mosaicDir = 'insar'
-    if not os.path.exists(mosaicDir):
-        os.makedirs(mosaicDir)
+    os.makedirs(mosaicDir, exist_ok=True)
     os.chdir(mosaicDir)
 
     numberOfFrames = len(masterTrack.frames)
@@ -334,8 +333,7 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
             if DEBUG:
                 #create a dir and work in this dir
                 diffDir = 'frame_mosaic'
-                if not os.path.exists(diffDir):
-                    os.makedirs(diffDir)
+                os.makedirs(diffDir, exist_ok=True)
                 os.chdir(diffDir)
 
                 #dump phase difference

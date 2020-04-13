@@ -25,8 +25,7 @@ def runLook(self):
     wbdFile = os.path.abspath(self._insar.wbd)
 
     insarDir = 'insar'
-    if not os.path.exists(insarDir):
-        os.makedirs(insarDir)
+    os.makedirs(insarDir, exist_ok=True)
     os.chdir(insarDir)
 
 

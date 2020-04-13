@@ -216,11 +216,10 @@ else:
 ### End of GPU branch-specific modifications
 
 
+os.makedirs(inst, exist_ok=True)
 env.Install(inst, '__init__.py')
 env.Install(inst, 'release_history.py')
 
-if not os.path.exists(inst):
-    os.makedirs(inst)
 
 v = 0
 if isrerun == 'no':

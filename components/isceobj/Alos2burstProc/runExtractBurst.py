@@ -66,8 +66,7 @@ def runExtractBurst(self):
                 #########################################################################################
 
                 #extract burst
-                if not os.path.exists(extractDir):
-                    os.makedirs(extractDir)
+                os.makedirs(extractDir, exist_ok=True)
                 os.chdir(extractDir)
                 if os.path.isfile(os.path.join('../', fullApertureSlc)):
                     os.rename(os.path.join('../', fullApertureSlc), fullApertureSlc)

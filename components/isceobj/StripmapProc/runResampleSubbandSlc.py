@@ -83,10 +83,7 @@ def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregD
     # preparing the output directory for coregistered slave slc
     #coregDir = self.insar.coregDirname
 
-    if os.path.isdir(coregDir):
-        logger.info('Geometry directory {0} already exists.'.format(coregDir))
-    else:
-        os.makedirs(coregDir)
+    os.makedirs(coregDir, exist_ok=True)
 
     # output file name of the coregistered slave slc
     img = slaveFrame.getImage() 

@@ -44,8 +44,7 @@ def runCoregSd(self):
             # spectral diversity or mai
             ##################################################
             sdDir = 'spectral_diversity'
-            if not os.path.exists(sdDir):
-                os.makedirs(sdDir)
+            os.makedirs(sdDir, exist_ok=True)
             os.chdir(sdDir)
 
             interferogramDir = 'burst_interf_2_coreg_cc'

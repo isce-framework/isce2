@@ -140,8 +140,7 @@ def main(iargs=None):
         else:
             outdir = os.path.join(inps.coreg, inps.overlapDir, 'IW{0}'.format(swath))
             offdir = os.path.join(inps.coreg, inps.overlapDir, 'IW{0}'.format(swath))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
     
         ####Indices w.r.t master

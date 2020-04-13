@@ -31,8 +31,7 @@ def runIonFilt(self):
     subbandPrefix = ['lower', 'upper']
 
     ionCalDir = os.path.join(ionDir['ion'], ionDir['ionCal'])
-    if not os.path.exists(ionCalDir):
-        os.makedirs(ionCalDir)
+    os.makedirs(ionCalDir, exist_ok=True)
     os.chdir(ionCalDir)
 
 

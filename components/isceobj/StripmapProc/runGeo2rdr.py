@@ -52,10 +52,7 @@ def runGeo2rdr(self):
     info = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
 
     offsetsDir = self.insar.offsetsDirname 
-    if os.path.isdir(offsetsDir):
-        logger.info('Geometry directory {0} already exists.'.format(offsetsDir))
-    else:
-        os.makedirs(offsetsDir)
+    os.makedirs(offsetsDir, exist_ok=True)
 
     grdr = createGeo2rdr()
     grdr.configure()

@@ -30,8 +30,7 @@ def runSlcMosaic(self):
     slaveTrack = self._insar.loadTrack(master=False)
 
     denseOffsetDir = 'dense_offset'
-    if not os.path.exists(denseOffsetDir):
-        os.makedirs(denseOffsetDir)
+    os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
 

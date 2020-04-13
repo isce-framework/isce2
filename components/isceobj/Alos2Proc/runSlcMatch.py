@@ -37,8 +37,7 @@ def runSlcMatch(self):
     wbdFile = os.path.abspath(self._insar.wbd)
 
     denseOffsetDir = 'dense_offset'
-    if not os.path.exists(denseOffsetDir):
-        os.makedirs(denseOffsetDir)
+    os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
     masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)

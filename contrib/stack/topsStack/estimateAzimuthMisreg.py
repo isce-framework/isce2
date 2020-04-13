@@ -63,6 +63,7 @@ def main(iargs=None):
 
         minBurst = int(os.path.basename(freqFiles[0]).split('.')[0][-2:])
         maxBurst = int(os.path.basename(freqFiles[-1]).split('.')[0][-2:])
+        maxBurst = maxBurst + 1
 
     #maxBurst = maxBurst - 1
 
@@ -79,9 +80,9 @@ def main(iargs=None):
   #  val = []
         lineCount = 0
         for ii in range(minBurst, maxBurst):
-          intname = os.path.join(esddir, 'overlap_%02d.%dalks_%drlks.int'%(ii+1, alks,rlks))
-          freqname = os.path.join(esddir, 'freq_%02d.%dalks_%drlks.bin'%(ii+1,alks,rlks))
-          corname = os.path.join(esddir, 'overlap_%02d.%dalks_%drlks.cor'%(ii+1, alks, rlks))
+          intname = os.path.join(esddir, 'overlap_%02d.%dalks_%drlks.int'%(ii, alks,rlks))
+          freqname = os.path.join(esddir, 'freq_%02d.%dalks_%drlks.bin'%(ii,alks,rlks))
+          corname = os.path.join(esddir, 'overlap_%02d.%dalks_%drlks.cor'%(ii, alks, rlks))
 
 
           img = isceobj.createImage()
@@ -174,8 +175,7 @@ def main(iargs=None):
 #    slaveTimingCorrection = medianval * master.bursts[0].azimuthTimeInterval
 
     outputDir = os.path.dirname(inps.output)
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     with open(inps.output, 'w') as f:
          f.write('median : '+str(medianval) +'\n')

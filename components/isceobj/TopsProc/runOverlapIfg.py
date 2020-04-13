@@ -128,8 +128,7 @@ def runOverlapIfg(self):
         nBurst = maxBurst - minBurst
 
         ifgdir = os.path.join( self._insar.coarseIfgDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
-        if not os.path.exists(ifgdir):
-            os.makedirs(ifgdir)
+        os.makedirs(ifgdir, exist_ok=True)
 
         ####All indexing is w.r.t stack master for overlaps
         maxBurst = maxBurst - 1

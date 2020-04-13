@@ -76,8 +76,7 @@ def main(iargs=None):
         annFile = file.replace('_s'+inps.segment+'_1x1.slc','')+'.ann'
         print (annFile)
         imgDir = os.path.join(outputDir,imgDate)
-        if not os.path.exists(imgDir):
-           os.makedirs(imgDir)
+        os.makedirs(imgDir, exist_ok=True)
 
         cmd = 'unpackFrame_UAVSAR.py -i ' + annFile  + ' -d '+ inps.dopFile + ' -o ' + imgDir
         print (cmd)

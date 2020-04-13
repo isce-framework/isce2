@@ -954,14 +954,7 @@ class Sentinel1(Component):
         if length is None:
             length = self.product.bursts[0].numberOfLines
 
-
-        if os.path.isdir(self.output):
-            print('Output directory exists. Overwriting ...')
-#            os.rmdir(self.output)
-        else:
-            print('Creating directory {0} '.format(self.output))
-            os.makedirs(self.output)
-
+        os.makedirs(self.output, exist_ok=True)
 
         prevTiff = None
         for index, burst in enumerate(self.product.bursts):

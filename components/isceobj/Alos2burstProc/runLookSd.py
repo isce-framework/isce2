@@ -24,8 +24,7 @@ def runLookSd(self):
     wbdFile = os.path.abspath(self._insar.wbd)
 
     sdDir = 'sd'
-    if not os.path.exists(sdDir):
-        os.makedirs(sdDir)
+    os.makedirs(sdDir, exist_ok=True)
     os.chdir(sdDir)
 
     sd = isceobj.createImage()

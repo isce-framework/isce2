@@ -136,8 +136,7 @@ def design_matrix(pairDirs):
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  if not os.path.exists(inps.output):
-      os.makedirs(inps.output)
+  os.makedirs(inps.output, exist_ok=True)
 
   pairDirs = glob.glob(os.path.join(inps.input,'*'))
   polyInfo = getPolyInfo(pairDirs[0])
@@ -185,8 +184,7 @@ def main(iargs=None):
      azpoly.initPoly(rangeOrder=polyInfo['azrgOrder'], azimuthOrder=polyInfo['azazOrder'], coeffs=azCoefs)
      rgpoly.initPoly(rangeOrder=polyInfo['rgrgOrder'], azimuthOrder=polyInfo['rgazOrder'], coeffs=rgCoefs)
 
-     if not os.path.exists(os.path.join(inps.output,dateList[i])):
-         os.makedirs(os.path.join(inps.output,dateList[i]))
+     os.makedirs(os.path.join(inps.output,dateList[i]), exist_ok=True)
 
      odb = shelve.open(os.path.join(inps.output,dateList[i]+'/misreg'))
      odb['azpoly'] = azpoly

@@ -207,8 +207,7 @@ def runFineResamp(self):
 
         ###Output directory for coregistered SLCs
         outdir = os.path.join(self._insar.fineCoregDirname, 'IW{0}'.format(swath))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
     
         ###Directory with offsets
