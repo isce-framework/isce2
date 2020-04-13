@@ -1672,8 +1672,6 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
     output: first lines > 0, last lines < 0
     '''
-    from scipy import interpolate
-    from scipy.interpolate import interp1d
 
     Vs = np.linalg.norm(burst.orbit.interpolateOrbit(burst.sensingMid, method='hermite').getVelocity())
     Ks =   2 * Vs * burst.azimuthSteeringRate / burst.radarWavelength 
@@ -1699,6 +1697,8 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
 
 def grd2ion(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     print('resampling ionosphere from ground to ionospheric layer')
     #get files
@@ -1886,8 +1886,6 @@ def filt_gaussian(self, ionParam):
     currently not implemented.
     a less accurate method is to use ionsphere without any projection
     '''
-    from scipy import interpolate
-    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
@@ -2109,6 +2107,8 @@ def ionosphere_shift(self, ionParam):
 
 
 def ion2grd(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
