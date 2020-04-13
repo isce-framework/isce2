@@ -1707,6 +1707,8 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
 
 def grd2ion(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     print('resampling ionosphere from ground to ionospheric layer')
     #get files
@@ -2117,6 +2119,8 @@ def ionosphere_shift(self, ionParam):
 
 
 def ion2grd(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
