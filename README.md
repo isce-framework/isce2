@@ -152,6 +152,7 @@ py36-scipy +gcc7 +openblas
 py36-matplotlib +cairo +tkinter
 py36-matplotlib-basemap
 py36-h5py
+py36-gdal
 ```
 
 ### Python3 Convention
