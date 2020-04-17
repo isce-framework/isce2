@@ -1,6 +1,6 @@
-version: 2
+version: 2.1
 jobs:
-  build:
+  test:
     docker:
         - image: hysds/pge-base:latest
           user: root
@@ -23,7 +23,7 @@ jobs:
             pwd
             mkdir config build install
             . /opt/conda/bin/activate root
-            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
+            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
             yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran
             ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
             cd /opt/conda/lib
@@ -72,12 +72,164 @@ jobs:
               set -ex
               pwd
               . /opt/conda/bin/activate root
-              export ISCE_HOME=/root/project/install/isce
+              ISCE_HOME=/root/project/install/isce
               export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:/opt/conda/bin:$PATH"
               export PYTHONPATH="/root/project/install:$PYTHONPATH"
               export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
               topsApp.py --help --steps
               stripmapApp.py --help --steps
               python3 -c "import isce"
-              
+  build:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache \
+              python-dev py-pip bash pigz build-base libffi-dev openssl-dev
+            pip install \
+              docker-compose awscli
+      - run:
+          name: Build docker image
+          command: |
+            mkdir images
+            SHA1=$(echo $CIRCLE_SHA1 | cut -c1-7)
+            echo "export TAG=$SHA1" >> images/env.sh
+            source images/env.sh
+            docker build --rm --force-rm -t isce/isce2:$TAG -f docker/Dockerfile .
+            cd images
+            docker save isce/isce2:$TAG > isce2.tar
+      - persist_to_workspace:
+          root: images
+          paths:
+            - "*"
+  build-release:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache \
+              python-dev py-pip bash pigz build-base libffi-dev openssl-dev
+            pip install \
+              docker-compose awscli
+      - run:
+          name: Build docker image
+          command: |
+            mkdir images
+            echo "export TAG=$CIRCLE_TAG" >> images/env.sh
+            source images/env.sh
+            docker build --rm --force-rm -t isce/isce2:$TAG -f docker/Dockerfile .
+            cd images
+            docker save isce/isce2:$TAG > isce2.tar
+      - persist_to_workspace:
+          root: images
+          paths:
+            - "*"
+  build-periodically:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache \
+              python-dev py-pip bash pigz build-base libffi-dev openssl-dev
+            pip install \
+              docker-compose awscli
+      - run:
+          name: Build docker image
+          command: |
+            mkdir images
+            echo 'export TAG=$(date -u +%Y%m%d)' >> images/env.sh
+            source images/env.sh
+            docker build --rm --force-rm -t isce/isce2:$TAG -f docker/Dockerfile .
+            cd images
+            docker save isce/isce2:$TAG > isce2.tar
+      - persist_to_workspace:
+          root: images
+          paths:
+            - "*"
+  deploy:
+    docker:
+      - image: docker:stable-git
+    steps:
+      - setup_remote_docker
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --no-cache \
+              curl file
+      - attach_workspace:
+          at: images
+      - run:
+          name: Deploy
+          command: |
+            cd images
+            source env.sh
+            docker load -i isce2.tar
+            docker tag isce/isce2:$TAG isce/isce2:latest
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push isce/isce2:$TAG
+            docker push isce/isce2:latest
 
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
+  build-deploy:
+    jobs:
+      - build:
+          filters:
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+  build-deploy-release:
+    jobs:
+      - build-release:
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - deploy:
+          requires:
+            - build-release
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+  weekly:
+    triggers:
+      - schedule:
+          cron: "0 7 * * 0"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - build-periodically:
+          filters:
+            branches:
+              only: master
+      - deploy:
+          requires:
+            - build-periodically
+          filters:
+            branches:
+              only: master

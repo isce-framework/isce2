@@ -39,9 +39,8 @@ from ctypes import cdll
 import numpy as np
 import os
 import sys
-import logging
+from isce import logging
 import math
-import logging.config
 import urllib.request, urllib.parse, urllib.error
 from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher
@@ -132,11 +131,7 @@ class SWBDStitcher(DemStitcher):
 
         delta = 1/3600.0
 
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
 
         width = self.getDemWidth(lon,1)
         image.initImage(outname,'read',width,'BYTE')
@@ -169,12 +164,8 @@ class SWBDStitcher(DemStitcher):
         else:
             self._downloadDir = downloadDir
 
-        if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+        if downloadDir is not None:
+            os.makedirs(downloadDir, exist_ok=True)
         for fileNow in listFile:
             url = self.getFullHttp(source)
             opener = urllib.request.URLopener()
@@ -315,9 +306,6 @@ class SWBDStitcher(DemStitcher):
         #it's /srtm/version2_1/SRTM(1,3)
         self._remove = ['.jpg','.xml']
         if not self.logger:
-            logging.config.fileConfig(
-            os.environ['ISCE_HOME'] + '/library/applications/logging.conf'
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.SWBDStitcher')
 
         self.parameter_list = self.parameter_list + super(DemStitcher,self).parameter_list

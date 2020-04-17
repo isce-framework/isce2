@@ -38,18 +38,14 @@ def main(iargs=None):
     # making the output direcory is non-existent
     outDir = os.path.dirname(inps.output_slc)
     inDir = os.path.dirname(inps.input_slc)
-    if not os.path.exists(outDir):
-       os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
     # copying shelf files as backup
     masterShelveDir = os.path.join(outDir, 'masterShelve')
     slaveShelveDir = os.path.join(outDir, 'slaveShelve')
 
-    if not os.path.exists(masterShelveDir):
-       os.makedirs(masterShelveDir)
-
-    if not os.path.exists(slaveShelveDir):
-       os.makedirs(slaveShelveDir)
+    os.makedirs(masterShelveDir, exist_ok=True)
+    os.makedirs(slaveShelveDir, exist_ok=True)
 
 
     cmd = 'cp '+ inDir + '/data* ' + slaveShelveDir

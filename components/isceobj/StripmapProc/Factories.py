@@ -52,7 +52,7 @@ def isRawSensor(sensor):
     '''
     Check if input data is raw / slc.
     '''
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','ers_envisat_slc','sicd_rgzero']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','ers_envisat_slc','sicd_rgzero', 'iceye_slc', 'uavsar_hdf5_slc']:
         return False
     else:
         return True
@@ -63,7 +63,7 @@ def isZeroDopplerSLC(sensor):
     Check if SLC is zero doppler / native doppler.
     '''
 
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','envisat_slc','ers_envisat_slc','sicd_rgzero']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','envisat_slc','ers_envisat_slc','sicd_rgzero', 'iceye_slc', 'uavsar_hdf5_slc']:
         return True
     elif sensor.lower() in ['alos_slc', 'uavsar_rpi']:
         return False
@@ -76,7 +76,7 @@ def getDopplerMethod(sensor):
     Return appropriate doppler method based on user input.
     '''
 
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','cosmo_skymed','ers_envisat_slc','sicd_rgzero']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','cosmo_skymed','ers_envisat_slc','sicd_rgzero', 'iceye_slc', 'uavsar_hdf5_slc']:
         res =  'useDEFAULT'
     else:
         res =  'useDOPIQ'
@@ -112,7 +112,8 @@ createResampleSlc = _factory("runResampleSlc")
 createResampleSubbandSlc = _factory("runResampleSubbandSlc")
 createRefineSlaveTiming = _factory("runRefineSlaveTiming")
 createDenseOffsets = _factory("runDenseOffsets")
-createRubbersheet = _factory("runRubbersheet")
+createRubbersheetAzimuth = _factory("runRubbersheetAzimuth") # Modified by V. Brancato (10.07.2019)
+createRubbersheetRange = _factory("runRubbersheetRange")     # Modified by V. Brancato (10.07.2019)
 createInterferogram = _factory("runInterferogram")
 createCoherence = _factory("runCoherence")
 createFilter = _factory("runFilter")

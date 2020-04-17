@@ -107,8 +107,7 @@ def design_matrix(overlapDirs):
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  if not os.path.exists(inps.output):
-      os.makedirs(inps.output)
+  os.makedirs(inps.output, exist_ok=True)
 
   overlapPairs = glob.glob(os.path.join(inps.input,'*/*.txt'))
 

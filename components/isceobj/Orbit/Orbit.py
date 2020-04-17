@@ -1053,12 +1053,20 @@ class Orbit(Component):
         return tguess, rng
 
 
-    def exportToC(self):
+    def exportToC(self, reference=None):
         from isceobj.Util import combinedlibmodule
         orb = []
 
+        ###Continue usage as usual if no reference is provided
+        ###This wont break the old interface but could cause 
+        ###issues at midnight crossing
+        if reference is None:
+            reference = self.minTime
+
+        refEpoch = reference.replace(hour=0, minute=0, second=0, microsecond=0)
+
         for sv in self._stateVectors:
-            tim = DTU.seconds_since_midnight(sv.getTime())
+            tim = (sv.getTime() - refEpoch).total_seconds()
             pos = sv.getPosition()
             vel = sv.getVelocity()
 

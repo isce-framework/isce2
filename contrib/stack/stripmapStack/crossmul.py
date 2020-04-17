@@ -33,6 +33,8 @@ def cmdLineParse(iargs = None):
 
 def run(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
     objSlc1 = isceobj.createSlcImage()
+    #right now imageSlc1 and 2 are just text files, need to open them as image
+
     IU.copyAttributes(imageSlc1, objSlc1)
     objSlc1.setAccessMode('read')
     objSlc1.createImage()
@@ -81,7 +83,6 @@ def run(imageSlc1, imageSlc2, resampName, azLooks, rgLooks):
 
 
 def main(iargs=None):
-
     inps = cmdLineParse(iargs)
 
     img1 = isceobj.createImage()
@@ -90,15 +91,13 @@ def main(iargs=None):
     img2 = isceobj.createImage()
     img2.load(inps.slave + '.xml')
 
-    if not os.path.exists(os.path.dirname(inps.prefix)):
-       os.makedirs(os.path.dirname(inps.prefix))
+    os.makedirs(os.path.dirname(inps.prefix), exist_ok=True)
 
     run(img1, img2, inps.prefix, inps.azlooks, inps.rglooks)
 
 if __name__ == '__main__':
-    
+
+    main()
     '''
     Main driver.
     '''
-
-

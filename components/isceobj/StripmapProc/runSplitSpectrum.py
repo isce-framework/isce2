@@ -142,15 +142,8 @@ def runSplitSpectrum(self):
     lowBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.lowBandSlcDirname)
     highBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.highBandSlcDirname)
 
-    if os.path.isdir(lowBandDir):
-        logger.info('low-band slc directory {0} already exists.'.format(lowBandDir))
-    else:
-        os.makedirs(lowBandDir)
-
-    if os.path.isdir(highBandDir):
-        logger.info('high-band slc directory {0} already exists.'.format(highBandDir))
-    else:
-        os.makedirs(highBandDir)
+    os.makedirs(lowBandDir, exist_ok=True)
+    os.makedirs(highBandDir, exist_ok=True)
 
     masterLowBandSlc = os.path.join(lowBandDir, os.path.basename(masterSlc)) 
     masterHighBandSlc = os.path.join(highBandDir, os.path.basename(masterSlc)) 

@@ -24,6 +24,8 @@ def createParser():
             help='output directory which will be used for unpacking.')
     parser.add_argument('-s', '--segment', dest='segment', type=str, default='1',
             help='segment of the UAVSAR stack to prepare. For "s2" use "2", etc. Default is "1" ')
+    parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='source ~/.bash_profile;', 
+            help='text command to be added to the beginning of each line of the run files. Default: source ~/.bash_profile;')
 
     return parser
 
@@ -74,8 +76,7 @@ def main(iargs=None):
         annFile = file.replace('_s'+inps.segment+'_1x1.slc','')+'.ann'
         print (annFile)
         imgDir = os.path.join(outputDir,imgDate)
-        if not os.path.exists(imgDir):
-           os.makedirs(imgDir)
+        os.makedirs(imgDir, exist_ok=True)
 
         cmd = 'unpackFrame_UAVSAR.py -i ' + annFile  + ' -d '+ inps.dopFile + ' -o ' + imgDir
         print (cmd)

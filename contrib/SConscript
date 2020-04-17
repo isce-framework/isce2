@@ -65,6 +65,8 @@ frameUtils = os.path.join('frameUtils','SConscript')
 SConscript(frameUtils)
 unwUtils = os.path.join('UnwrapComp','SConscript')
 SConscript(unwUtils)
+downsample_unwrapper = os.path.join('downsample_unwrapper','SConscript')
+SConscript(downsample_unwrapper)
 
 if 'MOTIFLIBPATH' in envcontrib.Dictionary():
     mdx = os.path.join('mdx','SConscript')
@@ -75,4 +77,9 @@ SConscript(rfi)
 
 SConscript('PyCuAmpcor/SConscript')
 SConscript('splitSpectrum/SConscript')
+SConscript('alos2filter/SConscript')
 SConscript('alos2proc/SConscript')
+SConscript('alos2proc_f/SConscript')
+
+if os.path.exists('geo_autoRIFT'):
+    SConscript('geo_autoRIFT/SConscript')

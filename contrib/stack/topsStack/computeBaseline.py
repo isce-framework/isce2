@@ -54,8 +54,7 @@ def main(iargs=None):
 
     #catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     baselineDir = os.path.dirname(inps.baselineFile)
-    if not os.path.exists(baselineDir):
-        os.makedirs(baselineDir)
+    os.makedirs(baselineDir, exist_ok=True)
 
     f = open(inps.baselineFile , 'w')
 

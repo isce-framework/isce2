@@ -65,6 +65,8 @@ class config(object):
         self.f.write('master : ' + self.slcDir +'\n')
         self.f.write('dem : ' + self.dem +'\n')
         self.f.write('output : ' + self.geometryDir +'\n')
+        self.f.write('alks : ' + self.alks +'\n')
+        self.f.write('rlks : ' + self.rlks +'\n')
         if self.nativeDoppler:
             self.f.write('native : True\n')
         if self.useGPU:
@@ -72,7 +74,18 @@ class config(object):
         else:
             self.f.write('useGPU : False\n')
         self.f.write('##########################'+'\n')
-    
+
+    def createWaterMask(self, function):
+
+        self.f.write('##########################'+'\n')
+        self.f.write(function+'\n')
+        self.f.write('createWaterMask : '+'\n')
+        self.f.write('dem_file : ' + self.dem +'\n')
+        self.f.write('lat_file : ' + self.latFile +'\n')
+        self.f.write('lon_file : ' + self.lonFile +'\n')
+        self.f.write('output : ' + self.waterMaskFile + '\n')
+        self.f.write('##########################'+'\n')
+
     def geo2rdr(self, function):
 
         self.f.write('##########################'+'\n')
@@ -197,6 +210,8 @@ class config(object):
         self.f.write('nomcf : ' + self.noMCF + '\n')
         self.f.write('master : ' + self.master + '\n')
         self.f.write('defomax : ' + self.defoMax + '\n')
+        self.f.write('alks : ' + self.alks + '\n')
+        self.f.write('rlks : ' + self.rlks + '\n')
         self.f.write('method : ' + self.unwMethod + '\n')
         self.f.write('##########################'+'\n')
 
@@ -270,15 +285,13 @@ class run(object):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
         self.runDir = os.path.join(self.workDir, 'run_files')
-        if not os.path.exists(self.runDir):
-            os.makedirs(self.runDir)
+        os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
         self.configDir = os.path.join(self.workDir,'configs')
-        if not os.path.exists(self.configDir):
-            os.makedirs(self.configDir)
+        os.makedirs(self.configDir, exist_ok=True)
 
         # passing argument of started from raw
         if inps.nofocus is  False:
@@ -307,8 +320,7 @@ class run(object):
              self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
  
     def master_focus_split_geometry(self, stackMaster, config_prefix, split=False, focus=True, native=True):
-  	########
-  	# focusing master and producing geometry files
+        """focusing master and producing geometry files"""
         configName = os.path.join(self.configDir, config_prefix + stackMaster)
         configObj = config(configName)
         configObj.configure(self)
@@ -325,11 +337,19 @@ class run(object):
         counter += 1
 
         if split:
-             configObj.slc = os.path.join(configObj.slcDir,stackMaster+self.raw_string+'.slc')
-             configObj.outDir = configObj.slcDir
-             configObj.shelve = os.path.join(configObj.slcDir, 'data')
-             configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
-        
+            configObj.slc = os.path.join(configObj.slcDir,stackMaster+self.raw_string+'.slc')
+            configObj.outDir = configObj.slcDir
+            configObj.shelve = os.path.join(configObj.slcDir, 'data')
+            configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
+            counter += 1
+
+        # generate water mask in radar coordinates
+        configObj.latFile = os.path.join(self.workDir, 'geom_master/lat.rdr')
+        configObj.lonFile = os.path.join(self.workDir, 'geom_master/lon.rdr')
+        configObj.waterMaskFile = os.path.join(self.workDir, 'geom_master/waterMask.rdr')
+        configObj.createWaterMask('[Function-{0}]'.format(counter))
+        counter += 1
+
         configObj.finalize()
         del configObj
         self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
@@ -632,37 +652,43 @@ class workflow(object):
 
 ##############################
 
-def baselinePair(baselineDir, master, slave):
+def baselinePair(baselineDir, master, slave,doBaselines=True):
     
-    try:
-        mdb = shelve.open( os.path.join(master, 'raw'), flag='r')
-        sdb = shelve.open( os.path.join(slave, 'raw'), flag='r')
-    except:
-        mdb = shelve.open( os.path.join(master, 'data'), flag='r')
-        sdb = shelve.open( os.path.join(slave, 'data'), flag='r')
+    if doBaselines: # open files to calculate baselines
+        try:
+            mdb = shelve.open( os.path.join(master, 'raw'), flag='r')
+            sdb = shelve.open( os.path.join(slave, 'raw'), flag='r')
+        except:
+            mdb = shelve.open( os.path.join(master, 'data'), flag='r')
+            sdb = shelve.open( os.path.join(slave, 'data'), flag='r')
 
-    mFrame = mdb['frame']
-    sFrame = sdb['frame']
+        mFrame = mdb['frame']
+        sFrame = sdb['frame']
 
 
-    bObj = Baseline()
-    bObj.configure()
-    bObj.wireInputPort(name='masterFrame', object=mFrame)
-    bObj.wireInputPort(name='slaveFrame', object=sFrame)
-    bObj.baseline()    
+        bObj = Baseline()
+        bObj.configure()
+        bObj.wireInputPort(name='masterFrame', object=mFrame)
+        bObj.wireInputPort(name='slaveFrame', object=sFrame)
+        bObj.baseline()    # calculate baseline from orbits
+        pBaselineBottom = bObj.pBaselineBottom
+        pBaselineTop = bObj.pBaselineTop
+    else:       # set baselines to zero if not calculated
+        pBaselineBottom = 0.0
+        pBaselineTop = 0.0
+        
     baselineOutName = os.path.basename(master) + "_" + os.path.basename(slave) + ".txt"
     f = open(os.path.join(baselineDir, baselineOutName) , 'w')
-    f.write("PERP_BASELINE_BOTTOM " + str(bObj.pBaselineBottom) + '\n')
-    f.write("PERP_BASELINE_TOP " + str(bObj.pBaselineTop) + '\n')
+    f.write("PERP_BASELINE_BOTTOM " + str(pBaselineBottom) + '\n')
+    f.write("PERP_BASELINE_TOP " + str(pBaselineTop) + '\n')
     f.close()
-    print('Baseline at top/bottom: %f %f'%(bObj.pBaselineTop,bObj.pBaselineBottom))
-    return (bObj.pBaselineTop+bObj.pBaselineBottom)/2.
+    print('Baseline at top/bottom: %f %f'%(pBaselineTop,pBaselineBottom))
+    return (pBaselineTop+pBaselineBottom)/2.
 
 def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     from collections import OrderedDict
     baselineDir = os.path.join(inps.workDir,'baselines')
-    if not os.path.exists(baselineDir):
-        os.makedirs(baselineDir)
+    os.makedirs(baselineDir, exist_ok=True)
     baselineDict = OrderedDict()
     timeDict = OrderedDict()
     datefmt = '%Y%m%d'
@@ -671,10 +697,7 @@ def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     for slv in acqDates:
         if slv != stackMaster:
             slave = os.path.join(inps.slcDir, slv)
-            if doBaselines:
-                baselineDict[slv]=baselinePair(baselineDir, master, slave)
-            else:
-                baselineDict[slv] = 0.0    # set slave baselines to zero if not calculated
+            baselineDict[slv]=baselinePair(baselineDir, master, slave, doBaselines)
             t = datetime.datetime.strptime(slv, datefmt)
             timeDict[slv] = t - t0
         else:

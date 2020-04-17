@@ -3,7 +3,6 @@
 # Copyright 2016
 #
 
-from scipy.ndimage.filters import median_filter
 import numpy as np
 import isce
 import isceobj
@@ -19,6 +18,8 @@ def runOffsetFilter(self):
 
     if not self.doDenseOffsets:
         return
+
+    from scipy.ndimage.filters import median_filter
 
     offsetfile = os.path.join(self._insar.mergedDirname, self._insar.offsetfile) 
     snrfile = os.path.join(self._insar.mergedDirname, self._insar.snrfile)

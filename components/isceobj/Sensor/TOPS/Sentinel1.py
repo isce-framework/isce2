@@ -493,15 +493,9 @@ class Sentinel1(Component):
             offset = np.int(np.rint((aslice.product.bursts[0].burstStartUTC - t0).total_seconds() / burstStartInterval.total_seconds()))
 
             for kk in range(aslice.product.numberOfBursts):
-                #####Overwrite previous copy if one exists
+                #####Skip appending if burst also exists from previous scene
                 if (offset+kk) < len(self.product.bursts):
-                    self.product.bursts[offset+kk] = aslice.product.bursts[kk]
-
-                    ####Keep track of tiff src files
-                    if len(self.tiff):
-                        self._tiffSrc[offset+kk] = aslice.tiff[0]
-
-                    self._elevationAngleVsTau[offset+kk] = aslice._elevationAngleVsTau[kk]
+                    continue
 
                 elif (offset+kk) == len(self.product.bursts):
                     self.product.bursts.append(aslice.product.bursts[kk])
@@ -604,7 +598,14 @@ class Sentinel1(Component):
             burst.numberOfSamples = samples
             burst.numberOfLines = lines
             burst.startingRange = startingRange
-            burst.trackNumber = (orbitnumber-73)%175 + 1  ###Appears to be standard for S1A
+
+            if mission == 'S1A':
+                burst.trackNumber = (orbitnumber-73)%175 + 1
+            elif mission == 'S1B':
+                burst.trackNumber = (orbitnumber-27)%175 + 1
+            else:
+                raise ValueError('Encountered unknown mission id {0}'.format(mission))
+
             burst.orbitNumber = orbitnumber 
             burst.frameNumber = 1  #S1A doesnt appear to have a frame system
             burst.polarization = polarization
@@ -953,14 +954,7 @@ class Sentinel1(Component):
         if length is None:
             length = self.product.bursts[0].numberOfLines
 
-
-        if os.path.isdir(self.output):
-            print('Output directory exists. Overwriting ...')
-#            os.rmdir(self.output)
-        else:
-            print('Creating directory {0} '.format(self.output))
-            os.makedirs(self.output)
-
+        os.makedirs(self.output, exist_ok=True)
 
         prevTiff = None
         for index, burst in enumerate(self.product.bursts):

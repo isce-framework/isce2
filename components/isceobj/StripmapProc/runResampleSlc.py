@@ -23,7 +23,7 @@ def runResampleSlc(self, kind='coarse'):
         raise Exception('Unknown operation type {0} in runResampleSlc'.format(kind))
 
     if kind == 'fine':
-        if not self.doRubbersheeting:
+        if not (self.doRubbersheetingRange | self.doRubbersheetingAzimuth): # Modified by V. Brancato 10.10.2019
             print('Rubber sheeting not requested, skipping resampling ....')
             return
 
@@ -68,12 +68,26 @@ def runResampleSlc(self, kind='coarse'):
     #Since the app is based on geometry module we expect pixel-by-pixel offset
     #field
     offsetsDir = self.insar.offsetsDirname 
-    rgname = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+    
+    # Modified by V. Brancato 10.10.2019
+    #rgname = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+    
     if kind in ['coarse', 'refined']:
         azname = os.path.join(offsetsDir, self.insar.azimuthOffsetFilename)
+        rgname = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+        flatten = True
     else:
         azname = os.path.join(offsetsDir, self.insar.azimuthRubbersheetFilename)
-
+        if self.doRubbersheetingRange:
+           print('Rubbersheeting in range is turned on, taking the cross-correlation offsets') 
+           print('Setting Flattening to False') 
+           rgname = os.path.join(offsetsDir, self.insar.rangeRubbersheetFilename) 
+           flatten=False
+        else:
+           print('Rubbersheeting in range is turned off, taking range geometric offsets')
+           rgname = os.path.join(offsetsDir, self.insar.rangeOffsetFilename)
+           flatten=True
+    
     rngImg = isceobj.createImage()
     rngImg.load(rgname + '.xml')
     rngImg.setAccessMode('READ')
@@ -85,8 +99,8 @@ def runResampleSlc(self, kind='coarse'):
     width = rngImg.getWidth()
     length = rngImg.getLength()
 
-
-    flatten = True
+# Modified by V. Brancato 10.10.2019
+    #flatten = True
     rObj.flatten = flatten
     rObj.outputWidth = width
     rObj.outputLines = length
@@ -103,10 +117,7 @@ def runResampleSlc(self, kind='coarse'):
     # preparing the output directory for coregistered slave slc
     coregDir = self.insar.coregDirname
 
-    if os.path.isdir(coregDir):
-        logger.info('Geometry directory {0} already exists.'.format(coregDir))
-    else:
-        os.makedirs(coregDir)
+    os.makedirs(coregDir, exist_ok=True)
 
     # output file name of the coregistered slave slc
     img = slaveFrame.getImage()

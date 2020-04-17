@@ -96,6 +96,8 @@ createEnviSAT_SLC = partial(factory_template, 'EnviSAT_SLC')
 createERS_ENVISAT = partial(factory_template, 'ERS_EnviSAT')
 createERS_EnviSAT_SLC = partial(factory_template, 'ERS_EnviSAT_SLC')
 createSICD_RGZERO = partial(factory_template, 'SICD_RGZERO')
+createICEYE_SLC = partial(factory_template, 'ICEYE_SLC')
+createUAVSAR_Hdf5_SLC = partial(factory_template, 'UAVSAR_HDF5_SLC')
 
 SENSORS = {'ALOS' : createALOS,
            'ALOS_SLC' : createALOS_SLC,
@@ -119,7 +121,9 @@ SENSORS = {'ALOS' : createALOS,
            'ENVISAT_SLC': createEnviSAT_SLC,
            'ERS_ENVISAT' : createERS_ENVISAT,
            'ERS_ENVISAT_SLC' : createERS_EnviSAT_SLC,
-           'SICD_RGZERO' : createSICD_RGZERO}
+           'SICD_RGZERO' : createSICD_RGZERO,
+           'ICEYE_SLC' : createICEYE_SLC,
+           'UAVSAR_HDF5_SLC' : createUAVSAR_Hdf5_SLC}
 
 #These are experimental and can be added in as they become ready
 #           'JERS': createJERS,

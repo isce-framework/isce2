@@ -141,12 +141,13 @@ else:
 gdal_version = os.popen('gdal-config --version').read()
 print('GDAL version: {0}'.format(gdal_version))
 try:
+    gdal_majorversion = int(gdal_version.split('.')[0])
     gdal_subversion = int(gdal_version.split('.')[1])
 except:
     raise Exception('gdal-config not found. GDAL does not appear to be installed ... cannot proceed. If you have installed gdal, ensure that you have path to gdal-config in your environment')
 
 env['GDALISCXX11'] = None
-if gdal_subversion >= 3:
+if (gdal_majorversion > 2) or (gdal_subversion >= 3):
     env['GDALISCXX11'] = 'True' 
 
 
@@ -215,43 +216,12 @@ else:
 ### End of GPU branch-specific modifications
 
 
-file = '__init__.py'
-if not os.path.exists(file):
-    fout = open(file,"w")
-    fout.write("#!/usr/bin/env python3")
-    fout.close()
-
-env.Install(inst,file)
-try:
-    from subprocess import check_output
-    svn_revision = check_output('svnversion').strip() or 'Unknown'
-    if sys.version_info[0] == 3:
-        svn_revision = svn_revision.decode('utf-8')
-except ImportError:
-    try:
-        import popen2
-        stdout, stdin, stderr = popen2.popen3('svnversion')
-        svn_revision = stdout.read().strip()
-        if stderr.read():
-            raise Exception
-    except Exception:
-        svn_revision = 'Unknown'
-except OSError:
-    svn_revision = 'Unknown'
+env.Install(inst, '__init__.py')
+env.Install(inst, 'release_history.py')
 
 if not os.path.exists(inst):
     os.makedirs(inst)
 
-fvers = open(os.path.join(inst,'version.py'),'w')
-
-from release_history import release_version, release_svn_revision, release_date
-fvers_lines = ["release_version = '"+release_version+"'\n",
-               "release_svn_revision = '"+release_svn_revision+"'\n",
-               "release_date = '"+release_date+"'\n",
-               "svn_revision = '"+svn_revision+"'\n\n"]
-
-fvers.write(''.join(fvers_lines))
-fvers.close()
 v = 0
 if isrerun == 'no':
     cmd = 'scons -Q install --isrerun=yes'

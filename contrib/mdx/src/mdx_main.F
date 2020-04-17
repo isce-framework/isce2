@@ -74,12 +74,6 @@ c*****************************************************************
           integer i_arg
           integer i_inarg
 
-          integer iargc
-#ifdef GFORTRAN
-c          external iargc
-#else
-           external iargc
-#endif
           integer rdflen
           external rdflen
 
@@ -110,7 +104,7 @@ c          external iargc
           equivalence(b_data,r_data)
 
           a_cmd = '-V'
-          i_inarg = iargc()
+          i_inarg = command_argument_count()
           if (i_inarg .eq. 0) then
             write(6,*) '  '
             write(6,'(1x,a,a18,a)'     ) '   <<  mdx    Version  ',version_mdx(),        '  >>   '

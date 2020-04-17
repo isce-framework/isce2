@@ -99,8 +99,7 @@ def runCoarseOffsets(self):
         ###Offsets output directory
         outdir = os.path.join(self._insar.coarseOffsetsDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
 
         ###Burst indices w.r.t master

@@ -6,7 +6,7 @@ package = envPyCuAmpcor['PACKAGE']
 project = envPyCuAmpcor['PROJECT']
 build = envPyCuAmpcor['PRJ_LIB_DIR']
 install = envPyCuAmpcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
-listFiles = ['SlcImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
+listFiles = ['GDALImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
              'cuArraysPadding.cu', 'cuOverSampler.cu',
              'cuSincOverSampler.cu', 'cuDeramp.cu',
              'cuOffset.cu', 'cuCorrNormalization.cu',
@@ -39,6 +39,8 @@ def cythonPseudoBuilder(env, src, bld, inst):
 
     # Add the Numpy headers to the include path
     env.Append(CPPFLAGS = ['-I'+np_header_path])
+    libList = ['gdal']
+    env.PrependUnique(LIBS=libList)
     listFiles.append('PyCuAmpcor.so')
     env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = True
     lib = env.LoadableModule(target='PyCuAmpcor.abi3.so', source=listFiles, CPPDEFINES='GPU_ACC_ENABLED')

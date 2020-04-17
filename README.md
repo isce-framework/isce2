@@ -1,5 +1,7 @@
 # ISCE2
 
+[![CircleCI](https://circleci.com/gh/isce-framework/isce2.svg?style=svg)](https://circleci.com/gh/isce-framework/isce2)
+
 This is the Interferometric synthetic aperture radar Scientific Computing
 Environment (ISCE).  Its initial development was funded by NASA's Earth Science
 Technology Office (ESTO) under the Advanced Information Systems Technology
@@ -621,7 +623,23 @@ between three files as follows:
     <property name="OUTPUT">20061231</property>
 </component>
 ```
-
+### rtcApp.xml 
+The inputs are Sentinel GRD zipfiles
+```xml
+<rtcApp>
+    <constant name="dir">/Users/data/sentinel1 </constant>
+    <component name="rtcApp">
+        <property name="posting">20</property>
+        <property name="sensor name">sentinel1</property>
+        <component name="master">
+        <property name="safe">$dir$/rtcApp/data/S1A_IW_GRDH_1SDV_20181221T225104_20181221T225129_025130_02C664_B46C.zip</property>
+        <property name="orbit directory">$dir$/orbits</property>
+        <property name="output directory">$dir$/rtcApp/output</property>
+        <property name="polarization">[VV, VH]</property>
+        </component>
+    </component>
+</rtcApp>
+```
 -----
 
 ## Component Configurability

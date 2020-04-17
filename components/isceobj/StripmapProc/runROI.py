@@ -235,11 +235,7 @@ def runFormSLC(self):
         outdir = os.path.join(self.master.output + '_slc')
         outname = os.path.join( outdir, os.path.basename(self.master.output) + '.slc')
         xmlname = outdir + '.xml'
-        if not os.path.isdir(outdir):
-            print('Creating directory: {0}'.format(outdir))
-            os.makedirs(outdir)
-        else:
-            print('SLC directory {0} already exists'.format(outdir))
+        os.makedirs(outdir, exist_ok=True)
 
         slcFrame = focus(frame, outname)
 
@@ -260,11 +256,7 @@ def runFormSLC(self):
         outdir = os.path.join(self.slave.output + '_slc')
         outname = os.path.join( outdir, os.path.basename(self.slave.output) + '.slc')
         xmlname = outdir + '.xml'
-        if not os.path.isdir(outdir):
-            print('Creating directory: {0}'.format(outdir))
-            os.makedirs(outdir)
-        else:
-            print('SLC directory {0} already exists'.format(outdir))
+        os.makedirs(outdir, exist_ok=True)
 
         slcFrame = focus(frame, outname)
 

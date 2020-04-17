@@ -84,8 +84,7 @@ def uncompressfile(inputFile,outputDir):
 
 
     # make the output directory if it does not exist 
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
 
     ## loop over the different options, and if fail try the second one

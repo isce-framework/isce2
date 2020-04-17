@@ -205,7 +205,12 @@ class config(object):
         self.f.write('filt : ' + self.filtName + '\n')
         self.f.write('coh : ' + self.cohName + '\n')
         self.f.write('strength : ' + self.filtStrength + '\n')
-
+        self.f.write('slc1 : ' + self.slc1 + '\n')
+        self.f.write('slc2 : ' + self.slc2 + '\n')
+        self.f.write('complex_coh : '+ self.cpxcor + '\n')
+        self.f.write('range_looks : ' + self.rangeLooks + '\n')
+        self.f.write('azimuth_looks : ' + self.azimuthLooks + '\n')
+	
     def unwrap(self, function):
         self.f.write('###################################'+'\n')
         self.f.write(function + '\n')
@@ -262,22 +267,19 @@ class run(object):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
         self.runDir = os.path.join(self.work_dir, 'run_files')
-        if not os.path.exists(self.runDir):
-            os.makedirs(self.runDir)
+        os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
         self.config_path = os.path.join(self.work_dir,'configs')
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
 
         self.runf= open(self.run_outname,'w')
 
     def unpackSLC(self, acquisitionDates, safe_dict):
         swath_path = self.work_dir
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
 
         for slcdate in acquisitionDates:
             configName = os.path.join(self.config_path,'config_'+slcdate)
@@ -298,8 +300,7 @@ class run(object):
 
     def unpackStackMasterSLC(self, safe_dict):
         swath_path = self.work_dir
-        if not os.path.exists(self.config_path):
-            os.makedirs(self.config_path)
+        os.makedirs(self.config_path, exist_ok=True)
         configName = os.path.join(self.config_path,'config_master')
         configObj = config(configName)
         configObj.configure(self)
@@ -629,12 +630,16 @@ class run(object):
             master = pair[0]
             slave = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + master + '_' + slave)
+            mergedSLCDir = os.path.join(self.work_dir, 'merged/SLC')        
             configName = os.path.join(self.config_path ,'config_igram_filt_coh_' + master + '_' + slave)
             configObj = config(configName)
             configObj.configure(self)
             configObj.input = os.path.join(mergedDir,'fine.int')
             configObj.filtName = os.path.join(mergedDir,'filt_fine.int')
             configObj.cohName = os.path.join(mergedDir,'filt_fine.cor')
+            configObj.slc1=os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(master, master))
+            configObj.slc2=os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(slave, slave))
+            configObj.cpxcor=os.path.join(mergedDir,'fine.cor.full')
             #configObj.filtStrength = str(self.filtStrength)
             configObj.FilterAndCoherence('[Function-1]')
             configObj.finalize()

@@ -40,6 +40,6 @@ project = 'TopsProc'
 
 install = os.path.join(envisceobj['PRJ_SCONS_INSTALL'],package,project)
 
-listFiles = ['__init__.py', 'Factories.py', 'TopsProc.py', 'runPreprocessor.py', 'runComputeBaseline.py', 'runVerifyDEM.py', 'runTopo.py', 'runSubsetOverlaps.py', 'runCoarseOffsets.py', 'runCoarseResamp.py', 'runOverlapIfg.py', 'runPrepESD.py', 'runESD.py', 'runRangeCoreg.py', 'runFineOffsets.py', 'runFineResamp.py', 'runBurstIfg.py', 'runMergeBursts.py', 'runFilter.py', 'runUnwrapGrass.py', 'runUnwrapIcu.py', 'runUnwrapSnaphu.py', 'runGeocode.py', 'runMergeSLCs.py', 'runDenseOffsets.py', 'runOffsetFilter.py', 'runOffsetGeocode.py', 'runCropOffsetGeo.py', 'runUnwrap2Stage.py', 'VRTManager.py', 'runVerifyGeocodeDEM.py', 'runIon.py']
+listFiles = ['__init__.py', 'run_downsample_unwrapper.py','Factories.py', 'TopsProc.py', 'runPreprocessor.py', 'runComputeBaseline.py', 'runVerifyDEM.py', 'runTopo.py', 'runSubsetOverlaps.py', 'runCoarseOffsets.py', 'runCoarseResamp.py', 'runOverlapIfg.py', 'runPrepESD.py', 'runESD.py', 'runRangeCoreg.py', 'runFineOffsets.py', 'runFineResamp.py', 'runBurstIfg.py', 'runMergeBursts.py', 'runFilter.py', 'runUnwrapGrass.py', 'runUnwrapIcu.py', 'runUnwrapSnaphu.py', 'runGeocode.py', 'runMergeSLCs.py', 'runDenseOffsets.py', 'runOffsetFilter.py', 'runOffsetGeocode.py', 'runCropOffsetGeo.py', 'runUnwrap2Stage.py', 'VRTManager.py', 'runVerifyGeocodeDEM.py', 'runIon.py']
 envisceobj.Install(install,listFiles)
 envisceobj.Alias('install',install)

@@ -30,10 +30,8 @@
 
 
 import time
-import os
 import sys
-import logging
-import logging.config
+from isce import logging
 
 import isce
 import isceobj
@@ -43,11 +41,6 @@ from iscesys.Compatibility import Compatibility
 from iscesys.Component.Configurable import SELF
 from isceobj import RtcProc
 from isceobj.Util.decorators import use_api
-
-logging.config.fileConfig(
-    os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
-        'logging.conf')
-)
 
 logger = logging.getLogger('isce.grdsar')
 
@@ -155,7 +148,7 @@ NUMBER_RANGE_LOOKS = Application.Parameter('numberRangeLooks',
 )
 
 POSTING = Application.Parameter('posting',
-            public_name='azimuth looks',
+            public_name='posting',
             default = 20.0,
             type = float,
             mandatory = False,
@@ -363,6 +356,7 @@ class GRDSAR(Application):
         self.verifyDEM = RtcProc.createVerifyDEM(self)
         self.multilook = RtcProc.createLooks(self)
         self.runTopo  = RtcProc.createTopo(self)
+        self.runNormalize = RtcProc.createNormalize(self)
 #        self.runGeocode = RtcProc.createGeocode(self)
 
         return None
@@ -392,6 +386,9 @@ class GRDSAR(Application):
         ##Run topo for each bursts
         self.step('topo', func=self.runTopo)
 
+	    ##Run normalize to get gamma0
+        self.step('normalize', func=self.runNormalize)
+
         # Geocode
 #        self.step('geocode', func=self.runGeocode,
 #                args=(self.geocode_list, self.do_unwrap, self.geocode_bbox))
@@ -416,6 +413,9 @@ class GRDSAR(Application):
 
         ##Run topo for each burst
         self.runTopo()
+	
+	##Run normalize to get gamma0
+        self.runNormalize()
 
         ###Compute covariance
 #        self.runEstimateCovariance()

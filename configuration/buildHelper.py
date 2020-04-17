@@ -98,10 +98,10 @@ def main(factoryFile,package,buildDir):
 #    import isce
     import filecmp
     try:
-        import imp
+        from importlib import util
         factoryFile = os.path.abspath(factoryFile)
-        mod = imp.find_module(factoryFile.replace('.py',''))
-        factModule = imp.load_module(factoryFile.replace('.py',''),mod[0],mod[1],mod[2])
+        mod = util.spec_from_file_location('.', factoryFile)
+        factModule = mod.loader.load_module()
         factoriesInfo = factModule.getFactoriesInfo()
         nameList = []
         for k,v in factoriesInfo.items():

@@ -34,6 +34,7 @@ from isceobj import Constants as CN
 from iscesys.Component.Component import Component, Port
 from zerodop.geozero import geozero
 from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
+from iscesys import DateTimeUtil as DTU
 from isceobj.Util import combinedlibmodule
 from isceobj.Util.Poly1D import Poly1D
 import os
@@ -221,7 +222,7 @@ class Geocode(Component):
         complexFlag = self.inputImage.dataType.upper().startswith('C')
         nBands = self.inputImage.getBands()
 
-        cOrbit = self.orbit.exportToC()
+        cOrbit = self.orbit.exportToC(reference=self.sensingStart)
         geozero.setOrbit_Py(cOrbit)
 
         #####Output cropped DEM for first band
@@ -347,7 +348,7 @@ class Geocode(Component):
         geozero.setDopplerAccessor_Py(self.polyDopplerAccessor)
         geozero.setPRF_Py(float(self.prf))
         geozero.setRadarWavelength_Py(float(self.radarWavelength))
-        geozero.setSensingStart_Py(float(self.sensingStart))
+        geozero.setSensingStart_Py(DTU.seconds_since_midnight(self.sensingStart))
         geozero.setFirstLatitude_Py(float(self.firstLatitude))
         geozero.setFirstLongitude_Py(float(self.firstLongitude))
         geozero.setDeltaLatitude_Py(float(self.deltaLatitude))
@@ -392,9 +393,7 @@ class Geocode(Component):
         self.radarWavelength = float(var)
 
     def setSensingStart(self,var):
-        rtime = datetime.datetime.combine(var.date(), datetime.time(0,0,0))
-        secs = (var - rtime).total_seconds()
-        self.sensingStart = float(secs)
+        self.sensingStart = var
 
     def setFirstLatitude(self,var):
         self.firstLatitude = float(var)
