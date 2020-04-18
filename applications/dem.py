@@ -82,7 +82,7 @@ def main():
     parser.add_argument('-n', '--uname', type = str, dest = 'uname', default = None, help = 'User name if using a server that requires authentication')
     parser.add_argument('-w', '--password', type = str, dest = 'password', default = None, help = 'Password if using a server that requires authentication')
     parser.add_argument('-t', '--type', type = str, dest = 'type', default = 'version3', help = \
-                        'Use version 3 or version 2 SRTM')
+                        'Use version 3 or version 2 SRTM, or nasadem')
     parser.add_argument('-x', '--noextras', action = 'store_true', dest = 'noextras', help = 'Use this flag if the filenames do not have extra part')
     parser.add_argument('-u', '--url', type = str, dest = 'url', default = None, help = \
                         'If --type=version2 then this is part of the url where the DEM files are located. The actual location must be' + \
@@ -91,9 +91,12 @@ def main():
     args = parser.parse_args()
     #first get the url,uname and password since are needed in the constructor
 
-
     ds = createDemStitcher(args.type)
     ds.configure()
+
+    #NASADEM only available in 1-arc sec resolution
+    if(args.type == 'nasadem'):
+        args.source == 1
 
     if(args.url):
         if(args.type == 'version3'):
