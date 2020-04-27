@@ -17,6 +17,7 @@ set(files
     looks.py
     make_raw.py
     mdx.py
+    rtcApp.py
     stitcher.py
     stripmapApp.py
     topsApp.py
