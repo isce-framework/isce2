@@ -58,11 +58,11 @@ def createParser():
             help='SAR sensor used to define square multi-look pixels')
 
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', 
-            help='unwrapping method (icu, snaphu, or snaphu2stage)')
+            help='unwrapping method (icu, snaphu, or snaphu2stage), no to skip phase unwrapping.')
 
     parser.add_argument('-f','--filter_strength', dest='filtStrength', type=str, default=filtStrength,
             help='strength of Goldstein filter applied to the wrapped phase before spatial coherence estimation.'
-                 ' Default: {}'.format(filtStrength))
+                 ' Default: {}. 0 to skip filtering.'.format(filtStrength))
 
     iono = parser.add_argument_group('Ionosphere', 'Configurationas for ionospheric correction')
     iono.add_argument('-L', '--low_band_frequency', dest='fL', type=str, default=None,
