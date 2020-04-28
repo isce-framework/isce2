@@ -8,6 +8,13 @@ import configparser
 import datetime
 import numpy as np
 import shelve
+
+# suppress matplotlib DEBUG message
+from matplotlib.path import Path as Path
+import logging
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.WARNING)
+
 import isce
 import isceobj
 from mroipac.baseline.Baseline import Baseline
