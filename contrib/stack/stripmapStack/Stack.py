@@ -598,12 +598,14 @@ class run(object):
              #configObj.filtStrength = filtStrength
              configObj.filterCoherence('[Function-2]')
 
-             configObj.igram = configObj.filtIgram
-             configObj.unwIfg = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] 
-             configObj.noMCF = noMCF
-             configObj.master = os.path.join(self.slcDir,stackMaster +'/data') 
-             configObj.defoMax = defoMax
-             configObj.unwrap('[Function-3]')
+             # skip phase unwrapping if input method == no
+             if self.unwMethod.lower() != 'no':
+                 configObj.igram = configObj.filtIgram
+                 configObj.unwIfg = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] 
+                 configObj.noMCF = noMCF
+                 configObj.master = os.path.join(self.slcDir,stackMaster +'/data') 
+                 configObj.defoMax = defoMax
+                 configObj.unwrap('[Function-3]')
 
              configObj.finalize()
              self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
