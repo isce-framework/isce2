@@ -17,17 +17,22 @@ def createParser():
     Create command line parser.
     '''
 
-    parser = argparse.ArgumentParser(description='Prepare ALOS2 slc for processing (unzip/untar files, '
+    parser = argparse.ArgumentParser(description='Prepare ALOS2 SLC for processing (unzip/untar files, '
                                      'organize in date folders, generate script to unpack into isce formats).')
     parser.add_argument('-i', '--input', dest='inputDir', type=str, required=True,
             help='directory with the downloaded SLC data')
-    parser.add_argument('-rmfile', '--rmfile', dest='rmfile',action='store_true', default=False,
-            help='Optional: remove zip/tar/compressed files after unpacking into date structure '
-                 '(default is to keep in archive fo  lder)')
     parser.add_argument('-o', '--output', dest='outputDir', type=str, required=False,
             help='output directory where data needs to be unpacked into isce format (for script generation).')
+
     parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='source ~/.bash_profile;',
-            help='text command to be added to the beginning of each line of the run files. Default: source ~/.bash_profile;')
+            help='text command to be added to the beginning of each line of the run files (default: %(default)s).')
+
+    parser.add_argument('-p', '--polarization', dest='polarization', type=str,
+            help='polarization in case if quad or full pol data exists (default: %(default)s).')
+
+    parser.add_argument('-rmfile', '--rmfile', dest='rmfile',action='store_true', default=False,
+            help='Optional: remove zip/tar/compressed files after unpacking into date structure '
+                 '(default is to keep in archive folder)')
     return parser
 
 
@@ -201,7 +206,9 @@ def main(iargs=None):
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(inps.outputDir, acquisitionDate)
                 os.makedirs(slcDir, exist_ok=True)
-                cmd = 'unpackFrame_ALOS2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
+                cmd = 'unpackFrame_ALOS2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir
+                if inps.polarization:
+                    cmd += ' --polarization {} '.format(inps.polarization)
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')
         f.close()
