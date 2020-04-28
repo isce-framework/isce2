@@ -614,10 +614,15 @@ class run(object):
                                             pair[0] + '_'  + pair[1])
 
             configObj.generateIgram('[Function-1]')
+
             configObj.igram = configObj.outDir+'.int'
-            configObj.filtIgram = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.int'
-            configObj.coherence = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.cor'
-            #configObj.filtStrength = filtStrength
+            if float(configObj.filtStrength) > 0.:
+                configObj.filtIgram = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.int'
+                configObj.coherence = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.cor'
+            else:
+                # do not add prefix filt_ to output file if no filtering is applied.
+                configObj.filtIgram = os.path.dirname(configObj.outDir) + '/' + pair[0] + '_'  + pair[1] + '.int'
+                configObj.coherence = os.path.dirname(configObj.outDir) + '/' + pair[0] + '_'  + pair[1] + '.cor'
             configObj.filterCoherence('[Function-2]')
 
             # skip phase unwrapping if input method == no
