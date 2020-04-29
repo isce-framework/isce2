@@ -50,6 +50,6 @@ helpList,installHelp = envdemStitcher['HELP_BUILDER'](envdemStitcher,'../__init_
 envdemStitcher.Install(installHelp,helpList)
 envdemStitcher.Alias('install',installHelp)
 
-listFiles = ['DemStitcher.py','DemStitcherV3.py']
+listFiles = ['DemStitcher.py','DemStitcherND.py','DemStitcherV3.py']
 envdemStitcher.Install(install,listFiles)
 envdemStitcher.Alias('install',install)
