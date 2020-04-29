@@ -33,7 +33,7 @@ def createDemStitcher(type='version3',name = ''):
     if(type == 'version2'):
         from contrib.demUtils.DemStitcher import DemStitcher
     if(type == 'nasadem'):        
-        from contrib.demUtils.DemStitcherV3 import DemStitcher
+        from contrib.demUtils.DemStitcherND import DemStitcher
     return DemStitcher(name=name)
 def createSWBDStitcher(name = ''):
     from contrib.demUtils.SWBDStitcher import SWBDStitcher
