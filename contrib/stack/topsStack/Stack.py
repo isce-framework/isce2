@@ -9,7 +9,6 @@ import  datetime
 
 
 noMCF = 'False'
-rmFilter = 'True'
 defoMax = '2'
 maxNodes = 72
 
@@ -685,7 +684,7 @@ class run(object):
             configObj.cohName = os.path.join(mergedDir,'filt_fine.cor')
             configObj.unwName = os.path.join(mergedDir,'filt_fine.unw')
             configObj.noMCF = noMCF
-            configObj.rmFilter = rmFilter
+            configObj.rmFilter = self.rmFilter
             configObj.master = os.path.join(self.work_dir,'master')
             configObj.defoMax = defoMax
             configObj.unwMethod = self.unwMethod

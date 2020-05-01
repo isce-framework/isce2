@@ -162,6 +162,9 @@ def createParser():
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
         help='Allow App to use GPU when available')
 
+    parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
+                        help='Make an extra unwrap file in which filtering effect is removed')
+
     return parser
 
 def cmdLineParse(iargs = None):
