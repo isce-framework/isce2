@@ -288,30 +288,19 @@ def remove_filter(intfile, filtfile, unwfile):
     outunw = outunw[0] + outunw[1]
 
     ds_unw = gdal.Open(unwfile + ".vrt", gdal.GA_ReadOnly)
-    unw_phase = ds_unw.ReadAsArray()
+    width = ds_unw.RasterXSize
+    length = ds_unw.RasterYSize
 
-    bands, length, width = unw_phase.shape
-    print(bands, length, width)
-    outfile = IML.memmap(outunw, mode='write', nchannels=2,
-                         nxx=width, nyy=length, scheme='BIL', dataType='f')
+    unw_phase = np.memmap(unwfile, dtype='f', mode='r', shape=(2, length, width))
+    filt_phase = np.memmap(filtfile, dtype='f', mode='r', shape=(length, width))
+    int_phase = np.memmap(intfile, dtype='f', mode='r', shape=(length, width))
 
-    outfile.bands[0][:, :] = unw_phase[0, :, :]
+    outfile = np.memmap(outunw, dtype='f', mode='w+', shape=(2, length, width))
 
-    ds_filt = gdal.Open(filtfile + ".vrt", gdal.GA_ReadOnly)
-    filt_phase = np.angle(ds_filt.ReadAsArray())
-
-    integer_jumps = unw_phase[1, :, :] - filt_phase
-
-    del unw_phase, filt_phase
-
-    ds_int = gdal.Open(intfile + ".vrt", gdal.GA_ReadOnly)
-    int_phase = np.angle(ds_int.ReadAsArray())
-
-    out_phase = integer_jumps + int_phase
-
-    del int_phase, integer_jumps
-
-    outfile.bands[1][:, :] = out_phase[:, :]
+    for line in range(length):
+        integer_jumps = unw_phase[1, line, :] - np.angle(filt_phase[line, :])
+        outfile[1, line, :] = integer_jumps + np.angle(int_phase[line, :])
+        outfile[0, line, :] = unw_phase[0, line, :]
     
     unwImage = isceobj.Image.createImage()
     unwImage.setFilename(outunw)
@@ -322,9 +311,7 @@ def remove_filter(intfile, filtfile, unwfile):
     unwImage.scheme = 'BIL'
     unwImage.dataType = 'FLOAT'
     unwImage.setAccessMode('read')
-    #unwImage.createImage()
     unwImage.renderHdr()
-    #unwImage.finalizeImage()
 
     return
 
@@ -334,9 +321,8 @@ def main(iargs=None):
     '''
 
     inps = cmdLineParse(iargs)
-    interferogramDir = os.path.dirname(inps.intfile)
     print ('unwrapping method : ' , inps.method)
-    '''
+
     if inps.method == 'snaphu':
        if inps.nomcf: 
            fncall =  runUnwrap
@@ -350,7 +336,6 @@ def main(iargs=None):
 
     elif inps.method == 'icu':
        runUnwrapIcu(inps.intfile, inps.unwfile)
-    '''
 
     if inps.rmfilter:
         filtfile = os.path.abspath(inps.intfile)
