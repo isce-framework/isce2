@@ -120,12 +120,13 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
     <!--=========================================================================================
     this water body is used to create water body in radar coordinate used in processing.
-    radar-coordinate water body is created three times in runRdr2Geo.py, runLook.py and 
-    runLookSd.py, respectively. radar-coordinate water body is used in:
+    radar-coordinate water body is created four times in runRdr2Geo.py, runLook.py, runIonUwrap.py 
+    and runLookSd.py, respectively. radar-coordinate water body is used in:
     (1) determining the number of offsets in slc offset estimation, and radar/dem offset 
         estimation
     (2) masking filtered interferogram or unwrapped interferogram
     (3) masking filtered interferogram or unwrapped interferogram in sd processing
+    (4) mask coherence in ionosphere fitting and filtering
     ==========================================================================================-->
     <!--<property name="water body">None</property>-->
 
