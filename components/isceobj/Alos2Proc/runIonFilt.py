@@ -80,11 +80,17 @@ def runIonFilt(self):
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
 
+    #remove water body
+    wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
+    cor[np.nonzero(wbd==-1)] = 0.0
+
+    #remove small values
+    cor[np.nonzero(cor<corThresholdAdj)] = 0.0
+
     #compute ionosphere
     fl = SPEED_OF_LIGHT / self._insar.subbandRadarWavelength[0]
     fu = SPEED_OF_LIGHT / self._insar.subbandRadarWavelength[1]
     adjFlag = 1
-    cor[np.nonzero(cor<corThresholdAdj)] = 0.0
     ionos = computeIonosphere(lowerUnw, upperUnw, cor**corOrderAdj, fl, fu, adjFlag, 0)
 
     #dump ionosphere
@@ -131,13 +137,13 @@ def runIonFilt(self):
         # 1 is not good for low coherence case, changed to 20
         #corOrderFit = 1
         corOrderFit = 20
-        corOrderFilt = 20
+        corOrderFilt = 14
     else:
         #parameters for using lower/upper band coherence
         corfile = subbandPrefix[0]+ml2+'.cor'
         corThresholdFit = 0.4
         corOrderFit = 10
-        corOrderFilt = 10
+        corOrderFilt = 4
 
     #################################################
 
@@ -165,6 +171,10 @@ def runIonFilt(self):
     #remove possible wired values in coherence
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
+
+    #remove water body
+    wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
+    cor[np.nonzero(wbd==-1)] = 0.0
 
     # #applying water body mask here
     # waterBodyFile = 'wbd'+ml2+'.wbd'
