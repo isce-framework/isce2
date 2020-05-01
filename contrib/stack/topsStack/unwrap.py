@@ -322,7 +322,7 @@ def main(iargs=None):
 
     inps = cmdLineParse(iargs)
     print ('unwrapping method : ' , inps.method)
-
+    
     if inps.method == 'snaphu':
        if inps.nomcf: 
            fncall =  runUnwrap
