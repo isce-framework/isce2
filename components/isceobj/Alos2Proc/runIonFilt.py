@@ -44,7 +44,8 @@ def runIonFilt(self):
     ###################################
     #SET PARAMETERS HERE
     #THESE SHOULD BE GOOD ENOUGH, NO NEED TO SET IN setup(self)
-    corThresholdAdj = 0.85
+    corThresholdAdj = 0.97
+    corOrderAdj = 20
     ###################################
 
     print('\ncomputing ionosphere')
@@ -75,11 +76,22 @@ def runIonFilt(self):
             upperUnw[area[0]:area[1], area[2]:area[3]] = 0
             cor[area[0]:area[1], area[2]:area[3]] = 0
 
+    #remove possible wired values in coherence
+    cor[np.nonzero(cor<0)] = 0.0
+    cor[np.nonzero(cor>1)] = 0.0
+
+    #remove water body
+    wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
+    cor[np.nonzero(wbd==-1)] = 0.0
+
+    #remove small values
+    cor[np.nonzero(cor<corThresholdAdj)] = 0.0
+
     #compute ionosphere
     fl = SPEED_OF_LIGHT / self._insar.subbandRadarWavelength[0]
     fu = SPEED_OF_LIGHT / self._insar.subbandRadarWavelength[1]
     adjFlag = 1
-    ionos = computeIonosphere(lowerUnw, upperUnw, cor, fl, fu, adjFlag, corThresholdAdj, 0)
+    ionos = computeIonosphere(lowerUnw, upperUnw, cor**corOrderAdj, fl, fu, adjFlag, 0)
 
     #dump ionosphere
     ionfile = 'ion'+ml2+'.ion'
@@ -108,13 +120,36 @@ def runIonFilt(self):
     size_max = self.filteringWinsizeMaxIon
     size_min = self.filteringWinsizeMinIon
 
+    if size_min >= size_max:
+        print('\n\nWARNING: minimum window size for filtering ionosphere phase {} >= maximum window size {}'.format(size_min, size_max))
+        print('         resetting maximum window size to {}\n\n'.format(size_min+5))
+        size_max = size_min + 5
+
     #THESE SHOULD BE GOOD ENOUGH, NO NEED TO SET IN setup(self)
-    corThresholdIon = 0.85
+    #corThresholdFit = 0.85
+
+    #Now changed to use lower band coherence. crl, 23-apr-2020.
+    useDiffCoherence = False
+    if useDiffCoherence:
+        #parameters for using diff coherence
+        corfile = 'diff'+ml2+'.cor'
+        corThresholdFit = 0.95
+        # 1 is not good for low coherence case, changed to 20
+        #corOrderFit = 1
+        corOrderFit = 20
+        corOrderFilt = 14
+    else:
+        #parameters for using lower/upper band coherence
+        corfile = subbandPrefix[0]+ml2+'.cor'
+        corThresholdFit = 0.4
+        corOrderFit = 10
+        corOrderFilt = 4
+
     #################################################
 
     print('\nfiltering ionosphere')
     ionfile = 'ion'+ml2+'.ion'
-    corfile = 'diff'+ml2+'.cor'
+    #corfile = 'diff'+ml2+'.cor'
     ionfiltfile = 'filt_ion'+ml2+'.ion'
 
     img = isceobj.createImage()
@@ -137,6 +172,10 @@ def runIonFilt(self):
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
 
+    #remove water body
+    wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
+    cor[np.nonzero(wbd==-1)] = 0.0
+
     # #applying water body mask here
     # waterBodyFile = 'wbd'+ml2+'.wbd'
     # if os.path.isfile(waterBodyFile):
@@ -145,14 +184,17 @@ def runIonFilt(self):
     #     cor[np.nonzero(wbd!=0)] = 0.00001
 
     if fit:
-        ion_fit = weight_fitting(ion, cor, width, length, 1, 1, 1, 1, 2, corThresholdIon)
+        import copy
+        wgt = copy.deepcopy(cor)
+        wgt[np.nonzero(wgt<corThresholdFit)] = 0.0
+        ion_fit = weight_fitting(ion, wgt**corOrderFit, width, length, 1, 1, 1, 1, 2)
         ion -= ion_fit * (ion!=0)
 
     #minimize the effect of low coherence pixels
     #cor[np.nonzero( (cor<0.85)*(cor!=0) )] = 0.00001
     #filt = adaptive_gaussian(ion, cor, size_max, size_min)
     #cor**14 should be a good weight to use. 22-APR-2018
-    filt = adaptive_gaussian(ion, cor**14, size_max, size_min)
+    filt = adaptive_gaussian(ion, cor**corOrderFilt, size_max, size_min)
 
     if fit:
         filt += ion_fit * (filt!=0)
@@ -282,19 +324,18 @@ def runIonFilt(self):
 
 
 
-def computeIonosphere(lowerUnw, upperUnw, cor, fl, fu, adjFlag, corThresholdAdj, dispersive):
+def computeIonosphere(lowerUnw, upperUnw, wgt, fl, fu, adjFlag, dispersive):
     '''
     This routine computes ionosphere and remove the relative phase unwrapping errors
 
     lowerUnw:        lower band unwrapped interferogram
     upperUnw:        upper band unwrapped interferogram
-    cor:             coherence
+    wgt:             weight
     fl:              lower band center frequency
     fu:              upper band center frequency
     adjFlag:         method for removing relative phase unwrapping errors
                        0: mean value
                        1: polynomial
-    corThresholdAdj: coherence threshold of samples used in removing relative phase unwrapping errors
     dispersive:      compute dispersive or non-dispersive
                        0: dispersive
                        1: non-dispersive
@@ -324,14 +365,14 @@ def computeIonosphere(lowerUnw, upperUnw, cor, fl, fu, adjFlag, corThresholdAdj,
 ##########################################################################################
     #adjust phase using mean value
     if adjFlag == 0:
-        flag = (lowerUnw!=0)*(cor>=corThresholdAdj)
+        flag = (lowerUnw!=0)*(wgt!=0)
         index = np.nonzero(flag!=0)
         mv = np.mean((lowerUnw - upperUnw)[index], dtype=np.float64)
         print('mean value of phase difference: {}'.format(mv))
         diff = mv
     #adjust phase using a surface
     else:
-        diff = weight_fitting(lowerUnw - upperUnw, cor, width, length, 1, 1, 1, 1, 2, corThresholdAdj)
+        diff = weight_fitting(lowerUnw - upperUnw, wgt, width, length, 1, 1, 1, 1, 2)
 
     flag2 = (lowerUnw!=0)
     index2 = np.nonzero(flag2)
@@ -435,10 +476,10 @@ def cal_surface(x, y, c, order):
     return z
 
 
-def weight_fitting(ionos, cor, width, length, nrli, nali, nrlo, nalo, order, coth):
+def weight_fitting(ionos, weight, width, length, nrli, nali, nrlo, nalo, order):
     '''
     ionos:  input ionospheric phase
-    cor:    coherence of the interferogram
+    weight: weight
     width:  file width
     length: file length
     nrli:   number of range looks of the input interferograms
@@ -446,7 +487,6 @@ def weight_fitting(ionos, cor, width, length, nrli, nali, nrlo, nalo, order, cot
     nrlo:   number of range looks of the output ionosphere phase
     nalo:   number of azimuth looks of the ioutput ionosphere phase
     order:  the order of the polynomial for fitting ionosphere phase estimates
-    coth:   coherence threshhold for ionosphere phase estimation
     '''
 
     from isceobj.Alos2Proc.Alos2ProcPublic import create_multi_index2
@@ -460,11 +500,8 @@ def weight_fitting(ionos, cor, width, length, nrli, nali, nrlo, nalo, order, cot
     rgindex = create_multi_index2(widtho, nrli, nrlo)
     azindex = create_multi_index2(lengtho, nali, nalo)
 
-    #convert coherence to weight
-    cor = cor**2/(1.009-cor**2)
-
     #look for data to use
-    flag = (cor>coth)*(ionos!=0)
+    flag = (weight!=0)*(ionos!=0)
     point_index = np.nonzero(flag)
     m = point_index[0].shape[0]
 
@@ -475,7 +512,7 @@ def weight_fitting(ionos, cor, width, length, nrli, nali, nrlo, nalo, order, cot
     x = x0[point_index].reshape(m, 1)
     y = y0[point_index].reshape(m, 1)
     z = ionos[point_index].reshape(m, 1)
-    w = cor[point_index].reshape(m, 1)
+    w = weight[point_index].reshape(m, 1)
 
     #convert to higher precision type before use
     x=np.asfarray(x,np.float64)

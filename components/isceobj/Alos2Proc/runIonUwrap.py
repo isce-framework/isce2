@@ -25,6 +25,7 @@ def runIonUwrap(self):
 
     masterTrack = self._insar.loadTrack(master=True)
     slaveTrack = self._insar.loadTrack(master=False)
+    wbdFile = os.path.abspath(self._insar.wbd)
 
     from isceobj.Alos2Proc.runIonSubband import defineIonDir
     ionDir = defineIonDir()
@@ -40,6 +41,7 @@ def runIonUwrap(self):
     ############################################################
     from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
     from contrib.alos2proc.alos2proc import look
+    from isceobj.Alos2Proc.Alos2ProcPublic import waterBodyRadar
 
     ml2 = '_{}rlks_{}alks'.format(self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon, 
                               self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon)
@@ -68,6 +70,14 @@ def runIonUwrap(self):
         #     if os.path.isfile(wbdOutFile):
         #         look(wbdOutFile, 'wbd'+ml2+'.wbd', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 0, 0, 1)
         #         create_xml('wbd'+ml2+'.wbd', width2, length2, 'byte')
+
+        #water body
+        if k == 0:
+            look(os.path.join(fullbandDir, self._insar.latitude), 'lat'+ml2+'.lat', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
+            look(os.path.join(fullbandDir, self._insar.longitude), 'lon'+ml2+'.lon', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
+            create_xml('lat'+ml2+'.lat', width2, length2, 'double')
+            create_xml('lon'+ml2+'.lon', width2, length2, 'double')
+            waterBodyRadar('lat'+ml2+'.lat', 'lon'+ml2+'.lon', wbdFile, 'wbd'+ml2+'.wbd')
 
 
     ############################################################

@@ -763,6 +763,7 @@ class DemStitcher(Component):
     def getUnzippedName(self,name,source = None):
         return name.replace(self._zip,'')
     def stitchDems(self,lat,lon,source, outname, downloadDir = None,region = None, keep = None, swap = None):
+        import glob
         if downloadDir is None:
             downloadDir = self._downloadDir
         else:
@@ -839,7 +840,8 @@ class DemStitcher(Component):
 
             if not self._keepDems:
                 for dem in decompressedList:
-                    os.remove(dem)
+                    for d in glob.glob('*'+os.path.basename(dem.decode('UTF-8'))[:7]+'*'):
+                        os.remove(d)
             if self._createXmlMetadata:
                 self.createXmlMetadata(lat,lon,source,outname)
             if self._createRscMetadata:
