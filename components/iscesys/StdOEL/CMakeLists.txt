@@ -5,6 +5,7 @@ add_library(stdoel_static STATIC
     src/StdOEL.cpp
     src/WriterFactory.cpp
     )
+set_property(TARGET stdoel_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_include_directories(stdoel_static PUBLIC include)
 
 Python_add_library(StdOEL MODULE
