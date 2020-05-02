@@ -13,14 +13,7 @@ target_include_directories(formslc PUBLIC
     formslc/include
     )
 target_link_libraries(formslc PRIVATE
-    # XXX Careful!
-    # Both of these libs define getline_ and
-    # we need to use the one from DataAccessor.
-    # So make sure that DataAccessor is linked first here!
-    # Linking the wrong getline may cause confusing segfaults!
     DataAccessor_static
-    # TODO remove these includes from formslc - they are not needed
-    LineAccessor_static
     )
 
 target_link_libraries(formslc PUBLIC
