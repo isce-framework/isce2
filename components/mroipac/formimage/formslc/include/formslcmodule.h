@@ -11,7 +11,6 @@
 #ifndef formslcmodule_h
 #define formslcmodule_h
 
-#include "LineAccessor.h"
 #include "formslcmoduleFortTrans.h"
 #include <stdint.h>
 
