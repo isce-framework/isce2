@@ -239,7 +239,7 @@ workflows:
   version: 2
   test:
     jobs:
-      #- test
+      - test
       - test-cmake
   build-deploy:
     jobs:
