@@ -98,12 +98,6 @@ function( compile_pyx _name generated_file )
 
   list(APPEND cython_args "-${Python_VERSION_MAJOR}")
 
-  # Include directory arguments.
-  list(REMOVE_DUPLICATES cmake_include_directories)
-  foreach(_include_dir ${cmake_include_directories})
-    list(APPEND cython_args "-I${_include_dir}")
-  endforeach()
-
   # Determining generated file name.
   set(_generated_file ${CMAKE_CURRENT_BINARY_DIR}/${_name}.cxx)
   set_source_files_properties( ${_generated_file} PROPERTIES GENERATED TRUE )
