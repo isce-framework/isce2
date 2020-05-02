@@ -42,8 +42,8 @@ jobs:
           command: |
             set -ex
             cd /root/project/src/build
-            ctest
             . /opt/conda/bin/activate root
+            ctest
             topsApp.py --help --steps
             stripmapApp.py --help --steps
             python3 -c "import isce"
