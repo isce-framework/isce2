@@ -35,7 +35,7 @@ jobs:
             mkdir build
             cd build
             cmake .. -DCMAKE_INSTALL_PREFIX==/opt/conda -DPYTHON_MODULE_DIR=$(python3 -c "import site; print(site.getsitepackages()[0])")
-            make install
+            make install VERBOSE=y
 
       - run:
           name: Test ISCE installation
