@@ -162,6 +162,9 @@ def createParser():
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
         help='Allow App to use GPU when available')
 
+    parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
+                        help='Make an extra unwrap file in which filtering effect is removed')
+
     return parser
 
 def cmdLineParse(iargs = None):
@@ -457,10 +460,16 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
             runObj.extractOverlaps()
             runObj.finalize()
 
-        i+=1
+        i += 1
         runObj = run()
-        runObj.configure(inps, 'run_' + str(i) + "_overlap_geo2rdr_resample")
-        runObj.overlap_geo2rdr_resample(slaveDates)
+        runObj.configure(inps, 'run_' + str(i) + "_overlap_geo2rdr")
+        runObj.geo2rdr_offset(slaveDates)
+        runObj.finalize()
+
+        i += 1
+        runObj = run()
+        runObj.configure(inps, 'run_' + str(i) + "_overlap_resample")
+        runObj.resample_with_carrier(slaveDates)
         runObj.finalize()
 
         i+=1
@@ -478,10 +487,16 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
         runObj.timeseries_misregistration()
         runObj.finalize()
 
-    i+=1
+    i += 1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_geo2rdr_resample")
-    runObj.geo2rdr_resample(slaveDates)
+    runObj.configure(inps, 'run_' + str(i) + "_fullBurst_geo2rdr")
+    runObj.geo2rdr_offset(slaveDates, fullBurst='True')
+    runObj.finalize()
+
+    i += 1
+    runObj = run()
+    runObj.configure(inps, 'run_' + str(i) + "_fullBurst_resample")
+    runObj.resample_with_carrier(slaveDates, fullBurst='True')
     runObj.finalize()
 
     i+=1
@@ -546,8 +561,14 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_merge_burst_igram") 
-    runObj.burstIgram_mergeBurst(acquisitionDates, safe_dict, pairs)
+    runObj.configure(inps, 'run_' + str(i) + "_generate_burst_igram")
+    runObj.generate_burstIgram(acquisitionDates, safe_dict, pairs)
+    runObj.finalize()
+
+    i += 1
+    runObj = run()
+    runObj.configure(inps, 'run_' + str(i) + "_merge_burst_igram")
+    runObj.igram_mergeBurst(acquisitionDates, safe_dict, pairs)
     runObj.finalize()
 
     i+=1
