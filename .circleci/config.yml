@@ -34,7 +34,7 @@ jobs:
             . /opt/conda/bin/activate root
             mkdir build
             cd build
-            cmake .. -DPYTHON_MODULE_DIR=$(python3 -c "import site; print(site.getsitepackages()[0])")
+            cmake .. -DCMAKE_INSTALL_PREFIX==/opt/conda -DPYTHON_MODULE_DIR=$(python3 -c "import site; print(site.getsitepackages()[0])")
             make install
 
       - run:
