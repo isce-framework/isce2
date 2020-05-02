@@ -41,9 +41,9 @@ jobs:
           name: Test ISCE installation
           command: |
             set -ex
-            pwd
-            . /opt/conda/bin/activate root
+            cd /root/project/src/build
             ctest
+            . /opt/conda/bin/activate root
             topsApp.py --help --steps
             stripmapApp.py --help --steps
             python3 -c "import isce"
