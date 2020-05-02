@@ -366,7 +366,12 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
     from iscesys.Parsers.FileParserFactory import createFileParser
     from mroipac.looks.Looks import Looks
 
-    print('generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks))
+    msg = 'generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks)
+    if method == 'isce':
+        msg += ' using mroipac.looks.Looks() ...'
+    else:
+        msg += ' using gdal.Translate() ...'
+    print('-'*50+'\n'+msg)
 
     # create 'geom_master' directory
     os.makedirs(out_dir, exist_ok=True)
@@ -377,6 +382,7 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
         out_file = os.path.join(out_dir, '{}{}'.format(fbase, out_ext))
 
         if all(os.path.isfile(in_file+ext) for ext in ['','.vrt','.xml']):
+            print('multilook {}'.format(in_file))
 
             # option 1 - Looks module (isce)
             if method == 'isce':
@@ -407,10 +413,9 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
                 src_wid = out_wid * rlks
                 src_len = out_len * alks
 
-                cmd = 'gdal_translate -of ENVI -a_nodata 0 -outsize {ox} {oy} '.format(ox=out_wid, oy=out_len)
-                cmd += ' -srcwin 0 0 {sx} {sy} {fi} {fo} '.format(sx=src_wid, sy=src_len, fi=in_file, fo=out_file)
-                print(cmd)
-                os.system(cmd)
+                options_str = '-of ENVI -a_nodata 0 -outsize {ox} {oy} -srcwin 0 0 {sx} {sy} '.format(
+                    ox=out_wid, oy=out_len, sx=src_wid, sy=src_len)
+                gdal.Translate(out_file, ds, options=options_str)
 
                 # generate ISCE .xml file
                 if not os.path.isfile(out_file+'.xml'):
