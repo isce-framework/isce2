@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-import isce
+
+
 import os
-import logging
-from components.stdproc.stdproc import crossmul
-import isceobj
-from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
-import isceobj
 import argparse
+import logging
+
+import isce
+import isceobj
+from components.stdproc.stdproc import crossmul
+from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
+
 
 def createParser():
 

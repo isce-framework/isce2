@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+import os
+import argparse
+import shelve
+import json
+import logging
+import numpy as np
+
 import isce
 import isceobj
 import stdproc
 from stdproc.stdproc import crossmul
-import numpy as np
-from isceobj.Util.Poly2D import Poly2D
-import argparse
-import os
-import shelve
-from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
-import json
-import logging
 from isceobj.Util.decorators import use_api
+from isceobj.Util.Poly2D import Poly2D
+from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 
 def createParser():
     parser = argparse.ArgumentParser( description='Use polynomial offsets and create burst by burst interferograms')
