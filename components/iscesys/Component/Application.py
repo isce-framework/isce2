@@ -297,7 +297,7 @@ class Application(Component, StepHelper):
                         (self._pickleObj, os.path.join(self.pickleLoadDir, name))
                         )
         except IOError:
-            print("Cannot open %s", os.path.join(self.pickleLoadDir, name))
+            print("Cannot open %s" % (os.path.join(self.pickleLoadDir, name)))
         return None
 
 

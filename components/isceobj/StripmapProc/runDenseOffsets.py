@@ -62,7 +62,7 @@ def estimateOffsetField(master, slave, denseOffsetFileName,
     else:
         objOffset.setImageDataType2('real')
 
-    
+
     objOffset.offsetImageName = denseOffsetFileName + '.bil'
     objOffset.snrImageName = denseOffsetFileName +'_snr.bil'
     objOffset.covImageName = denseOffsetFileName +'_cov.bil'
@@ -75,11 +75,11 @@ def estimateOffsetField(master, slave, denseOffsetFileName,
 
 def runDenseOffsets(self):
 
-    if self.doDenseOffsets or self.doRubbersheeting:
+    if self.doDenseOffsets or self.doRubbersheetingAzimuth:
         if self.doDenseOffsets:
             print('Dense offsets explicitly requested')
 
-        if self.doRubbersheeting:
+        if self.doRubbersheetingAzimuth:
             print('Generating offsets as rubber sheeting requested')
     else:
         return
@@ -90,13 +90,10 @@ def runDenseOffsets(self):
     slaveSlc = os.path.join(self.insar.coregDirname, self._insar.refinedCoregFilename )
 
     dirname = self.insar.denseOffsetsDirname
-    if os.path.isdir(dirname):
-        logger.info('dense offsets directory {0} already exists.'.format(dirname))
-    else:
-        os.makedirs(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
     denseOffsetFilename = os.path.join(dirname , self.insar.denseOffsetFilename)
-    
+
     field = estimateOffsetField(masterSlc, slaveSlc, denseOffsetFilename,
                                 ww = self.denseWindowWidth,
                                 wh = self.denseWindowHeight,
@@ -107,5 +104,5 @@ def runDenseOffsets(self):
 
     self._insar.offset_top = field[0]
     self._insar.offset_left = field[1]
-    
+
     return None

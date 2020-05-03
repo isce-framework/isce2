@@ -78,7 +78,8 @@ listFiles = ['mdx.py',
              'wbd.py',
 	     'downsampleDEM.py',
 	     'gdal2isce_xml.py',
-             'scansarApp.py']
+             'alos2App.py',
+             'alos2burstApp.py']
 #             'isce2he5.py']
 
 envapplications.Install(install, listFiles)

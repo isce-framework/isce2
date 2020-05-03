@@ -3,18 +3,12 @@
 #
 #
 import logging
-import os
+import os,gdal
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
-import gdal
 
-from scipy import ndimage
-try:
-    import cv2
-except ImportError:
-    print('OpenCV2 does not appear to be installed / is not importable.')
-    print('OpenCV2 is needed for this step. You may experience failures ...')
+
 
 
 logger = logging.getLogger('isce.insar.runDispersive')
@@ -30,19 +24,8 @@ def getValue(dataFile, band, y_ref, x_ref):
     ds = None
     return ref[0][0]
 
-def check_consistency(lowBandIgram, highBandIgram, outputDir):
 
-
-    jumpFile = os.path.join(outputDir , "jumps.bil")
-    cmd = 'imageMath.py -e="round((a_1-b_1)/(2.0*PI))" --a={0}  --b={1} -o {2} -t float  -s BIL'.format(lowBandIgram, highBandIgram, jumpFile)
-    print(cmd)
-    os.system(cmd)
-
-    return jumpFile
-
-
-
-def dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive, jumpFile, y_ref=None, x_ref=None, m=None , d=None):
+def dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive, y_ref=None, x_ref=None, m=None , d=None):
     
     if y_ref and x_ref:
         refL = getValue(lowBandIgram, 2, y_ref, x_ref)
@@ -58,100 +41,80 @@ def dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispers
     if m and d:
 
         coef = (fL*fH)/(f0*(fH**2 - fL**2))
-        #cmd = 'imageMath.py -e="{0}*((a_1-{8}-2*PI*c)*{1}-(b_1-{9}-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} -o {7} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, m , d, outDispersive, refL, refH)
-        cmd = 'imageMath.py -e="{0}*((a_1-2*PI*c)*{1}-(b_1+(2.0*PI*g)-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} --g={7} -o {8} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, m , d, jumpFile, outDispersive)
+        cmd = 'imageMath.py -e="{0}*((a_1-2*PI*c)*{1}-(b_1+(2.0*PI)-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} -o {7} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, m , d, outDispersive)
         print(cmd)
         os.system(cmd)
 
         coefn = f0/(fH**2-fL**2)
-        #cmd = 'imageMath.py -e="{0}*((a_1-{8}-2*PI*c)*{1}-(b_1-{9}-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} -o {7} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, m , d, outNonDispersive, refH, refL)
-        cmd = 'imageMath.py -e="{0}*((a_1+(2.0*PI*g)-2*PI*c)*{1}-(b_1-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} --g={7} -o {8} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, m , d, jumpFile, outNonDispersive)
+        cmd = 'imageMath.py -e="{0}*((a_1+(2.0*PI)-2*PI*c)*{1}-(b_1-2*PI*(c+f))*{2})" --a={3} --b={4} --c={5} --f={6} -o {7} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, m , d, outNonDispersive)
         print(cmd)
         os.system(cmd)
 
     else:
         
         coef = (fL*fH)/(f0*(fH**2 - fL**2))
-        #cmd = 'imageMath.py -e="{0}*((a_1-{6})*{1}-(b_1-{7})*{2})" --a={3} --b={4} -o {5} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, outDispersive, refL, refH)
-        cmd = 'imageMath.py -e="{0}*(a_1*{1}-(b_1+2.0*PI*c)*{2})" --a={3} --b={4} --c={5}  -o {6} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, jumpFile, outDispersive)
+        cmd = 'imageMath.py -e="{0}*(a_1*{1}-(b_1+2.0*PI)*{2})" --a={3} --b={4} -o {5} -t float32 -s BIL'.format(coef,fH, fL, lowBandIgram, highBandIgram, outDispersive)
 
         print(cmd)
         os.system(cmd)
 
         coefn = f0/(fH**2-fL**2)
-        #cmd = 'imageMath.py -e="{0}*((a_1-{6})*{1}-(b_1-{7})*{2})" --a={3} --b={4} -o {5} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, outNonDispersive, refH, refL) 
-        cmd = 'imageMath.py -e="{0}*((a_1+2.0*PI*c)*{1}-(b_1)*{2})" --a={3} --b={4} --c={5} -o {6} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, jumpFile, outNonDispersive)
+        cmd = 'imageMath.py -e="{0}*((a_1+2.0*PI)*{1}-(b_1)*{2})" --a={3} --b={4} -o {5} -t float32 -s BIL'.format(coefn,fH, fL, highBandIgram, lowBandIgram, outNonDispersive)
         print(cmd)
         os.system(cmd)
 
 
     return None
 
+def std_iono_mean_coh(f0,fL,fH,coh_mean,rgLooks,azLooks):
+    
+    # From Liao et al., Remote Sensing of Environment 2018
+    
+    # STD sub-band at average coherence value (Eq. 8)
+    Nb = (rgLooks*azLooks)/3.0
+    coeffA = (np.sqrt(2.0*Nb))**(-1)
+    coeffB = np.sqrt(1-coh_mean**2)/coh_mean
+    std_subbands = coeffA * coeffB
+    
+    # STD Ionosphere (Eq. 7)
+    coeffC = np.sqrt(1+(fL/fH)**2)
+    coeffD = (fH*fL*fH)/(f0*(fH**2-fL**2))
+    std_iono = coeffC*coeffD*std_subbands
+    
+    return std_iono
+    
 def theoretical_variance_fromSubBands(self, f0, fL, fH, B, Sig_phi_iono, Sig_phi_nonDisp,N):
-    # Calculating the theoretical variance of the 
-    # ionospheric phase based on the coherence of
-    # the sub-band interferograns 
+    
+    # Calculating the theoretical variance of the ionospheric phase based on the coherence of the sub-band interferograns 
     ifgDirname = os.path.join(self.insar.ifgDirname, self.insar.lowBandSlcDirname)
     lowBandCoherence = os.path.join(ifgDirname , self.insar.coherenceFilename)
     Sig_phi_L = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename + ".sig")
 
     ifgDirname = os.path.join(self.insar.ifgDirname, self.insar.highBandSlcDirname)
-    #highBandIgram = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename + ".unw")
-
-    #ifgDirname = os.path.dirname(self.insar.lowBandIgram)
-    #lowBandCoherence = os.path.join(ifgDirname , self.insar.coherenceFilename)
-    #Sig_phi_L = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename + ".sig")
-
-    #ifgDirname = os.path.dirname(self.insar.highBandIgram)
     highBandCoherence = os.path.join(ifgDirname , self.insar.coherenceFilename)
     Sig_phi_H = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename + ".sig")
-
-    #N = self.numberAzimuthLooks*self.numberRangeLooks
-    #PI = np.pi
-    #fL,f0,fH,B = getBandFrequencies(inps)
-    #cL = read(inps.lowBandCoherence,bands=[1])
-    #cL = cL[0,:,:]
-    #cL[cL==0.0]=0.001
     
     cmd = 'imageMath.py -e="sqrt(1-a**2)/a/sqrt(2.0*{0})" --a={1} -o {2} -t float -s BIL'.format(N, lowBandCoherence, Sig_phi_L)
+   
     print(cmd)
     os.system(cmd)
-    #Sig_phi_L = np.sqrt(1-cL**2)/cL/np.sqrt(2.*N)
-
-    #cH = read(inps.highBandCoherence,bands=[1])
-    #cH = cH[0,:,:]
-    #cH[cH==0.0]=0.001
-
     cmd = 'imageMath.py -e="sqrt(1-a**2)/a/sqrt(2.0*{0})" --a={1} -o {2} -t float -s BIL'.format(N, highBandCoherence, Sig_phi_H)
     print(cmd)
     os.system(cmd)
-    #Sig_phi_H = np.sqrt(1-cH**2)/cH/np.sqrt(2.0*N)
 
     coef = (fL*fH)/(f0*(fH**2 - fL**2))
 
     cmd = 'imageMath.py -e="sqrt(({0}**2)*({1}**2)*(a**2) + ({0}**2)*({2}**2)*(b**2))" --a={3} --b={4} -o {5} -t float -s BIL'.format(coef, fL, fH, Sig_phi_L, Sig_phi_H, Sig_phi_iono)
     os.system(cmd)
 
-    #Sig_phi_iono = np.sqrt((coef**2)*(fH**2)*Sig_phi_H**2 + (coef**2)*(fL**2)*Sig_phi_L**2)
-    #length, width = Sig_phi_iono.shape
-
-    #outFileIono = os.path.join(inps.outDir, 'Sig_iono.bil')
-    #write(Sig_phi_iono, outFileIono, 1, 6)
-    #write_xml(outFileIono, length, width)
-
     coef_non = f0/(fH**2 - fL**2)
     cmd = 'imageMath.py -e="sqrt(({0}**2)*({1}**2)*(a**2) + ({0}**2)*({2}**2)*(b**2))" --a={3} --b={4} -o {5} -t float -s BIL'.format(coef_non, fL, fH, Sig_phi_L, Sig_phi_H, Sig_phi_nonDisp)
     os.system(cmd)
 
-    #Sig_phi_non_dis = np.sqrt((coef_non**2) * (fH**2) * Sig_phi_H**2 + (coef_non**2) * (fL**2) * Sig_phi_L**2)
-
-    #outFileNonDis = os.path.join(inps.outDir, 'Sig_nonDis.bil')
-    #write(Sig_phi_non_dis, outFileNonDis, 1, 6)
-    #write_xml(outFileNonDis, length, width)
-
+  
     return None #Sig_phi_iono, Sig_phi_nonDisp
 
-def lowPassFilter(dataFile, sigDataFile, maskFile, Sx, Sy, sig_x, sig_y, iteration=5, theta=0.0):
+def lowPassFilter(self,dataFile, sigDataFile, maskFile, Sx, Sy, sig_x, sig_y, iteration=5, theta=0.0):
     ds = gdal.Open(dataFile + '.vrt', gdal.GA_ReadOnly)
     length = ds.RasterYSize
     width = ds.RasterXSize
@@ -160,7 +123,7 @@ def lowPassFilter(dataFile, sigDataFile, maskFile, Sx, Sy, sig_x, sig_y, iterati
     sigData = np.memmap(sigDataFile, dtype=np.float32, mode='r', shape=(length,width))
     mask = np.memmap(maskFile, dtype=np.byte, mode='r', shape=(length,width))
 
-    dataF, sig_dataF = iterativeFilter(dataIn[:,:], mask[:,:], sigData[:,:], iteration, Sx, Sy, sig_x, sig_y, theta)
+    dataF, sig_dataF = iterativeFilter(self,dataIn[:,:], mask[:,:], sigData[:,:], iteration, Sx, Sy, sig_x, sig_y, theta)
 
     filtDataFile = dataFile + ".filt"
     sigFiltDataFile  = sigDataFile + ".filt"
@@ -193,7 +156,7 @@ def write_xml(fileName,width,length,bands,dataType,scheme):
     
     return None
 
-def iterativeFilter(dataIn, mask, Sig_dataIn, iteration, Sx, Sy, sig_x, sig_y, theta=0.0):
+def iterativeFilter(self,dataIn, mask, Sig_dataIn, iteration, Sx, Sy, sig_x, sig_y, theta=0.0):
     data = np.zeros(dataIn.shape)
     data[:,:] = dataIn[:,:]
     Sig_data = np.zeros(dataIn.shape)
@@ -202,17 +165,30 @@ def iterativeFilter(dataIn, mask, Sig_dataIn, iteration, Sx, Sy, sig_x, sig_y, t
     print ('masking the data')
     data[mask==0]=np.nan
     Sig_data[mask==0]=np.nan
-    print ('Filling the holes with nearest neighbor interpolation')
-    dataF = fill(data)
-    Sig_data = fill(Sig_data)
+    
+    if self.dispersive_filling_method == "smoothed":
+       print('Filling the holes with smoothed values')
+       dataF = fill_with_smoothed(data,3)
+       Sig_data = fill_with_smoothed(Sig_data,3) 
+    else:
+       print ('Filling the holes with nearest neighbor interpolation')
+       dataF = fill(data)
+       Sig_data = fill(Sig_data)
+       
     print ('Low pass Gaussian filtering the interpolated data')
     dataF, Sig_dataF = Filter(dataF, Sig_data, Sx, Sy, sig_x, sig_y, theta=0.0)
     for i in range(iteration):
        print ('iteration: ', i , ' of ',iteration)
        print ('masking the interpolated and filtered data')
        dataF[mask==0]=np.nan
-       print('Filling the holes with nearest neighbor interpolation of the filtered data from previous step')
-       dataF = fill(dataF)
+       
+       if self.dispersive_filling_method == "smoothed":
+          print("Fill the holes with smoothed values")
+          dataF = fill_with_smoothed(dataF,3)
+       else:
+          print('Filling the holes with nearest neighbor interpolation of the filtered data from previous step')
+          dataF = fill(dataF)
+
        print('Replace the valid pixels with original unfiltered data')
        dataF[mask==1]=data[mask==1]
        dataF, Sig_dataF = Filter(dataF, Sig_data, Sx, Sy, sig_x, sig_y, theta=0.0)
@@ -220,6 +196,9 @@ def iterativeFilter(dataIn, mask, Sig_dataIn, iteration, Sx, Sy, sig_x, sig_y, t
     return dataF, Sig_dataF
 
 def Filter(data, Sig_data, Sx, Sy, sig_x, sig_y, theta=0.0):
+    
+    import cv2
+
     kernel = Gaussian_kernel(Sx, Sy, sig_x, sig_y) #(800, 800, 15.0, 100.0)
     kernel = rotate(kernel , theta)
 
@@ -227,11 +206,6 @@ def Filter(data, Sig_data, Sx, Sy, sig_x, sig_y, theta=0.0):
     data = cv2.filter2D(data,-1,kernel)
     W1 = cv2.filter2D(1.0/Sig_data**2,-1,kernel)
     W2 = cv2.filter2D(1.0/Sig_data**2,-1,kernel**2)
-
-    #data = ndimage.convolve(data,kernel, mode='nearest')
-    #W1 = ndimage.convolve(1.0/Sig_data**2,kernel, mode='nearest')
-    #W2 = ndimage.convolve(1.0/Sig_data**2,kernel**2, mode='nearest')
-
 
     return data/W1, np.sqrt(W2/(W1**2))
 
@@ -282,7 +256,34 @@ def rotate(k , theta):
         k = a*k
     return k
 
+def fill_with_smoothed(off,filterSize):
+    
+    from astropy.convolution import convolve
+    
+    off_2filt=np.copy(off)
+    kernel = np.ones((filterSize,filterSize),np.float32)/(filterSize*filterSize)
+    loop = 0
+    cnt2=1
+    
+    while (cnt2!=0 & loop<100):
+       loop += 1
+       idx2= np.isnan(off_2filt)
+       cnt2 = np.sum(np.count_nonzero(np.isnan(off_2filt)))
+       print(cnt2)
+       if cnt2 != 0:
+          off_filt= convolve(off_2filt,kernel,boundary='extend',nan_treatment='interpolate')
+          off_2filt[idx2]=off_filt[idx2]
+          idx3 = np.where(off_filt == 0)
+          off_2filt[idx3]=np.nan
+          off_filt=None
+          
+    return off_2filt
+    
+
+
 def fill(data, invalid=None):
+    
+    from scipy import ndimage
     """
     Replace the value of invalid 'data' cells (indicated by 'invalid')
     by the value of the nearest valid data cell
@@ -304,8 +305,10 @@ def fill(data, invalid=None):
     return data[tuple(ind)]
 
 
-def getMask(self, maskFile):
-   
+def getMask(self, maskFile,std_iono):
+    
+    from scipy.ndimage import median_filter
+    
     ifgDirname = os.path.join(self.insar.ifgDirname, self.insar.lowBandSlcDirname)
     lowBandIgram = os.path.join(ifgDirname , 'filt_' + self.insar.ifgFilename )
     lowBandCor = os.path.join(ifgDirname ,self.insar.coherenceFilename)
@@ -328,7 +331,7 @@ def getMask(self, maskFile):
     else:
         highBandIgram += '.unw'
 
-    if self.dispersive_filter_mask_type == "coherence":
+    if (self.dispersive_filter_mask_type == "coherence") and (not self.dispersive_filter_mask_type == "median_filter"):
         print ('generating a mask based on coherence files of sub-band interferograms with a threshold of {0}'.format(self.dispersive_filter_coherence_threshold))
         cmd = 'imageMath.py -e="(a>{0})*(b>{0})" --a={1} --b={2} -t byte -s BIL -o {3}'.format(self.dispersive_filter_coherence_threshold, lowBandCor, highBandCor, maskFile)
         os.system(cmd)
@@ -338,28 +341,31 @@ def getMask(self, maskFile):
         print ('generating a mask based on .conncomp files')
         cmd = 'imageMath.py -e="(a>0)*(b>0)" --a={0} --b={1} -t byte -s BIL -o {2}'.format(lowBandIgram + '.conncomp', highBandIgram + '.conncomp', maskFile)
         os.system(cmd)
-        #m = read(lowBandIgram + '.conncomp')
-        #m = m[0,:,:]
-        #m = thresholdConnectedComponents(m,minPixelConnComp)
-        #mask = np.ones_like((m))
-        #mask[m==0] = 0.0
 
-        #m = read(highBandIgram + '.conncomp')
-        #m = m[0,:,:]
-        #m = thresholdConnectedComponents(m,minPixelConnComp)
-        #mask[m==0] = 0.0
+    elif self.dispersive_filter_mask_type == "median_filter":
+        print('Generating mask based on median filtering of the raw dispersive component')
+	
+	# Open raw dispersive component (non-filtered, no unwrapping-error corrected)
+        dispFilename = os.path.join(self.insar.ionosphereDirname,self.insar.dispersiveFilename)
+        sigFilename = os.path.join(self.insar.ionosphereDirname,self.insar.dispersiveFilename+'.sig')
+	
+        ds = gdal.Open(dispFilename+'.vrt',gdal.GA_ReadOnly)
+        disp = ds.GetRasterBand(1).ReadAsArray()
+        ds=None
 
-        #outName = os.path.join(inps.outDir, 'mask0.bil')
-        #length, width = mask.shape
-        #write(mask, outName, 1, 6)
-        #write_xml(outName, length, width)
+        mask = (np.abs(disp-median_filter(disp,15))<3*std_iono) 
+        
+        mask = mask.astype(np.float32)
+        mask.tofile(maskFile)
+        dims=np.shape(mask)
+        write_xml(maskFile,dims[1],dims[0],1,"FLOAT","BIL")
 
     else:
         print ('generating a mask based on unwrapped files. Pixels with phase = 0 are masked out.')
         cmd = 'imageMath.py -e="(a_1!=0)*(b_1!=0)" --a={0} --b={1} -t byte -s BIL -o {2}'.format(lowBandIgram , highBandIgram , maskFile)
         os.system(cmd)
 
-def unwrapp_error_correction(f0, B, dispFile, nonDispFile,lowBandIgram, highBandIgram, jumpsFile, y_ref=None, x_ref=None):
+def unwrapp_error_correction(f0, B, dispFile, nonDispFile,lowBandIgram, highBandIgram, y_ref=None, x_ref=None):
 
     dFile = os.path.join(os.path.dirname(dispFile) , "dJumps.bil")
     mFile = os.path.join(os.path.dirname(dispFile) , "mJumps.bil")
@@ -372,27 +378,13 @@ def unwrapp_error_correction(f0, B, dispFile, nonDispFile,lowBandIgram, highBand
         refL = 0.0
         refH = 0.0
 
-    #cmd = 'imageMath.py -e="round(((a_1-{7}) - (b_1-{8}) - (2.0*{0}/3.0/{1})*c + (2.0*{0}/3.0/{1})*f )/2.0/PI)" --a={2} --b={3} --c={4} --f={5}  -o {6} -t float32 -s BIL'.format(B, f0, highBandIgram, lowBandIgram, nonDispFile, dispFile, dFile, refH, refL)
-
-    cmd = 'imageMath.py -e="round(((a_1+(2.0*PI*g)) - (b_1) - (2.0*{0}/3.0/{1})*c + (2.0*{0}/3.0/{1})*f )/2.0/PI)" --a={2} --b={3} --c={4} --f={5} --g={6}  -o {7} -t float32 -s BIL'.format(B, f0, highBandIgram, lowBandIgram, nonDispFile, dispFile, jumpsFile, dFile)
-
+    cmd = 'imageMath.py -e="round(((a_1+(2.0*PI)) - (b_1) - (2.0*{0}/3.0/{1})*c + (2.0*{0}/3.0/{1})*f )/2.0/PI)" --a={2} --b={3} --c={4} --f={5}  -o {6} -t float32 -s BIL'.format(B, f0, highBandIgram, lowBandIgram, nonDispFile, dispFile, dFile)
     print(cmd)
-
     os.system(cmd)
-    #d = (phH - phL - (2.*B/3./f0)*ph_nondis + (2.*B/3./f0)*ph_iono )/2./PI
-    #d = np.round(d)
-
-    #cmd = 'imageMath.py -e="round(((a_1 - {6}) + (b_1-{7}) - 2.0*c - 2.0*f )/4.0/PI - g/2)" --a={0} --b={1} --c={2} --f={3} --g={4} -o {5} -t float32 -s BIL'.format(lowBandIgram, highBandIgram, nonDispFile, dispFile, dFile, mFile, refL, refH)
-
-    cmd = 'imageMath.py -e="round(((a_1 ) + (b_1+(2.0*PI*k)) - 2.0*c - 2.0*f )/4.0/PI - g/2)" --a={0} --b={1} --c={2} --f={3} --g={4} --k={5} -o {6} -t float32 -s BIL'.format(lowBandIgram, highBandIgram, nonDispFile, dispFile, dFile, jumpsFile, mFile)
-
+    
+    cmd = 'imageMath.py -e="round(((a_1 ) + (b_1+(2.0*PI)) - 2.0*c - 2.0*f )/4.0/PI - g/2)" --a={0} --b={1} --c={2} --f={3} --g={4} -o {5} -t float32 -s BIL'.format(lowBandIgram, highBandIgram, nonDispFile, dispFile, dFile, mFile)
     print(cmd)
-
     os.system(cmd)
-
-
-    #m = (phL + phH - 2*ph_nondis - 2*ph_iono)/4./PI - d/2.
-    #m = np.round(m)
 
     return mFile , dFile
 
@@ -424,10 +416,7 @@ def runDispersive(self):
         highBandIgram += '.unw'
 
     outputDir = self.insar.ionosphereDirname
-    if os.path.isdir(outputDir):
-        logger.info('Ionosphere directory {0} already exists.'.format(outputDir))
-    else:
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     outDispersive = os.path.join(outputDir, self.insar.dispersiveFilename)
     sigmaDispersive = outDispersive + ".sig"
@@ -450,33 +439,33 @@ def runDispersive(self):
 
     pulseLength = masterFrame.instrument.pulseLength
     chirpSlope = masterFrame.instrument.chirpSlope
+   
     # Total Bandwidth
     B = np.abs(chirpSlope)*pulseLength
-
+    
+    
     ###Determine looks
     azLooks, rgLooks = self.insar.numberOfLooks( masterFrame, self.posting,
                                         self.numberAzimuthLooks, self.numberRangeLooks)
 
-
-    #########################################################
-    # make sure the low-band and high-band interferograms have consistent unwrapping errors. 
-    # For this we estimate jumps as the difference of lowBand and highBand phases divided by 2PI
-    # The assumprion is that bothe interferograms are flattened and the phase difference between them
-    # is less than 2PI. This assumprion is valid for current sensors. It needs to be evaluated for
-    # future sensors like NISAR.
-    jumpsFile = check_consistency(lowBandIgram, highBandIgram, outputDir)
-
-    #########################################################
     # estimating the dispersive and non-dispersive components
-    dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive, jumpsFile)
+    dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive)
 
+    # If median filter is selected, compute the ionosphere phase standard deviation at a mean coherence value defined by the user
+    if self.dispersive_filter_mask_type == "median_filter":
+       coh_thres = self.dispersive_filter_coherence_threshold
+       std_iono = std_iono_mean_coh(f0,fL,fH,coh_thres,rgLooks,azLooks)
+    else:
+       std_iono = None
+    
     # generating a mask which will help filtering the estimated dispersive and non-dispersive phase
-    getMask(self, maskFile)
+    getMask(self, maskFile,std_iono)
+    
     # Calculating the theoretical standard deviation of the estimation based on the coherence of the interferograms
     theoretical_variance_fromSubBands(self, f0, fL, fH, B, sigmaDispersive, sigmaNonDispersive, azLooks * rgLooks) 
-
+    
     # low pass filtering the dispersive phase
-    lowPassFilter(outDispersive, sigmaDispersive, maskFile, 
+    lowPassFilter(self,outDispersive, sigmaDispersive, maskFile, 
                     self.kernel_x_size, self.kernel_y_size, 
                     self.kernel_sigma_x, self.kernel_sigma_y, 
                     iteration = self.dispersive_filter_iterations, 
@@ -484,7 +473,7 @@ def runDispersive(self):
 
 
     # low pass filtering the  non-dispersive phase
-    lowPassFilter(outNonDispersive, sigmaNonDispersive, maskFile, 
+    lowPassFilter(self,outNonDispersive, sigmaNonDispersive, maskFile, 
                     self.kernel_x_size, self.kernel_y_size,
                     self.kernel_sigma_x, self.kernel_sigma_y,
                     iteration = self.dispersive_filter_iterations,
@@ -493,21 +482,21 @@ def runDispersive(self):
             
     # Estimating phase unwrapping errors
     mFile , dFile = unwrapp_error_correction(f0, B, outDispersive+".filt", outNonDispersive+".filt", 
-                                                    lowBandIgram, highBandIgram, jumpsFile)
+                                                    lowBandIgram, highBandIgram)
 
     # re-estimate the dispersive and non-dispersive phase components by taking into account the unwrapping errors
     outDispersive = outDispersive + ".unwCor"
     outNonDispersive = outNonDispersive + ".unwCor"
-    dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive, jumpsFile, m=mFile , d=dFile)
+    dispersive_nonDispersive(lowBandIgram, highBandIgram, f0, fL, fH, outDispersive, outNonDispersive, m=mFile , d=dFile)
 
     # low pass filtering the new estimations 
-    lowPassFilter(outDispersive, sigmaDispersive, maskFile, 
+    lowPassFilter(self,outDispersive, sigmaDispersive, maskFile, 
                     self.kernel_x_size, self.kernel_y_size,
                     self.kernel_sigma_x, self.kernel_sigma_y,
                     iteration = self.dispersive_filter_iterations,
                     theta = self.kernel_rotation)
 
-    lowPassFilter(outNonDispersive, sigmaNonDispersive, maskFile,
+    lowPassFilter(self,outNonDispersive, sigmaNonDispersive, maskFile,
                     self.kernel_x_size, self.kernel_y_size,
                     self.kernel_sigma_x, self.kernel_sigma_y,
                     iteration = self.dispersive_filter_iterations,

@@ -47,15 +47,9 @@ def runTopoCPU(self):
         if numCommon > 0:
             catalog.addItem('Number of common bursts IW-{0}'.format(swath), self._insar.numberOfCommonBursts[swath-1], 'topo')
 
-    
             ###Check if geometry directory already exists.
             dirname = os.path.join(self._insar.geometryDirname, 'IW{0}'.format(swath))
-
-            if os.path.isdir(dirname):
-                logger.info('Geometry directory {0} already exists.'.format(dirname))
-            else:
-                os.makedirs(dirname)
-
+            os.makedirs(dirname, exist_ok=True)
 
             ###For each burst
             for index in range(numCommon):
@@ -201,11 +195,8 @@ def runTopoGPU(self):
     slantRangeImage.createPoly2D()
 
 
-
-
     dirname = self._insar.geometryDirname
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
 
     latImage = isceobj.createImage()
@@ -321,9 +312,7 @@ def runTopoGPU(self):
     for swath, frame, istart in zip(swaths, frames, swathStarts):
         outname = os.path.join(dirname, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outname):
-            os.makedirs(outname)
-
+        os.makedirs(outname, exist_ok=True)
 
         for ind, burst in enumerate(frame.bursts):
             top = int(np.rint((burst.sensingStart - t0).total_seconds()/dt))

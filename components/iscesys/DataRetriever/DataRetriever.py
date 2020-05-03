@@ -37,8 +37,7 @@ import isce
 import zipfile
 import os
 import sys
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 import shutil
 from urllib import request
@@ -128,11 +127,7 @@ class DataRetriever(Component):
     # @param listFile \c list of the filenames to be retrieved.
 
     def getFiles(self,listFile):
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
         #curl with -O downloads in working dir, so save cwd
         cwd = os.getcwd()
         #move to _downloadDir
@@ -325,8 +320,4 @@ class DataRetriever(Component):
         # logger not defined until baseclass is called
 
         if not self.logger:
-            logging.config.fileConfig(
-                os.path.join(os.environ['ISCE_HOME'], 'defaults',
-                'logging', 'logging.conf')
-            )
             self.logger = logging.getLogger('isce.iscesys.DataRetriever')

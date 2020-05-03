@@ -304,8 +304,7 @@ def main(iargs=None):
     lonImage.load(os.path.join(inps.geom, 'lon.rdr.xml'))
     lonImage.setAccessMode('read')
 
-    if not os.path.isdir(inps.outdir):
-        os.makedirs(inps.outdir)
+    os.makedirs(inps.outdir, exist_ok=True)
 
     
     azoff = 0.0

@@ -1,6 +1,6 @@
-# 
+#
 # PYX file to control Python module interface to underlying CUDA-Ampcor code
-# 
+#
 from libcpp.string cimport string
 import numpy as np
 cimport numpy as np
@@ -9,13 +9,13 @@ cimport numpy as np
 cdef extern from "cudaUtil.h":
     int gpuDeviceInit(int)
     void gpuDeviceList()
-    int gpuGetMaxGflopsDeviceId()    
+    int gpuGetMaxGflopsDeviceId()
 
 def listGPU():
     gpuDeviceList()
 
 def findGPU():
-    return gpuGetMaxGflopsDeviceId() 
+    return gpuGetMaxGflopsDeviceId()
 
 def setGPU(int id):
     return gpuDeviceInit(id)
@@ -24,90 +24,92 @@ def setGPU(int id):
 cdef extern from "cuAmpcorParameter.h":
     cdef cppclass cuAmpcorParameter:
         cuAmpcorParameter() except +
-        int algorithm      					## Cross-correlation algorithm: 0=freq domain 1=time domain 
-        int deviceID       					## Targeted GPU device ID: use -1 to auto select 
-        int nStreams       					## Number of streams to asynchonize data transfers and compute kernels  
+        int algorithm      					## Cross-correlation algorithm: 0=freq domain 1=time domain
+        int deviceID       					## Targeted GPU device ID: use -1 to auto select
+        int nStreams       					## Number of streams to asynchonize data transfers and compute kernels
         int derampMethod   					## Method for deramping 0=None, 1=average, 2=phase gradient
-    
+
         ## chip or window size for raw data
         int windowSizeHeightRaw         	## Template window height (original size)
-        int windowSizeWidthRaw          	## Template window width (original size) 
-        int searchWindowSizeHeightRaw   	## Search window height (original size) 
+        int windowSizeWidthRaw          	## Template window width (original size)
+        int searchWindowSizeHeightRaw   	## Search window height (original size)
         int searchWindowSizeWidthRaw    	## Search window width (orignal size)
-        int halfSearchRangeDownRaw    		##(searchWindowSizeHeightRaw-windowSizeHeightRaw)/2  
+        int halfSearchRangeDownRaw    		##(searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
         int halfSearchRangeAcrossRaw     	##(searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
         ## chip or window size after oversampling
         int rawDataOversamplingFactor   	## Raw data overampling factor (from original size to oversampled size)
-    
-        ## strides between chips/windows 
+
+        ## strides between chips/windows
         int skipSampleDownRaw    			## Skip size between neighboring windows in Down direction (original size)
         int skipSampleAcrossRaw  			## Skip size between neighboring windows in across direction (original size)
-        
+
         ## Zoom in region near location of max correlation
-        int zoomWindowSize       			## Zoom-in window size in correlation surface (same for down and across directions) 
+        int zoomWindowSize       			## Zoom-in window size in correlation surface (same for down and across directions)
         int oversamplingFactor   			## Oversampling factor for interpolating correlation surface
-        int oversamplingMethod    
- 
-        float thresholdSNR       			## Threshold of Signal noise ratio to remove noisy data 
-    
+        int oversamplingMethod
+
+        float thresholdSNR       			## Threshold of Signal noise ratio to remove noisy data
+
         ##master image
         string masterImageName     			## master SLC image name
         int imageDataType1              	## master image data type, 2=cfloat=complex=float2 1=float
-        int masterImageHeight           	## master image height  
+        int masterImageHeight           	## master image height
         int masterImageWidth            	## master image width
-  
+
         ##slave image
         string slaveImageName      			## slave SLC image name
         int imageDataType2              	## slave image data type, 2=cfloat=complex=float2 1=float
-        int slaveImageHeight            	## slave image height  
+        int slaveImageHeight            	## slave image height
         int slaveImageWidth            		## slave image width
-        
-        int mmapSizeInGB                    ## mmap buffer size in unit of Gigabytes
-        
+
+        int useMmap                         ## whether to use mmap
+        int mmapSizeInGB                    ## mmap buffer size in unit of Gigabytes (if not mmmap, the buffer size)
+
         ## total number of chips/windows
         int numberWindowDown            	## number of total windows (down)
         int numberWindowAcross          	## number of total windows (across)
         int numberWindows  					## numberWindowDown*numberWindowAcross
-    
+
         ## number of chips/windows in a batch/chunk
         int numberWindowDownInChunk     	## number of windows processed in a chunk (down)
         int numberWindowAcrossInChunk   	## number of windows processed in a chunk (across)
         int numberWindowsInChunk  			## numberWindowDownInChunk*numberWindowAcrossInChunk
         int numberChunkDown             	## number of chunks (down)
         int numberChunkAcross           	## number of chunks (across)
-        int numberChunks 
+        int numberChunks
 
-        int *masterStartPixelDown   		## master starting pixels for each window (down) 
+        int *masterStartPixelDown   		## master starting pixels for each window (down)
         int *masterStartPixelAcross 		## master starting pixels for each window (across)
-        int *slaveStartPixelDown    		## slave starting pixels for each window (down) 
-        int *slaveStartPixelAcross  		## slave starting pixels for each window (across) 
+        int *slaveStartPixelDown    		## slave starting pixels for each window (down)
+        int *slaveStartPixelAcross  		## slave starting pixels for each window (across)
         int *grossOffsetDown 				## Gross offsets between master and slave windows (down) : slaveStartPixel - masterStartPixel
-        int *grossOffsetAcross      		## Gross offsets between master and slave windows (across) 
+        int *grossOffsetAcross      		## Gross offsets between master and slave windows (across)
         int grossOffsetDown0				## constant gross offset (down)
         int grossOffsetAcross0				## constant gross offset (across)
-        int masterStartPixelDown0           ## the first pixel of master image (down), be adjusted with margins and gross offset 
+        int masterStartPixelDown0           ## the first pixel of master image (down), be adjusted with margins and gross offset
         int masterStartPixelAcross0         ## the first pixel of master image (across)
         int *masterChunkStartPixelDown 		## array of starting pixels for all master chunks (down)
         int *masterChunkStartPixelAcross 	## array of starting pixels for all master chunks (across)
         int *slaveChunkStartPixelDown 		## array of starting pixels for all slave chunks (down)
         int *slaveChunkStartPixelAcross 	## array of starting pixels for all slave chunks (across)
-        int *masterChunkHeight 				## array of heights of all master chunks, required when loading chunk to GPU 
+        int *masterChunkHeight 				## array of heights of all master chunks, required when loading chunk to GPU
         int *masterChunkWidth 				## array of width of all master chunks
         int *slaveChunkHeight 				## array of width of all master chunks
         int *slaveChunkWidth 				## array of width of all slave chunks
-        int maxMasterChunkHeight 					## max height for all master/slave chunks, determine the size of reading cache in GPU	
-        int maxMasterChunkWidth 					## max width for all master chunks, determine the size of reading cache in GPU
+        int maxMasterChunkHeight 			## max height for all master/slave chunks, determine the size of reading cache in GPU
+        int maxMasterChunkWidth 			## max width for all master chunks, determine the size of reading cache in GPU
         int maxSlaveChunkHeight
         int maxSlaveChunkWidth
-    	
-        string grossOffsetImageName  
-        string offsetImageName     ## Output Offset fields filename 
+
+        string grossOffsetImageName
+        string offsetImageName     ## Output Offset fields filename
         string snrImageName        ## Output SNR filename
-        void setStartPixels(int*, int*, int*, int*) 
-        void setStartPixels(int, int, int*, int*) 
-        void setStartPixels(int, int, int, int) 
-        void checkPixelInImageRange()  ## check whether  
-        
+        string covImageName        ## Output COV filename
+        void setStartPixels(int*, int*, int*, int*)
+        void setStartPixels(int, int, int*, int*)
+        void setStartPixels(int, int, int, int)
+        void checkPixelInImageRange()  ## check whether
+
         void setupParameters()      ## Process other parameters after Python Inpu
 
 cdef extern from "cuAmpcorController.h":
@@ -115,34 +117,40 @@ cdef extern from "cuAmpcorController.h":
         cuAmpcorController() except +
         cuAmpcorParameter *param
         void runAmpcor()
-  
+
 cdef class PyCuAmpcor(object):
     '''
-    Python interface for cuda Ampcor 
+    Python interface for cuda Ampcor
     '''
     cdef cuAmpcorController c_cuAmpcor
     def __cinit__(self):
-        return  
-        
+        return
+
     @property
     def algorithm(self):
-        return self.c_cuAmpcor.param.algorithm 
+        return self.c_cuAmpcor.param.algorithm
     @algorithm.setter
     def algorithm(self, int a):
         self.c_cuAmpcor.param.algorithm = a
     @property
     def deviceID(self):
-        return self.c_cuAmpcor.param.deviceID 
+        return self.c_cuAmpcor.param.deviceID
     @deviceID.setter
     def deviceID(self, int a):
         self.c_cuAmpcor.param.deviceID = a
     @property
     def nStreams(self):
-        return self.c_cuAmpcor.param.nStreams 
+        return self.c_cuAmpcor.param.nStreams
     @nStreams.setter
     def nStreams(self, int a):
         self.c_cuAmpcor.param.nStreams = a
-    @property 
+    @property
+    def useMmap(self):
+        return self.c_cuAmpcor.param.useMmap
+    @useMmap.setter
+    def useMmap(self, int a):
+        self.c_cuAmpcor.param.useMmap = a
+    @property
     def mmapSize(self):
         return self.c_cuAmpcor.param.mmapSizeInGB
     @mmapSize.setter
@@ -150,19 +158,19 @@ cdef class PyCuAmpcor(object):
         self.c_cuAmpcor.param.mmapSizeInGB = a
     @property
     def derampMethod(self):
-        return self.c_cuAmpcor.param.derampMethod 
+        return self.c_cuAmpcor.param.derampMethod
     @derampMethod.setter
     def derampMethod(self, int a):
         self.c_cuAmpcor.param.derampMethod = a
     @property
     def windowSizeHeight(self):
-        return self.c_cuAmpcor.param.windowSizeHeightRaw 
+        return self.c_cuAmpcor.param.windowSizeHeightRaw
     @windowSizeHeight.setter
     def windowSizeHeight(self, int a):
         self.c_cuAmpcor.param.windowSizeHeightRaw = a
     @property
     def windowSizeWidth(self):
-        return self.c_cuAmpcor.param.windowSizeWidthRaw 
+        return self.c_cuAmpcor.param.windowSizeWidthRaw
     @windowSizeWidth.setter
     def windowSizeWidth(self, int a):
         self.c_cuAmpcor.param.windowSizeWidthRaw = a
@@ -200,7 +208,7 @@ cdef class PyCuAmpcor(object):
     @skipSampleAcross.setter
     def skipSampleAcross(self, int a):
         self.c_cuAmpcor.param.skipSampleAcrossRaw = a
-        
+
     @property
     def rawDataOversamplingFactor(self):
         """anti-aliasing oversampling factor"""
@@ -229,7 +237,7 @@ cdef class PyCuAmpcor(object):
     @corrSufaceOverSamplingMethod.setter
     def corrSufaceOverSamplingMethod(self, int a):
         self.c_cuAmpcor.param.oversamplingMethod = a
-    @property    
+    @property
     def masterImageName(self):
         return self.c_cuAmpcor.param.masterImageName
     @masterImageName.setter
@@ -241,12 +249,12 @@ cdef class PyCuAmpcor(object):
     @slaveImageName.setter
     def slaveImageName(self, str a):
         self.c_cuAmpcor.param.slaveImageName = <string> a.encode()
-    @property    
+    @property
     def masterImageName(self):
         return self.c_cuAmpcor.param.masterImageName
     @masterImageName.setter
     def masterImageName(self, str a):
-        self.c_cuAmpcor.param.masterImageName = <string> a.encode()    
+        self.c_cuAmpcor.param.masterImageName = <string> a.encode()
     @property
     def masterImageHeight(self):
         return self.c_cuAmpcor.param.masterImageHeight
@@ -258,7 +266,7 @@ cdef class PyCuAmpcor(object):
         return self.c_cuAmpcor.param.masterImageWidth
     @masterImageWidth.setter
     def masterImageWidth(self, int a):
-        self.c_cuAmpcor.param.masterImageWidth=a 
+        self.c_cuAmpcor.param.masterImageWidth=a
     @property
     def slaveImageHeight(self):
         return self.c_cuAmpcor.param.slaveImageHeight
@@ -270,8 +278,8 @@ cdef class PyCuAmpcor(object):
         return self.c_cuAmpcor.param.slaveImageWidth
     @slaveImageWidth.setter
     def slaveImageWidth(self, int a):
-        self.c_cuAmpcor.param.slaveImageWidth=a 
-    
+        self.c_cuAmpcor.param.slaveImageWidth=a
+
     @property
     def numberWindowDown(self):
         return self.c_cuAmpcor.param.numberWindowDown
@@ -283,11 +291,11 @@ cdef class PyCuAmpcor(object):
         return self.c_cuAmpcor.param.numberWindowAcross
     @numberWindowAcross.setter
     def numberWindowAcross(self, int a):
-        self.c_cuAmpcor.param.numberWindowAcross = a       
+        self.c_cuAmpcor.param.numberWindowAcross = a
     @property
     def numberWindows(self):
         return  self.c_cuAmpcor.param.numberWindows
-    
+
     @property
     def numberWindowDownInChunk(self):
         return  self.c_cuAmpcor.param.numberWindowDownInChunk
@@ -299,7 +307,7 @@ cdef class PyCuAmpcor(object):
         return  self.c_cuAmpcor.param.numberWindowAcrossInChunk
     @numberWindowAcrossInChunk.setter
     def numberWindowAcrossInChunk(self, int a):
-        self.c_cuAmpcor.param.numberWindowAcrossInChunk = a   
+        self.c_cuAmpcor.param.numberWindowAcrossInChunk = a
     @property
     def numberChunkDown(self):
         return  self.c_cuAmpcor.param.numberChunkDown
@@ -309,9 +317,9 @@ cdef class PyCuAmpcor(object):
     @property
     def numberChunks(self):
         return  self.c_cuAmpcor.param.numberChunks
-  
-    
-    ## gross offets 
+
+
+    ## gross offets
     @property
     def grossOffsetImageName(self):
         return self.c_cuAmpcor.param.grossOffsetImageName
@@ -324,13 +332,21 @@ cdef class PyCuAmpcor(object):
     @offsetImageName.setter
     def offsetImageName(self, str a):
         self.c_cuAmpcor.param.offsetImageName = <string> a.encode()
+
     @property
     def snrImageName(self):
         return self.c_cuAmpcor.param.snrImageName
     @snrImageName.setter
     def snrImageName(self, str a):
         self.c_cuAmpcor.param.snrImageName = <string> a.encode()
-    
+
+    @property
+    def covImageName(self):
+        return self.c_cuAmpcor.param.covImageName
+    @covImageName.setter
+    def covImageName(self, str a):
+        self.c_cuAmpcor.param.covImageName = <string> a.encode()
+
     @property
     def masterStartPixelDownStatic(self):
         return self.c_cuAmpcor.param.masterStartPixelDown0
@@ -342,20 +358,20 @@ cdef class PyCuAmpcor(object):
         return self.c_cuAmpcor.param.masterStartPixelAcross0
     @masterStartPixelAcrossStatic.setter
     def masterStartPixelAcrossStatic(self, int a):
-        self.c_cuAmpcor.param.masterStartPixelAcross0 = a      
+        self.c_cuAmpcor.param.masterStartPixelAcross0 = a
     @property
     def grossOffsetDownStatic(self):
         return self.c_cuAmpcor.param.grossOffsetDown0
     @grossOffsetDownStatic.setter
     def grossOffsetDownStatic(self, int a):
-        self.c_cuAmpcor.param.grossOffsetDown0 =a  
+        self.c_cuAmpcor.param.grossOffsetDown0 =a
     @property
     def grossOffsetAcrossStatic(self):
         return self.c_cuAmpcor.param.grossOffsetAcross0
     @grossOffsetAcrossStatic.setter
     def grossOffsetAcrossStatic(self, int a):
-        self.c_cuAmpcor.param.grossOffsetAcross0 =a  
-         
+        self.c_cuAmpcor.param.grossOffsetAcross0 =a
+
     @property
     def grossOffsetDownDynamic(self):
         cdef int *c_data
@@ -366,12 +382,12 @@ cdef class PyCuAmpcor(object):
         return p_data
     @grossOffsetDownDynamic.setter
     def grossOffsetDownDynamic (self, np.ndarray[np.int32_t,ndim=1,mode="c"] pa):
-        cdef int *c_data 
+        cdef int *c_data
         cdef int *p_data
         c_data = self.c_cuAmpcor.param.grossOffsetDown
         p_data = <int *> pa.data
         for i in range (self.numberWindows):
-            c_data[i] = p_data[i]   
+            c_data[i] = p_data[i]
     @property
     def grossOffsetAcrossDynamic(self):
         cdef int *c_data
@@ -382,23 +398,23 @@ cdef class PyCuAmpcor(object):
         return p_data
     @grossOffsetAcrossDynamic.setter
     def grossOffsetAcrossDynamic (self, np.ndarray[np.int32_t,ndim=1,mode="c"] pa):
-        cdef int *c_data 
+        cdef int *c_data
         cdef int *p_data
         c_data = self.c_cuAmpcor.param.grossOffsetAcross
         p_data = <int *> pa.data
         for i in range (self.numberWindows):
-            c_data[i] = p_data[i]  
+            c_data[i] = p_data[i]
         return
 
-   
+
     def setConstantGrossOffset(self, int goDown, int goAcross):
-        """ 
+        """
         constant gross offsets
         param goDown gross offset in azimuth direction
         param goAcross gross offset in range direction
         """
         self.c_cuAmpcor.param.setStartPixels(<int>self.masterStartPixelDownStatic, <int>self.masterStartPixelAcrossStatic, goDown, goAcross)
-    
+
     def setVaryingGrossOffset(self, np.ndarray[np.int32_t,ndim=1,mode="c"] vD, np.ndarray[np.int32_t,ndim=1,mode="c"] vA):
         """
         varying gross offsets for each window
@@ -411,21 +427,21 @@ cdef class PyCuAmpcor(object):
     def checkPixelInImageRange(self):
         """ check whether each window is with image range """
         self.c_cuAmpcor.param.checkPixelInImageRange()
-      
+
     def setupParams(self):
         """
         set up constant parameters and allocate array parameters (offsets)
         should be called after number of windows is set and before setting varying gross offsets
         """
-        self.c_cuAmpcor.param.setupParameters() 
+        self.c_cuAmpcor.param.setupParameters()
 
     def runAmpcor(self):
         """ main procedure to run ampcor """
         self.c_cuAmpcor.runAmpcor()
 
-    
-        
-        
-        
-        
-        
+
+
+
+
+
+

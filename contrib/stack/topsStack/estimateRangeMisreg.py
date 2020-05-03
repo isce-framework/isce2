@@ -178,7 +178,8 @@ def main(iargs=None):
 
         minBurst = max(minSlave, minMaster)
         maxBurst = min(maxSlave, maxMaster)
-        maxBurst = maxBurst - 1 ###For overlaps
+        #maxBurst = maxBurst - 1 ###For overlaps
+        maxBurst = maxBurst + 1
 
         for pair in [(masterTop,slaveTop), (masterBottom,slaveBottom)]:
             for ii in range(minBurst,maxBurst):
@@ -208,8 +209,7 @@ def main(iargs=None):
     center = 0.5*(bins[:-1] + bins[1:])
 
     outputDir = os.path.dirname(inps.output)
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     try:
         import matplotlib as mpl

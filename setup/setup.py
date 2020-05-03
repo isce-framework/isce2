@@ -12,7 +12,7 @@
 from __future__ import print_function
 import sys
 import os
-import urllib2
+import urllib
 import getopt
 import re
 import shutil
@@ -57,7 +57,7 @@ def print2log(msg, withtime=True, cmd=False):
     if withtime:
         now = datetime.datetime.today()
         msg = "%s >> %s" % (now.isoformat(), msg)
-    LOGFILE.write(msg + '\n')
+    LOGFILE.write((msg + '\n').encode('utf-8'))
     LOGFILE.flush()
     os.fsync(LOGFILE)
 
@@ -157,9 +157,9 @@ def downloadfile(url, fname, repeat=1):
     counter = 0
     while counter < repeat:
         try:
-            response = urllib2.urlopen(url)
+            response = urllib.request.urlopen(url)
             break
-        except urllib2.URLError, e:
+        except urllib.request.URLError as e:
             counter += 1
             if hasattr(e, 'reason'):
                 print2log("Failed to reach server. Reason: %s" % e.reason)
@@ -851,7 +851,7 @@ class ISCEDeps(object):
         f = open(self.config, 'rb')
         lines = f.readlines()
         for line in lines:
-            m = re.match("([^#].*?)=([^#]+?)$", line.strip())
+            m = re.match("([^#].*?)=([^#]+?)$", line.strip().decode('utf-8'))
             if m:
                 var = m.group(1).strip()
                 val = m.group(2).strip()
@@ -867,7 +867,7 @@ def readSetupConfig(setup_config):
     f = open(setup_config, 'rb')
     lines = f.readlines()
     for line in lines:
-        m = re.match("([^#].*?)=([^#]+?)$", line.strip())
+        m = re.match("([^#].*?)=([^#]+?)$", line.strip().decode('utf-8'))
         if m:
             var = m.group(1).strip()
             val = m.group(2).strip().replace('"', '')
@@ -885,7 +885,7 @@ def checkArgs(args):
     """
     try:
         opts, args = getopt.getopt(args, "h", ["help", "prefix=", "ping=", "config=", "uname=", "download=", "unpack=", "install=", "gcc=", "gpp=", "verbose"])
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         print2log("ProgError: %s" % str(err))
         usage()
         sys.exit(2)

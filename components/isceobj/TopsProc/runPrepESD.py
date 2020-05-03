@@ -8,7 +8,6 @@ import numpy as np
 import os
 import isceobj
 import logging
-import scipy.signal as SS
 from isceobj.Util.ImageUtil import ImageLib as IML
 import datetime
 import pprint
@@ -177,6 +176,7 @@ def createCoherence(intfile, win=5):
     '''
     Compute coherence using scipy convolve 2D.
     '''
+    import scipy.signal as SS
 
     corfile = os.path.splitext(intfile)[0] + '.cor'
     filt = np.ones((win,win))/ (1.0*win*win)
@@ -245,8 +245,7 @@ def runPrepESD(self):
 
         ####Create ESD output directory
         esddir = self._insar.esdDirname
-        if not os.path.isdir(esddir):
-            os.makedirs(esddir)
+        os.makedirs(esddir, exist_ok=True)
 
         ####Overlap offsets directory
         offdir = os.path.join( self._insar.coarseOffsetsDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))

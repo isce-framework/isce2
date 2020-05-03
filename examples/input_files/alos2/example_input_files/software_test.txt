@@ -1,0 +1,25 @@
+   Combination    |                  Description                    |    Result
+====================================================================================
+stripmap-stripmap |  1: regular one frame                           |
+                  |  2: regular two frames (interferogram+offset)   |
+                  |  3: different wavelengths one frame             |
+                  |  4: different wavelengths three frames          |
+------------------------------------------------------------------------------------
+ScanSAR-stripmap  |  1: one frame                                   |
+                  |  2: four frames                                 |
+------------------------------------------------------------------------------------
+ScanSAR-ScanSAR   |  1: one frame one subswath                      |
+(5-subswath mode) |  2: one frame all subswaths                     |
+                  |  3: two frames one subswath                     |
+                  |  4: two frames all subswaths                    |
+------------------------------------------------------------------------------------
+ScanSAR-ScanSAR   |  1: one frame one subswath                      |
+(5-subswath mode) |  2: one frame all subswaths                     |
+(burst-by-burst   |  3: two frames one subswath                     |
+processing)       |  4: two frames all subswaths                    |
+------------------------------------------------------------------------------------
+ScanSAR-ScanSAR   |     one frame all subswaths                     |
+(7-subswath mode) |                                                 |
+------------------------------------------------------------------------------------
+
+

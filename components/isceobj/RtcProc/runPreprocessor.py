@@ -25,9 +25,7 @@ def runPreprocessor(self):
 
     self.master.configure()
 
-
-    if not os.path.isdir(self.master.output):
-        os.makedirs(self.master.output)
+    os.makedirs(self.master.output, exist_ok=True)
 
 
     slantRangeExtracted = False

@@ -43,8 +43,7 @@ import os
 import sys
 import math
 import urllib.request, urllib.parse, urllib.error
-import logging
-import logging.config
+from isce import logging
 from iscesys.Component.Component import Component
 
 import xml.etree.ElementTree as ET
@@ -353,11 +352,7 @@ class DemStitcher(Component):
             self._downloadDir = downloadDir
 
         if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+            os.makedirs(downloadDir, exist_ok=True)
         if region:
             regionList = region
         #region unknown, so try all of them
@@ -637,11 +632,7 @@ class DemStitcher(Component):
         else:
             delta = 1/3600.0
 
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
 
         width = self.getDemWidth(lon,source)
         demImage.initImage(outname,'read',width)
@@ -703,11 +694,7 @@ class DemStitcher(Component):
         demImage = self.createImage(lat,lon,source,outname)
 
         dict = {'WIDTH':demImage.width,'LENGTH':demImage.length,'X_FIRST':demImage.coord1.coordStart,'Y_FIRST':demImage.coord2.coordStart,'X_STEP':demImage.coord1.coordDelta,'Y_STEP':-demImage.coord2.coordDelta,'X_UNIT':'degrees','Y_UNIT':'degrees'}
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
         extension = '.rsc'
         outfile = outname + extension
         fp = open(outfile,'w')
@@ -776,6 +763,7 @@ class DemStitcher(Component):
     def getUnzippedName(self,name,source = None):
         return name.replace(self._zip,'')
     def stitchDems(self,lat,lon,source, outname, downloadDir = None,region = None, keep = None, swap = None):
+        import glob
         if downloadDir is None:
             downloadDir = self._downloadDir
         else:
@@ -852,7 +840,8 @@ class DemStitcher(Component):
 
             if not self._keepDems:
                 for dem in decompressedList:
-                    os.remove(dem)
+                    for d in glob.glob('*'+os.path.basename(dem.decode('UTF-8'))[:7]+'*'):
+                        os.remove(d)
             if self._createXmlMetadata:
                 self.createXmlMetadata(lat,lon,source,outname)
             if self._createRscMetadata:
@@ -1013,10 +1002,6 @@ class DemStitcher(Component):
         # logger not defined until baseclass is called
 
         if not self.logger:
-            logging.config.fileConfig(
-                os.path.join(os.environ['ISCE_HOME'], 'defaults',
-                'logging', 'logging.conf')
-            )
             self.logger = logging.getLogger('isce.contrib.demUtils.DemStitcher')
 
     url = property(getUrl,setUrl)

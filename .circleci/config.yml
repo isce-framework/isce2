@@ -23,7 +23,7 @@ jobs:
             pwd
             mkdir config build install
             . /opt/conda/bin/activate root
-            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake
+            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
             yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran
             ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
             cd /opt/conda/lib
@@ -72,7 +72,7 @@ jobs:
               set -ex
               pwd
               . /opt/conda/bin/activate root
-              export ISCE_HOME=/root/project/install/isce
+              ISCE_HOME=/root/project/install/isce
               export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:/opt/conda/bin:$PATH"
               export PYTHONPATH="/root/project/install:$PYTHONPATH"
               export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"

@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
+
+import os
 import argparse
+import shelve
+import datetime
+import shutil
+import numpy as np
+import gdal
 import isce
 import isceobj
-import numpy as np
-import shelve
-import os
-import datetime 
 from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.Util.Poly2D import Poly2D
+
 
 def createParser():
     '''
@@ -45,20 +49,17 @@ class Dummy(object):
 
 
 def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
-    
-    from isceobj.Planet.Planet import Planet
-    from zerodop.GPUtopozero.GPUtopozero import PyTopozero
+
     from isceobj import Constants as CN
+    from isceobj.Planet.Planet import Planet
     from isceobj.Util.Poly2D import Poly2D
     from iscesys import DateTimeUtil as DTU
-
+    from zerodop.GPUtopozero.GPUtopozero import PyTopozero
 
     ## TODO GPU does not support shadow and layover and local inc file generation
     full = False
 
-
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     # define variables to be used later on
     r0 = info.rangeFirstSample + ((info.numberRangeLooks - 1)/2) * info.slantRangePixelSpacing
@@ -81,14 +82,14 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         omethod = 2 # LEGENDRE INTERPOLATION
     else:
         omethod = 0 # HERMITE INTERPOLATION
-        
+
     # tracking doppler specifications
     if nativedop and (dop is not None):
         try:
             coeffs = dop._coeffs
         except:
             coeffs = dop
-        
+
         polyDoppler = Poly2D()
         polyDoppler.setWidth(width)
         polyDoppler.setLength(length)
@@ -106,10 +107,10 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         polyDoppler.createPoly2D()
 
 
-    # dem 
+    # dem
     demImage.setCaster('read','FLOAT')
     demImage.createImage()
-    
+
     # slant range file
     slantRangeImage = Poly2D()
     slantRangeImage.setWidth(width)
@@ -127,12 +128,12 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     dataType = 'DOUBLE'
     latImage.initImage(latFilename,accessMode,width,dataType)
     latImage.createImage()
-    
+
     # lon file
     lonImage = isceobj.createImage()
     lonImage.initImage(lonFilename,accessMode,width,dataType)
     lonImage.createImage()
-    
+
     # LOS file
     losImage = isceobj.createImage()
     dataType = 'FLOAT'
@@ -141,7 +142,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     losImage.initImage(losFilename,accessMode,width,dataType,bands=bands,scheme=scheme)
     losImage.setCaster('write','DOUBLE')
     losImage.createImage()
-    
+
     # height file
     heightImage = isceobj.createImage()
     dataType = 'DOUBLE'
@@ -155,7 +156,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         incImage.initImage(incFilename,accessMode,width,dataType,bands=bands,scheme=scheme)
         incImage.createImage()
         incImagePtr = incImage.getImagePointer()
-        
+
         maskImage = isceobj.createImage()
         dataType = 'BYTE'
         bands = 1
@@ -165,7 +166,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     else:
         incImagePtr = 0
         maskImagePtr = 0
-    
+
     # initalize planet
     elp = Planet(pname='Earth').ellipsoid
 
@@ -211,14 +212,14 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
     topo.set_orbitBasis(1) # Is this ever different?
     topo.createOrbit() # Initializes the empty orbit to the right allocated size
     count = 0
-    
+
     for sv in info.orbit.stateVectors.list:
         td = DTU.seconds_since_midnight(sv.getTime())
         pos = sv.getPosition()
         vel = sv.getVelocity()
         topo.set_orbitVector(count,td,pos[0],pos[1],pos[2],vel[0],vel[1],vel[2])
         count += 1
-    
+
     # run topo
     topo.runTopo()
 
@@ -241,13 +242,13 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
 
     # los file
     descr = '''Two channel Line-Of-Sight geometry image (all angles in degrees). Represents vector drawn from target to platform.
-                Channel 1: Incidence angle measured from vertical at target (always +ve). 
+                Channel 1: Incidence angle measured from vertical at target (always +ve).
                 Channel 2: Azimuth angle measured from North in Anti-clockwise direction.'''
     losImage.setImageType('bil')
     losImage.addDescription(descr)
     losImage.finalizeImage()
     losImage.renderHdr()
-    
+
     # dem/ height file
     demImage.finalizeImage()
 
@@ -256,7 +257,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         descr = '''Two channel angle file.
                 Channel 1: Angle between ray to target and the vertical at the sensor
                 Channel 2: Local incidence angle accounting for DEM slope at target'''
-                
+
         incImage.addDescription(descr)
         incImage.finalizeImage()
         incImage.renderHdr()
@@ -265,7 +266,7 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
         maskImage.addDescription(descr)
         maskImage.finalizeImage()
         maskImage.renderHdr()
-        
+
         if slantRangeImage:
             try:
                 slantRangeImage.finalizeImage()
@@ -273,13 +274,12 @@ def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
                 pass
 
 
-def runTopoCPU(info, demImage, dop=None, 
+def runTopoCPU(info, demImage, dop=None,
         nativedop=False, legendre=False):
     from zerodop.topozero import createTopozero
     from isceobj.Planet.Planet import Planet
 
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     #####Run Topo
     planet = Planet(pname='Earth')
@@ -295,7 +295,7 @@ def runTopoCPU(info, demImage, dop=None,
     topo.numberRangeLooks = info.numberRangeLooks
     topo.numberAzimuthLooks = info.numberAzimuthLooks
     topo.lookSide = info.lookSide
-    topo.sensingStart = info.sensingStart + datetime.timedelta(seconds = ((info.numberAzimuthLooks - 1) /2) / info.prf) 
+    topo.sensingStart = info.sensingStart + datetime.timedelta(seconds = ((info.numberAzimuthLooks - 1) /2) / info.prf)
     topo.rangeFirstSample = info.rangeFirstSample + ((info.numberRangeLooks - 1)/2) * info.slantRangePixelSpacing
 
     topo.demInterpolationMethod='BIQUINTIC'
@@ -328,9 +328,10 @@ def runTopoCPU(info, demImage, dop=None,
     topo.topo()
     return
 
+
 def runSimamp(outdir, hname='z.rdr'):
     from iscesys.StdOEL.StdOELPy import create_writer
-    
+
     #####Run simamp
     stdWriter = create_writer("log","",True,filename='sim.log')
     objShade = isceobj.createSimamplitude()
@@ -354,6 +355,85 @@ def runSimamp(outdir, hname='z.rdr'):
     simImage.renderHdr()
     hgtImage.finalizeImage()
     simImage.finalizeImage()
+    return
+
+
+def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', method='gdal',
+                 fbase_list=['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']):
+    """
+    Multilook geometry files.
+    """
+    from iscesys.Parsers.FileParserFactory import createFileParser
+    from mroipac.looks.Looks import Looks
+
+    msg = 'generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks)
+    if method == 'isce':
+        msg += ' using mroipac.looks.Looks() ...'
+    else:
+        msg += ' using gdal.Translate() ...'
+    print('-'*50+'\n'+msg)
+
+    # create 'geom_master' directory
+    os.makedirs(out_dir, exist_ok=True)
+
+    # multilook files one by one
+    for fbase in fbase_list:
+        in_file = os.path.join(in_dir, '{}{}'.format(fbase, in_ext))
+        out_file = os.path.join(out_dir, '{}{}'.format(fbase, out_ext))
+
+        if all(os.path.isfile(in_file+ext) for ext in ['','.vrt','.xml']):
+            print('multilook {}'.format(in_file))
+
+            # option 1 - Looks module (isce)
+            if method == 'isce':
+                xmlProp = createFileParser('xml').parse(in_file+'.xml')[0]
+                if('image_type' in xmlProp and xmlProp['image_type'] == 'dem'):
+                    inImage = isceobj.createDemImage()
+                else:
+                    inImage = isceobj.createImage()
+
+                inImage.load(in_file+'.xml')
+                inImage.filename = in_file
+
+                lkObj = Looks()
+                lkObj.setDownLooks(alks)
+                lkObj.setAcrossLooks(rlks)
+                lkObj.setInputImage(inImage)
+                lkObj.setOutputFilename(out_file)
+                lkObj.looks()
+
+            # option 2 - gdal_translate (gdal)
+            elif method == 'gdal':
+                ds = gdal.Open(in_file, gdal.GA_ReadOnly)
+                in_wid = ds.RasterXSize
+                in_len = ds.RasterYSize
+
+                out_wid = int(in_wid / rlks)
+                out_len = int(in_len / alks)
+                src_wid = out_wid * rlks
+                src_len = out_len * alks
+
+                options_str = '-of ENVI -a_nodata 0 -outsize {ox} {oy} -srcwin 0 0 {sx} {sy} '.format(
+                    ox=out_wid, oy=out_len, sx=src_wid, sy=src_len)
+                gdal.Translate(out_file, ds, options=options_str)
+
+                # generate ISCE .xml file
+                if not os.path.isfile(out_file+'.xml'):
+                    cmd = 'gdal2isce_xml.py -i {}.vrt'.format(out_file)
+                    print(cmd)
+                    os.system(cmd)
+
+            else:
+                raise ValueError('un-supported multilook method: {}'.format(method))
+
+            # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
+            # to facilitate the number of looks extraction
+            # the file path inside .xml file is not, but should, updated
+            if in_file != out_file+'.full':
+                shutil.copy(in_file+'.xml', out_file+'.full.xml')
+                shutil.copy(in_file+'.vrt', out_file+'.full.vrt')
+
+    return out_dir
 
 
 def extractInfo(frame, inps):
@@ -369,8 +449,8 @@ def extractInfo(frame, inps):
 
     info.lookSide = frame.instrument.platform.pointingDirection
     info.rangeFirstSample = frame.startingRange
-    info.numberRangeLooks = inps.rlks
-    info.numberAzimuthLooks = inps.alks
+    info.numberRangeLooks = 1 #inps.rlks
+    info.numberAzimuthLooks = 1 #inps.alks
 
     fsamp = frame.rangeSamplingRate
 
@@ -378,9 +458,9 @@ def extractInfo(frame, inps):
     info.prf = frame.PRF
     info.radarWavelength = frame.radarWavelegth
     info.orbit = frame.getOrbit()
-    
-    info.width = frame.getNumberOfSamples() 
-    info.length = frame.getNumberOfLines() 
+
+    info.width = frame.getNumberOfSamples()
+    info.length = frame.getNumberOfLines()
 
     info.sensingStop = frame.getSensingStop()
     info.outdir = inps.outdir
@@ -389,7 +469,7 @@ def extractInfo(frame, inps):
 
 
 def main(iargs=None):
-    
+
     inps = cmdLineParse(iargs)
 
     # see if the user compiled isce with GPU enabled
@@ -419,9 +499,7 @@ def main(iargs=None):
         doppler = db['doppler']
     except:
         doppler = frame._dopplerVsPixel
-
     db.close()
-
 
 
     ####Setup dem
@@ -439,9 +517,15 @@ def main(iargs=None):
     info.incFilename = os.path.join(info.outdir, 'incLocal.rdr')
     info.maskFilename = os.path.join(info.outdir, 'shadowMask.rdr')
 
-
     runTopo(info,demImage,dop=doppler,nativedop=inps.nativedop, legendre=inps.legendre)
     runSimamp(os.path.dirname(info.heightFilename),os.path.basename(info.heightFilename))
+
+    # write multilooked geometry files in "geom_master" directory, same level as "Igrams"
+    if inps.rlks * inps.rlks > 1:
+        out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_master')
+        runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
+
+    return
 
 
 if __name__ == '__main__':
@@ -449,4 +533,3 @@ if __name__ == '__main__':
     Main driver.
     '''
     main()
-

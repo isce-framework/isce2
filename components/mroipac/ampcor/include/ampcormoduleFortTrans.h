@@ -67,6 +67,8 @@
               #define deallocate_cov2Ret_f deallocate_cov2ret_
               #define deallocate_cov3Ret_f deallocate_cov3ret_
 
+              #define setWinsizeFilt_f setwinsizefilt_
+              #define setOversamplingFactorFilt_f setoversamplingfactorfilt_
 
         #else
             #error Unknown translation for FORTRAN external symbols

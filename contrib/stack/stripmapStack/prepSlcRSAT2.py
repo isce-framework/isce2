@@ -104,8 +104,7 @@ def main(iargs=None):
 
                 # put failed files in a seperate directory
                 if not successflag_unzip:
-                    if not os.path.isdir(os.path.join(workdir,'FAILED_FILES')):
-                        os.makedirs(os.path.join(workdir,'FAILED_FILES'))
+                    os.makedirs(os.path.join(workdir,'FAILED_FILES'), exist_ok=True)
                     os.rename(RSAT2_infilefolder,os.path.join(workdir,'FAILED_FILES','.'))
                 else:
                     # check if file needs to be removed or put in archive folder
@@ -113,8 +112,7 @@ def main(iargs=None):
                         os.remove(RSAT2_infilefolder)
                         print('Deleting: ' + RSAT2_infilefolder)
                     else:
-                        if not os.path.isdir(os.path.join(workdir,'ARCHIVED_FILES')):
-                            os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'))
+                        os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'), exist_ok=True)
                         cmd  = 'mv ' + RSAT2_infilefolder + ' ' + os.path.join(workdir,'ARCHIVED_FILES','.')
                         os.system(cmd)
 
@@ -166,8 +164,7 @@ def main(iargs=None):
             if len(RSAT2Files)>0:
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(outputDir, acquisitionDate)
-                if not os.path.exists(slcDir):
-                    os.makedirs(slcDir)     
+                os.makedirs(slcDir, exist_ok=True)
                 cmd = 'unpackFrame_RSAT2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')

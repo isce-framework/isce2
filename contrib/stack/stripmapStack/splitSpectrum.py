@@ -138,11 +138,8 @@ def main(iargs=None):
         outDirH = os.path.join(inps.outDir,'HighBand')
         outDirL = os.path.join(inps.outDir,'LowBand')
 
-        if not os.path.exists(outDirH):
-           os.makedirs(outDirH)
-
-        if not os.path.exists(outDirL):
-           os.makedirs(outDirL)
+        os.makedirs(outDirH, exist_ok=True)
+        os.makedirs(outDirL, exist_ok=True)
 
         fullBandSlc = os.path.basename(inps.slc)
         lowBandSlc = os.path.join(outDirL, fullBandSlc)
