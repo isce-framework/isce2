@@ -47,7 +47,7 @@ def runTopo(self, method='legendre'):
     demImg = isceobj.createDemImage()
     demImg.load(demname + '.xml')
 
-
+    os.makedirs(self._grd.geometryFolder, exist_ok=True)
     if not os.path.isdir(self._grd.geometryFolder):
         os.makedirs(self._grd.geometryFolder)
 
