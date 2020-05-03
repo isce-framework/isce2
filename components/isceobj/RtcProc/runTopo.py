@@ -110,4 +110,3 @@ def runSimamp(outdir, hname='z.rdr'):
     hgtImage.finalizeImage()
     simImage.finalizeImage()
 
-    
