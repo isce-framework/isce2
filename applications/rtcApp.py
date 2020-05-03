@@ -31,6 +31,7 @@
 
 import time
 import sys
+from isce import logging
 
 import isce
 import isceobj
