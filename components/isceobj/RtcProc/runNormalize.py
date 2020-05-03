@@ -10,6 +10,7 @@ from .runTopo import filenameWithLooks
 import os
 import numpy as np
 from isceobj.Util.decorators import use_api
+from applications import imageMath
 
 logger = logging.getLogger('isce.grdsar.looks')
 
