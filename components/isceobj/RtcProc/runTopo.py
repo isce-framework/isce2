@@ -26,8 +26,6 @@ def runTopo(self, method='legendre'):
                                         'beta_{0}.xml'.format(refPol)))
 
 
-    rangeName = master.slantRangeImage.filename
-    
     azlooks, rglooks = self._grd.getLooks(self.posting, master.azimuthPixelSize,
             master.groundRangePixelSize, self.numberAzimuthLooks,
             self.numberRangeLooks)
@@ -47,9 +45,8 @@ def runTopo(self, method='legendre'):
     demImg = isceobj.createDemImage()
     demImg.load(demname + '.xml')
 
+
     os.makedirs(self._grd.geometryFolder, exist_ok=True)
-    if not os.path.isdir(self._grd.geometryFolder):
-        os.makedirs(self._grd.geometryFolder)
 
 
     #####Run Topo
@@ -112,5 +109,4 @@ def runSimamp(outdir, hname='z.rdr'):
     simImage.renderHdr()
     hgtImage.finalizeImage()
     simImage.finalizeImage()
-
 
