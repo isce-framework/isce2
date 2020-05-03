@@ -47,5 +47,5 @@ createVerifyDEM = _factory("runVerifyDEM")
 createLooks = _factory("runLooks")
 createTopo = _factory("runTopo")
 createNormalize = _factory("runNormalize")
-#createGeocode = _factory("runGeocode")
+createGeocode = _factory("runGeocode")
 
