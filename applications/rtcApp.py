@@ -30,8 +30,10 @@
 
 
 import time
+import os
 import sys
-from isce import logging
+import logging
+import logging.config
 
 import isce
 import isceobj
@@ -41,6 +43,11 @@ from iscesys.Compatibility import Compatibility
 from iscesys.Component.Configurable import SELF
 from isceobj import RtcProc
 from isceobj.Util.decorators import use_api
+
+logging.config.fileConfig(
+    os.path.join(os.environ['ISCE_HOME'], 'defaults', 'logging',
+        'logging.conf')
+)
 
 logger = logging.getLogger('isce.grdsar')
 
