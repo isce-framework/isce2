@@ -109,3 +109,5 @@ def runSimamp(outdir, hname='z.rdr'):
     simImage.renderHdr()
     hgtImage.finalizeImage()
     simImage.finalizeImage()
+
+    
