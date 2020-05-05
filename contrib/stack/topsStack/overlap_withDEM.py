@@ -278,8 +278,7 @@ def main(iargs=None):
 
         ####Create ESD output directory
         esddir = os.path.join(inps.overlap, IWstr)
-        if not os.path.isdir(esddir):
-            os.makedirs(esddir)
+        os.makedirs(esddir, exist_ok=True)
 
         ####Overlap offsets directory
         masterOffdir = os.path.join(inps.master, IWstr)

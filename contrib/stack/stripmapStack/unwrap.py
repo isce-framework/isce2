@@ -305,8 +305,7 @@ def main(iargs=None):
     if inps.method != 'icu':
     
         masterShelveDir = os.path.join(interferogramDir , 'masterShelve')
-        if not os.path.exists(masterShelveDir):
-            os.makedirs(masterShelveDir)
+        os.makedirs(masterShelveDir, exist_ok=True)
 
         inps.master = os.path.dirname(inps.master)
         cpCmd='cp ' + os.path.join(inps.master, 'data*') +' '+masterShelveDir

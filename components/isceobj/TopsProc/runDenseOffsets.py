@@ -50,7 +50,7 @@ def runDenseOffsetsCPU(self):
         sf += '.full'
     master = os.path.join(self._insar.mergedDirname, mf)
     slave = os.path.join(self._insar.mergedDirname, sf)
-    
+
     ####For this module currently, we need to create an actual file on disk
     for infile in [master,slave]:
         if os.path.isfile(infile):
@@ -59,7 +59,7 @@ def runDenseOffsetsCPU(self):
         status = os.system(cmd)
         if status:
             raise Exception('{0} could not be executed'.format(status))
-    
+
 
 
     ### Load the master object
@@ -73,7 +73,7 @@ def runDenseOffsetsCPU(self):
     s.load(slave + '.xml')
     s.setAccessMode('READ')
 #    s.createImage()
-    
+
     width = m.getWidth()
     length = m.getLength()
 
@@ -104,7 +104,7 @@ def runDenseOffsetsCPU(self):
     objOffset.oversamplingFactor = self.oversample
     objOffset.setAcrossGrossOffset(self.rgshift)
     objOffset.setDownGrossOffset(self.azshift)
-    
+
     objOffset.setFirstPRF(1.0)
     objOffset.setSecondPRF(1.0)
     if m.dataType.startswith('C'):
@@ -126,7 +126,7 @@ def runDenseOffsetsCPU(self):
     print('\n======================================')
     print('Running dense ampcor...')
     print('======================================\n')
-    
+
     objOffset.denseampcor(m, s) ### Where the magic happens...
 
     ### Store params for later
@@ -140,7 +140,7 @@ def runDenseOffsetsGPU(self):
     '''
     Estimate dense offset field between merged master bursts and slave bursts.
     '''
-    
+
     from contrib.PyCuAmpcor import PyCuAmpcor
 
     print('\n============================================================')
@@ -156,7 +156,7 @@ def runDenseOffsetsGPU(self):
     slave = os.path.join(self._insar.mergedDirname, sf)
 
     ####For this module currently, we need to create an actual file on disk
-    
+
     for infile in [master,slave]:
         if os.path.isfile(infile):
             continue
@@ -177,7 +177,7 @@ def runDenseOffsetsGPU(self):
     s.load(slave + '.xml')
     s.setAccessMode('READ')
 #    s.createImage()
-    
+
     width = m.getWidth()
     length = m.getLength()
 
@@ -186,10 +186,10 @@ def runDenseOffsetsGPU(self):
     objOffset.deviceID = -1
     objOffset.nStreams = 2
     objOffset.derampMethod = 0
-    objOffset.masterImageName = master
+    objOffset.masterImageName = master + '.vrt'
     objOffset.masterImageHeight = length
     objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave
+    objOffset.slaveImageName = slave + '.vrt'
     objOffset.slaveImageHeight = length
     objOffset.slaveImageWidth = width
 
@@ -250,7 +250,7 @@ def runDenseOffsetsGPU(self):
     print('\n======================================')
     print('Running dense ampcor...')
     print('======================================\n')
-   
+
 
     objOffset.checkPixelInImageRange()
     objOffset.runAmpcor()
@@ -274,14 +274,14 @@ def runDenseOffsetsGPU(self):
     outImg.renderHdr()
 
     snrImg = isceobj.createImage()
-    snrImg.setFilename( objOffset.snrImageName.decode('utf8'))
+    snrImg.setFilename( objOffset.snrImageName.decode('utf-8'))
     snrImg.setDataType('FLOAT')
     snrImg.setBands(1)
     snrImg.setWidth(objOffset.numberWindowAcross)
     snrImg.setLength(objOffset.numberWindowDown)
     snrImg.setAccessMode('read')
     snrImg.renderHdr()
-        
+
 
 
 if __name__ == '__main__' :

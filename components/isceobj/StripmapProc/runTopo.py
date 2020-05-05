@@ -51,10 +51,7 @@ def runTopo(self):
     #IU.copyAttributes(demImage, objDem)
     geometryDir = self.insar.geometryDirname
 
-    if os.path.isdir(geometryDir):
-        logger.info('Geometry directory {0} already exists.'.format(geometryDir))
-    else:
-        os.makedirs(geometryDir)
+    os.makedirs(geometryDir, exist_ok=True)
 
 
     demFilename = self.verifyDEM()

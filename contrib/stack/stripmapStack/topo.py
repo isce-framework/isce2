@@ -6,11 +6,12 @@ import shelve
 import datetime
 import shutil
 import numpy as np
+import gdal
 import isce
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.Util.Poly2D import Poly2D
-from mroipac.looks.Looks import Looks
+
 
 def createParser():
     '''
@@ -49,19 +50,16 @@ class Dummy(object):
 
 def runTopoGPU(info, demImage, dop=None, nativedop=False, legendre=False):
 
-    from isceobj.Planet.Planet import Planet
-    from zerodop.GPUtopozero.GPUtopozero import PyTopozero
     from isceobj import Constants as CN
+    from isceobj.Planet.Planet import Planet
     from isceobj.Util.Poly2D import Poly2D
     from iscesys import DateTimeUtil as DTU
-
+    from zerodop.GPUtopozero.GPUtopozero import PyTopozero
 
     ## TODO GPU does not support shadow and layover and local inc file generation
     full = False
 
-
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     # define variables to be used later on
     r0 = info.rangeFirstSample + ((info.numberRangeLooks - 1)/2) * info.slantRangePixelSpacing
@@ -281,8 +279,7 @@ def runTopoCPU(info, demImage, dop=None,
     from zerodop.topozero import createTopozero
     from isceobj.Planet.Planet import Planet
 
-    if not os.path.isdir(info.outdir):
-        os.makedirs(info.outdir)
+    os.makedirs(info.outdir, exist_ok=True)
 
     #####Run Topo
     planet = Planet(pname='Earth')
@@ -361,75 +358,73 @@ def runSimamp(outdir, hname='z.rdr'):
     return
 
 
-def runMultilook(in_dir, out_dir, alks, rlks):
-    print('generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks))
+def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', method='gdal',
+                 fbase_list=['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']):
+    """
+    Multilook geometry files.
+    """
     from iscesys.Parsers.FileParserFactory import createFileParser
-    FP = createFileParser('xml')
+    from mroipac.looks.Looks import Looks
 
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-        print('create directory: {}'.format(out_dir))
-
-    for fbase in ['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']:
-        fname = '{}.rdr'.format(fbase)
-        in_file = os.path.join(in_dir, fname)
-        out_file = os.path.join(out_dir, fname)
-
-        if os.path.isfile(in_file):
-            xmlProp = FP.parse(in_file+'.xml')[0]
-            if('image_type' in xmlProp and xmlProp['image_type'] == 'dem'):
-                inImage = isceobj.createDemImage()
-            else:
-                inImage = isceobj.createImage()
-
-            inImage.load(in_file+'.xml')
-            inImage.filename = in_file
-
-            lkObj = Looks()
-            lkObj.setDownLooks(alks)
-            lkObj.setAcrossLooks(rlks)
-            lkObj.setInputImage(inImage)
-            lkObj.setOutputFilename(out_file)
-            lkObj.looks()
-
-            # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
-            # to facilitate the number of looks extraction
-            # the file path inside .xml file is not, but should, updated
-            shutil.copy(in_file+'.xml', out_file+'.full.xml')
-            shutil.copy(in_file+'.vrt', out_file+'.full.vrt')
-
-    return out_dir
-
-
-def runMultilookGdal(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr',
-                     fbase_list=['hgt', 'incLocal', 'lat', 'lon', 'los', 'shadowMask', 'waterMask']):
-    print('generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks))
-    import gdal
+    msg = 'generate multilooked geometry files with alks={} and rlks={}'.format(alks, rlks)
+    if method == 'isce':
+        msg += ' using mroipac.looks.Looks() ...'
+    else:
+        msg += ' using gdal.Translate() ...'
+    print('-'*50+'\n'+msg)
 
     # create 'geom_master' directory
-    if not os.path.isdir(out_dir):
-        os.makedirs(out_dir)
-        print('create directory: {}'.format(out_dir))
+    os.makedirs(out_dir, exist_ok=True)
 
     # multilook files one by one
     for fbase in fbase_list:
         in_file = os.path.join(in_dir, '{}{}'.format(fbase, in_ext))
         out_file = os.path.join(out_dir, '{}{}'.format(fbase, out_ext))
 
-        if os.path.isfile(in_file):
-            ds = gdal.Open(in_file, gdal.GA_ReadOnly)
-            in_wid = ds.RasterXSize
-            in_len = ds.RasterYSize
+        if all(os.path.isfile(in_file+ext) for ext in ['','.vrt','.xml']):
+            print('multilook {}'.format(in_file))
 
-            out_wid = int(in_wid / rlks)
-            out_len = int(in_len / alks)
-            src_wid = out_wid * rlks
-            src_len = out_len * alks
+            # option 1 - Looks module (isce)
+            if method == 'isce':
+                xmlProp = createFileParser('xml').parse(in_file+'.xml')[0]
+                if('image_type' in xmlProp and xmlProp['image_type'] == 'dem'):
+                    inImage = isceobj.createDemImage()
+                else:
+                    inImage = isceobj.createImage()
 
-            cmd = 'gdal_translate -of ENVI -a_nodata 0 -outsize {ox} {oy} '.format(ox=out_wid, oy=out_len)
-            cmd += ' -srcwin 0 0 {sx} {sy} {fi} {fo} '.format(sx=src_wid, sy=src_len, fi=in_file, fo=out_file)
-            print(cmd)
-            os.system(cmd)
+                inImage.load(in_file+'.xml')
+                inImage.filename = in_file
+
+                lkObj = Looks()
+                lkObj.setDownLooks(alks)
+                lkObj.setAcrossLooks(rlks)
+                lkObj.setInputImage(inImage)
+                lkObj.setOutputFilename(out_file)
+                lkObj.looks()
+
+            # option 2 - gdal_translate (gdal)
+            elif method == 'gdal':
+                ds = gdal.Open(in_file, gdal.GA_ReadOnly)
+                in_wid = ds.RasterXSize
+                in_len = ds.RasterYSize
+
+                out_wid = int(in_wid / rlks)
+                out_len = int(in_len / alks)
+                src_wid = out_wid * rlks
+                src_len = out_len * alks
+
+                options_str = '-of ENVI -a_nodata 0 -outsize {ox} {oy} -srcwin 0 0 {sx} {sy} '.format(
+                    ox=out_wid, oy=out_len, sx=src_wid, sy=src_len)
+                gdal.Translate(out_file, ds, options=options_str)
+
+                # generate ISCE .xml file
+                if not os.path.isfile(out_file+'.xml'):
+                    cmd = 'gdal2isce_xml.py -i {}.vrt'.format(out_file)
+                    print(cmd)
+                    os.system(cmd)
+
+            else:
+                raise ValueError('un-supported multilook method: {}'.format(method))
 
             # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
             # to facilitate the number of looks extraction
@@ -528,8 +523,7 @@ def main(iargs=None):
     # write multilooked geometry files in "geom_master" directory, same level as "Igrams"
     if inps.rlks * inps.rlks > 1:
         out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_master')
-        runMultilookGdal(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
-        #runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
+        runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
 
     return
 

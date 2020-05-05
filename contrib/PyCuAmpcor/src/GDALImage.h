@@ -8,7 +8,6 @@
 #ifndef __GDALIMAGE_H
 #define __GDALIMAGE_H
 
-#include <cublas_v2.h>
 #include <string>
 #include <gdal_priv.h>
 #include <cpl_conv.h>

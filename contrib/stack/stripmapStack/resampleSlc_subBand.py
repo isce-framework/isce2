@@ -138,8 +138,7 @@ def resampSlave(burst, offdir, outname, doppler, azpoly, rgpoly,
     imgOut.setWidth(width)
 
     outdir = os.path.dirname(outname)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    os.makedirs(outdir, exist_ok=True)
 
     if zero:
         imgOut.filename = os.path.join(outname)
@@ -174,17 +173,15 @@ def main(iargs=None):
 
     outfile = os.path.join(inps.coreg,os.path.basename(os.path.dirname(inps.coreg))+'.slc')
     outDir = inps.coreg
-    if not os.path.exists(outDir):
-       os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
     masterShelveDir = os.path.join(outDir, 'masterShelve')
     slaveShelveDir = os.path.join(outDir, 'slaveShelve')
 
-    if (not os.path.exists(masterShelveDir)) and (inps.master is not None ):
-       os.makedirs(masterShelveDir)
+    if inps.master is not None:
+       os.makedirs(masterShelveDir, exist_ok=True)
 
-    if not os.path.exists(slaveShelveDir):
-       os.makedirs(slaveShelveDir)
+    os.makedirs(slaveShelveDir, exist_ok=True)
 
     cmd = 'cp '+ inps.slave + '/data* ' + slaveShelveDir
     print (cmd)

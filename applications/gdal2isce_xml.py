@@ -3,12 +3,14 @@
 # Author: Bekaert David
 # Year: 2017
 
+import os 
+import sys
+import argparse
+from osgeo import gdal
+
 import isce
 import isceobj
-import sys
-from osgeo import gdal
-import argparse
-import os 
+
 
 # command line parsing of input file
 def cmdLineParse():
@@ -20,17 +22,14 @@ def cmdLineParse():
     return parser.parse_args()
 
 
-# main script
-if __name__ == '__main__':
-    '''
-    Main driver.
-    '''
- 
-    # Parse command line
-    inps = cmdLineParse()
-    # check if the input file exist
-    if not os.path.isfile(inps.fname):
-       raise Exception('Input file is not found ....')
+def gdal2isce_xml(fname):
+    """
+    Generate ISCE xml file from gdal supported file
+
+    Example: import isce
+             from applications.gdal2isce_xml import gdal2isce_xml
+             xml_file = gdal2isce_xml(fname+'.vrt')
+    """
 
     # open the GDAL file and get typical data informationi
     GDAL2ISCE_DATATYPE = {
@@ -57,47 +56,46 @@ if __name__ == '__main__':
 #     }
 
     # check if the input file is a vrt
-    filename, file_extension = os.path.splitext(inps.fname)
-    print(file_extension)
-    if file_extension == ".vrt":
-        inps.outname = filename
+    fbase, fext = os.path.splitext(fname)
+    print(fext)
+    if fext == ".vrt":
+        outname = fbase
     else:
-        inps.outname = inps.fname
-    print(inps.outname)
+        outname = fname
+    print(outname)
 
-    # open the GDAL file and get typical data informationi
-    data =  gdal.Open(inps.fname, gdal.GA_ReadOnly)
-    width = data.RasterXSize
-    length = data.RasterYSize
-    bands = data.RasterCount
-    # output to user
-    print("width:    " + "\t" + str(width))
-    print("length:   " + "\t" + str(length))
-    print("nof bands:" + "\t" + str(bands))
+    # open the GDAL file and get typical ds information
+    ds =  gdal.Open(fname, gdal.GA_ReadOnly)
+    width = ds.RasterXSize
+    length = ds.RasterYSize
+    bands = ds.RasterCount
+    print("width:       " + "\t" + str(width))
+    print("length:      " + "\t" + str(length))
+    print("num of bands:" + "\t" + str(bands))
 
     # getting the datatype information
-    raster = data.GetRasterBand(1)
+    raster = ds.GetRasterBand(1)
     dataTypeGdal = raster.DataType
+
     # user look-up dictionary from gdal to isce format
     dataType= GDAL2ISCE_DATATYPE[dataTypeGdal]
-    # output to user
     print("dataType: " + "\t" + str(dataType))
 
-
     # transformation contains gridcorners (lines/pixels or lonlat and the spacing 1/-1 or deltalon/deltalat)
-    transform = data.GetGeoTransform()
+    transform = ds.GetGeoTransform()
     # if a complex data type, then create complex image
     # if a real data type, then create a regular image
 
     img = isceobj.createImage()
-    img.setFilename(os.path.abspath(inps.outname))
+    img.setFilename(os.path.abspath(outname))
     img.setWidth(width)
     img.setLength(length)
     img.setAccessMode('READ')
     img.bands = bands
     img.dataType = dataType
-    
-    md = data.GetMetadata('IMAGE_STRUCTURE')
+
+    # interleave
+    md = ds.GetMetadata('IMAGE_STRUCTURE')
     sch = md.get('INTERLEAVE', None)
     if sch == 'LINE':
         img.scheme = 'BIL'
@@ -110,10 +108,29 @@ if __name__ == '__main__':
         print('Assuming default, BIP')
         img.scheme = 'BIP'
 
-
     img.firstLongitude = transform[0]
     img.firstLatitude = transform[3] 
     img.deltaLatitude = transform[5] 
-    img.deltaLongitude = transform[1] 
-    img.dump(inps.outname + ".xml")
+    img.deltaLongitude = transform[1]
+
+    xml_file = outname + ".xml"
+    img.dump(xml_file)
+
+    return xml_file
+
+
+# main script
+if __name__ == '__main__':
+    '''
+    Main driver.
+    '''
+ 
+    # Parse command line
+    inps = cmdLineParse()
+
+    # check if the input file exist
+    if not os.path.isfile(inps.fname):
+        raise Exception('Input file is not found ....')
+
+    gdal2isce_xml(inps.fname)
 

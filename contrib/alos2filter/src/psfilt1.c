@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <fftw3.h>
 
 #define PLUS 1
 #define MINU 2
@@ -74,6 +75,11 @@ int psfilt1(char *inputfile, char *outputfile, int width, double alpha, int fftw
    int lc;				/* line counter */
     
    FILE *int_file, *sm_file;
+
+   double psd,psd_sc;  /* power spectrum, scale factor */
+   int ii, jj;
+   fftwf_plan p_forward;
+   fftwf_plan p_backward;
 
    int k;
    float sf; // scale factor for FFT, otherwise FFT will magnify the data by FFT length
@@ -212,6 +218,9 @@ int psfilt1(char *inputfile, char *outputfile, int width, double alpha, int fftw
    }
    lc=0;
 
+   p_forward  = fftwf_plan_dft_2d(fftw, fftw, (fftw_complex *)seg_fft[0], (fftw_complex *)seg_fft[0], FFTW_FORWARD, FFTW_MEASURE);
+   p_backward = fftwf_plan_dft_2d(fftw, fftw, (fftw_complex *)seg_fft[0], (fftw_complex *)seg_fft[0], FFTW_BACKWARD, FFTW_MEASURE);
+
    for (i=0; i < yh; i += step){
      for(i1=fftw - step; i1 < fftw; i1++){
        fread((char *)cmp[i1], sizeof(fcomplex), width, int_file);
@@ -229,8 +238,30 @@ int psfilt1(char *inputfile, char *outputfile, int width, double alpha, int fftw
      if(i%(2*step) == 0)fprintf(stderr,"\rprogress: %3d%%", (int)(i*100/yh + 0.5));
   
      for (j=0; j < width; j += step){
-       psd_wgt(cmp, seg_fft, alpha, j, i, fftw);	
-       fourn((float *)seg_fft[0]-1,nfft,ndim,isign);	/* 2D inverse FFT of region, get back filtered fringes */
+       //psd_wgt(cmp, seg_fft, alpha, j, i, fftw);	
+       ////////////////////////////////////////////////////////////////////////////////////////
+       //replace function psd_wgt with the following to call FFTW, crl, 23-APR-2020
+       for (ii=0; ii < fftw; ii++){            /* load up data array */
+         for (jj=j; jj < j+fftw; jj++){
+           seg_fft[ii][jj-j].re = cmp[ii][jj].re;
+           seg_fft[ii][jj-j].im = cmp[ii][jj].im;
+         }
+       }
+
+       //fourn((float *)seg_fft[0]-1, nfft, ndim, -1);   /* 2D forward FFT of region */
+       fftwf_execute(p_forward);
+
+       for (ii=0; ii < fftw; ii++){
+         for (jj=0; jj < fftw; jj++){
+           psd = seg_fft[ii][jj].re * seg_fft[ii][jj].re + seg_fft[ii][jj].im * seg_fft[ii][jj].im;
+           psd_sc = pow(psd,alpha/2.);
+           seg_fft[ii][jj].re *= psd_sc;
+           seg_fft[ii][jj].im *= psd_sc;    
+         }
+       }
+       /////////////////////////////////////////////////////////////////////////////////////////
+       //fourn((float *)seg_fft[0]-1,nfft,ndim,isign);	/* 2D inverse FFT of region, get back filtered fringes */
+       fftwf_execute(p_backward);
 
        for (i1=0; i1 < fftw; i1++){			/* save filtered output values */
          for (j1=0; j1 < fftw; j1++){
@@ -284,6 +315,9 @@ int psfilt1(char *inputfile, char *outputfile, int width, double alpha, int fftw
 
    fprintf(stdout,"\nnumber of lines written to file: %d\n",lc);
    stop_timing();
+
+   fftwf_destroy_plan(p_forward);
+   fftwf_destroy_plan(p_backward);
 
    free(bufcz);
    //free_cmatrix(cmp, 0, fftw-1, -fftw,width+fftw);

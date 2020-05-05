@@ -28,8 +28,7 @@ def runUnwrapSnaphuSd(self):
     #slaveTrack = self._insar.loadTrack(master=False)
 
     sdDir = 'sd'
-    if not os.path.exists(sdDir):
-        os.makedirs(sdDir)
+    os.makedirs(sdDir, exist_ok=True)
     os.chdir(sdDir)
 
 

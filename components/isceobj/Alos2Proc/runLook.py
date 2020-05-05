@@ -25,8 +25,7 @@ def runLook(self):
     wbdFile = os.path.abspath(self._insar.wbd)
 
     insarDir = 'insar'
-    if not os.path.exists(insarDir):
-        os.makedirs(insarDir)
+    os.makedirs(insarDir, exist_ok=True)
     os.chdir(insarDir)
 
 
@@ -51,8 +50,21 @@ def runLook(self):
         create_xml(self._insar.multilookLongitude, width2, length2, 'double')
         create_xml(self._insar.multilookHeight, width2, length2, 'double')
         #los has two bands, use look program in isce instead
-        cmd = "looks.py -i {} -o {} -r {} -a {}".format(self._insar.los, self._insar.multilookLos, self._insar.numberRangeLooks2, self._insar.numberAzimuthLooks2)
-        runCmd(cmd)
+        #cmd = "looks.py -i {} -o {} -r {} -a {}".format(self._insar.los, self._insar.multilookLos, self._insar.numberRangeLooks2, self._insar.numberAzimuthLooks2)
+        #runCmd(cmd)
+
+        #replace the above system call with function call
+        from mroipac.looks.Looks import Looks
+        from isceobj.Image import createImage
+        inImage = createImage()
+        inImage.load(self._insar.los+'.xml')
+
+        lkObj = Looks()
+        lkObj.setDownLooks(self._insar.numberAzimuthLooks2)
+        lkObj.setAcrossLooks(self._insar.numberRangeLooks2)
+        lkObj.setInputImage(inImage)
+        lkObj.setOutputFilename(self._insar.multilookLos)
+        lkObj.looks()
 
         #water body
         #this looking operation has no problems where there is only water and land, but there is also possible no-data area

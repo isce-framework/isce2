@@ -8,6 +8,13 @@ import configparser
 import datetime
 import numpy as np
 import shelve
+
+# suppress matplotlib DEBUG message
+from matplotlib.path import Path as Path
+import logging
+mpl_logger = logging.getLogger('matplotlib')
+mpl_logger.setLevel(logging.WARNING)
+
 import isce
 import isceobj
 from mroipac.baseline.Baseline import Baseline
@@ -51,11 +58,11 @@ def createParser():
             help='SAR sensor used to define square multi-look pixels')
 
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', 
-            help='unwrapping method (icu, snaphu, or snaphu2stage)')
+            help='unwrapping method (icu, snaphu, or snaphu2stage), no to skip phase unwrapping.')
 
     parser.add_argument('-f','--filter_strength', dest='filtStrength', type=str, default=filtStrength,
             help='strength of Goldstein filter applied to the wrapped phase before spatial coherence estimation.'
-                 ' Default: {}'.format(filtStrength))
+                 ' Default: {}. 0 to skip filtering.'.format(filtStrength))
 
     iono = parser.add_argument_group('Ionosphere', 'Configurationas for ionospheric correction')
     iono.add_argument('-L', '--low_band_frequency', dest='fL', type=str, default=None,
@@ -319,11 +326,9 @@ def main(iargs=None):
   # getting the acquisitions
   acquisitionDates, stackMasterDate, slaveDates = get_dates(inps)
   configDir = os.path.join(inps.workDir,'configs')
-  if not os.path.exists(configDir):
-       os.makedirs(configDir)
+  os.makedirs(configDir, exist_ok=True)
   runDir = os.path.join(inps.workDir,'run_files')
-  if not os.path.exists(runDir):
-       os.makedirs(runDir)
+  os.makedirs(runDir, exist_ok=True)
 
   if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
     pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=False)

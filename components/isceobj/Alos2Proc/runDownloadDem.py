@@ -31,20 +31,27 @@ def runDownloadDem(self):
     #get 1 arcsecond dem for coregistration
     if self.dem == None:
         demDir = 'dem_1_arcsec'
-        if not os.path.exists(demDir):
-            os.makedirs(demDir)
+        os.makedirs(demDir, exist_ok=True)
         os.chdir(demDir)
 
-        downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
-        cmd = 'dem.py -a stitch -b {} -k -s 1 -c -f -u {}'.format(
-               bboxStr,
-               downloadUrl
-               )
-        runCmd(cmd)
-        cmd = 'fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f'
-        runCmd(cmd)
-        cmd = 'rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml'
-        runCmd(cmd)
+        # downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
+        # cmd = 'dem.py -a stitch -b {} -k -s 1 -c -f -u {}'.format(
+        #        bboxStr,
+        #        downloadUrl
+        #        )
+        # runCmd(cmd)
+        # cmd = 'fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f'
+        # runCmd(cmd)
+        # cmd = 'rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml'
+        # runCmd(cmd)
+
+        #replace the above system calls with function calls
+        downloadDem(list(bbox), demType='version3', resolution=1, fillingValue=-32768, outputFile=None, userName=None, passWord=None)
+        imagePathXml((glob.glob('demLat_*_*_Lon_*_*.dem.wgs84'))[0], fullPath=True)
+        filesRemoved = glob.glob('*.hgt*') + glob.glob('*.log') + glob.glob('demLat_*_*_Lon_*_*.dem') + glob.glob('demLat_*_*_Lon_*_*.dem.vrt') + glob.glob('demLat_*_*_Lon_*_*.dem.xml')
+        for filex in filesRemoved:
+            os.remove(filex)
+
         os.chdir('../')
 
         self.dem = glob.glob(os.path.join(demDir, 'demLat_*_*_Lon_*_*.dem.wgs84'))[0]
@@ -52,20 +59,27 @@ def runDownloadDem(self):
     #get 3 arcsecond dem for geocoding
     if self.demGeo == None:
         demGeoDir = 'dem_3_arcsec'
-        if not os.path.exists(demGeoDir):
-            os.makedirs(demGeoDir)
+        os.makedirs(demGeoDir, exist_ok=True)
         os.chdir(demGeoDir)
 
-        downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
-        cmd = 'dem.py -a stitch -b {} -k -s 3 -c -f -u {}'.format(
-               bboxStr,
-               downloadUrl
-               )
-        runCmd(cmd)
-        cmd = 'fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f'
-        runCmd(cmd)
-        cmd = 'rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml'
-        runCmd(cmd)
+        # downloadUrl = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
+        # cmd = 'dem.py -a stitch -b {} -k -s 3 -c -f -u {}'.format(
+        #        bboxStr,
+        #        downloadUrl
+        #        )
+        # runCmd(cmd)
+        # cmd = 'fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f'
+        # runCmd(cmd)
+        # cmd = 'rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml'
+        # runCmd(cmd)
+
+        #replace the above system calls with function calls
+        downloadDem(list(bbox), demType='version3', resolution=3, fillingValue=-32768, outputFile=None, userName=None, passWord=None)
+        imagePathXml((glob.glob('demLat_*_*_Lon_*_*.dem.wgs84'))[0], fullPath=True)
+        filesRemoved = glob.glob('*.hgt*') + glob.glob('*.log') + glob.glob('demLat_*_*_Lon_*_*.dem') + glob.glob('demLat_*_*_Lon_*_*.dem.vrt') + glob.glob('demLat_*_*_Lon_*_*.dem.xml')
+        for filex in filesRemoved:
+            os.remove(filex)
+
         os.chdir('../')
 
         self.demGeo = glob.glob(os.path.join(demGeoDir, 'demLat_*_*_Lon_*_*.dem.wgs84'))[0]
@@ -73,17 +87,23 @@ def runDownloadDem(self):
     #get water body for masking interferogram
     if self.wbd == None:
         wbdDir = 'wbd_1_arcsec'
-        if not os.path.exists(wbdDir):
-            os.makedirs(wbdDir)
+        os.makedirs(wbdDir, exist_ok=True)
         os.chdir(wbdDir)
 
         #cmd = 'wbd.py {}'.format(bboxStr)
         #runCmd(cmd)
         download_wbd(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
-        cmd = 'fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f'
-        runCmd(cmd)
-        cmd = 'rm *.log'
-        runCmd(cmd)
+        #cmd = 'fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f'
+        #runCmd(cmd)
+        #cmd = 'rm *.log'
+        #runCmd(cmd)
+        
+        #replace the above system calls with function calls
+        imagePathXml((glob.glob('swbdLat_*_*_Lon_*_*.wbd'))[0], fullPath=True)
+        filesRemoved = glob.glob('*.log')
+        for filex in filesRemoved:
+            os.remove(filex)
+
         os.chdir('../')
 
         self.wbd = glob.glob(os.path.join(wbdDir, 'swbdLat_*_*_Lon_*_*.wbd'))[0]
@@ -96,6 +116,54 @@ def runDownloadDem(self):
     catalog.printToLog(logger, "runDownloadDem")
     self._insar.procDoc.addAllFromCatalog(catalog)
 
+
+def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, outputFile=None, userName=None, passWord=None):
+    '''
+    bbox:        [s, n, w, e]
+    demType:     can be 'version3' or 'nasadem'. nasadem is also tested.
+    resolution:  1 or 3, NASADEM only available in 1-arc sec resolution
+    '''
+    import numpy as np
+    import isceobj
+    from contrib.demUtils import createDemStitcher
+
+    ds = createDemStitcher(demType)
+    ds.configure()
+
+    if demType == 'version3':
+        if resolution == 1:
+            ds._url1 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
+        else:
+            ds._url3 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
+    elif demType == 'nasadem':
+        resolution = 1
+        #this url is included in the module
+        #ds._url1 = 'http://e4ftl01.cr.usgs.gov/MEASURES/NASADEM_HGT.001/2000.02.11'
+    else:
+        raise Exception('unknown DEM type, currently supported DEM types: version3 and nasadem')
+
+    ds.setUsername(userName)
+    ds.setPassword(passWord)
+
+    ds._keepAfterFailed = True
+    ds.setCreateXmlMetadata(True)
+    ds.setUseLocalDirectory(False)
+    ds.setFillingValue(fillingValue)
+    ds.setFilling()
+
+    bbox = [np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3]))]
+    if outputFile==None:
+        outputFile = ds.defaultName(bbox)
+
+    if not(ds.stitchDems(bbox[0:2],bbox[2:4],resolution,outputFile,'./',keep=True)):
+        print('Could not create a stitched DEM. Some tiles are missing')
+    else:
+        #Apply correction  EGM96 -> WGS84
+        demImg = ds.correct()
+
+    #report downloads
+    for k,v in list(ds._downloadReport.items()):
+        print(k,'=',v)
 
 
 def download_wbd(s, n, w, e):
@@ -202,3 +270,21 @@ def download_wbd(s, n, w, e):
 
 
     return outputFile
+
+
+def imagePathXml(imageFile, fullPath=True):
+    import os
+    import isceobj
+    from isceobj.Util.ImageUtil import ImageLib as IML
+
+    img = IML.loadImage(imageFile)[0]
+
+    dirname  = os.path.dirname(imageFile)
+    if fullPath:
+        fname = os.path.abspath( os.path.join(dirname, os.path.basename(imageFile)))
+    else:
+        fname = os.path.basename(imageFile)
+
+    img.filename = fname
+    img.setAccessMode('READ')
+    img.renderHdr()

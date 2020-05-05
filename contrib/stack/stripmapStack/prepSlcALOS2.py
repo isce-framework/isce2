@@ -17,17 +17,22 @@ def createParser():
     Create command line parser.
     '''
 
-    parser = argparse.ArgumentParser(description='Prepare ALOS2 slc for processing (unzip/untar files, '
+    parser = argparse.ArgumentParser(description='Prepare ALOS2 SLC for processing (unzip/untar files, '
                                      'organize in date folders, generate script to unpack into isce formats).')
     parser.add_argument('-i', '--input', dest='inputDir', type=str, required=True,
             help='directory with the downloaded SLC data')
-    parser.add_argument('-rmfile', '--rmfile', dest='rmfile',action='store_true', default=False,
-            help='Optional: remove zip/tar/compressed files after unpacking into date structure '
-                 '(default is to keep in archive fo  lder)')
     parser.add_argument('-o', '--output', dest='outputDir', type=str, required=False,
             help='output directory where data needs to be unpacked into isce format (for script generation).')
+
     parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='source ~/.bash_profile;',
-            help='text command to be added to the beginning of each line of the run files. Default: source ~/.bash_profile;')
+            help='text command to be added to the beginning of each line of the run files (default: %(default)s).')
+
+    parser.add_argument('-p', '--polarization', dest='polarization', type=str,
+            help='polarization in case if quad or full pol data exists (default: %(default)s).')
+
+    parser.add_argument('-rmfile', '--rmfile', dest='rmfile',action='store_true', default=False,
+            help='Optional: remove zip/tar/compressed files after unpacking into date structure '
+                 '(default is to keep in archive folder)')
     return parser
 
 
@@ -130,8 +135,7 @@ def main(iargs=None):
                 # put failed files in a seperate directory
                 if not successflag_unzip:
                     dir_failed = os.path.join(workdir,'FAILED_FILES')
-                    if not os.path.isdir(dir_failed):
-                        os.makedirs(dir_failed)
+                    os.makedirs(dir_failed, exist_ok=True)
                     cmd = 'mv {} {}'.format(fname, dir_failed)
                     os.system(cmd)
                 else:
@@ -141,8 +145,7 @@ def main(iargs=None):
                         print('Deleting: ' + fname)
                     else:
                         dir_archive = os.path.join(workdir,'ARCHIVED_FILES')
-                        if not os.path.isdir(dir_archive):
-                            os.makedirs(dir_archive)
+                        os.makedirs(dir_archive, exist_ok=True)
                         cmd = 'mv {} {}'.format(fname, dir_archive)
                         os.system(cmd)
 
@@ -177,9 +180,8 @@ def main(iargs=None):
         if successflag:
             # move the file into the date folder
             SLC_dir = os.path.join(workdir,imgDate,'')
-            if not os.path.isdir(SLC_dir):
-                os.makedirs(SLC_dir)
-                
+            os.makedirs(SLC_dir, exist_ok=True)
+
             # check if the folder already exist in that case overwrite it
             ALOS_folder_out = os.path.join(SLC_dir,os.path.basename(ALOS_folder))
             if os.path.isdir(ALOS_folder_out):
@@ -203,9 +205,10 @@ def main(iargs=None):
             if len(AlosFiles)>0:
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(inps.outputDir, acquisitionDate)
-                if not os.path.exists(slcDir):
-                    os.makedirs(slcDir)     
-                cmd = 'unpackFrame_ALOS2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
+                os.makedirs(slcDir, exist_ok=True)
+                cmd = 'unpackFrame_ALOS2.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir
+                if inps.polarization:
+                    cmd += ' --polarization {} '.format(inps.polarization)
                 print (cmd)
                 f.write(inps.text_cmd + cmd+'\n')
         f.close()

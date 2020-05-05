@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
+import os
+import argparse
+import shelve
+import json
+import logging
+import numpy as np
+
 import isce
 import isceobj
 import stdproc
 from stdproc.stdproc import crossmul
-import numpy as np
-from isceobj.Util.Poly2D import Poly2D
-import argparse
-import os
-import shelve
-from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
-import json
-import logging
 from isceobj.Util.decorators import use_api
+from isceobj.Util.Poly2D import Poly2D
+from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 
 def createParser():
     parser = argparse.ArgumentParser( description='Use polynomial offsets and create burst by burst interferograms')
@@ -136,8 +137,7 @@ def resampSlave(burst, offdir, outname, doppler, azpoly, rgpoly,
     imgOut.setWidth(width)
 
     outdir = os.path.dirname(outname)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    os.makedirs(outdir, exist_ok=True)
 
     if zero:
         imgOut.filename = os.path.join(outname)
@@ -171,17 +171,13 @@ def main(iargs=None):
 
     outfile = os.path.join(inps.coreg,os.path.basename(inps.coreg) + '.slc')
     outDir = inps.coreg
-    if not os.path.exists(outDir):
-       os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
     masterShelveDir = os.path.join(outDir, 'masterShelve')
     slaveShelveDir = os.path.join(outDir, 'slaveShelve')
 
-    if not os.path.exists(masterShelveDir):
-       os.makedirs(masterShelveDir)
-
-    if not os.path.exists(slaveShelveDir):
-       os.makedirs(slaveShelveDir)
+    os.makedirs(masterShelveDir, exist_ok=True)
+    os.makedirs(slaveShelveDir, exist_ok=True)
 
     cmd = 'cp '+ inps.slave + '/data* ' + slaveShelveDir
     print (cmd)

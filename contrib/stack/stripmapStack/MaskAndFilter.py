@@ -259,8 +259,7 @@ def main(iargs=None):
 
     inps = cmdLineParse(iargs)
 
-    if not os.path.exists(inps.outDir):
-        os.makedirs(inps.outD)
+    os.makedirs(inps.outD, exist_ok=True)
 
     #######################
     # masking the dense offsets based on SNR and median filter the masked offs

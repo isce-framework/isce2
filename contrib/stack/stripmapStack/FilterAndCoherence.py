@@ -28,13 +28,13 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
 import logging
 import isce
 import isceobj
 import argparse
 import os
 logger = logging.getLogger('isce.tops.runFilter')
+
 
 def runFilter(infile, outfile, filterStrength):
     from mroipac.filter.Filter import Filter
@@ -61,10 +61,11 @@ def runFilter(infile, outfile, filterStrength):
 
     intImage.finalizeImage()
     filtImage.finalizeImage()
-   
+
 
 def estCoherence(outfile, corfile):
     from mroipac.icu.Icu import Icu
+    logger.info("Estimating spatial coherence based phase sigma")
 
     #Create phase sigma correlation file here
     filtImage = isceobj.createIntImage()
@@ -110,6 +111,7 @@ def createParser():
 
     return parser
 
+
 def cmdLineParse(iargs=None):
     parser = createParser()
     return parser.parse_args(args=iargs)
@@ -121,7 +123,11 @@ def main(iargs=None):
     if inps.filtfile is None:
         inps.filtfile = 'filt_' + inps.infile
 
-    runFilter(inps.infile, inps.filtfile, inps.filterstrength)
+    if inps.filterstrength <= 0.:
+        inps.filtfile = inps.infile
+        logger.info('input filter strength "{}" <= 0, skip filtering.'.format(inps.filterstrength))
+    else:
+        runFilter(inps.infile, inps.filtfile, inps.filterstrength)
 
     estCoherence(inps.filtfile, inps.cohfile)
 

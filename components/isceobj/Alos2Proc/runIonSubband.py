@@ -58,8 +58,7 @@ def runIonSubband(self):
     ############################################################
     #create and enter 'ion' directory
     #after finishing each step, we are in this directory
-    if not os.path.exists(ionDir['ion']):
-        os.makedirs(ionDir['ion'])
+    os.makedirs(ionDir['ion'], exist_ok=True)
     os.chdir(ionDir['ion'])
 
     #create insar processing directories
@@ -70,12 +69,10 @@ def runIonSubband(self):
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
                 fullDir = os.path.join(subbandDir, frameDir, swathDir)
-                if not os.path.exists(fullDir):
-                    os.makedirs(fullDir)
+                os.makedirs(fullDir, exist_ok=True)
 
     #create ionospheric phase directory
-    if not os.path.exists(ionDir['ionCal']):
-        os.makedirs(ionDir['ionCal'])
+    os.makedirs(ionDir['ionCal'], exist_ok=True)
 
 
     ############################################################
@@ -223,8 +220,7 @@ def runIonSubband(self):
             os.chdir(frameDir)
 
             mosaicDir = ionDir['swathMosaic']
-            if not os.path.exists(mosaicDir):
-                os.makedirs(mosaicDir)
+            os.makedirs(mosaicDir, exist_ok=True)
             os.chdir(mosaicDir)
 
             if not (
@@ -316,8 +312,7 @@ def runIonSubband(self):
         os.chdir(ionDir['subband'][k])
 
         mosaicDir = ionDir['insar']
-        if not os.path.exists(mosaicDir):
-            os.makedirs(mosaicDir)
+        os.makedirs(mosaicDir, exist_ok=True)
         os.chdir(mosaicDir)
 
         numberOfFrames = len(masterTrack.frames)
@@ -406,8 +401,7 @@ def runIonSubband(self):
         os.chdir(ionDir['subband'][k])
 
         insarDir = ionDir['insar']
-        if not os.path.exists(insarDir):
-            os.makedirs(insarDir)
+        os.makedirs(insarDir, exist_ok=True)
         os.chdir(insarDir)
 
         rangePixelSize = self._insar.numberRangeLooks1 * masterTrack.rangePixelSize

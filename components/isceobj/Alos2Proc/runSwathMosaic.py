@@ -28,8 +28,7 @@ def runSwathMosaic(self):
         os.chdir(frameDir)
 
         mosaicDir = 'mosaic'
-        if not os.path.exists(mosaicDir):
-            os.makedirs(mosaicDir)
+        os.makedirs(mosaicDir, exist_ok=True)
         os.chdir(mosaicDir)
 
         if not (
@@ -379,33 +378,94 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
 
 
             #get difference
-            corth = 0.87
-            if filt:
-                corth = 0.90
-            diffMean0 = 0.0
-            for k in range(5):
-                dataDiff = data1 * np.conj(data2)
-                cor = cal_coherence_1(dataDiff, win=3)
-                index = np.nonzero(np.logical_and(cor>corth, dataDiff!=0))
+            dataDiff = data1 * np.conj(data2)
+            cor = cal_coherence_1(dataDiff, win=5)
+            index = np.nonzero(np.logical_and(cor>0.85, dataDiff!=0))
+
+            DEBUG=False
+            if DEBUG:
+                from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
+                (length7, width7)=dataDiff.shape
+                filename = 'diff_ori_s{}-s{}.int'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber)
+                dataDiff.astype(np.complex64).tofile(filename)
+                create_xml(filename, width7, length7, 'int')
+                filename = 'cor_ori_s{}-s{}.cor'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber)
+                cor.astype(np.float32).tofile(filename)
+                create_xml(filename, width7, length7, 'float')
+
+            print('\ncompute phase difference between subswaths {} and {}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber))
+            print('number of pixels with coherence > 0.85: {}'.format(index[0].size))
+
+            #if already filtered the subswath overlap interferograms (MAI), do not filtered differential interferograms
+            if (filt == False) and (index[0].size < 4000):
+                #coherence too low, filter subswath overlap differential interferogram
+                diffMean0 = 0.0
+                breakFlag = False
+                for (filterStrength, filterWinSize) in zip([3.0, 9.0], [64, 128]):
+                    dataDiff = data1 * np.conj(data2)
+                    dataDiff /= (np.absolute(dataDiff)+(dataDiff==0))
+                    dataDiff = filterInterferogram(dataDiff, filterStrength, filterWinSize, 1)
+                    cor = cal_coherence_1(dataDiff, win=7)
+
+                    DEBUG=False
+                    if DEBUG:
+                        from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
+                        (length7, width7)=dataDiff.shape
+                        filename = 'diff_filt_s{}-s{}_strength_{}_winsize_{}.int'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, filterStrength, filterWinSize)
+                        dataDiff.astype(np.complex64).tofile(filename)
+                        create_xml(filename, width7, length7, 'int')
+                        filename = 'cor_filt_s{}-s{}_strength_{}_winsize_{}.cor'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, filterStrength, filterWinSize)
+                        cor.astype(np.float32).tofile(filename)
+                        create_xml(filename, width7, length7, 'float')
+
+                    for corth in [0.99999, 0.9999]:
+                        index = np.nonzero(np.logical_and(cor>corth, dataDiff!=0))
+                        if index[0].size > 30000:
+                            breakFlag = True
+                            break
+                    if breakFlag:
+                        break
+
                 if index[0].size < 100:
                     diffMean0 = 0.0
-                    print('\n\nWARNING: too few high coherence pixels for swath phase difference estimation between swath {} and {}'.format(i-1, i))
-                    print('       : first swath swath number: 0\n\n')
-                    break
-                angle = np.mean(np.angle(dataDiff[index]), dtype=np.float64)
-                diffMean0 += angle
-                data2 *= np.exp(np.complex64(1j) * angle)
-                print('phase offset: %15.12f rad after loop: %3d'%(diffMean0, k))
+                    print('\n\nWARNING: too few high coherence pixels for swath phase difference estimation')
+                    print('         number of high coherence pixels: {}\n\n'.format(index[0].size))
+                else:
+                    print('filtered coherence threshold used: {}, number of pixels used: {}'.format(corth, index[0].size))
+                    angle = np.mean(np.angle(dataDiff[index]), dtype=np.float64)
+                    diffMean0 += angle
+                    data2 *= np.exp(np.complex64(1j) * angle)
+                    print('phase offset: %15.12f rad with filter strength: %f, window size: %3d'%(diffMean0, filterStrength, filterWinSize))
+            else:
+                diffMean0 = 0.0
+                for k in range(30):
+                    dataDiff = data1 * np.conj(data2)
+                    cor = cal_coherence_1(dataDiff, win=5)
+                    if filt:
+                        index = np.nonzero(np.logical_and(cor>0.95, dataDiff!=0))
+                    else:
+                        index = np.nonzero(np.logical_and(cor>0.85, dataDiff!=0))
+                    if index[0].size < 100:
+                        diffMean0 = 0.0
+                        print('\n\nWARNING: too few high coherence pixels for swath phase difference estimation')
+                        print('         number of high coherence pixels: {}\n\n'.format(index[0].size))
+                        break
+                    angle = np.mean(np.angle(dataDiff[index]), dtype=np.float64)
+                    diffMean0 += angle
+                    data2 *= np.exp(np.complex64(1j) * angle)
+                    print('phase offset: %15.12f rad after loop: %3d'%(diffMean0, k))
 
-                DEBUG=False
-                if DEBUG and (k==0):
-                    from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
-                    (lengthxx, widthxx)=dataDiff.shape
-                    filtnamePrefix = 'subswath{}_subswath{}_loop{}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, k)
-                    cor.astype(np.float32).tofile(filtnamePrefix+'.cor')
-                    create_xml(filtnamePrefix+'.cor', widthxx, lengthxx, 'float')
-                    dataDiff.astype(np.complex64).tofile(filtnamePrefix+'.int')
-                    create_xml(filtnamePrefix+'.int', widthxx, lengthxx, 'int')
+                    DEBUG=False
+                    if DEBUG and (k==0):
+                        from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
+                        (length7, width7)=dataDiff.shape
+                        filename = 'diff_ori_s{}-s{}_loop_{}.int'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, k)
+                        dataDiff.astype(np.complex64).tofile(filename)
+                        create_xml(filename, width7, length7, 'int')
+                        filename = 'cor_ori_s{}-s{}_loop_{}.cor'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, k)
+                        cor.astype(np.float32).tofile(filename)
+                        create_xml(filename, width7, length7, 'float')
+
 
             diffMean.append(diffMean0)
             print('phase offset: subswath{} - subswath{}: {}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, diffMean0))

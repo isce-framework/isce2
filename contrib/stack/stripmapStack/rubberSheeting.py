@@ -252,9 +252,8 @@ def main(iargs=None):
         #######################
         cmd = 'isce2gis.py envi -i ' + inps.geometryAzimuthOffset
         os.system(cmd)
-        
-        if not os.path.exists(inps.outDir):
-            os.makedirs(inps.outDir)
+
+        os.makedirs(inps.outDir, exist_ok=True)
 
         #######################
         # masking the dense offsets based on SNR and median filter the masked offsets
@@ -286,9 +285,8 @@ def main(iargs=None):
         #######################
         cmd = 'isce2gis.py envi -i ' + inps.geometryRangeOffset
         os.system(cmd)
-        
-        if not os.path.exists(inps.outDir):
-            os.makedirs(inps.outDir)
+
+        os.makedirs(inps.outDir, exist_ok=True)
         #######################
         # masking the dense offsets based on SNR and median filter the masked offsets
 

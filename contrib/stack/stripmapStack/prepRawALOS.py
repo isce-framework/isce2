@@ -130,8 +130,7 @@ def main(iargs=None):
 
                 # put failed files in a seperate directory
                 if not successflag_unzip:
-                    if not os.path.isdir(os.path.join(workdir,'FAILED_FILES')):
-                        os.makedirs(os.path.join(workdir,'FAILED_FILES'))
+                    os.makedirs(os.path.join(workdir,'FAILED_FILES'), exist_ok=True)
                     os.rename(ALOS_infilefolder,os.path.join(workdir,'FAILED_FILES','.'))
                 else:
                     # check if file needs to be removed or put in archive folder
@@ -139,8 +138,7 @@ def main(iargs=None):
                         os.remove(ALOS_infilefolder)
                         print('Deleting: ' + ALOS_infilefolder)
                     else:
-                        if not os.path.isdir(os.path.join(workdir,'ARCHIVED_FILES')):
-                            os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'))
+                        os.makedirs(os.path.join(workdir,'ARCHIVED_FILES'), exist_ok=True)
                         cmd  = 'mv ' + ALOS_infilefolder + ' ' + os.path.join(workdir,'ARCHIVED_FILES','.')
                         os.system(cmd)
 
@@ -175,9 +173,8 @@ def main(iargs=None):
         if successflag:
             # move the file into the date folder
             SLC_dir = os.path.join(workdir,imgDate,'')
-            if not os.path.isdir(SLC_dir):
-                os.makedirs(SLC_dir)
-                
+            os.makedirs(SLC_dir, exist_ok=True)
+
             # check if the folder already exist in that case overwrite it
             ALOS_folder_out = os.path.join(SLC_dir,os.path.basename(ALOS_folder))
             if os.path.isdir(ALOS_folder_out):
@@ -200,8 +197,7 @@ def main(iargs=None):
             if len(AlosFiles)>0:
                 acquisitionDate = os.path.basename(dateDir)
                 slcDir = os.path.join(inps.outputDir, acquisitionDate)
-                if not os.path.exists(slcDir):
-                    os.makedirs(slcDir)     
+                os.makedirs(slcDir, exist_ok=True)
                 cmd = 'unpackFrame_ALOS_raw.py -i ' + os.path.abspath(dateDir) + ' -o ' + slcDir      
                 IMG_files = glob.glob(os.path.join(AlosFiles[0],'IMG*'))
                 if inps.fbd2fbs:

@@ -413,11 +413,9 @@ def subband(self, ionParam):
 
         #create dirs
         lowerDir = os.path.join(ionParam.ionDirname, ionParam.lowerDirname, ionParam.fineIfgDirname, 'IW{0}'.format(swath))
-        if not os.path.isdir(lowerDir):
-            os.makedirs(lowerDir)
         upperDir = os.path.join(ionParam.ionDirname, ionParam.upperDirname, ionParam.fineIfgDirname, 'IW{0}'.format(swath))
-        if not os.path.isdir(upperDir):
-            os.makedirs(upperDir)
+        os.makedirs(lowerDir, exist_ok=True)
+        os.makedirs(upperDir, exist_ok=True)
 
         ##############################################################
         #for resampling
@@ -732,8 +730,7 @@ def merge(self, ionParam):
             frames.append(ifg)
             burstList.append([os.path.join(burstDirname, 'IW{0}'.format(swath),  'burst_%02d.int'%(x+1)) for x in range(minBurst, maxBurst)])
 
-        if not os.path.isdir(mergeDirname):
-            os.makedirs(mergeDirname)
+        os.makedirs(mergeDirname, exist_ok=True)
 
         suffix = '.full'
         if (ionParam.numberRangeLooks0 == 1) and (ionParam.numberAzimuthLooks0 == 1):
@@ -940,8 +937,7 @@ def multilook_unw(self, ionParam, mergedDirname):
         procdir = os.path.join(ionParam.ionDirname, dirx, mergedDirname)
         #create a directory for original files
         oridir = os.path.join(procdir, oridir0)
-        if not os.path.isdir(oridir):
-            os.makedirs(oridir)
+        os.makedirs(oridir, exist_ok=True)
         #move files, renameFile uses os.rename, which overwrites if file already exists in oridir. This can support re-run
         filename0 = os.path.join(procdir, self._insar.mergedIfgname)
         filename  = os.path.join(oridir, self._insar.mergedIfgname)
@@ -1293,8 +1289,7 @@ def ionosphere(self, ionParam):
 
     #dump ionosphere
     outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
-    if not os.path.isdir(outDir):
-        os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
     outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
     ion = np.zeros((length*2, width), dtype=np.float32)
     ion[0:length*2:2, :] = amp
@@ -1434,8 +1429,7 @@ def ionSwathBySwath(self, ionParam):
         for dirx in dirs:
             outputFilename = self._insar.mergedIfgname
             outputDirname = os.path.join(ionParam.ionDirname, dirx, ionParam.mergedDirname + '_IW{0}'.format(swath))
-            if not os.path.isdir(outputDirname):
-                os.makedirs(outputDirname)
+            os.makedirs(outputDirname, exist_ok=True)
             suffix = '.full'
             if (numberRangeLooks0 == 1) and (numberAzimuthLooks0 == 1):
                 suffix=''
@@ -1561,8 +1555,7 @@ def ionSwathBySwath(self, ionParam):
 
         #dump result
         outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname + '_IW{0}'.format(swath))
-        if not os.path.isdir(outDir):
-            os.makedirs(outDir)
+        os.makedirs(outDir, exist_ok=True)
         outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
         ion = np.zeros((length*2, width), dtype=np.float32)
         ion[0:length*2:2, :] = amp
@@ -1635,8 +1628,7 @@ def ionSwathBySwath(self, ionParam):
 
     #dump ionosphere
     outDir = os.path.join(ionParam.ionDirname, ionParam.ioncalDirname)
-    if not os.path.isdir(outDir):
-        os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
     outFilename = os.path.join(outDir, ionParam.ionRawNoProj)
     ion = np.zeros((length*2, width), dtype=np.float32)
     ion[0:length*2:2, :] = ampMerged
@@ -1680,8 +1672,6 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
     output: first lines > 0, last lines < 0
     '''
-    from scipy import interpolate
-    from scipy.interpolate import interp1d
 
     Vs = np.linalg.norm(burst.orbit.interpolateOrbit(burst.sensingMid, method='hermite').getVelocity())
     Ks =   2 * Vs * burst.azimuthSteeringRate / burst.radarWavelength 
@@ -1707,6 +1697,8 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
 
 
 def grd2ion(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     print('resampling ionosphere from ground to ionospheric layer')
     #get files
@@ -1894,8 +1886,6 @@ def filt_gaussian(self, ionParam):
     currently not implemented.
     a less accurate method is to use ionsphere without any projection
     '''
-    from scipy import interpolate
-    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
@@ -2117,6 +2107,8 @@ def ionosphere_shift(self, ionParam):
 
 
 def ion2grd(self, ionParam):
+    from scipy import interpolate
+    from scipy.interpolate import interp1d
 
     #################################################
     #SET PARAMETERS HERE
@@ -2197,8 +2189,7 @@ def ion2grd(self, ionParam):
         nburst = len(frames[i].bursts)
         ###output directory for burst ionosphere
         outdir = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swathList2[i]))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
         for j in range(nburst):
             #according to runBurstIfg.py, this is originally from self._insar.masterSlcProduct, 'IW{0}.xml'
@@ -2565,8 +2556,7 @@ def esd_noion(self, ionParam):
 
 
         sdir = os.path.join(ionParam.ionDirname, esddir, 'IW{0}'.format(swath))
-        if not os.path.exists(sdir):
-            os.makedirs(sdir)
+        os.makedirs(sdir, exist_ok=True)
 
         #use mis-registration estimated from esd to compute phase error
         for ii in range(minBurst, maxBurst):

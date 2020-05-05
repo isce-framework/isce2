@@ -719,8 +719,7 @@ def runMergeBursts(self, adjust=1):
     # STEP 2. MERGE BURSTS
     #########################################
     mergedir = self._insar.mergedDirname
-    if not os.path.isdir(mergedir):
-        os.makedirs(mergedir)
+    os.makedirs(mergedir, exist_ok=True)
     if (self.numberRangeLooks == 1) and (self.numberAzimuthLooks==1):
         suffix = ''
     else:

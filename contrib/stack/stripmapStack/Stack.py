@@ -12,27 +12,28 @@ import isce
 import isceobj
 from mroipac.baseline.Baseline import Baseline
 
+
 filtStrength = '0.8'
 noMCF = 'False'
 defoMax = '2'
 maxNodes = 72
 
-    
+
 class config(object):
     """
        A class representing the config file
     """
     def __init__(self, outname):
-       self.f= open(outname,'w')
-       self.f.write('[Common]'+'\n')
-       self.f.write('')
-       self.f.write('##########################'+'\n')
+        self.f= open(outname,'w')
+        self.f.write('[Common]'+'\n')
+        self.f.write('')
+        self.f.write('##########################'+'\n')
 
     def configure(self,inps):
-       for k in inps.__dict__.keys():
-           setattr(self, k, inps.__dict__[k])
-       self.plot = 'False'
-       self.misreg = None
+        for k in inps.__dict__.keys():
+            setattr(self, k, inps.__dict__[k])
+        self.plot = 'False'
+        self.misreg = None
 
     def cropFrame(self, function):
         self.f.write('##########################'+'\n')
@@ -112,7 +113,7 @@ class config(object):
         self.f.write('coreg : ' + self.coregSlaveSlc +'\n')
         self.f.write('offsets : ' + self.offsetDir +'\n')
         if self.misreg:
-           self.f.write('poly : ' + self.misreg + '\n')
+            self.f.write('poly : ' + self.misreg + '\n')
         self.f.write('##########################'+'\n')
 
     def resampleSlc_subband(self, function):
@@ -124,7 +125,7 @@ class config(object):
         self.f.write('coreg : ' + self.coregSlaveSlc +'\n')
         self.f.write('offsets : ' + self.offsetDir +'\n')
         if self.misreg:
-           self.f.write('poly : ' + self.misreg + '\n')
+            self.f.write('poly : ' + self.misreg + '\n')
         self.f.write('##########################'+'\n')
 
     def baselineGrid(self, function):
@@ -223,9 +224,9 @@ class config(object):
         self.f.write('outDir : ' + self.outDir + '\n')
         self.f.write('shelve : ' + self.shelve + '\n')
         if self.fL and self.fH and self.bandWidth:
-           self.f.write('dcL : ' + self.fL + '\n')
-           self.f.write('dcH : ' + self.fH + '\n')
-           self.f.write('bw : ' + self.bandWidth + '\n')
+            self.f.write('dcL : ' + self.fL + '\n')
+            self.f.write('dcH : ' + self.fH + '\n')
+            self.f.write('bw : ' + self.bandWidth + '\n')
         self.f.write('##########################'+'\n')
    
     def estimateDispersive(self, function):
@@ -257,23 +258,23 @@ class config(object):
 
 def get_dates(inps):
  
-  dirs = glob.glob(inps.slcDir+'/*')
-  acuisitionDates = []
-  for dir in dirs:
-     expectedRaw = os.path.join(dir,os.path.basename(dir) + '.slc')
-     if os.path.exists(expectedRaw):
-        acuisitionDates.append(os.path.basename(dir))
-
-  acuisitionDates.sort()
-  print (dirs)
-  print (acuisitionDates)
-  if inps.masterDate not in acuisitionDates:
-     print ('master date was not found. The first acquisition will be considered as the stack master date.')
-  if inps.masterDate is None or inps.masterDate not in acuisitionDates:
-     inps.masterDate = acuisitionDates[0]
-  slaveDates = acuisitionDates.copy()
-  slaveDates.remove(inps.masterDate)
-  return acuisitionDates, inps.masterDate, slaveDates 
+    dirs = glob.glob(inps.slcDir+'/*')
+    acuisitionDates = []
+    for dir in dirs:
+        expectedRaw = os.path.join(dir,os.path.basename(dir) + '.slc')
+        if os.path.exists(expectedRaw):
+            acuisitionDates.append(os.path.basename(dir))
+  
+    acuisitionDates.sort()
+    print (dirs)
+    print (acuisitionDates)
+    if inps.masterDate not in acuisitionDates:
+        print ('master date was not found. The first acquisition will be considered as the stack master date.')
+    if inps.masterDate is None or inps.masterDate not in acuisitionDates:
+        inps.masterDate = acuisitionDates[0]
+    slaveDates = acuisitionDates.copy()
+    slaveDates.remove(inps.masterDate)
+    return acuisitionDates, inps.masterDate, slaveDates 
   
 class run(object):
     """
@@ -285,22 +286,19 @@ class run(object):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
         self.runDir = os.path.join(self.workDir, 'run_files')
-        if not os.path.exists(self.runDir):
-            os.makedirs(self.runDir)
+        os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
         self.configDir = os.path.join(self.workDir,'configs')
-        if not os.path.exists(self.configDir):
-            os.makedirs(self.configDir)
+        os.makedirs(self.configDir, exist_ok=True)
 
         # passing argument of started from raw
         if inps.nofocus is  False:
             self.raw_string = '.raw'
         else:
             self.raw_string = '' 
-
 
         # folder structures
         self.stack_folder = inps.stack_folder
@@ -310,16 +308,16 @@ class run(object):
 
     def crop(self, acquisitionDates, config_prefix, native=True, israw=True):
         for d in acquisitionDates:
-             configName = os.path.join(self.configDir, config_prefix + d)
-             configObj = config(configName)
-             configObj.configure(self)
-             configObj.inputDir = os.path.join(self.fullFrameSlcDir, d)
-             configObj.cropOutputDir = os.path.join(self.slcDir, d)
-             configObj.bbox = self.bbox
-             configObj.nativeDoppler = native
-             configObj.israw = israw
-             configObj.cropFrame('[Function-1]')
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir, config_prefix + d)
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.inputDir = os.path.join(self.fullFrameSlcDir, d)
+            configObj.cropOutputDir = os.path.join(self.slcDir, d)
+            configObj.bbox = self.bbox
+            configObj.nativeDoppler = native
+            configObj.israw = israw
+            configObj.cropFrame('[Function-1]')
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
  
     def master_focus_split_geometry(self, stackMaster, config_prefix, split=False, focus=True, native=True):
         """focusing master and producing geometry files"""
@@ -359,115 +357,121 @@ class run(object):
 
     def slaves_focus_split(self, slaveDates, config_prefix, split=False, focus=True, native=True):
         for slave in slaveDates:
-             configName = os.path.join(self.configDir, config_prefix + '_'+slave)
-             configObj = config(configName)
-             configObj.configure(self)
-             configObj.slcDir = os.path.join(self.slcDir,slave)
-
-             counter=1
-             if focus:
-                 configObj.focus('[Function-{0}]'.format(counter))
-                 counter += 1
-
-             if split:
-                  configObj.slc = os.path.join(configObj.slcDir,slave + self.raw_string + '.slc')
-                  configObj.outDir = configObj.slcDir
-                  configObj.shelve = os.path.join(configObj.slcDir, 'data')
-                  configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
-
-             configObj.finalize()
-             del configObj
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir, config_prefix + '_'+slave)
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.slcDir = os.path.join(self.slcDir,slave)
+            counter=1
+            if focus:
+                configObj.focus('[Function-{0}]'.format(counter))
+                counter += 1
+            if split:
+                configObj.slc = os.path.join(configObj.slcDir,slave + self.raw_string + '.slc')
+                configObj.outDir = configObj.slcDir
+                configObj.shelve = os.path.join(configObj.slcDir, 'data')
+                configObj.splitRangeSpectrum('[Function-{0}]'.format(counter))
+            configObj.finalize()
+            del configObj
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
     def slaves_geo2rdr_resampleSlc(self, stackMaster, slaveDates, config_prefix, native=True):
 
         for slave in slaveDates:
-             configName = os.path.join(self.configDir,config_prefix+slave) 
-             configObj = config(configName)
-             configObj.configure(self)
-             configObj.masterSlc = os.path.join(self.slcDir, stackMaster)
-             configObj.slaveSlc = os.path.join(self.slcDir, slave)
-             configObj.geometryDir = os.path.join(self.workDir, self.stack_folder,'geom_master')
-             configObj.offsetDir = os.path.join(self.workDir, 'offsets',slave)
-             configObj.nativeDoppler = native
-
-             configObj.geo2rdr('[Function-1]')
-             configObj.coregSlaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse',slave)
-             configObj.resampleSlc('[Function-2]')
-             configObj.finalize()
-             del configObj
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir,config_prefix+slave) 
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.masterSlc = os.path.join(self.slcDir, stackMaster)
+            configObj.slaveSlc = os.path.join(self.slcDir, slave)
+            configObj.geometryDir = os.path.join(self.workDir, self.stack_folder,'geom_master')
+            configObj.offsetDir = os.path.join(self.workDir, 'offsets',slave)
+            configObj.nativeDoppler = native
+            configObj.geo2rdr('[Function-1]')
+            configObj.coregSlaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse',slave)
+            configObj.resampleSlc('[Function-2]')
+            configObj.finalize()
+            del configObj
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
 
     def refineSlaveTiming_singleMaster(self, stackMaster, slaveDates, config_prefix):
   
         for slave in slaveDates:
-             configName = os.path.join(self.configDir,config_prefix+slave)
-             configObj = config(configName)  
-             configObj.configure(self)
-             configObj.masterSlc = os.path.join(self.slcDir, stackMaster,stackMaster+self.raw_string+'.slc')
-             configObj.slaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse', slave,slave +'.slc')
-             configObj.masterMetaData = os.path.join(self.slcDir, stackMaster)
-             configObj.slaveMetaData = os.path.join(self.slcDir, slave)
-             configObj.outfile = os.path.join(self.workDir, 'offsets', slave ,'misreg')
-             configObj.refineSlaveTiming('[Function-1]')
-             configObj.finalize()
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir,config_prefix+slave)
+            configObj = config(configName)  
+            configObj.configure(self)
+            configObj.masterSlc = os.path.join(self.slcDir, stackMaster,stackMaster+self.raw_string+'.slc')
+            configObj.slaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse', slave,slave +'.slc')
+            configObj.masterMetaData = os.path.join(self.slcDir, stackMaster)
+            configObj.slaveMetaData = os.path.join(self.slcDir, slave)
+            configObj.outfile = os.path.join(self.workDir, 'offsets', slave ,'misreg')
+            configObj.refineSlaveTiming('[Function-1]')
+            configObj.finalize()
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
 
     def refineSlaveTiming_Network(self, pairs, stackMaster, slaveDates,  config_prefix):
   
         for pair in pairs:
-             configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
-             configObj = config(configName)
-             configObj.configure(self)
-
-             if pair[0] == stackMaster:
-                  configObj.masterSlc = os.path.join(self.slcDir,stackMaster,stackMaster+self.raw_string+'.slc')
-             else:
-                 configObj.masterSlc = os.path.join(self.workDir, 'coregSLC','Coarse', pair[0]  , pair[0] + '.slc')
-
-             if pair[1] == stackMaster:
-                 configObj.slaveSlc = os.path.join(self.slcDir,stackMaster, stackMaster+self.raw_string+'.slc')
-             else:
-                 configObj.slaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse', pair[1], pair[1] + '.slc')
-
-             configObj.masterMetaData = os.path.join(self.slcDir, pair[0])
-             configObj.slaveMetaData = os.path.join(self.slcDir, pair[1])
-             configObj.outfile = os.path.join(self.workDir, 'refineSlaveTiming','pairs', pair[0] + '_' + pair[1] ,'misreg')
-             configObj.refineSlaveTiming('[Function-1]')
-             configObj.finalize()
-             del configObj
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
+            configObj = config(configName)
+            configObj.configure(self)
+            if pair[0] == stackMaster:
+                configObj.masterSlc = os.path.join(self.slcDir,stackMaster,stackMaster+self.raw_string+'.slc')
+            else:
+                configObj.masterSlc = os.path.join(self.workDir, 'coregSLC','Coarse', pair[0]  , pair[0] + '.slc')
+            if pair[1] == stackMaster:
+                configObj.slaveSlc = os.path.join(self.slcDir,stackMaster, stackMaster+self.raw_string+'.slc')
+            else:
+                configObj.slaveSlc = os.path.join(self.workDir, 'coregSLC','Coarse', pair[1], pair[1] + '.slc')
+            configObj.masterMetaData = os.path.join(self.slcDir, pair[0])
+            configObj.slaveMetaData = os.path.join(self.slcDir, pair[1])
+            configObj.outfile = os.path.join(self.workDir, 'refineSlaveTiming','pairs', pair[0] + '_' + pair[1] ,'misreg')
+            configObj.refineSlaveTiming('[Function-1]')
+            configObj.finalize()
+            del configObj
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
 
     def denseOffsets_Network(self, pairs, stackMaster, slaveDates, config_prefix):
 
         for pair in pairs:
-             configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
-             configObj = config(configName)
-             configObj.configure(self)
+            configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
+            configObj = config(configName)
+            configObj.configure(self)
+            if pair[0] == stackMaster:
+                 configObj.masterSlc = os.path.join(self.slcDir,
+                                                    stackMaster,
+                                                    stackMaster+self.raw_string + '.slc')
+            else:
+                 configObj.masterSlc = os.path.join(self.workDir,
+                                                    self.stack_folder,
+                                                    'SLC',
+                                                    pair[0],
+                                                    pair[0] + '.slc')
+            if pair[1] == stackMaster:
+                 configObj.slaveSlc = os.path.join(self.slcDir,
+                                                   stackMaster,
+                                                   stackMaster+self.raw_string+'.slc')
+            else:
+                 configObj.slaveSlc = os.path.join(self.workDir,
+                                                   self.stack_folder,
+                                                   'SLC',
+                                                   pair[1],
+                                                   pair[1] + '.slc')
+            configObj.outfile = os.path.join(self.workDir,
+                                             self.dense_offsets_folder,
+                                             'pairs',
+                                             pair[0] + '_' + pair[1],
+                                             pair[0] + '_' + pair[1])
 
-
-             if pair[0] == stackMaster:
-                  configObj.masterSlc = os.path.join(self.slcDir,stackMaster , stackMaster+self.raw_string + '.slc')
-             else:
-                  configObj.masterSlc = os.path.join(self.workDir, self.stack_folder, 'SLC', pair[0] , pair[0] + '.slc')
-
-             if pair[1] == stackMaster:
-                  configObj.slaveSlc = os.path.join(self.slcDir,stackMaster, stackMaster+self.raw_string+'.slc')
-             else:
-                  configObj.slaveSlc = os.path.join(self.workDir, self.stack_folder,'SLC', pair[1] , pair[1] + '.slc')
-
-             configObj.outfile = os.path.join(self.workDir, self.dense_offsets_folder,'pairs',  pair[0] + '_' + pair[1] ,  pair[0] + '_' + pair[1])
-             configObj.denseOffsets('[Function-1]')
-             configObj.denseOffset = configObj.outfile + '.bil'
-             configObj.snr = configObj.outfile + '_snr.bil'
-             configObj.outDir = os.path.join(self.workDir, self.dense_offsets_folder,'pairs' , pair[0] + '_' + pair[1])
-             configObj.filterOffsets('[Function-2]')
-             configObj.finalize()
-             del configObj
-             self.runf.write(self.text_cmd + 'stripmapWrapper.py -c '+ configName+'\n')
+            configObj.denseOffsets('[Function-1]')
+            configObj.denseOffset = configObj.outfile + '.bil'
+            configObj.snr = configObj.outfile + '_snr.bil'
+            configObj.outDir = os.path.join(self.workDir, self.dense_offsets_folder,'pairs' , pair[0] + '_' + pair[1])
+            configObj.filterOffsets('[Function-2]')
+            configObj.finalize()
+            del configObj
+            self.runf.write(self.text_cmd + 'stripmapWrapper.py -c '+ configName+'\n')
 
   
     def invertMisregPoly(self):
@@ -476,7 +480,7 @@ class run(object):
         dateDirs = os.path.join(self.workDir, 'refineSlaveTiming/dates/')
         cmd = self.text_cmd + 'invertMisreg.py -i ' + pairDirs + ' -o ' + dateDirs
         self.runf.write(cmd + '\n')
-        
+
 
     def  invertDenseOffsets(self):
 
@@ -488,43 +492,43 @@ class run(object):
     def rubbersheet(self, slaveDates, config_prefix):
 
         for slave in slaveDates:
-             configName = os.path.join(self.configDir, config_prefix+slave)
-             configObj = config(configName)
-             configObj.configure(self)
-             configObj.geometry_azimuth_offset = os.path.join(self.workDir, 'offsets' , slave , 'azimuth.off')
-             configObj.dense_offset = os.path.join(self.workDir,self.dense_offsets_folder,'dates', slave , slave + '.bil')
-             configObj.snr = os.path.join(self.workDir,self.dense_offsets_folder,'dates' , slave , slave + '_snr.bil')
-             configObj.output_azimuth_offset = 'azimuth.off'
-             configObj.output_directory = os.path.join(self.workDir,self.dense_offsets_folder,'dates', slave)
-             configObj.rubbersheet('[Function-1]')
-             configObj.finalize()
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir, config_prefix+slave)
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.geometry_azimuth_offset = os.path.join(self.workDir, 'offsets' , slave , 'azimuth.off')
+            configObj.dense_offset = os.path.join(self.workDir,self.dense_offsets_folder,'dates', slave , slave + '.bil')
+            configObj.snr = os.path.join(self.workDir,self.dense_offsets_folder,'dates' , slave , slave + '_snr.bil')
+            configObj.output_azimuth_offset = 'azimuth.off'
+            configObj.output_directory = os.path.join(self.workDir,self.dense_offsets_folder,'dates', slave)
+            configObj.rubbersheet('[Function-1]')
+            configObj.finalize()
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
    
 
     def resampleOffset(self, slaveDates, config_prefix):
 
         for slave in slaveDates:
-             configName = os.path.join(self.configDir, config_prefix+slave)
-             configObj = config(configName)
-             configObj.configure(self)
-             configObj.targetFile = os.path.join(self.workDir, 'offsets/'+slave + '/azimuth.off')
-             configObj.input = os.path.join(self.workDir,self.dense_offsets_folder,'dates',slave  , slave + '.bil')
-             configObj.output = os.path.join(self.workDir,self.dense_offsets_folder,'dates',slave, 'azimuth.off')
-             configObj.resampleOffset('[Function-1]')
-             configObj.finalize()
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir, config_prefix+slave)
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.targetFile = os.path.join(self.workDir, 'offsets/'+slave + '/azimuth.off')
+            configObj.input = os.path.join(self.workDir,self.dense_offsets_folder,'dates',slave  , slave + '.bil')
+            configObj.output = os.path.join(self.workDir,self.dense_offsets_folder,'dates',slave, 'azimuth.off')
+            configObj.resampleOffset('[Function-1]')
+            configObj.finalize()
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
   
 
-    def  replaceOffsets(self, slaveDates):
+    def replaceOffsets(self, slaveDates):
 
         dateDirs = os.path.join(self.workDir, self.dense_offsets_folder,'dates')
         for slave in slaveDates:
-             geometryOffset = os.path.join(self.workDir, 'offsets', slave  , 'azimuth.off')
-             geometryOnlyOffset = os.path.join(self.workDir, 'offsets' , slave , 'azimuth.off.geometry')
-             rubberSheeted = os.path.join(self.workDir,self.dense_offsets_folder,'dates' , slave , 'azimuth.off')
-             cmd = self.text_cmd + 'mv ' + geometryOffset + ' ' + geometryOnlyOffset
-             cmd = cmd + '; mv ' + rubberSheeted + ' ' + geometryOffset
-             self.runf.write(cmd + '\n')
+            geometryOffset = os.path.join(self.workDir, 'offsets', slave  , 'azimuth.off')
+            geometryOnlyOffset = os.path.join(self.workDir, 'offsets' , slave , 'azimuth.off.geometry')
+            rubberSheeted = os.path.join(self.workDir,self.dense_offsets_folder,'dates' , slave , 'azimuth.off')
+            cmd = self.text_cmd + 'mv ' + geometryOffset + ' ' + geometryOnlyOffset
+            cmd = cmd + '; mv ' + rubberSheeted + ' ' + geometryOffset
+            self.runf.write(cmd + '\n')
 
   
     def gridBaseline(self, stackMaster, slaveDates, config_prefix, split=False):
@@ -548,8 +552,16 @@ class run(object):
 
     def slaves_fine_resampleSlc(self, stackMaster, slaveDates, config_prefix, split=False):
         # copy over the master into the final SLC folder as well
-        self.runf.write(self.text_cmd + ' masterStackCopy.py -i ' + os.path.join(self.slcDir,stackMaster, stackMaster+self.raw_string + '.slc') + ' -o ' + os.path.join(self.workDir, self.stack_folder,'SLC', stackMaster, stackMaster+'.slc' )+ '\n')
-        
+        self.runf.write(self.text_cmd + ' masterStackCopy.py -i ' + 
+                        os.path.join(self.slcDir, 
+                                     stackMaster,
+                                     stackMaster + self.raw_string + '.slc') + ' -o ' +
+                        os.path.join(self.workDir,
+                                     self.stack_folder,
+                                     'SLC',
+                                     stackMaster,
+                                     stackMaster+'.slc' )+ '\n')
+
         # now resample each of the slaves to the master geometry
         for slave in slaveDates:
             configName = os.path.join(self.configDir, config_prefix+slave)
@@ -576,60 +588,81 @@ class run(object):
     def igrams_network(self,  pairs, acuisitionDates, stackMaster,low_or_high, config_prefix):
 
         for pair in pairs:
-             configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
-             configObj = config(configName)
-             configObj.configure(self)
-             
-             if pair[0] == stackMaster:
-                  configObj.masterSlc = os.path.join(self.slcDir,stackMaster + low_or_high + stackMaster+self.raw_string +'.slc')
-             else:
-                  configObj.masterSlc = os.path.join(self.workDir, self.stack_folder, 'SLC',  pair[0] + low_or_high + pair[0] + '.slc')
+            configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
+            configObj = config(configName)
+            configObj.configure(self)
+            
+            if pair[0] == stackMaster:
+                 configObj.masterSlc = os.path.join(self.slcDir,
+                                                    stackMaster + low_or_high + stackMaster+self.raw_string +'.slc')
+            else:
+                 configObj.masterSlc = os.path.join(self.workDir,
+                                                    self.stack_folder,
+                                                    'SLC',
+                                                    pair[0] + low_or_high + pair[0] + '.slc')
+            if pair[1] == stackMaster:
+                 configObj.slaveSlc = os.path.join(self.slcDir,
+                                                   stackMaster + low_or_high + stackMaster+self.raw_string+'.slc')
+            else:
+                 configObj.slaveSlc = os.path.join(self.workDir,
+                                                   self.stack_folder,
+                                                   'SLC',
+                                                   pair[1] + low_or_high + pair[1] + '.slc')
 
-             if pair[1] == stackMaster:
-                  configObj.slaveSlc = os.path.join(self.slcDir,stackMaster + low_or_high + stackMaster+self.raw_string+'.slc')
-             else:
-                  configObj.slaveSlc = os.path.join(self.workDir, self.stack_folder, 'SLC',  pair[1] + low_or_high + pair[1] + '.slc')
+            configObj.outDir = os.path.join(self.workDir,
+                                            'Igrams' + low_or_high + pair[0] + '_'  + pair[1],
+                                            pair[0] + '_'  + pair[1])
 
-             configObj.outDir = os.path.join(self.workDir, 'Igrams' + low_or_high + 
-                         pair[0] + '_'  + pair[1] +'/'+pair[0] + '_'  + pair[1])
-             configObj.generateIgram('[Function-1]')
+            configObj.generateIgram('[Function-1]')
 
-             configObj.igram = configObj.outDir+'.int'
-             configObj.filtIgram = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.int'
-             configObj.coherence = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.cor'
-             #configObj.filtStrength = filtStrength
-             configObj.filterCoherence('[Function-2]')
+            configObj.igram = configObj.outDir+'.int'
+            if float(configObj.filtStrength) > 0.:
+                configObj.filtIgram = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.int'
+                configObj.coherence = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] + '.cor'
+            else:
+                # do not add prefix filt_ to output file if no filtering is applied.
+                configObj.filtIgram = os.path.dirname(configObj.outDir) + '/' + pair[0] + '_'  + pair[1] + '.int'
+                configObj.coherence = os.path.dirname(configObj.outDir) + '/' + pair[0] + '_'  + pair[1] + '.cor'
+            configObj.filterCoherence('[Function-2]')
 
-             configObj.igram = configObj.filtIgram
-             configObj.unwIfg = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] 
-             configObj.noMCF = noMCF
-             configObj.master = os.path.join(self.slcDir,stackMaster +'/data') 
-             configObj.defoMax = defoMax
-             configObj.unwrap('[Function-3]')
-
-             configObj.finalize()
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            # skip phase unwrapping if input method == no
+            if self.unwMethod.lower() != 'no':
+                configObj.igram = configObj.filtIgram
+                configObj.unwIfg = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] 
+                configObj.noMCF = noMCF
+                configObj.master = os.path.join(self.slcDir,stackMaster +'/data') 
+                configObj.defoMax = defoMax
+                configObj.unwrap('[Function-3]')
+            configObj.finalize()
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
 
     def dispersive_nonDispersive(self, pairs, acuisitionDates, stackMaster, 
                            lowBand, highBand, config_prefix):
         for pair in pairs:
-             configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
-             configObj = config(configName) 
-             configObj.configure(self)
-             configObj.lowBandIgram = os.path.join(self.workDir, 'Igrams' + lowBand + pair[0] + '_'  + pair[1]                      + '/filt_'+pair[0] + '_'  + pair[1])    
-             configObj.highBandIgram = os.path.join(self.workDir, 'Igrams' + highBand + pair[0] + '_'  + pair[1] 
-                   + '/filt_'+pair[0] + '_'  + pair[1])
-             configObj.lowBandCor = os.path.join(self.workDir, 'Igrams' + lowBand + pair[0] + '_'  + pair[1]
-                   + '/filt_'+pair[0] + '_'  + pair[1] + '.cor')
-             configObj.highBandCor = os.path.join(self.workDir, 'Igrams' + highBand + pair[0] + '_'  + pair[1]
-                   + '/filt_'+pair[0] + '_'  + pair[1] + '.cor')
-             configObj.lowBandShelve = os.path.join(self.slcDir,pair[0] + lowBand  + 'data') 
-             configObj.highBandShelve = os.path.join(self.slcDir,pair[0] + highBand  + 'data')   
-             configObj.outDir = os.path.join(self.workDir, 'Ionosphere/'+pair[0]+'_'+pair[1])
-             configObj.estimateDispersive('[Function-1]')
-             configObj.finalize()
-             self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
+            configName = os.path.join(self.configDir,config_prefix + pair[0] + '_' + pair[1])
+            configObj = config(configName) 
+            configObj.configure(self)
+            configObj.lowBandIgram  = os.path.join(self.workDir,
+                                                   'Igrams' + lowBand + pair[0] + '_'  + pair[1],
+                                                   'filt_' + pair[0] + '_'  + pair[1])
+            configObj.highBandIgram = os.path.join(self.workDir,
+                                                   'Igrams' + highBand + pair[0] + '_'  + pair[1],
+                                                   'filt_' + pair[0] + '_'  + pair[1])
+
+            configObj.lowBandCor  = os.path.join(self.workDir,
+                                                 'Igrams' + lowBand + pair[0] + '_'  + pair[1],
+                                                 'filt_' + pair[0] + '_'  + pair[1] + '.cor')
+            configObj.highBandCor = os.path.join(self.workDir,
+                                                 'Igrams' + highBand + pair[0] + '_'  + pair[1],
+                                                 'filt_' + pair[0] + '_'  + pair[1] + '.cor')
+
+            configObj.lowBandShelve = os.path.join(self.slcDir,pair[0] + lowBand  + 'data') 
+            configObj.highBandShelve = os.path.join(self.slcDir,pair[0] + highBand  + 'data')   
+            configObj.outDir = os.path.join(self.workDir, 'Ionosphere/'+pair[0]+'_'+pair[1])
+            configObj.estimateDispersive('[Function-1]')
+            configObj.finalize()
+            self.runf.write(self.text_cmd+'stripmapWrapper.py -c '+ configName+'\n')
 
     def finalize(self):
         self.runf.close() 
@@ -667,7 +700,6 @@ def baselinePair(baselineDir, master, slave,doBaselines=True):
         mFrame = mdb['frame']
         sFrame = sdb['frame']
 
-
         bObj = Baseline()
         bObj.configure()
         bObj.wireInputPort(name='masterFrame', object=mFrame)
@@ -690,8 +722,7 @@ def baselinePair(baselineDir, master, slave,doBaselines=True):
 def baselineStack(inps,stackMaster,acqDates,doBaselines=True):
     from collections import OrderedDict
     baselineDir = os.path.join(inps.workDir,'baselines')
-    if not os.path.exists(baselineDir):
-        os.makedirs(baselineDir)
+    os.makedirs(baselineDir, exist_ok=True)
     baselineDict = OrderedDict()
     timeDict = OrderedDict()
     datefmt = '%Y%m%d'
@@ -713,15 +744,15 @@ def selectPairs(inps,stackMaster, slaveDates, acuisitionDates,doBaselines=True):
 
     baselineDict, timeDict = baselineStack(inps, stackMaster, acuisitionDates,doBaselines)
     for slave in slaveDates:
-       print (slave,' : ' , baselineDict[slave])
+        print (slave,' : ' , baselineDict[slave])
     numDates = len(acuisitionDates)
     pairs = []
     for i in range(numDates-1):
-       for j in range(i+1,numDates):
-          db = np.abs(baselineDict[acuisitionDates[j]] - baselineDict[acuisitionDates[i]])
-          dt  = np.abs(timeDict[acuisitionDates[j]].days - timeDict[acuisitionDates[i]].days)
-          if (db < inps.dbThr) and (dt < inps.dtThr):
-              pairs.append((acuisitionDates[i],acuisitionDates[j]))
+        for j in range(i+1,numDates):
+            db = np.abs(baselineDict[acuisitionDates[j]] - baselineDict[acuisitionDates[i]])
+            dt = np.abs(timeDict[acuisitionDates[j]].days - timeDict[acuisitionDates[i]].days)
+            if (db < inps.dbThr) and (dt < inps.dtThr):
+                pairs.append((acuisitionDates[i],acuisitionDates[j]))
 
     plotNetwork(baselineDict, timeDict, pairs,os.path.join(inps.workDir,'pairs.pdf'))
     return pairs 
@@ -739,9 +770,11 @@ def plotNetwork(baselineDict, timeDict, pairs,save_name='pairs.png'):
     ax1.cla()
     for ni in range(len(pairs)):
 #        ax1.plot(np.array([timeDict[pairs[ni][0]].days,timeDict[pairs[ni][1]].days]), 
-         ax1.plot([datetime.datetime.strptime(pairs[ni][0],datefmt), datetime.datetime.strptime(pairs[ni][1], datefmt)], 
-                 np.array([baselineDict[pairs[ni][0]],baselineDict[pairs[ni][1]]]),
-                 '-ko',lw=1, ms=4, alpha=0.7, mfc='r')
+         ax1.plot([datetime.datetime.strptime(pairs[ni][0],datefmt),
+                   datetime.datetime.strptime(pairs[ni][1], datefmt)], 
+                  np.array([baselineDict[pairs[ni][0]],
+                            baselineDict[pairs[ni][1]]]),
+                  '-ko',lw=1, ms=4, alpha=0.7, mfc='r')
   
     
 
@@ -779,19 +812,19 @@ def plotNetwork(baselineDict, timeDict, pairs,save_name='pairs.png'):
 def writeJobFile(runFile):
 
   
-  jobName = runFile + ".job"
-  dirName = os.path.dirname(runFile)
-  with open(runFile) as ff:
-    nodes = len(ff.readlines())
-  if nodes >maxNodes:
-     nodes = maxNodes
+    jobName = runFile + ".job"
+    dirName = os.path.dirname(runFile)
+    with open(runFile) as ff:
+        nodes = len(ff.readlines())
+    if nodes >maxNodes:
+        nodes = maxNodes
 
-  f = open (jobName,'w')
-  f.write('#!/bin/bash '+ '\n')
-  f.write('#PBS -N Parallel_GNU'+ '\n')
-  f.write('#PBS -l nodes=' + str(nodes) + '\n')
+    f = open (jobName,'w')
+    f.write('#!/bin/bash '+ '\n')
+    f.write('#PBS -N Parallel_GNU'+ '\n')
+    f.write('#PBS -l nodes=' + str(nodes) + '\n')
 
-  jobTxt='''#PBS -V
+    jobTxt='''#PBS -V
 #PBS -l walltime=05:00:00
 #PBS -q default
 
@@ -816,10 +849,10 @@ echo " "
 #
 
 '''
-  f.write(jobTxt+ '\n')
-  f.write('parallel --sshloginfile $PBS_NODEFILE  -a '+runFile+'\n')
-  f.write('')
-  f.close()
+    f.write(jobTxt+ '\n')
+    f.write('parallel --sshloginfile $PBS_NODEFILE  -a '+runFile+'\n')
+    f.write('')
+    f.close()
 
 
 def main(iargs=None):
@@ -827,7 +860,7 @@ def main(iargs=None):
 
 if __name__ == "__main__":
        
-  # Main engine  
-  main()
+    # Main engine  
+    main()
        
 

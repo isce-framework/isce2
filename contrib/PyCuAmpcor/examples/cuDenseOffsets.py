@@ -1,25 +1,15 @@
 #!/usr/bin/env python3
 
-# author: Minyan Zhong
+# Author: Minyan Zhong, Lijun Zhu 
 
-import numpy as np
 import argparse
 import os
 import isce
 import isceobj
-import shelve
-import datetime
-from isceobj.Location.Offset import OffsetField
-from iscesys.StdOEL.StdOELPy import create_writer
-#from mroipac.ampcor.DenseAmpcor import DenseAmpcor
-
-from contrib.PyCuAmpcor import PyCuAmpcor
-from grossOffsets import grossOffsets
-
-#from isceobj.Utils.denseoffsets import denseoffsets
 from isceobj.Util.decorators import use_api
 
-from pprint import pprint
+import numpy as np 
+from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
 
 def createParser():
     '''
@@ -59,10 +49,15 @@ def createParser():
     parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
             help='Number of Window Down')
 
-    parser.add_argument('-op','--outprefix', type=str, dest='outprefix', default='dense_ampcor',
+    parser.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=1,
+            help='Number of Window Across in Chunk')
+    parser.add_argument('--nwdc', type=int, dest='numWinDownInChunk', default=1,
+            help='Number of Window Down in Chunk')
+
+    parser.add_argument('-op','--outprefix', type=str, dest='outprefix', default='dense_ampcor', required=True,
             help='Output prefix')
 
-    parser.add_argument('-os','--outsuffix', type=str, dest='outsuffix', default='dense_ampcor',
+    parser.add_argument('-os','--outsuffix', type=str, dest='outsuffix',default='dense_ampcor',
             help='Output suffix')
 
     parser.add_argument('-g','--gross', type=int, dest='gross', default=0,
@@ -86,7 +81,6 @@ def createParser():
     parser.add_argument('-gid', '--gpuid', dest='gpuid', type=int, default=-1
        , help='GPU ID')
 
-
     return parser
 
 def cmdLineParse(iargs = None):
@@ -98,35 +92,35 @@ def cmdLineParse(iargs = None):
 @use_api
 def estimateOffsetField(master, slave, inps=None):
 
+    import pathlib
+
     ###Loading the slave image object
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(pathlib.Path(slave).with_suffix('.xml'))
     sim.setAccessMode('READ')
     sim.createImage()
 
 
     ###Loading the master image object
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(pathlib.Path(master).with_suffix('.xml'))
     sar.setAccessMode('READ')
     sar.createImage()
-
 
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = PyCuAmpcor.PyCuAmpcor()
-
+    objOffset = PyCuAmpcor()
+    
     objOffset.algorithm = 0
     objOffset.deviceID = inps.gpuid  # -1:let system find the best GPU
-    objOffset.nStreams =   2 #cudaStreams
+    objOffset.nStreams =   1 #cudaStreams 
     objOffset.derampMethod = inps.deramp
-    print(objOffset.derampMethod)
 
-    objOffset.masterImageName = master + '.vrt'
+    objOffset.masterImageName = master
     objOffset.masterImageHeight = length
     objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave + '.vrt'
+    objOffset.slaveImageName = slave
     objOffset.slaveImageHeight = length
     objOffset.slaveImageWidth = width
 
@@ -142,27 +136,21 @@ def estimateOffsetField(master, slave, inps=None):
     if (inps.numWinAcross != -1):
         objOffset.numberWindowAcross = inps.numWinAcross
 
-
-    print("nlines: ",objOffset.numberWindowDown)
-    print("ncolumns: ",objOffset.numberWindowAcross)
-
+    print("offset field length: ",objOffset.numberWindowDown)
+    print("offset field width: ",objOffset.numberWindowAcross)
 
     # window size
     objOffset.windowSizeHeight = inps.winhgt
     objOffset.windowSizeWidth = inps.winwidth
-
-    print(objOffset.windowSizeHeight)
-    print(objOffset.windowSizeWidth)
-
+    
     # search range
     objOffset.halfSearchRangeDown = inps.srchgt
     objOffset.halfSearchRangeAcross = inps.srcwidth
-    print(inps.srchgt,inps.srcwidth)
 
     # starting pixel
     objOffset.masterStartPixelDownStatic = inps.margin
     objOffset.masterStartPixelAcrossStatic = inps.margin
-
+ 
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
@@ -170,143 +158,117 @@ def estimateOffsetField(master, slave, inps=None):
     # oversampling
     objOffset.corrSufaceOverSamplingMethod = 0
     objOffset.corrSurfaceOverSamplingFactor = inps.oversample
-    #objOffset.rawDataOversamplingFactor = 4
 
     # output filenames
     objOffset.offsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '.bip'
     objOffset.grossOffsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '_gross.bip'
     objOffset.snrImageName = str(inps.outprefix) + str(inps.outsuffix) + '_snr.bip'
+    objOffset.covImageName = str(inps.outprefix) + str(inps.outsuffix) + '_cov.bip'
 
     print("offsetfield: ",objOffset.offsetImageName)
     print("gross offsetfield: ",objOffset.grossOffsetImageName)
     print("snr: ",objOffset.snrImageName)
+    print("cov: ",objOffset.covImageName)
 
     offsetImageName = objOffset.offsetImageName.decode('utf8')
-    #print(type(offsetImageName))
-    #print(offsetImageName)
-    #print(type(objOffset.numberWindowAcross))
     grossOffsetImageName = objOffset.grossOffsetImageName.decode('utf8')
     snrImageName = objOffset.snrImageName.decode('utf8')
+    covImageName = objOffset.covImageName.decode('utf8')
 
-    print(offsetImageName)
-    print(inps.redo)
     if os.path.exists(offsetImageName) and inps.redo==0:
+
         print('offsetfield file exists')
+        exit()
+
+    # generic control
+    objOffset.numberWindowDownInChunk = inps.numWinDownInChunk
+    objOffset.numberWindowAcrossInChunk = inps.numWinAcrossInChunk
+    objOffset.useMmap = 0
+    objOffset.mmapSize = 8
+
+    objOffset.setupParams()
+    
+    ## Set Gross Offset ###
+    if inps.gross == 0:
+        print("Set constant grossOffset")
+        print("By default, the gross offsets are zero")
+        print("You can override the default values here")
+        objOffset.setConstantGrossOffset(0, 0)
     else:
-        # generic control
-        objOffset.numberWindowDownInChunk = 5
-        objOffset.numberWindowAcrossInChunk = 5
-        objOffset.mmapSize = 16
+        print("Set varying grossOffset")
+        print("By default, the gross offsets are zero")
+        print("You can override the default grossDown and grossAcross arrays here")
+        objOffset.setVaryingGrossOffset(np.zeros(shape=grossDown.shape,dtype=np.int32), np.zeros(shape=grossAcross.shape,dtype=np.int32))
+   
+    # check 
+    objOffset.checkPixelInImageRange()
 
-        objOffset.setupParams()
+    # Run the code
+    print('Running PyCuAmpcor')
+     
+    objOffset.runAmpcor()
 
-        ## Set Gross Offset ###
+    print('Finished')
 
-        if inps.gross == 0:
-            objOffset.setConstantGrossOffset(0, 0)
-        else:
+    sar.finalizeImage()
+    sim.finalizeImage()
+ 
+    # Finalize the results
+    # offsetfield
+    outImg = isceobj.createImage()
+    outImg.setDataType('FLOAT')
+    outImg.setFilename(offsetImageName)
+    outImg.setBands(2)
+    outImg.scheme = 'BIP'
+    outImg.setWidth(objOffset.numberWindowAcross)
+    outImg.setLength(objOffset.numberWindowDown)
+    outImg.setAccessMode('read')
+    outImg.renderHdr()
 
-            print("Setting up grossOffset...")
+    # gross offsetfield
+    outImg = isceobj.createImage()
+    outImg.setDataType('FLOAT')
+    outImg.setFilename(grossOffsetImageName)
+    outImg.setBands(2)
+    outImg.scheme = 'BIP'
+    outImg.setWidth(objOffset.numberWindowAcross)
+    outImg.setLength(objOffset.numberWindowDown)
+    outImg.setAccessMode('read')
+    outImg.renderHdr()
 
-            objGrossOff = grossOffsets()
+    # snr
+    snrImg = isceobj.createImage()
+    snrImg.setFilename(snrImageName)
+    snrImg.setDataType('FLOAT')
+    snrImg.setBands(1)
+    snrImg.setWidth(objOffset.numberWindowAcross)
+    snrImg.setLength(objOffset.numberWindowDown)
+    snrImg.setAccessMode('read')
+    snrImg.renderHdr()
 
-            objGrossOff.setXSize(width)
-            objGrossOff.setYize(length)
-            objGrossOff.setMargin(inps.margin)
-            objGrossOff.setWinSizeHgt(inps.winhgt)
-            objGrossOff.setWinSizeWidth(inps.winwidth)
-            objGrossOff.setSearchSizeHgt(inps.srchgt)
-            objGrossOff.setSearchSizeWidth(inps.srcwidth)
-            objGrossOff.setSkipSizeHgt(inps.skiphgt)
-            objGrossOff.setSkipSizeWidth(inps.skipwidth)
-            objGrossOff.setLatFile(inps.lat)
-            objGrossOff.setLonFile(inps.lon)
-            objGrossOff.setLosFile(inps.los)
-            objGrossOff.setMasterFile(inps.masterxml)
-            objGrossOff.setbTemp(inps.bTemp)
+    # cov
+    covImg = isceobj.createImage()
+    covImg.setFilename(covImageName)
+    covImg.setDataType('FLOAT')
+    covImg.setBands(3)
+    covImg.scheme = 'BIP'
+    covImg.setWidth(objOffset.numberWindowAcross)
+    covImg.setLength(objOffset.numberWindowDown)
+    covImg.setAccessMode('read')
+    covImg.renderHdr()
 
-
-
-            grossDown, grossAcross = objGrossOff.runGrossOffsets()
-
-            # change nan to 0
-            grossDown = np.nan_to_num(grossDown)
-            grossAcross = np.nan_to_num(grossAcross)
-
-            print("Before plotting the gross offsets (min and max): ", np.nanmin(grossDown),np.nanmax(grossDown))
-            print("Before plotting the gross offsets (min and max): ", np.rint(np.nanmin(grossDown)),np.rint(np.nanmax(grossDown)))
-
-            grossDown = np.int32(np.rint(grossDown.ravel()))
-            grossAcross = np.int32(np.rint(grossAcross.ravel()))
-
-            print(np.amin(grossDown), np.amax(grossDown))
-            print(np.amin(grossAcross), np.amax(grossAcross))
-
-            print(grossDown.shape)
-            print(grossDown.shape)
-
-            objOffset.setVaryingGrossOffset(grossDown, grossAcross)
-            #objOffset.setVaryingGrossOffset(np.zeros(shape=grossDown.shape,dtype=np.int32), np.zeros(shape=grossAcross.shape,dtype=np.int32))
-
-        # check
-        objOffset.checkPixelInImageRange()
-
-        # Run the code
-        print('Running PyCuAmpcor')
-
-        objOffset.runAmpcor()
-
-        print('Finished')
-
-        sar.finalizeImage()
-        sim.finalizeImage()
-
-        # Finalize the results
-        # offsetfield
-
-        outImg = isceobj.createImage()
-        outImg.setDataType('FLOAT')
-        outImg.setFilename(offsetImageName)
-        outImg.setBands(2)
-        outImg.scheme = 'BIP'
-        outImg.setWidth(objOffset.numberWindowAcross)
-        outImg.setLength(objOffset.numberWindowDown)
-        outImg.setAccessMode('read')
-        outImg.renderHdr()
-
-
-        # gross offsetfield
-        outImg = isceobj.createImage()
-        outImg.setDataType('FLOAT')
-        outImg.setFilename(grossOffsetImageName)
-        outImg.setBands(2)
-        outImg.scheme = 'BIP'
-        outImg.setWidth(objOffset.numberWindowAcross)
-        outImg.setLength(objOffset.numberWindowDown)
-        outImg.setAccessMode('read')
-        outImg.renderHdr()
-
-        # snr
-        snrImg = isceobj.createImage()
-        snrImg.setFilename(snrImageName)
-        snrImg.setDataType('FLOAT')
-        snrImg.setBands(1)
-        snrImg.setWidth(objOffset.numberWindowAcross)
-        snrImg.setLength(objOffset.numberWindowDown)
-        snrImg.setAccessMode('read')
-        snrImg.renderHdr()
-
-    return objOffset
-
-def main(iargs=None):
+    return 0
+            
+def main(iargs=None):        
 
     inps = cmdLineParse(iargs)
     outDir = os.path.dirname(inps.outprefix)
     print(inps.outprefix)
-    os.makedirs(outDir, exist_ok=True)
-
-    objOffset = estimateOffsetField(inps.master, inps.slave, inps)
+    if not os.path.exists(outDir):
+         os.makedirs(outDir)
+    
+    estimateOffsetField(inps.master, inps.slave, inps)
 
 if __name__ == '__main__':
-
+    
     main()

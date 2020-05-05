@@ -64,8 +64,7 @@ def runPreprocessor(self):
     if israwdata:
         print('Master data is in RAW format. Adding _raw to output name.')
         sensor.output = os.path.join(dirname + '_raw', os.path.basename(dirname)+'.raw')
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
         #sensor._resampleFlag = 'single2dual'
         master = make_raw(sensor, masterdop)
 
@@ -85,9 +84,8 @@ def runPreprocessor(self):
         iszerodop = isZeroDopplerSLC(self.masterSensorName) 
         sensor.output =  os.path.join(dirname + '_slc', os.path.basename(dirname)+'.slc')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
-        
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
+
         master = make_raw(sensor, masterdop)
         
         if self._insar.masterSlcProduct is None:
@@ -121,8 +119,7 @@ def runPreprocessor(self):
         print('Slave data is in RAW format. Adding _raw to output name.')
         sensor.output = os.path.join(dirname + '_raw', os.path.basename(dirname)+'.raw')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
 
         slave = make_raw(sensor, slavedop)
 
@@ -142,8 +139,7 @@ def runPreprocessor(self):
         iszerodop = isZeroDopplerSLC(self.slaveSensorName)
         sensor.output =  os.path.join(dirname + '_slc', os.path.basename(dirname)+'.slc')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs( os.path.dirname(sensor.output), exist_ok=True)
 
         slave = make_raw(sensor, slavedop)
         

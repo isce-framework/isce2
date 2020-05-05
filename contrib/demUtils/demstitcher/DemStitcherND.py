@@ -44,33 +44,22 @@ from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher as DS
 #Parameters definitions
 URL1 = Component.Parameter('_url1',
-    public_name = 'URL1',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11',
+    public_name = 'URL1',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/NASADEM_HGT.001/2000.02.11',
     type = str,
     mandatory = False,
-    doc = "Url for the high resolution DEM. Used for SRTM version3")
-URL3 = Component.Parameter('_url3',
-    public_name = 'URL3',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11',
-    type = str,
-    mandatory = False,
-    doc = "Url for the low resolution DEM. Used for SRTM version3")
-EXTRA_EXT1 = Component.Parameter('_extraExt1',
-    public_name = 'extra extension 1',default = 'SRTMGL1',
+    doc = "Url for the high resolution DEM. Used for NASADEM")
+EXTRA_PREPEND1 = Component.Parameter('_extraPrepend1',
+    public_name = 'extra prepend 1',default = 'NASADEM_HGT',
     type = str,
     mandatory = False,
     doc = "The actual file name might have some extra string compared to the conventional one." \
-          + "This is for the high resolution files. Used for SRTM version3")
-EXTRA_EXT3 = Component.Parameter('_extraExt3',
-    public_name = 'extra extension 3',default = 'SRTMGL3',
-    type = str,
-    mandatory = False,
-    doc = "The actual file name might have some extra string compared to the conventional one." \
-          + "This is for the low resolution files. Used for SRTM version3")
+          + "This is for the high resolution files. Used for NASADEM")
 HAS_EXTRAS = Component.Parameter('_hasExtras',
     public_name = 'has extras',default = True,
     type = bool,
     mandatory = False,
-    doc = "Instead of having to provide the EXTRA_EXT empty when the extra extension " \
-+ "is not present, turn on this flag. Used for SRTM version3")
+    doc = "Instead of having to provide the EXTRA_EXT or EXTRA_PREPEND empty when the extra extension " \
++ "is not present, turn on this flag. Used for NASADEM")
 
 ## This class provides a set of convenience method to retrieve and possibly combine different DEMs from  the USGS server.
 # \c NOTE: the latitudes and the longitudes that describe the DEMs refer to the bottom left corner of the image.
@@ -90,32 +79,25 @@ class DemStitcher(DS):
         else:
             lon = lon
         ns,ew = self.convertCoordinateToString(lat,lon)
+        #make coords lower-case
+        ns=ns.lower()
+        ew=ew.lower()
         if(self._hasExtras):
             if(source and source == 1):
-                toAppend = '.' + self._extraExt1
-            elif(source and source == 3):
-                toAppend = '.' + self._extraExt3
+                toPrepend = self._extraPrepend1 + "_"
             else:
                 print('Unrecognized dem source',source)
                 raise Exception
 
-            return ns + ew +  toAppend + self._extension +  self._zip
+            return toPrepend+ ns + ew + self._extension +  self._zip
 
         else:
             return ns + ew +  self._extension +  self._zip
 
 
     def getUnzippedName(self,name,source = None):
-        if(self._hasExtras):
-            if(source and source == 1):
-                name =  name.replace('.' + self._extraExt1,'')
-            elif(source and source == 3):
-                name =  name.replace('.' + self._extraExt3,'')
-
-            else:
-                print('Unrecognized dem source',source)
-                raise Exception
-        return name.replace(self._zip,'')
+        name = name.replace(self._extraPrepend1+'_','')
+        return name.replace(self._zip,'.hgt')
 
     ##
     # Given a list of filenames  it fetches the corresponding
@@ -139,8 +121,12 @@ class DemStitcher(DS):
         else:
             self._downloadDir = downloadDir
 
-        if downloadDir is not None:
-            os.makedirs(downloadDir, exist_ok=True)
+        if not (downloadDir) is  None:
+            try:
+                os.makedirs(downloadDir)
+            except:
+                #dir already exists
+                pass
         for fileNow in listFile:
             url = self.getFullHttp(source)
             opener = urllib.request.URLopener()
@@ -243,9 +229,7 @@ class DemStitcher(DS):
     '''
     parameter_list = (
                       URL1,
-                      URL3,
-                      EXTRA_EXT1,
-                      EXTRA_EXT3,
+                      EXTRA_PREPEND1,
                       HAS_EXTRAS,
                       USERNAME,
                       PASSWORD,
@@ -267,9 +251,7 @@ class DemStitcher(DS):
     '''
     parameter_list = (
                       URL1,
-                      URL3,
-                      EXTRA_EXT1,
-                      EXTRA_EXT3,
+                      EXTRA_PREPEND1,
                       HAS_EXTRAS
                      ) + DS.parameter_list
 
@@ -279,7 +261,7 @@ class DemStitcher(DS):
 
         super(DemStitcher, self).__init__(family if family else  self.__class__.family, name=name)
         # logger not defined until baseclass is called
-        self._extension = '.hgt'
+        self._extension = ''
         self._zip = '.zip'
 
         #to make it working with other urls, make sure that the second part of the url
