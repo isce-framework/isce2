@@ -1,0 +1,12 @@
+InstallSameDir(
+    __init__.py
+    affine.py
+    charts.py
+    coordinates.py
+    dxdt.py
+    ellipsoid.py
+    euclid.py
+    exceptions.py
+    motion.py
+    trig.py
+    )
