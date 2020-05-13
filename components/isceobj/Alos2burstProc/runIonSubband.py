@@ -286,12 +286,22 @@ def runIonSubband(self):
             phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.179664007520499, 2.6766909968024932, 3.130810857]
 
             snapThreshold = 0.2
+
+            #the above preparetions only applies to 'self._insar.modeCombination == 21'
+            #looks like it also works for 31 (scansarNominalModes-stripmapModes)
+            if self._insar.modeCombination != 21:
+                phaseDiff = None
+                phaseDiffFixed = None
+                snapThreshold = None
+
             (phaseDiffEst, phaseDiffUsed, phaseDiffSource) = swathMosaic(masterTrack.frames[i], inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=False, 
                 phaseCompensation=True, phaseDiff=phaseDiff, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, pcRangeLooks=1, pcAzimuthLooks=3, 
                 filt=False, resamplingMethod=1)
 
             #the first item is meaningless for all the following list, so only record the following items
+            if phaseDiff == None:
+                phaseDiff = [None for iii in range(self._insar.startingSwath, self._insar.endingSwath + 1)]
             catalog.addItem('{} subswath phase difference input'.format(ionDir['subband'][k]), phaseDiff[1:], 'runIonSubband')
             catalog.addItem('{} subswath phase difference estimated'.format(ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
             catalog.addItem('{} subswath phase difference used'.format(ionDir['subband'][k]), phaseDiffUsed[1:], 'runIonSubband')
