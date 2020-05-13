@@ -28,7 +28,8 @@
         call rect(infile,outfile,ndac,nddn,nrac,nrdn,a,b,c,d,e,f,filetype,intstyle)
     end subroutine
 
-    subroutine c_rect_with_looks(infile,outfile,ndac,nddn,nrac,nrdn,a,b,c,d,e,f,lac,ldn,lac0,ldn0,filetype,intstyle) bind(c, name="c_rect_with_looks")
+    subroutine c_rect_with_looks(infile,outfile,ndac,nddn,nrac,nrdn,a,b,c,d,e,f,lac,ldn,lac0,ldn0,filetype,intstyle) &
+            bind(c, name="c_rect_with_looks")
         use iso_c_binding, only : c_double, c_char, c_int
         implicit none
         external rect_with_looks

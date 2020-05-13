@@ -100,6 +100,28 @@ GEOCODE_BOX = Application.Parameter(
     doc='Bounding box for geocoding - South, North, West, East in degrees'
                                     )
 
+EPSG = Application.Parameter(
+    'epsg',
+    public_name='epsg id',
+    default = '',
+    type=str,
+    doc='epsg code for roi'
+                                    )
+
+GSPACING = Application.Parameter('gspacing',
+            public_name='geocode spacing',
+            default = 100.0,
+            type = float,
+            doc = 'Desired grid spacing of geocoded product in meters, in the specified UTM grid.'
+                                    ) 
+
+INTMETHOD = Application.Parameter('intmethod',
+            public_name='geocode interpolation method',
+            default = 'bilinear',
+            type = str,
+            doc = 'Desired grid spacing of geocoded product in meters, in the specified UTM grid.'
+                                    ) 
+
 PICKLE_DUMPER_DIR = Application.Parameter(
     'pickleDumpDir',
     public_name='pickle dump directory',
@@ -149,10 +171,10 @@ NUMBER_RANGE_LOOKS = Application.Parameter('numberRangeLooks',
 
 POSTING = Application.Parameter('posting',
             public_name='posting',
-            default = 20.0,
+            default = 10.0,
             type = float,
             mandatory = False,
-            doc = 'Posting of data used to determine looks') 
+            doc = 'Posting of data. This can be any integer multiple of the product resolution. Used to determine looks') 
 
 POLARIZATIONS = Application.Parameter('polarizations',
             public_name='polarizations',
@@ -215,6 +237,9 @@ class GRDSAR(Application):
                       NUMBER_RANGE_LOOKS,
                       POSTING,
                       GEOCODE_BOX,
+                      EPSG,
+                      GSPACING,
+                      INTMETHOD,
                       PICKLE_DUMPER_DIR,
                       PICKLE_LOAD_DIR,
                       RENDERER,
@@ -357,7 +382,7 @@ class GRDSAR(Application):
         self.multilook = RtcProc.createLooks(self)
         self.runTopo  = RtcProc.createTopo(self)
         self.runNormalize = RtcProc.createNormalize(self)
-#        self.runGeocode = RtcProc.createGeocode(self)
+        self.runGeocode = RtcProc.createGeocode(self)
 
         return None
 
@@ -390,8 +415,8 @@ class GRDSAR(Application):
         self.step('normalize', func=self.runNormalize)
 
         # Geocode
-#        self.step('geocode', func=self.runGeocode,
-#                args=(self.geocode_list, self.do_unwrap, self.geocode_bbox))
+        self.step('geocode', func=self.runGeocode,
+                args=(self.geocode_list, self.geocode_bbox))
 
         return None
 
@@ -417,12 +442,8 @@ class GRDSAR(Application):
 	##Run normalize to get gamma0
         self.runNormalize()
 
-        ###Compute covariance
-#        self.runEstimateCovariance()
-
         # Geocode
-#        self.runGeocode(self.geocode_list, self.do_unwrap, self.geocode_bbox)
-
+        self.runGeocode()
 
         timeEnd = time.time()
         logger.info("Total Time: %i seconds" %(timeEnd - timeStart))

@@ -1,5 +1,59 @@
 version: 2.1
 jobs:
+  test-cmake:
+    docker:
+        - image: hysds/pge-base:latest
+          user: root
+    steps:
+      - checkout:
+          path: /root/project/src
+
+      - run:
+          name: Install development tools
+          command: |
+            set -ex
+            pwd
+            yum update -y
+            yum groupinstall -y "development tools"
+
+      - run:
+          name: Install ISCE requirements
+          command: |
+            set -ex
+            pwd
+            mkdir config build install
+            . /opt/conda/bin/activate root
+            conda install -y cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
+            yum install -y x11-devel motif-devel jq gcc-gfortran
+
+      - run:
+          name: Build and Install ISCE
+          command: |
+            set -ex
+            cd /root/project/src
+            . /opt/conda/bin/activate root
+            mkdir build
+            cd build
+            INSTALLPATH=/opt/conda
+            MODPATH=$(python3 -c "import site; print(site.getsitepackages()[0])")
+            # convert to relative path
+            MODPATH=$(realpath --relative-to=$INSTALLPATH $MODPATH)
+            cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALLPATH -DPYTHON_MODULE_DIR=$MODPATH
+            make install VERBOSE=y
+
+      - run:
+          name: Test ISCE installation
+          command: |
+            set -ex
+            cd /root/project/src/build
+            . /opt/conda/bin/activate root
+            ctest
+            ISCE2DIR=$(python3 -c "import os, isce2; print(os.path.dirname(isce2.__file__))" | tail -n 1)
+            export PATH=$ISCE2DIR/applications:$PATH
+            topsApp.py --help --steps
+            stripmapApp.py --help --steps
+            python3 -c "import isce"
+
   test:
     docker:
         - image: hysds/pge-base:latest
@@ -186,6 +240,7 @@ workflows:
   test:
     jobs:
       - test
+      - test-cmake
   build-deploy:
     jobs:
       - build:

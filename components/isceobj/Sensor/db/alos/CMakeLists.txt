@@ -1,0 +1,18 @@
+InstallSameDir(
+    attitude_record.xml
+    calibration_record.xml
+    data_quality_summary_record.xml
+    facility_record.xml
+    file_pointer_record.xml
+    image_file.xml
+    image_record.xml
+    leader_file.xml
+    map_proj_record.xml
+    platform_position_record.xml
+    processed_data_record.xml
+    radiometric_record.xml
+    scene_record.xml
+    text_record.xml
+    trailer_file.xml
+    volume_descriptor.xml
+    )

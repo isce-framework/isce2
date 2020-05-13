@@ -1,0 +1,14 @@
+InstallSameDir(
+    __init__.py
+    Application.py
+    Component.py
+    Configurable.py
+    FactoryInit.py
+    InitFromDictionary.py
+    InitFromFile.py
+    InitFromObject.py
+    InitFromXmlFile.py
+    manager.py
+    ProductManager.py
+    TraitSeq.py
+    )
