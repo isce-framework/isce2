@@ -99,6 +99,8 @@ def runRdrDemOffset(self):
         self._insar.radarDemAffineTransform = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
         catalog.addItem('warning message', 'land area too small for estimating offsets between radar and dem', 'runRdrDemOffset')
 
+        os.chdir('../../')
+
         catalog.printToLog(logger, "runRdrDemOffset")
         self._insar.procDoc.addAllFromCatalog(catalog)
 
