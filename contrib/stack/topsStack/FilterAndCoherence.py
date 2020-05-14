@@ -128,25 +128,31 @@ def estCpxCoherence(slc1_file, slc2_file, cpx_coh_file, alks=3, rlks=9):
     from isceobj.TopsProc.runBurstIfg import computeCoherence
     from mroipac.looks.Looks import Looks
 
+    # get the full resolution file name
+    if alks * rlks == 1:
+        cpx_coh_file_full = cpx_coh_file
+    else:
+        cpx_coh_file_full = cpx_coh_file+'.full'
+
     # calculate complex coherence in full resolution
-    computeCoherence(slc1_file, slc2_file, cpx_coh_file)
+    computeCoherence(slc1_file, slc2_file, cpx_coh_file_full)
 
     # multilook
-    print('Multilooking {0} ...'.format(cpx_coh_file))
+    if alks * rlks > 1:
+        print('Multilooking {0} ...'.format(cpx_coh_file_full))
 
-    inimg = isceobj.createImage()
-    inimg.load(cpx_coh_file + '.xml')
+        inimg = isceobj.createImage()
+        inimg.load(cpx_coh_file_full + '.xml')
 
-    outname = os.path.splitext(inimg.filename)[0]
-    lkObj = Looks()
-    lkObj.setDownLooks(alks)
-    lkObj.setAcrossLooks(rlks)
-    lkObj.setInputImage(inimg)
-    lkObj.setOutputFilename(outname)
-    lkObj.looks()
+        lkObj = Looks()
+        lkObj.setDownLooks(alks)
+        lkObj.setAcrossLooks(rlks)
+        lkObj.setInputImage(inimg)
+        lkObj.setOutputFilename(cpx_coh_file)
+        lkObj.looks()
 
-    # remove full resolution coherence file
-    ret=os.system('rm '+cpx_coh_file)
+        # remove full resolution coherence file
+        os.remove(cpx_coh_file_full)
     return
 
 
