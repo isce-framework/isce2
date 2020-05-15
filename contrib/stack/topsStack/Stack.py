@@ -925,7 +925,7 @@ class sentinelSLC(object):
            orbit_start_date_time = datetime.datetime.strptime(fields[6].replace('V',''), datefmt)
            orbit_stop_date_time = datetime.datetime.strptime(fields[7].replace('.EOF',''), datefmt)
 
-           if self.start_date_time > orbit_start_date_time and self.start_date_time < orbit_stop_date_time:
+           if self.start_date_time > orbit_start_date_time and self.stop_date_time < orbit_stop_date_time:
                self.orbit = os.path.join(orbitDir,orbit)
                self.orbitType = 'precise'
                match = True
@@ -944,7 +944,7 @@ class sentinelSLC(object):
               fields = os.path.basename(orbitFile).split('_')
               orbit_start_date_time = datetime.datetime.strptime(fields[6].replace('V',''), datefmt)
               orbit_stop_date_time = datetime.datetime.strptime(fields[7].replace('.EOF',''), datefmt)
-              if self.start_date_time > orbit_start_date_time and self.start_date_time < orbit_stop_date_time:
+              if self.start_date_time > orbit_start_date_time and self.stop_date_time < orbit_stop_date_time:
                   print ("restituted orbit already exists.")
                   self.orbit =  orbitFile
                   self.orbitType = 'restituted'
