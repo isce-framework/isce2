@@ -146,7 +146,7 @@ if __name__ == '__main__':
 
     inps = cmdLineParse()
 
-    fileTS, satName, , fileTSStart = FileToTimeStamp(inps.input)
+    fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
     
