@@ -30,9 +30,7 @@ RUN set -ex \
       numpy \
       fftw \
       scipy \
-      basemap \
       scons \
-      opencv \
       hdf4 \
       hdf5 \
       netcdf4 \
@@ -98,8 +96,6 @@ RUN set -ex \
       numpy \
       fftw \
       scipy \
-      basemap \
-      opencv \
       hdf4 \
       hdf5 \
       netcdf4 \
