@@ -628,7 +628,7 @@ class run(object):
             # skip phase unwrapping if input method == no
             if self.unwMethod.lower() != 'no':
                 configObj.igram = configObj.filtIgram
-                configObj.unwIfg = os.path.dirname(configObj.outDir) + '/filt_' + pair[0] + '_'  + pair[1] 
+                configObj.unwIfg = os.path.splitext(configObj.igram)[0]
                 configObj.noMCF = noMCF
                 configObj.master = os.path.join(self.slcDir,stackMaster +'/data') 
                 configObj.defoMax = defoMax

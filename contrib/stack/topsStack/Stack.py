@@ -223,7 +223,10 @@ class config(object):
         self.f.write('defomax : ' + self.defoMax + '\n')
         self.f.write('rlks : ' + self.rangeLooks + '\n')
         self.f.write('alks : ' + self.azimuthLooks + '\n')
-        self.f.write('rmfilter : ' + self.rmFilter + '\n')
+        if self.rmFilter:
+            self.f.write('rmfilter : True \n')
+        else:
+            self.f.write('rmfilter : False\n')
         self.f.write('method : ' + self.unwMethod + '\n')
 
     def unwrapSnaphu(self, function):
