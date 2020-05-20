@@ -27,7 +27,7 @@ if(NOT TARGET FFTW::Float)
 
     # Create a wrapper library to mimic the FFTW equivalent
     add_library(FFTW::Float IMPORTED INTERFACE)
-    target_include_directories(FFTW::Float INTERFACE extern/mkl/macos/include)
+    target_include_directories(FFTW::Float INTERFACE extern/mkl/include)
     target_link_libraries(FFTW::Float INTERFACE ${mkl_lib})
 endif()
 
