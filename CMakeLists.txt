@@ -11,7 +11,26 @@ endif()
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/.cmake)
 
 find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development)
-find_package(FFTW REQUIRED)
+find_package(FFTW)
+
+if(NOT TARGET FFTW::Float)
+    message(STATUS "FFTW not found. Falling back to Intel MKL wrapper...")
+
+    # Look for suitable MKL runtime
+    # (Move this to a separate FindMKL helper if it gets too complicated.)
+    find_library(mkl_lib NAMES mkl_rt)
+    if(mkl_lib)
+        message(STATUS "Found MKL library: ${mkl_lib}")
+    else()
+        message(FATAL_ERROR "Could not find FFTW or MKL library")
+    endif()
+
+    # Create a wrapper library to mimic the FFTW equivalent
+    add_library(FFTW::Float IMPORTED INTERFACE)
+    target_include_directories(FFTW::Float INTERFACE extern/mkl/macos/include)
+    target_link_libraries(FFTW::Float INTERFACE ${mkl_lib})
+endif()
+
 find_package(Motif)
 find_package(OpenMP REQUIRED COMPONENTS C CXX Fortran)
 # Find these, and create IMPORTED INTERFACE libraries for them if they exist
