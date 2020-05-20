@@ -23,7 +23,7 @@ jobs:
             pwd
             mkdir config build install
             . /opt/conda/bin/activate root
-            conda install -y cython gdal h5py libgdal pytest numpy fftw scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
+            conda install -y cython gdal h5py libgdal pytest numpy mkl scipy basemap scons opencv hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
             yum install -y x11-devel motif-devel jq gcc-gfortran
 
       - run:
