@@ -204,6 +204,7 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
     <!--=========================================================================================
     This is a list of files to be geocoded
+    Wild card such as * is accepted, e.g. filt_*-*_5rlks_28alks.unw.conncomp
     ==========================================================================================-->
     <!--<property name="geocode file list">None</property>-->
 
@@ -279,6 +280,7 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
     <!--=========================================================================================
     This is a list of files to be geocoded
+    Wild card such as * is accepted, e.g. filt_*-*_5rlks_28alks.unw.conncomp
     ==========================================================================================-->
     <!--<property name="geocode file list SD">None</property>-->
 

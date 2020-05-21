@@ -4,6 +4,7 @@
 #
 
 import os
+import glob
 import logging
 import numpy as np
 
@@ -42,7 +43,9 @@ def runGeocode(self):
         if self.doIon:
             geocodeList.append(self._insar.multilookIon)
     else:
-        geocodeList = self.geocodeList
+        geocodeList = []
+        for xxx in self.geocodeList:
+            geocodeList += glob.glob(xxx)
 
     numberRangeLooks = self._insar.numberRangeLooks1 * self._insar.numberRangeLooks2
     numberAzimuthLooks = self._insar.numberAzimuthLooks1 * self._insar.numberAzimuthLooks2

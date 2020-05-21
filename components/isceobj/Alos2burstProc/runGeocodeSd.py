@@ -4,6 +4,7 @@
 #
 
 import os
+import glob
 import logging
 import numpy as np
 
@@ -31,7 +32,9 @@ def runGeocodeSd(self):
     if self.geocodeListSd == None:
         geocodeList = self._insar.multilookCoherenceSd + self._insar.azimuthDeformationSd + self._insar.maskedAzimuthDeformationSd
     else:
-        geocodeList = self.geocodeListSd
+        geocodeList = []
+        for xxx in self.geocodeListSd:
+            geocodeList += glob.glob(xxx)
 
     if self.bbox == None:
         bbox = getBboxGeo(masterTrack)
