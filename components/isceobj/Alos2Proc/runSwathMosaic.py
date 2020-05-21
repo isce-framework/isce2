@@ -162,21 +162,30 @@ def runSwathMosaic(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateFrame=False, phaseCompensation=False, pcRangeLooks=1, pcAzimuthLooks=4, filt=False, resamplingMethod=0):
+def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateFrame=False, phaseCompensation=False, phaseDiff=None, phaseDiffFixed=None, snapThreshold=None, pcRangeLooks=1, pcAzimuthLooks=4, filt=False, resamplingMethod=0):
     '''
     mosaic swaths
     
+    #PART 1. REGULAR INPUT PARAMTERS
     frame:                 frame
     inputFiles:            input file list
-    output file:           output mosaic file
+    outputfile:            output mosaic file
     rangeOffsets:          range offsets
     azimuthOffsets:        azimuth offsets
     numberOfRangeLooks:    number of range looks of the input files
     numberOfAzimuthLooks:  number of azimuth looks of the input files
+    updateFrame:           whether update frame parameters
+
+    #PART 2. PARAMETERS FOR COMPUTING PHASE DIFFERENCE BETWEEN SUBSWATHS
     phaseCompensation:     whether do phase compensation for each swath
+    phaseDiff:             pre-computed compensation phase for each swath
+    phaseDiffFixed:        if provided, the estimated value will snap to one of these values, which is nearest to the estimated one.
+    snapThreshold:         this is used with phaseDiffFixed
     pcRangeLooks:          number of range looks to take when compute swath phase difference
     pcAzimuthLooks:        number of azimuth looks to take when compute swath phase difference
     filt:                  whether do filtering when compute swath phase difference
+
+    #PART 3. RESAMPLING METHOD
     resamplingMethod:      0: amp resampling. 1: int resampling.
     '''
     from contrib.alos2proc_f.alos2proc_f import rect_with_looks
@@ -335,10 +344,33 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
 
     #compute compensation phase for each swath
     diffMean2 = [0.0 for i in range(numberOfSwaths)]
+    phaseDiffEst = [None for i in range(numberOfSwaths)]
+    #True if:
+    #  (1) used diff phase from input
+    #  (2) used estimated diff phase after snapping to a fixed diff phase provided
+    #False if:
+    #  (1) used purely estimated diff phase
+    phaseDiffSource  = ['estimated' for i in range(numberOfSwaths)]
+    # 1. 'estimated': estimated from subswath overlap
+    # 2. 'estimated+snap': estimated from subswath overlap and snap to a fixed value
+    # 3. 'input': pre-computed
+    # confidence level: 3 > 2 > 1
     if phaseCompensation:
         #compute swath phase offset
         diffMean = [0.0]
         for i in range(1, numberOfSwaths):
+
+            #no need to estimate diff phase if provided from input
+            #####################################################################
+            if phaseDiff!=None:
+                if phaseDiff[i]!=None:
+                    diffMean.append(phaseDiff[i])
+                    phaseDiffSource[i] = 'input'
+                    print('using pre-computed phase offset given from input')
+                    print('phase offset: subswath{} - subswath{}: {}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, phaseDiff[i]))
+                    continue
+            #####################################################################
+
             #all indexes start with zero, all the computed start/end sample/line indexes are included.
             
             #no need to add edge here, as we are going to find first/last nonzero sample/lines later
@@ -467,6 +499,19 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
                         create_xml(filename, width7, length7, 'float')
 
 
+            #save purely estimated diff phase
+            phaseDiffEst[i] = diffMean0
+            
+            #if fixed diff phase provided and the estimated diff phase is close enough to a fixed value, snap to it
+            ############################################################################################################
+            if phaseDiffFixed != None:
+                phaseDiffTmp = np.absolute(np.absolute(np.array(phaseDiffFixed)) - np.absolute(diffMean0))
+                phaseDiffTmpMinIndex = np.argmin(phaseDiffTmp)
+                if phaseDiffTmp[phaseDiffTmpMinIndex] < snapThreshold:
+                   diffMean0 = np.sign(diffMean0) * np.absolute(phaseDiffFixed[phaseDiffTmpMinIndex])
+                   phaseDiffSource[i] = 'estimated+snap'
+            ############################################################################################################
+
             diffMean.append(diffMean0)
             print('phase offset: subswath{} - subswath{}: {}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, diffMean0))
 
@@ -502,6 +547,10 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
         frame.azimuthPixelSize = frame.swaths[0].azimuthPixelSize
         frame.azimuthLineInterval = frame.swaths[0].azimuthLineInterval
 
+
+    if phaseCompensation:
+        # estimated phase diff, used phase diff, used phase diff source
+        return (phaseDiffEst, diffMean, phaseDiffSource)
 
 def swathMosaicParameters(frame, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks):
     '''
