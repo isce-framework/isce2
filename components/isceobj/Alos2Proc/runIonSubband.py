@@ -88,6 +88,23 @@ def runIonSubband(self):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
             swathDir = 's{}'.format(swathNumber)
+
+            #skip this time consuming process, if interferogram already exists
+            if os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.interferogram)) and \
+               os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.interferogram+'.vrt')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.interferogram+'.xml')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.amplitude)) and \
+               os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.amplitude+'.vrt')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][0], frameDir, swathDir, self._insar.amplitude+'.xml')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.interferogram)) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.interferogram+'.vrt')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.interferogram+'.xml')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.amplitude)) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.amplitude+'.vrt')) and \
+               os.path.isfile(os.path.join(ionDir['subband'][1], frameDir, swathDir, self._insar.amplitude+'.xml')):
+                print('interferogram already exists at swath {}, frame {}'.format(swathNumber, frameNumber))
+                continue
+
             #filter master and slave images
             for slcx in [self._insar.masterSlc, self._insar.slaveSlc]:
                 slc = os.path.join('../', frameDir, swathDir, slcx)
@@ -279,18 +296,66 @@ def runIonSubband(self):
             #list of input files
             inputInterferograms = []
             inputAmplitudes = []
+            phaseDiff = [None]
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
                 inputInterferograms.append(os.path.join('../', swathDir, self._insar.interferogram))
                 inputAmplitudes.append(os.path.join('../', swathDir, self._insar.amplitude))
+
+                #compute phase needed to be compensated using startingRange
+                if j >= 1:
+                    #phaseDiffSwath1 = -4.0 * np.pi * (masterTrack.frames[i].swaths[j-1].startingRange - slaveTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
+                    #phaseDiffSwath2 = -4.0 * np.pi * (masterTrack.frames[i].swaths[j].startingRange - slaveTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
+                    phaseDiffSwath1 = +4.0 * np.pi * masterTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                      -4.0 * np.pi * slaveTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                    phaseDiffSwath2 = +4.0 * np.pi * masterTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                      -4.0 * np.pi * slaveTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                    if masterTrack.frames[i].swaths[j-1].startingRange - slaveTrack.frames[i].swaths[j-1].startingRange == \
+                       masterTrack.frames[i].swaths[j].startingRange - slaveTrack.frames[i].swaths[j].startingRange:
+                        #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
+                        #if master and slave versions are all before or after version 2.025 (starting range error < 0.5 m), 
+                        #it should be OK to do the above.
+                        #see results in neom where it meets the above requirement, but there is still phase diff
+                        #to be less risky, we do not input values here
+                        phaseDiff.append(None)
+                    else:
+                        phaseDiff.append(None)
 
             #note that frame parameters are updated after mosaicking, here no need to update parameters
             #mosaic amplitudes
             swathMosaic(masterTrack.frames[i], inputAmplitudes, self._insar.amplitude, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, resamplingMethod=0)
             #mosaic interferograms
-            swathMosaic(masterTrack.frames[i], inputInterferograms, self._insar.interferogram, 
-                rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=False, phaseCompensation=True, resamplingMethod=1)
+            #These are for ALOS-2, may need to change for ALOS-4!
+            phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.179664007520499, 2.6766909968024932, 3.130810857]
+
+            snapThreshold = 0.2
+
+            #the above preparetions only applies to 'self._insar.modeCombination == 21'
+            #looks like it also works for 31 (scansarNominalModes-stripmapModes)
+            if self._insar.modeCombination != 21:
+                phaseDiff = None
+                phaseDiffFixed = None
+                snapThreshold = None
+
+            (phaseDiffEst, phaseDiffUsed, phaseDiffSource) = swathMosaic(masterTrack.frames[i], inputInterferograms, self._insar.interferogram, 
+                rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=False, 
+                phaseCompensation=True, phaseDiff=phaseDiff, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, pcRangeLooks=1, pcAzimuthLooks=4, 
+                filt=False, resamplingMethod=1)
+
+            #the first item is meaningless for all the following list, so only record the following items
+            if phaseDiff == None:
+                phaseDiff = [None for iii in range(self._insar.startingSwath, self._insar.endingSwath + 1)]
+            catalog.addItem('{} subswath phase difference input'.format(ionDir['subband'][k]), phaseDiff[1:], 'runIonSubband')
+            catalog.addItem('{} subswath phase difference estimated'.format(ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
+            catalog.addItem('{} subswath phase difference used'.format(ionDir['subband'][k]), phaseDiffUsed[1:], 'runIonSubband')
+            catalog.addItem('{} subswath phase difference used source'.format(ionDir['subband'][k]), phaseDiffSource[1:], 'runIonSubband')
+            #check if there is value around 3.130810857, which may not be stable
+            phaseDiffUnstableExist = False
+            for xxx in phaseDiffUsed:
+                if abs(abs(xxx) - 3.130810857) < 0.2:
+                    phaseDiffUnstableExist = True
+            catalog.addItem('{} subswath phase difference unstable exists'.format(ionDir['subband'][k]), phaseDiffUnstableExist, 'runIonSubband')
 
             create_xml(self._insar.amplitude, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'amp')
             create_xml(self._insar.interferogram, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'int')
@@ -385,7 +450,8 @@ def runIonSubband(self):
         os.chdir(ionDir['subband'][k])
         for i, frameNumber in enumerate(self._insar.masterFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
-            shutil.rmtree(frameDir)
+            #keep subswath interferograms
+            #shutil.rmtree(frameDir)
             #cmd = 'rm -rf {}'.format(frameDir)
             #runCmd(cmd)
         os.chdir('../')
