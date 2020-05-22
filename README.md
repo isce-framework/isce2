@@ -310,6 +310,29 @@ cmake .. -DCMAKE_INSTALL_PREFIX=/my/isce/install/location
 make install
 ```
 
+#### Additional cmake configuration options
+
+CMake uses `CMAKE_PREFIX_PATH` as a global prefix for finding packages,
+which can come in handy when using e.g. Anaconda:
+
+```sh
+cmake [...] -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+```
+
+On macOS, cmake will also look for systemwide "frameworks",
+which is usually not what you want when using Conda or Macports.
+
+```sh
+cmake [...] -DCMAKE_FIND_FRAMEWORK=NEVER
+```
+
+For packagers, the `PYTHON_MODULE_DIR` can be used to specify ISCE2's
+package installation location relative to the installation prefix
+
+```sh
+cmake [...] -DPYTHON_MODULE_DIR=lib/python3.8m/site-packages
+```
+
 ### Setup Your Environment
 
 Once everything is installed, you will need to set the following environment
