@@ -12,3 +12,7 @@ target_link_libraries(GPUampcor PRIVATE
     cublas
     DataAccessor_static
     )
+InstallSameDir(
+    GPUampcor
+    __init__.py
+    )
