@@ -50,22 +50,16 @@ endfunction()
 # Note that it first checks if a provided file is a target,
 # and if so, installs it as a TARGET instead. Make sure your
 # filenames and target names don't have any overlap!
-
 function(InstallSameDir)
-mark_as_advanced(isce2_bin_base)
     foreach(name ${ARGN})
         if(TARGET ${name})
             set(installtype TARGETS)
         else()
             set(installtype FILES)
         endif()
-        file(RELATIVE_PATH path ${isce2_bin_dir} ${CMAKE_CURRENT_BINARY_DIR})
+        file(RELATIVE_PATH path ${isce2_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
         install(${installtype} ${name}
                 DESTINATION ${ISCE2_PKG}/${path}
                 )
     endforeach()
 endfunction()
-# We use this instead of CMAKE_BINARY_DIR to handle
-# cases where isce2 is added as a subdirectory
-set(isce2_bin_dir ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH
-    "ISCE2 root build directory")
