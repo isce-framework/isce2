@@ -107,6 +107,12 @@ def cmdLineParse(iargs = None):
     parser = createParser()
     inps =  parser.parse_args(args=iargs)
 
+    # check oversampled window size
+    if (inps.winwidth + 2 * inps.srcwidth) * inps.raw_oversample > 1024:
+        msg = 'input oversampled window size in the across/range direction '
+        msg += 'exceeds the current implementaion limit of 1024!'
+        raise ValueError(msg)
+
     return inps
 
 
