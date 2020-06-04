@@ -77,6 +77,8 @@ def runComputeBaseline(self):
                     mxyz = np.array(masterSV.getPosition())
                     mvel = np.array(masterSV.getVelocity())
                     sxyz = np.array(slaveSV.getPosition())
+                    mvelunit = mvel / np.linalg.norm(mvel)
+                    sxyz = sxyz - np.dot ( sxyz-mxyz, mvelunit) * mvelunit
 
                     aa = np.linalg.norm(sxyz-mxyz)
                     costheta = (rng*rng + aa*aa - slvrng*slvrng)/(2.*rng*aa)
