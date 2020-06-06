@@ -92,7 +92,15 @@ in the data. Normally we only process HH polarization, so you can only extract H
 zip files to save space. If you want to process other polarizations, extract those polarization instead.
 
 2. DEM and water body
-If you only process one InSAR pair, there is no need to download DEM and water body. The program will
+
+You MUST FIRST have an account to download DEM and water body, no matter you download them manually or let 
+the program download them automatically. See
+https://github.com/isce-framework/isce2#notes-on-digital-elevation-models
+or
+https://github.com/isce-framework/isce2
+for more details.
+
+If you only process one InSAR pair, there is no need to download DEM and water body manually. The program will
 do it for you. However, if you want to process a stack of interferograms, we recommend downloading DEM
 and water body by yourself and set the parameters in the input file; otherwise, the program will download
 DEM and water body each time it processes a pair. See input file on how to download DEM and water

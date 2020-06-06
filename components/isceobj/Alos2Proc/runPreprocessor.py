@@ -494,6 +494,10 @@ def runPreprocessor(self):
         mvel = np.array(masterSV.getVelocity())
         sxyz = np.array(slaveSV.getPosition())
 
+        #to fix abrupt change near zero in baseline grid. JUN-05-2020
+        mvelunit = mvel / np.linalg.norm(mvel)
+        sxyz = sxyz - np.dot ( sxyz-mxyz, mvelunit) * mvelunit
+
         aa = np.linalg.norm(sxyz-mxyz)
         costheta = (x[1]*x[1] + aa*aa - slvrng*slvrng)/(2.*x[1]*aa)
 
