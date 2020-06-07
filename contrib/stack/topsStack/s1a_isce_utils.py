@@ -193,6 +193,12 @@ def adjustCommonValidRegion(master,slave):
     master.firstValidLine = max(master.firstValidLine, slave.firstValidLine)
     master.firstValidSample = max(master.firstValidSample, slave.firstValidSample)
 
+    #set to 0 to avoid negative values
+    if master.firstValidLine<0:
+        master.firstValidLine=0
+    if master.firstValidSample<0:
+        master.firstValidSample=0
+
     master.numValidLines = igram_lastValidLine - master.firstValidLine + 1
     master.numValidSamples = igram_lastValidSample - master.firstValidSample + 1
 
