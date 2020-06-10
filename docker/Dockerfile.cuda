@@ -15,6 +15,7 @@ RUN set -ex \
  && yum groupinstall -y "development tools" \
  && yum install -y \
       make ruby-devel rpm-build rubygems \
+ && gem install ffi -v 1.12.2 \
  && gem install --no-ri --no-rdoc fpm
 
 # install isce requirements
