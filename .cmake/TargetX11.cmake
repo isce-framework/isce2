@@ -17,11 +17,11 @@ if(X11_FOUND)
         if(X11_${component}_FOUND)
             if(NOT TARGET X11::${component})
                 add_library(X11::${component} IMPORTED INTERFACE)
+                target_link_libraries(X11::${component}
+                    INTERFACE ${X11_${component}_LIB})
+                target_include_directories(X11::${component} SYSTEM
+                    INTERFACE ${X11_${component}_INCLUDE_PATH})
             endif()
-            target_link_libraries(X11::${component}
-                INTERFACE ${X11_${component}_LIB})
-            target_include_directories(X11::${component} SYSTEM
-                INTERFACE ${X11_${component}_INCLUDE_PATH})
         endif()
     endforeach()
 endif()
