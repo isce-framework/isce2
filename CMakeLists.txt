@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 project(isce2 LANGUAGES C CXX Fortran)
 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/.cmake)
+
 include(CheckLanguage)
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
     enable_language(CUDA)
+    find_package(CUDAToolkit) # TODO added in cmake 3.17 - copy this module
 endif()
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/.cmake)
 
 find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development
                         OPTIONAL_COMPONENTS NumPy)
