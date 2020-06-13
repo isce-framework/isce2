@@ -1,7 +1,9 @@
 # Early exit if prereqs not available
-if(NOT CMAKE_CUDA_COMPILER OR
-   NOT TARGET GDAL::GDAL OR
-   NOT TARGET Python::NumPy)
+if(NOT TARGET GDAL::GDAL
+OR NOT TARGET Python::NumPy
+OR NOT TARGET CUDA::cublas
+OR NOT TARGET CUDA::cufft
+   )
     return()
 endif()
 
@@ -30,15 +32,12 @@ cython_add_module(PyCuAmpcor
     )
 target_include_directories(PyCuAmpcor PRIVATE
     src
-    ${CMAKE_CUDA_IMPLICIT_INCLUDE_DIRECTORIES} # <cuda_runtime.h>
-    )
-target_link_directories(PyCuAmpcor PRIVATE
-    ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES} # cufft
     )
 target_link_libraries(PyCuAmpcor PRIVATE
+    CUDA::cufft
+    CUDA::cublas
     GDAL::GDAL
     Python::NumPy
-    cufft
     )
 
 InstallSameDir(
