@@ -130,7 +130,8 @@ target_include_directories(combinedLib INTERFACE
 install(TARGETS
     utilLib
     combinedLib
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 
 InstallSameDir(
     combinedlibmodule
