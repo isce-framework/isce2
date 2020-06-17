@@ -69,7 +69,6 @@ RUN set -ex \
  && scons install \
  && cp docker/isce_env.sh $ISCE_INSTALL_ROOT \
  && cd /tmp \
- && rm -rf /opt/isce2/src \
  && mkdir -p /tmp/rpm-build/opt \
  && mv $ISCE_INSTALL_ROOT /tmp/rpm-build/opt \
  && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/master \
