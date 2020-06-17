@@ -38,9 +38,11 @@ def FileToTimeStamp(safename):
     '''
     safename = os.path.basename(safename)
     fields = safename.split('_')
+    sstamp = []  # sstamp for getting SAFE file start time, not needed for orbit file timestamps
 
     try:
         tstamp = datetime.datetime.strptime(fields[-4], datefmt)
+        sstamp = datetime.datetime.strptime(fields[-5], datefmt)
     except: 
         p = re.compile(r'(?<=_)\d{8}')  
         dt2 = p.search(safename).group() 
@@ -48,7 +50,7 @@ def FileToTimeStamp(safename):
 
     satName = fields[0]
 
-    return tstamp, satName
+    return tstamp, satName, sstamp
 
 
 class MyHTMLParser(HTMLParser):
@@ -144,7 +146,7 @@ if __name__ == '__main__':
 
     inps = cmdLineParse()
 
-    fileTS, satName = FileToTimeStamp(inps.input)
+    fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
     
@@ -198,7 +200,7 @@ if __name__ == '__main__':
                 for result in results:
                     tbef, taft, mission = fileToRange(os.path.basename(result))
 
-                    if (tbef <= fileTS) and (taft >= fileTS):
+                    if (tbef <= fileTSStart) and (taft >= fileTS):
                         datestr2 = FileToTimeStamp(result)[0].strftime(queryfmt2) 
                         match = (server2 + spec[1].replace('aux_', '').upper() +
                                  '/' +datestr2+ result + '.EOF')
