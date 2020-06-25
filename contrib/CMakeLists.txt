@@ -5,7 +5,7 @@ add_subdirectory(frameUtils)
 #add_subdirectory(unwUtils)
 add_subdirectory(downsample_unwrapper)
 
-#add_subdirectory(PyCuAmpcor)
+add_subdirectory(PyCuAmpcor)
 add_subdirectory(splitSpectrum)
 add_subdirectory(alos2filter)
 add_subdirectory(alos2proc)

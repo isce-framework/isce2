@@ -5,6 +5,9 @@ set(components
 
 find_package(X11 COMPONENTS ${components})
 
+# The X11::{component} targets only exist for CMake ≥ 3.14,
+# so we create them here for backwards compatibility.
+
 if(X11_FOUND)
 
     # make X11 look like a regular find_package component
@@ -13,15 +16,13 @@ if(X11_FOUND)
     list(APPEND components X11)
 
     foreach(component ${components})
-        message("${component} include = ${X11_${component}_INCLUDE_PATH}")
-        if(X11_${component}_FOUND)
-            if(NOT TARGET X11::${component})
-                add_library(X11::${component} IMPORTED INTERFACE)
-                target_link_libraries(X11::${component}
-                    INTERFACE ${X11_${component}_LIB})
-                target_include_directories(X11::${component} SYSTEM
-                    INTERFACE ${X11_${component}_INCLUDE_PATH})
-            endif()
+        if(X11_${component}_FOUND AND
+           NOT TARGET X11::${component})
+            add_library(X11::${component} IMPORTED INTERFACE)
+            target_link_libraries(X11::${component}
+                INTERFACE ${X11_${component}_LIB})
+            target_include_directories(X11::${component} SYSTEM
+                INTERFACE ${X11_${component}_INCLUDE_PATH})
         endif()
     endforeach()
 endif()

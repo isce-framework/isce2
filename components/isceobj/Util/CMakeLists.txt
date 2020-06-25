@@ -81,14 +81,8 @@ add_library(utilLib SHARED
 target_include_directories(utilLib PUBLIC
     include
     )
-target_link_libraries(utilLib PUBLIC
+target_link_libraries(utilLib PRIVATE
     FFTW::Float
-    )
-# TODO (fortran module include)
-# This seems to be needed to use this library's modules,
-# but is there a more idiomatic way to do this?
-target_include_directories(utilLib INTERFACE
-    ${CMAKE_CURRENT_BINARY_DIR}
     )
 
 add_library(combinedLib SHARED
@@ -120,17 +114,24 @@ target_include_directories(combinedlibmodule PUBLIC
 target_link_libraries(combinedlibmodule PUBLIC
     combinedLib
     )
-# TODO (fortran module include)
-# This seems to be needed to use this library's modules,
-# but is there a more idiomatic way to do this?
+
+# Set up fortran module paths
+set(mdir ${CMAKE_CURRENT_BINARY_DIR}/utillib_fortran_modules)
+set_property(TARGET utilLib PROPERTY Fortran_MODULE_DIRECTORY ${mdir})
+target_include_directories(utilLib INTERFACE
+    $<$<COMPILE_LANGUAGE:Fortran>:${mdir}>
+    )
+set(mdir ${CMAKE_CURRENT_BINARY_DIR}/combinelib_fortran_modules)
+set_property(TARGET combinedLib PROPERTY Fortran_MODULE_DIRECTORY ${mdir})
 target_include_directories(combinedLib INTERFACE
-    ${CMAKE_CURRENT_BINARY_DIR}
+    $<$<COMPILE_LANGUAGE:Fortran>:${mdir}>
     )
 
 install(TARGETS
     utilLib
     combinedLib
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    )
 
 InstallSameDir(
     combinedlibmodule
