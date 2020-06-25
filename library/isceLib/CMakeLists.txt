@@ -1,4 +1,5 @@
-Python_add_library(isceLib MODULE
+cython_add_module(isceLib
+    pyx/isceLib.pyx
     src/Ellipsoid.cpp
     src/LinAlg.cpp
     src/Orbit.cpp

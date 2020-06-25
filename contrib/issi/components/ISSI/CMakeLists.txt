@@ -8,12 +8,19 @@ add_library(issi SHARED
     src/polcal.c
     src/tecToPhase.c
     )
+set_target_properties(issi PROPERTIES
+    PREFIX ""
+    OUTPUT_NAME issi
+    SUFFIX .so)
 target_include_directories(issi PUBLIC include)
-
-add_subdirectory(src)
 
 InstallSameDir(
     issi
     __init__.py
     FR.py
     )
+
+file(RELATIVE_PATH relpath ${isce2_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+install(DIRECTORY src/igrf_data
+        DESTINATION ${ISCE2_PKG}/${relpath}
+        )
