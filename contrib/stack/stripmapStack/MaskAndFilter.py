@@ -3,8 +3,8 @@
 # Author: Heresh Fattahi
 # Copyright 2016
 #
-            
-import os   
+
+import os
 import argparse
 import numpy as np
 from scipy import ndimage
@@ -32,7 +32,14 @@ GDAL2NUMPY_DATATYPE = {
     7 : np.float64,
     10: np.complex64,
     11: np.complex128,
-}   
+}
+
+
+EXAMPLE = '''example:
+  MaskAndFilter.py -d offset.bip -s offset_snr.bip
+  MaskAndFilter.py -d offset.bip -s offset_snr.bip --plot
+'''
+
 
 
 EXAMPLE = '''example:
@@ -42,10 +49,10 @@ EXAMPLE = '''example:
 
 
 def createParser():
-    '''     
+    '''
     Command line parser.
     '''
-           
+
     parser = argparse.ArgumentParser(description='Mask and filter the densOffset',
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=EXAMPLE)
@@ -88,7 +95,7 @@ def cmdLineParse(iargs = None):
 
 def read(file, processor='ISCE', bands=None, dataType=None):
     ''' raeder based on GDAL.
-       
+
     Args:
 
         * file      -> File name to be read
@@ -96,7 +103,7 @@ def read(file, processor='ISCE', bands=None, dataType=None):
     Kwargs:
 
         * processor -> the processor used for the InSAR processing. default: ISCE
-        * bands     -> a list of bands to be extracted. If not specified all bands will be extracted. 
+        * bands     -> a list of bands to be extracted. If not specified all bands will be extracted.
         * dataType  -> if not specified, it will be extracted from the data itself
     Returns:
         * data : A numpy array with dimensions : number_of_bands * length * width
@@ -116,7 +123,7 @@ def read(file, processor='ISCE', bands=None, dataType=None):
     if bands is None:
         bands = range(1,dataset.RasterCount+1)
     ######################################
-    # if dataType is not known let's get it from the data:    
+    # if dataType is not known let's get it from the data:
     if dataType is None:
         band = dataset.GetRasterBand(1)
         dataType =  GDAL2NUMPY_DATATYPE[band.DataType]
@@ -149,13 +156,13 @@ def fill(data, invalid=None):
     """
     Replace the value of invalid 'data' cells (indicated by 'invalid')
     by the value of the nearest valid data cell
-    
+
     Input:
         data:    numpy array of any dimension
         invalid: a binary array of same shape as 'data'.
                  data value are replaced where invalid is True
                  If None (default), use: invalid  = np.isnan(data)
-       
+
     Output:
         Return a filled array.
     """
@@ -171,7 +178,7 @@ def mask_filter(inps, band, outName):
     """masking and Filtering"""
 
     # read offset
-    offset = read(inps.denseOffset, bands=band) 
+    offset = read(inps.denseOffset, bands=band)
     offset = offset[0,:,:]
 
     # read SNR
@@ -184,17 +191,21 @@ def mask_filter(inps, band, outName):
     offset1 = np.array(offset)
     offset1[snr < inps.snrThreshold] = np.nan
 
+    # percentage of masked out pixels among all non-zero SNR pixels
+    perc = np.sum(snr >= inps.snrThreshold) / np.sum(snr > 0)
+    print('percentage of pixels with SNR >= {} among pixels with SNR > 0: {:.0%}'.format(inps.snrThreshold, perc))
+
     # fill the hole in offset with nearest data
     print('fill the masked out region with nearest data')
     offset2 = fill(offset1)
 
     # median filtering
-    print('filtering with median filter with size : ', inps.filterSize)
+    print('filtering with median filter with size: {}'.format(inps.filterSize))
     offset3 = ndimage.median_filter(offset2, size=inps.filterSize)
     length, width = offset3.shape
 
     # write data to file
-    print('writing masked and filtered offsets to: ', outName)
+    print('writing masked and filtered offsets to: {}'.format(outName))
     write(offset3, outName, 1, 6)
 
     # write the xml/vrt/hdr file
@@ -216,33 +227,55 @@ def mask_filter(inps, band, outName):
 
 def plot_mask_and_filtering(az_list, rg_list, inps=None):
 
+    print('-'*30)
+    print('plotting mask and filtering result ...')
+    print('mask pixels with SNR == 0 (for plotting ONLY; data files are untouched)')
+    snr = az_list[0]
+    for i in range(1, len(az_list)):
+        az_list[i][snr == 0] = np.nan
+        rg_list[i][snr == 0] = np.nan
+
+    # percentage of masked out pixels among all non-zero SNR pixels
+    perc = np.sum(snr >= inps.snrThreshold) / np.sum(snr > 0)
+    print('percentage of pixels with SNR >= {} among pixels with SNR > 0: {:.0%}'.format(inps.snrThreshold, perc))
+
     fig, axs = plt.subplots(nrows=2, ncols=5, figsize=inps.figsize, sharex=True, sharey=True)
-    titles = ['SNR', 'offset', 'offset (mask)', 'offset (mask/fill)', 'offset (mask/fill/filter)']
+    titles = ['SNR',
+              'offset',
+              'offset (mask {} - {:.0%} remain)'.format(inps.snrThreshold, perc),
+              'offset (mask {} / fill)'.format(inps.snrThreshold),
+              'offset (mask {} / fill / filter {})'.format(inps.snrThreshold, inps.filterSize)]
 
     # plot SNR
-    im0 = axs[0,0].imshow(az_list[0], vmin=inps.vlim_snr[0], vmax=inps.vlim_snr[1], cmap='RdBu')
-    im0 = axs[1,0].imshow(rg_list[0], vmin=inps.vlim_snr[0], vmax=inps.vlim_snr[1], cmap='RdBu')
+    kwargs = dict(vmin=inps.vlim_snr[0], vmax=inps.vlim_snr[1], cmap='RdBu', interpolation='nearest')
+    im0 = axs[0,0].imshow(snr, **kwargs)
+    im0 = axs[1,0].imshow(snr, **kwargs)
     axs[0,0].set_title('SNR', fontsize=12)
+    print('SNR data range: [{}, {}]'.format(np.nanmin(snr), np.nanmax(snr)))
 
     # label
     axs[0,0].set_ylabel('azimuth', fontsize=12)
     axs[1,0].set_ylabel('range', fontsize=12)
 
     # plot offset
+    kwargs = dict(vmin=inps.vlim[0], vmax=inps.vlim[1], cmap='jet', interpolation='nearest')
     for i in range(1,len(az_list)):
-        im1 = axs[0,i].imshow(az_list[i], vmin=inps.vlim[0], vmax=inps.vlim[1], cmap='jet')
-        im1 = axs[1,i].imshow(rg_list[i], vmin=inps.vlim[0], vmax=inps.vlim[1], cmap='jet')
+        im1 = axs[0,i].imshow(az_list[i], **kwargs)
+        im1 = axs[1,i].imshow(rg_list[i], **kwargs)
         axs[0,i].set_title(titles[i], fontsize=12)
+        print('{} data range'.format(titles[i]))
+        print('azimuth offset: [{:.3f}, {:.3f}]'.format(np.nanmin(az_list[i]), np.nanmax(az_list[i])))
+        print('range   offset: [{:.3f}, {:.3f}]'.format(np.nanmin(rg_list[i]), np.nanmax(rg_list[i])))
     fig.tight_layout()
 
     # colorbar
     fig.subplots_adjust(bottom=0.15)
-    cax0 = fig.add_axes([0.09, 0.1, 0.08, 0.015])
+    cax0 = fig.add_axes([0.08, 0.1, 0.08, 0.015])
     cbar0 = plt.colorbar(im0, cax=cax0, orientation='horizontal')
     cax0.yaxis.set_ticks_position('left')
 
     #fig.subplots_adjust(right=0.93)
-    cax1 = fig.add_axes([0.57, 0.1, 0.08, 0.015])
+    cax1 = fig.add_axes([0.60, 0.1, 0.15, 0.015])
     cbar1 = plt.colorbar(im1, cax=cax1,  orientation='horizontal')
     cbar1.set_label('pixel', fontsize=12)
 
@@ -259,7 +292,7 @@ def main(iargs=None):
 
     inps = cmdLineParse(iargs)
 
-    os.makedirs(inps.outD, exist_ok=True)
+    os.makedirs(inps.outDir, exist_ok=True)
 
     #######################
     # masking the dense offsets based on SNR and median filter the masked offs
@@ -283,4 +316,3 @@ if __name__ == '__main__':
     Main driver.
     '''
     main()
-

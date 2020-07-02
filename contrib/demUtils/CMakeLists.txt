@@ -17,8 +17,31 @@ Python_add_library(demStitch MODULE
     demstitcher/bindings/demStitch.c
     )
 
+Python_add_library(upsampledem MODULE
+    upsampledem/bindings/upsampledemmodule.cpp
+    upsampledem/src/upsampledem.f
+    upsampledem/src/upsampledemSetState.f
+    upsampledem/src/upsampledemState.f
+    )
+target_include_directories(upsampledem PRIVATE
+    upsampledem/include
+    )
+target_link_libraries(upsampledem PRIVATE
+    utilLib
+    )
+
+Python_add_library(watermask MODULE
+    watermask/bindings/watermaskmodule.cpp
+    watermask/src/watermask.cpp
+    )
+target_include_directories(watermask PRIVATE
+    watermask/include
+    )
+
 InstallSameDir(
     demStitch
+    upsampledem
+    watermask
     correct_geoid_i2_srtm
     __init__.py
     correct_geoid_i2_srtm/Correct_geoid_i2_srtm.py
@@ -27,6 +50,5 @@ InstallSameDir(
     demstitcher/DemStitcherV3.py
     swbdstitcher/SWBDStitcher.py
     upsampledem/UpsampleDem.py
-    watermask/test/mask.py
     watermask/WaterMask.py
     )

@@ -33,8 +33,10 @@ TERRASARX, and UAVSAR.
    - [Note On 'python3' Exectuable Convention](#python3-convention)
    - [License required for dependencies to enable some workflows in ISCE](#license-required-for-dependencies-to-enable-some-workflows-in-isce)
 2. [Building ISCE](#building-isce)
-   - [Configuration control: SCONS\_CONFIG\_DIR and SConfigISCE](#configuration-control)
-   - [Install ISCE](#install-isce)
+   - [SCons](#scons-recommended)
+     - [Configuration control: SCONS\_CONFIG\_DIR and SConfigISCE](#configuration-control)
+     - [Install ISCE](#install-isce)
+   - [CMake](#cmake-experimental)
    - [Setup Your Environment](#setup-your-environment)
 3. [Running ISCE](#running-isce)
    - [Running ISCE from the command line](#running-isce-from-the-command-line)
@@ -192,7 +194,9 @@ the older data with the same workflows available in this open source release.
 
 ## Building ISCE
 
-### Configuration control
+### SCons (recommended)
+
+#### Configuration control
 
 Scons requires that configuration information be present in a directory
 specified by the environment variable SCONS\_CONFIG\_DIR.  First, create a
@@ -252,7 +256,7 @@ and the install files.  Also, in the following the capitalization of 'isce' as
 lower case does matter.  This is the case-sensitive package name that Python
 code uses for importing isce.
 
-### Install ISCE
+#### Install ISCE
 
 cd isce
 scons install
@@ -273,7 +277,7 @@ This will build the necessary components and install them into the location
 specified in the configuration file as PRJ\_SCONS\_INSTALL.
 
 
-#### Note about compiling ISCE after an unsuccessful build.
+##### Note about compiling ISCE after an unsuccessful build.
 
 When building ISCE, scons will check the list of header files and libraries that
 ISCE requires.  Scons will cache the results of this dependency checking.  So,
@@ -289,6 +293,47 @@ directory containing the SConstruct file):
 ```
 
 and then try "scons install" again.
+
+### CMake (experimental)
+Make sure you have the following prerequisites:
+* CMake ≥ 3.12
+* GCC ≥ 4.8  (with C++11 support)
+* Python ≥ 3.5
+* Cython
+* FFTW 3
+* GDAL
+
+```sh
+git clone https://github.com/isce-framework/isce2
+cd isce2
+mkdir build
+cd build
+cmake .. -DCMAKE_INSTALL_PREFIX=/my/isce/install/location
+make install
+```
+
+#### Additional cmake configuration options
+
+CMake uses `CMAKE_PREFIX_PATH` as a global prefix for finding packages,
+which can come in handy when using e.g. Anaconda:
+
+```sh
+cmake [...] -DCMAKE_PREFIX_PATH=$CONDA_PREFIX
+```
+
+On macOS, cmake will also look for systemwide "frameworks",
+which is usually not what you want when using Conda or Macports.
+
+```sh
+cmake [...] -DCMAKE_FIND_FRAMEWORK=NEVER
+```
+
+For packagers, the `PYTHON_MODULE_DIR` can be used to specify ISCE2's
+package installation location relative to the installation prefix
+
+```sh
+cmake [...] -DPYTHON_MODULE_DIR=lib/python3.8m/site-packages
+```
 
 ### Setup Your Environment
 
