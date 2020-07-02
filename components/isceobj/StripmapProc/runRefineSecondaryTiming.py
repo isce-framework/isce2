@@ -10,29 +10,29 @@ import os
 import shelve
 import logging
 
-logger = logging.getLogger('isce.insar.runRefineSlaveTiming')
+logger = logging.getLogger('isce.insar.runRefineSecondaryTiming')
 
 
-def estimateOffsetField(master, slave, azoffset=0, rgoffset=0):
+def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     '''
     Estimate offset field between burst and simamp.
     '''
 
 
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(reference + '.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = Ampcor(name='master_offset1')
+    objOffset = Ampcor(name='reference_offset1')
     objOffset.configure()
     objOffset.setAcrossGrossOffset(rgoffset)
     objOffset.setDownGrossOffset(azoffset)
@@ -124,20 +124,20 @@ def fitOffsets(field,azrgOrder=0,azazOrder=0,
     return (aa, rr), field
 
 
-def runRefineSlaveTiming(self):
+def runRefineSecondaryTiming(self):
 
-    logger.info("Running refine slave timing") 
-    slaveFrame = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    masterSlc = masterFrame.getImage().filename
+    logger.info("Running refine secondary timing") 
+    secondaryFrame = self._insar.loadProduct( self._insar.secondarySlcCropProduct)
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    referenceSlc = referenceFrame.getImage().filename
 
-    slvImg = slaveFrame.getImage()
-    slaveSlc = os.path.join(self.insar.coregDirname , self._insar.coarseCoregFilename)
+    slvImg = secondaryFrame.getImage()
+    secondarySlc = os.path.join(self.insar.coregDirname , self._insar.coarseCoregFilename)
     
-    field = estimateOffsetField(masterSlc, slaveSlc)
+    field = estimateOffsetField(referenceSlc, secondarySlc)
 
-    rgratio = masterFrame.instrument.getRangePixelSize()/slaveFrame.instrument.getRangePixelSize()
-    azratio = slaveFrame.PRF / masterFrame.PRF 
+    rgratio = referenceFrame.instrument.getRangePixelSize()/secondaryFrame.instrument.getRangePixelSize()
+    azratio = secondaryFrame.PRF / referenceFrame.PRF 
 
     print ('*************************************')
     print ('rgratio, azratio: ', rgratio, azratio)

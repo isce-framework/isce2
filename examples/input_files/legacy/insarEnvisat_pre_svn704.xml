@@ -12,11 +12,11 @@
         <property name="doppler_method">
             <value>useDOPIQ</value>
         </property>
-        <component name="Master">
-            <catalog>envisatMaster.xml</catalog> <!-- see envisatIn1.xml as an example -->
+        <component name="Reference">
+            <catalog>envisatReference.xml</catalog> <!-- see envisatIn1.xml as an example -->
         </component>
-        <component name="Slave">
-            <catalog>envisatSlave.xml</catalog><!-- see envisatIn1.xml as an example -->
+        <component name="Secondary">
+            <catalog>envisatSecondary.xml</catalog><!-- see envisatIn1.xml as an example -->
         </component>
 </component>
 </input>

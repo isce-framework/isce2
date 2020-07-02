@@ -8,12 +8,12 @@ import shelve
 import logging
 
 def createParser():
-    parser = argparse.ArgumentParser( description='Duplicating the master SLC')
+    parser = argparse.ArgumentParser( description='Duplicating the reference SLC')
 
     parser.add_argument('-i', '--input_slc', dest='input_slc', type=str, required=True,
-            help = 'Directory with master acquisition for reference')
+            help = 'Directory with reference acquisition for reference')
     parser.add_argument('-o', '--output_slc', dest='output_slc', type=str, required=True,
-            help='Directory with slave acquisition')
+            help='Directory with secondary acquisition')
 
     return parser
     
@@ -41,17 +41,17 @@ def main(iargs=None):
     os.makedirs(outDir, exist_ok=True)
 
     # copying shelf files as backup
-    masterShelveDir = os.path.join(outDir, 'masterShelve')
-    slaveShelveDir = os.path.join(outDir, 'slaveShelve')
+    referenceShelveDir = os.path.join(outDir, 'referenceShelve')
+    secondaryShelveDir = os.path.join(outDir, 'secondaryShelve')
 
-    os.makedirs(masterShelveDir, exist_ok=True)
-    os.makedirs(slaveShelveDir, exist_ok=True)
+    os.makedirs(referenceShelveDir, exist_ok=True)
+    os.makedirs(secondaryShelveDir, exist_ok=True)
 
 
-    cmd = 'cp '+ inDir + '/data* ' + slaveShelveDir
+    cmd = 'cp '+ inDir + '/data* ' + secondaryShelveDir
     os.system(cmd) 
 
-    cmd = 'cp '+ inDir + '/data* ' + masterShelveDir
+    cmd = 'cp '+ inDir + '/data* ' + referenceShelveDir
     os.system(cmd)
 
     cmd = 'gdal_translate -of ENVI ' + inps.input_slc + " " + inps.output_slc

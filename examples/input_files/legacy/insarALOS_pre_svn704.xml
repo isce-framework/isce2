@@ -54,7 +54,7 @@ Option 3: any combination of in-line properties and components or catalogs.
         <property name="patch_size">
             <value>8192</value>
         </property>
-        <component name="Master"> <!-- Master file -->
+        <component name="Reference"> <!-- Reference file -->
            <property name="IMAGEFILE">
                <value>'IMG-HH-ALPSRPXXXXXXXXXX-P1.0__A'</value> <!-- here goes your IMG file name -->
            </property>
@@ -62,10 +62,10 @@ Option 3: any combination of in-line properties and components or catalogs.
                 <value>'LED-ALPSRPXXXXXXXXXXX-P1.0__A'</value><!-- here goes your LED file name -->
            </property>
            <property name="OUTPUT">
-                <value>master.raw</value><!-- here goes your raw output file name -->
+                <value>reference.raw</value><!-- here goes your raw output file name -->
            </property>
         </component>
-        <component name="Slave"><!-- Slave  file . See Master for following attributes-->
+        <component name="Secondary"><!-- Secondary  file . See Reference for following attributes-->
            <property name="IMAGEFILE">
                 <value>'IMG-HH-ALPSRP080110680-P1.0__A'</value>
            </property>
@@ -73,7 +73,7 @@ Option 3: any combination of in-line properties and components or catalogs.
                 <value>'LED-ALPSRP080110680-P1.0__A'</value>
            </property>
            <property name="OUTPUT">
-                <value>slave.raw</value>
+                <value>secondary.raw</value>
            </property>
         </component>
 </component>

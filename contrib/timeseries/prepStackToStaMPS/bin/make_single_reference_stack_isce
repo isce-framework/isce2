@@ -35,8 +35,8 @@ endif
 set datasource = `grep source_data input_file | awk '{print $2}'`
 # check if there is an slc stack path specified
 set slc_stack_path = `grep slc_stack_path input_file | awk '{print $2}'`
-# check the master date 
-set master_date = `grep slc_stack_master input_file | awk '{print $2}'`
+# check the reference date 
+set reference_date = `grep slc_stack_reference input_file | awk '{print $2}'`
 # cehck the geom path is specified
 set stack_geom_path = `grep slc_stack_geom_path input_file | awk '{print $2}'`
 # get the slc suffix if specified
@@ -69,13 +69,13 @@ if (("$datasource" != "slc_stack") && ("$datasource" != "slc_stack_burst")) then
 endif
 # catch error specific for the type of stack processing
 # the stack processing option
-if (( "$slc_stack_path" == "" ) || ( "$master_date" == "" ) || ( "$lambda" == "" ) || ( "$looks" == "" ) || ( "$ar" == "" ) || ( "$stack_geom_path" == "" ) || ( "$slc_stack_baseline_path" == "" ))  then
+if (( "$slc_stack_path" == "" ) || ( "$reference_date" == "" ) || ( "$lambda" == "" ) || ( "$looks" == "" ) || ( "$ar" == "" ) || ( "$stack_geom_path" == "" ) || ( "$slc_stack_baseline_path" == "" ))  then
         echo Need to define: 
         echo \- slc_stack_path as the path to the slc\'s
-        echo \- slc_stack_master as the master of the \"NEW\" SM network as YYYYMMDD. This does not need to be the master used to generate the stack
+        echo \- slc_stack_reference as the reference of the \"NEW\" SM network as YYYYMMDD. This does not need to be the reference used to generate the stack
         echo \- slc_stack_geom_path as the path to the geometry for the stack 
         echo \- slc_stack_baseline_path as the path to the baseline folder for the stack, with files containing single baseline value as AAAAAAAA_YYYYMMDD.txt or grid of baselines as YYYYMMDD (isce readable file with xml information), and with the baseline in m units. 
-        echo \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AAAAAAAA is the data of the master used to generate the intital stack
+        echo \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AAAAAAAA is the data of the reference used to generate the intital stack
         echo \- lambda as the SAR wavelength in m units
         echo \- looks as the number of looks. Used only for multi-looked products \(e.g. quickviews\)
         echo \- aspect_ratio as the integer ratio n_lines/n_pixels for a square pixel. Used only for multi-looked products \(e.g. quickviews\)
@@ -104,72 +104,72 @@ if ("$geom_suffix" != "") then
    echo Geometry files have a suffix as: $geom_suffix
 endif
 
-# check if the master is likely given as YYYYMMDD format
-set n_char = `echo $master_date | wc -c`      # this includes the new line char too, so date should be 9 not 8 char
-#( $master_date !~ ^[0-9]+$ )  => expression does not seem to catch letter...
-if ((  "$n_char" != "9" ) || ( "$master_date" !~ ^[0-9]+$ )) then
-   echo The slc_stack_master does not look to be in YYYYMMDD format: $master_date
+# check if the reference is likely given as YYYYMMDD format
+set n_char = `echo $reference_date | wc -c`      # this includes the new line char too, so date should be 9 not 8 char
+#( $reference_date !~ ^[0-9]+$ )  => expression does not seem to catch letter...
+if ((  "$n_char" != "9" ) || ( "$reference_date" !~ ^[0-9]+$ )) then
+   echo The slc_stack_reference does not look to be in YYYYMMDD format: $reference_date
    echo
    exit 1
 endif
 
 # check if the SM dir already exists
-set SMdir = INSAR_$master_date
+set SMdir = INSAR_$reference_date
 if (! -e $SMdir) then
     mkdir $SMdir
 endif
 
 # will now rename the input file and copy a version into the INSAR_YYYYMMDD folder
 cp input_file $SMdir/.
-mv input_file input_file_$master_date
+mv input_file input_file_$reference_date
 
 # save the ar, looks, and lambda files for StaMPS
 echo $lambda > $SMdir/lambda.1.in
 
 set SM_DIR = $WORKDIR/$SMdir
-# the master date
-echo SM: Master Date = $master_date 
+# the reference date
+echo SM: Reference Date = $reference_date 
 echo -------------------------------
 echo
 
-# linking the master SLC
-if (! -e $SM_DIR/master) then
-   mkdir $SM_DIR/master
+# linking the reference SLC
+if (! -e $SM_DIR/reference) then
+   mkdir $SM_DIR/reference
 endif
-cd $SM_DIR/master
+cd $SM_DIR/reference
 
 # the SLC structure for the BURST is different
 if ($datasource == "slc_stack")  then
-    ln -s -f  $slc_stack_path/$master_date/$master_date.slc${slc_suffix}* .
-    if ( -e $slc_stack_path/$master_date/${master_date}.slc.hdr) then
-        ln -s -f  $slc_stack_path/$master_date/${master_date}.slc.hdr .
-    else if ( -e $slc_stack_path/$master_date/${master_date}.hdr) then
-        ln -s -f  $slc_stack_path/$master_date/${master_date}.hdr .
+    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .
+    if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .
+    else if ( -e $slc_stack_path/$reference_date/${reference_date}.hdr) then
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.hdr .
     endif
 
-    rm $master_date.slc${slc_suffix}.vrt
-    gdal_translate -of VRT $master_date.slc${slc_suffix} $master_date.slc${slc_suffix}.vrt
-    rm $master_date.slc${slc_suffix}.xml
-    gdal2isce_xml.py -i $master_date.slc${slc_suffix}.vrt
-    ln -s -f $slc_stack_path/$master_date/$master_date.slc${slc_suffix} master.slc
-    set master_slc = $slc_stack_path/$master_date/$master_date.slc$slc_suffix
-    set master_slc_local = master/$master_date.slc$slc_suffix
+    rm $reference_date.slc${slc_suffix}.vrt
+    gdal_translate -of VRT $reference_date.slc${slc_suffix} $reference_date.slc${slc_suffix}.vrt
+    rm $reference_date.slc${slc_suffix}.xml
+    gdal2isce_xml.py -i $reference_date.slc${slc_suffix}.vrt
+    ln -s -f $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix} reference.slc
+    set reference_slc = $slc_stack_path/$reference_date/$reference_date.slc$slc_suffix
+    set reference_slc_local = reference/$reference_date.slc$slc_suffix
 
     # check if the xml file exist
-    if (! -e $master_date.slc$slc_suffix.xml) then
+    if (! -e $reference_date.slc$slc_suffix.xml) then
         echo "xml file for the SLC does not exist, you need to have these"
         exit 1
     endif
 
     cd $SM_DIR
     # getting the meta-data used in stamps
-    get_LengthWidth.py master/$master_date.slc$slc_suffix 
+    get_LengthWidth.py reference/$reference_date.slc$slc_suffix 
 
-    # linking the master geometry information
-    if (! -e $SM_DIR/master/geom) then
-        mkdir $SM_DIR/master/geom
+    # linking the reference geometry information
+    if (! -e $SM_DIR/reference/geom) then
+        mkdir $SM_DIR/reference/geom
     endif
-    cd $SM_DIR/master/geom 
+    cd $SM_DIR/reference/geom 
     ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .
     ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .
     ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .
@@ -203,64 +203,64 @@ endif
 
 # generating a file with the baseline information
 cd $SM_DIR
-step_baseline_stack.py -i $slc_stack_baseline_path -m $master_date
+step_baseline_stack.py -i $slc_stack_baseline_path -m $reference_date
 # Setting the new SM processing directory
 cd $slc_stack_path
 if (-e $SM_DIR/slcs.list) then
    rm $SM_DIR/slcs.list > /dev/null
 endif
 if (! -e $SM_DIR/slcs.list) then
-   \ls -d [0-9]*[0-9] | sed "/$master_date/ d" | gawk 'BEGIN {FS="/"} {print $(NF)}' > $SM_DIR/slcs.list
-   echo "Processing all SLCs as slaves except $master_date"
+   \ls -d [0-9]*[0-9] | sed "/$reference_date/ d" | gawk 'BEGIN {FS="/"} {print $(NF)}' > $SM_DIR/slcs.list
+   echo "Processing all SLCs as secondarys except $reference_date"
 endif
 cd $SM_DIR
 
 # loop over the set of dates to make SM combinations
-echo Looping over the slave acquisitions now: 
+echo Looping over the secondary acquisitions now: 
 foreach dir(`cat slcs.list`)
-   set slave_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $NF}'`
-   if ($slave_date == "") then
-       set slave_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $(NF-1)}'`
+   set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $NF}'`
+   if ($secondary_date == "") then
+       set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $(NF-1)}'`
    endif             
-   echo $slave_date
+   echo $secondary_date
 
    # check if the SLC directoy needs to be made
-   if (! -e $slave_date) then
-       mkdir $slave_date
+   if (! -e $secondary_date) then
+       mkdir $secondary_date
    endif
     
-   # the slave SLC
-   set slave_slc = ${slc_stack_path}/$slave_date/$slave_date.slc$slc_suffix
-   set slave_slc_local = $slave_date/coreg_fine/$slave_date.slc$slc_suffix
-   cd $slave_date
+   # the secondary SLC
+   set secondary_slc = ${slc_stack_path}/$secondary_date/$secondary_date.slc$slc_suffix
+   set secondary_slc_local = $secondary_date/coreg_fine/$secondary_date.slc$slc_suffix
+   cd $secondary_date
 
    # generate the coreg_fine symbolic link which is used when loading into stamps
    if (! -e coreg_fine) then
        mkdir coreg_fine/
    endif 
    cd coreg_fine
-   ln -s -f ${slave_slc}* .
-   if ( -e ${slc_stack_path}/$slave_date/$slave_date.slc.hdr ) then
-       ln -s -f ${slc_stack_path}/$slave_date/$slave_date.slc.hdr .
-   else if ( -e ${slc_stack_path}/$slave_date/$slave_date.hdr) then
-        ln -s -f ${slc_stack_path}/$slave_date/$slave_date.hdr .
+   ln -s -f ${secondary_slc}* .
+   if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr ) then
+       ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr .
+   else if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.hdr) then
+        ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.hdr .
    endif
-   rm $slave_date.slc${slc_suffix}.vrt
-   gdal_translate -of VRT $slave_date.slc$slc_suffix $slave_date.slc${slc_suffix}.vrt
-   rm $slave_date.slc${slc_suffix}.xml
-   gdal2isce_xml.py -i $slave_date.slc${slc_suffix}.vrt
-   ln -s -f $slave_slc coreg.slc                                                                                            
+   rm $secondary_date.slc${slc_suffix}.vrt
+   gdal_translate -of VRT $secondary_date.slc$slc_suffix $secondary_date.slc${slc_suffix}.vrt
+   rm $secondary_date.slc${slc_suffix}.xml
+   gdal2isce_xml.py -i $secondary_date.slc${slc_suffix}.vrt
+   ln -s -f $secondary_slc coreg.slc                                                                                            
 
    # check if the xml file exist, if not need to make it
-   if (! -e $slave_date.slc$slc_suffix.xml) then
+   if (! -e $secondary_date.slc$slc_suffix.xml) then
         echo "xml file for the SLC does not exist, you need to have these"
-        echo try: gdal2isce_xml.py -i $slave_date.slc$slc_suffix
+        echo try: gdal2isce_xml.py -i $secondary_date.slc$slc_suffix
         exit 1
    endif
         
    cd $SM_DIR
    # generate the intererograms if requested
-   set IFG_DIR = $slave_date
+   set IFG_DIR = $secondary_date
    if ( "$generate_ifgs" == "y" ) then
         set save_ifg = $IFG_DIR/isce_minrefdem.int
         # store the information on how isce will be called
@@ -268,9 +268,9 @@ foreach dir(`cat slcs.list`)
             # nothing to be done, file exist and user does not want to overwrite it
             echo $save_ifg exist, will not overwrite on user request
         else
-            echo "imageMath.py -e='a*conj(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ifg -t CFLOAT -s BIP" >> processing_SM.log
-            echo "imageMath.py -e='a*conj(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ifg -t CFLOAT -s BIP"
-            imageMath.py -e='a*conj(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ifg -t CFLOAT -s BIP
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP" >> processing_SM.log
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP"
+            imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP
             fixImageXml.py -f -i $save_ifg
         endif
    endif
@@ -282,19 +282,19 @@ foreach dir(`cat slcs.list`)
        if ( -f $save_ampl & $overwrite == 0 ) then
             echo $save_ampl exist, will not overwrite on user request
        else
-           echo "imageMath.py -e='abs(a);abs(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ampl -t FLOAT -s BIP" >> processing_SM.log
-           echo "imageMath.py -e='abs(a);abs(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ampl -t FLOAT -s BIP"
-           imageMath.py -e='abs(a);abs(b)' --a=$master_slc_local --b=$slave_slc_local -o $save_ampl -t FLOAT -s BIP
+           echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP" >> processing_SM.log
+           echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP"
+           imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP
            fixImageXml.py -f -i $save_ampl
        endif
    endif
 
 
-   # include a symbolic link for the slave and master slc.
+   # include a symbolic link for the secondary and reference slc.
    # This will be used latter on to get the amplitude information from in StaMPS
    cd $IFG_DIR
-   ln -s -f $slave_slc slave.slc
-   ln -s -f $master_slc master.slc
+   ln -s -f $secondary_slc secondary.slc
+   ln -s -f $reference_slc reference.slc
 
    cd $SM_DIR
 

@@ -252,8 +252,8 @@
         write(6,*) ''
         write(6,*) '   *** using ScanSAR full-aperture mode for gross offset estimation ***'
         write(6,*) 'azimuth multi-looking window size: ', winsize_filt
-        write(6,*) 'number of azimuth samples before and after multi-looking (master): ', i_wsyi, i_wsyi_filt
-        write(6,*) 'number of azimuth samples before and after multi-looking (slave): ', i_wsyj, i_wsyj_filt
+        write(6,*) 'number of azimuth samples before and after multi-looking (reference): ', i_wsyi, i_wsyi_filt
+        write(6,*) 'number of azimuth samples before and after multi-looking (secondary): ', i_wsyj, i_wsyj_filt
         write(6,*) 'azimuth covariance surface oversampling factor: ', i_covs_filt
         write(6,*) 'total number of azimuth samples to be oversampled', i_cw_filt
         write(6,*) ''

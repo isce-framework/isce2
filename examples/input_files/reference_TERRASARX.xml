@@ -7,7 +7,7 @@
 </component>
 <!--
 Shown above is the bare minimum input XML file for TERRASARX sensor.
-The master and slave catalog xml files have the same structure.
+The reference and secondary catalog xml files have the same structure.
 
 All file paths in the input files should either be absolute paths or relative
 to the processing directory.
@@ -25,12 +25,12 @@ consist of very long strings.  This is a case where use of the constant tag
 (see the top level README.txt file) can help in constructing the paths.  At
 the time of this release the constant tag does not work with catalog files.
 This will be fixed in a future release.  In the meantime, you could go with
-the above example master.xml catalog file or else you can try the all-in-one
+the above example reference.xml catalog file or else you can try the all-in-one
 insarApp.xml style and use constants as in the following example:
 
 ========================================================================
 Use the all-in-one style of insarApp.xml file.  In this examples the
-paths to the master and slave input files are constructed from three
+paths to the reference and secondary input files are constructed from three
 constants each.  It is assumed that you might have all of your downloaded
 TerraSARX data in one place, which we reference with the constant named,
 "tsx".  From there we use constants "d1" and "d2" to get to the directory
@@ -64,13 +64,13 @@ insarApp.xml
 <component name="insar">
     <property name="Sensor Name">TerraSARX</property>
     <property name="doppler method ">useDOPTSX</property>
-    <component name="Master">
+    <component name="Reference">
         <property name="XML">$tsx$/$d1$/$b1$/$b1$.xml</property>
-        <property name="OUTPUT">master.raw</property>
+        <property name="OUTPUT">reference.raw</property>
     </component>
-    <component name="Slave">
+    <component name="Secondary">
         <property name="XML">$tsx$/$d2$/$b2$/$b2$.xml</property>
-        <property name="OUTPUT">slave.raw</property>
+        <property name="OUTPUT">secondary.raw</property>
     </component>
 </component>
 

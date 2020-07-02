@@ -58,7 +58,7 @@ git reset --hard origin/master
 
 ```
 git checkout master
-(potentially update your local master against upstream, as described above)
+(potentially update your local reference against upstream, as described above)
 git checkout -b my_new_feature_branch
 
 # do work. For example:

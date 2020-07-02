@@ -27,8 +27,8 @@ def runDenseOffset(self):
     os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
-    #masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)
-    #slaveTrack = self._insar.loadProduct(self._insar.slaveTrackParameter)
+    #referenceTrack = self._insar.loadProduct(self._insar.referenceTrackParameter)
+    #secondaryTrack = self._insar.loadProduct(self._insar.secondaryTrackParameter)
 
 #########################################################################################
 
@@ -101,24 +101,24 @@ def runDenseOffsetCPU(self):
     from isceobj.Alos2Proc.Alos2ProcPublic import runCmd
 
     ####For this module currently, we need to create an actual file on disk
-    for infile in [self._insar.masterSlc, self._insar.slaveSlcCoregistered]:
+    for infile in [self._insar.referenceSlc, self._insar.secondarySlcCoregistered]:
         if os.path.isfile(infile):
             continue
         cmd = 'gdal_translate -of ENVI {0}.vrt {0}'.format(infile)
         runCmd(cmd)
 
     m = isceobj.createSlcImage()
-    m.load(self._insar.masterSlc + '.xml')
+    m.load(self._insar.referenceSlc + '.xml')
     m.setAccessMode('READ')
 
     s = isceobj.createSlcImage()
-    s.load(self._insar.slaveSlcCoregistered + '.xml')
+    s.load(self._insar.secondarySlcCoregistered + '.xml')
     s.setAccessMode('READ')
 
     #objOffset.numberThreads = 1
     print('\n************* dense offset estimation parameters *************')
-    print('master SLC: %s' % (self._insar.masterSlc))
-    print('slave SLC: %s' % (self._insar.slaveSlcCoregistered))
+    print('reference SLC: %s' % (self._insar.referenceSlc))
+    print('secondary SLC: %s' % (self._insar.secondarySlcCoregistered))
     print('dense offset estimation window width: %d' % (self.offsetWindowWidth))
     print('dense offset estimation window hight: %d' % (self.offsetWindowHeight))
     print('dense offset search window width: %d' % (self.offsetSearchWindowWidth))
@@ -216,23 +216,23 @@ def runDenseOffsetGPU(self):
 
 
     ####For this module currently, we need to create an actual file on disk
-    for infile in [self._insar.masterSlc, self._insar.slaveSlcCoregistered]:
+    for infile in [self._insar.referenceSlc, self._insar.secondarySlcCoregistered]:
         if os.path.isfile(infile):
             continue
         cmd = 'gdal_translate -of ENVI {0}.vrt {0}'.format(infile)
         runCmd(cmd)
 
     m = isceobj.createSlcImage()
-    m.load(self._insar.masterSlc + '.xml')
+    m.load(self._insar.referenceSlc + '.xml')
     m.setAccessMode('READ')
 
     s = isceobj.createSlcImage()
-    s.load(self._insar.slaveSlcCoregistered + '.xml')
+    s.load(self._insar.secondarySlcCoregistered + '.xml')
     s.setAccessMode('READ')
 
     print('\n************* dense offset estimation parameters *************')
-    print('master SLC: %s' % (self._insar.masterSlc))
-    print('slave SLC: %s' % (self._insar.slaveSlcCoregistered))
+    print('reference SLC: %s' % (self._insar.referenceSlc))
+    print('secondary SLC: %s' % (self._insar.secondarySlcCoregistered))
     print('dense offset estimation window width: %d' % (self.offsetWindowWidth))
     print('dense offset estimation window hight: %d' % (self.offsetWindowHeight))
     print('dense offset search window width: %d' % (self.offsetSearchWindowWidth))
@@ -249,12 +249,12 @@ def runDenseOffsetGPU(self):
     objOffset.nStreams = 2
     #original ampcor program in roi_pac uses phase gradient to deramp
     objOffset.derampMethod = 2
-    objOffset.masterImageName = self._insar.masterSlc
-    objOffset.masterImageHeight = m.length
-    objOffset.masterImageWidth = m.width
-    objOffset.slaveImageName = self._insar.slaveSlcCoregistered
-    objOffset.slaveImageHeight = s.length
-    objOffset.slaveImageWidth = s.width
+    objOffset.referenceImageName = self._insar.referenceSlc
+    objOffset.referenceImageHeight = m.length
+    objOffset.referenceImageWidth = m.width
+    objOffset.secondaryImageName = self._insar.secondarySlcCoregistered
+    objOffset.secondaryImageHeight = s.length
+    objOffset.secondaryImageWidth = s.width
     objOffset.offsetImageName = self._insar.denseOffset
     objOffset.snrImageName = self._insar.denseOffsetSnr
 
@@ -273,8 +273,8 @@ def runDenseOffsetGPU(self):
     objOffset.grossOffsetAcrossStatic = 0
     objOffset.grossOffsetDownStatic = 0
 
-    objOffset.masterStartPixelDownStatic = self.offsetWindowHeight//2
-    objOffset.masterStartPixelAcrossStatic = self.offsetWindowWidth//2
+    objOffset.referenceStartPixelDownStatic = self.offsetWindowHeight//2
+    objOffset.referenceStartPixelAcrossStatic = self.offsetWindowWidth//2
 
     objOffset.numberWindowDown = (m.length - 2*self.offsetSearchWindowHeight - self.offsetWindowHeight) // self.offsetSkipHeight
     objOffset.numberWindowAcross = (m.width - 2*self.offsetSearchWindowWidth - self.offsetWindowWidth) // self.offsetSkipWidth

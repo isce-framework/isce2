@@ -32,10 +32,10 @@ def runESD(self, debugPlot=True):
             print('Skipping ESD for swath IW{0}'.format(swath))
             continue
 
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
 
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
-        slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits(swath-1)
 
         esddir = self._insar.esdDirname
         alks = self.esdAzimuthLooks
@@ -156,7 +156,7 @@ def runESD(self, debugPlot=True):
     catalog.printToLog(logger, "runESD")
     self._insar.procDoc.addAllFromCatalog(catalog)
 
-    self._insar.slaveTimingCorrection = medianval * master.bursts[0].azimuthTimeInterval 
+    self._insar.secondaryTimingCorrection = medianval * reference.bursts[0].azimuthTimeInterval 
 
     return
 

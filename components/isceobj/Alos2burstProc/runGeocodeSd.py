@@ -20,8 +20,8 @@ def runGeocodeSd(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    #slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    #secondaryTrack = self._insar.loadTrack(reference=False)
 
     demFile = os.path.abspath(self._insar.demGeo)
 
@@ -37,7 +37,7 @@ def runGeocodeSd(self):
             geocodeList += glob.glob(xxx)
 
     if self.bbox == None:
-        bbox = getBboxGeo(masterTrack)
+        bbox = getBboxGeo(referenceTrack)
     else:
         bbox = self.bbox
     catalog.addItem('geocode bounding box', bbox, 'runGeocodeSd')
@@ -56,7 +56,7 @@ def runGeocodeSd(self):
         else:
             interpMethod = self.geocodeInterpMethodSd.lower()
 
-        geocode(masterTrack, demFile, inputFile, bbox, numberRangeLooks, numberAzimuthLooks, interpMethod, 0, 0)
+        geocode(referenceTrack, demFile, inputFile, bbox, numberRangeLooks, numberAzimuthLooks, interpMethod, 0, 0)
 
 
     os.chdir('../')

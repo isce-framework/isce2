@@ -64,7 +64,7 @@ def createParser():
             help='Working directory ')
     
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
-            help='Directory with slave acquisition')
+            help='Directory with secondary acquisition')
     
     parser.add_argument('-n', '--swath_num', dest='swath_num', type=str, default='1 2 3',
             help='A list of swaths to be processed')

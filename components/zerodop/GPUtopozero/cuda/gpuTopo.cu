@@ -562,7 +562,7 @@ __global__ void runTopo(struct Orbit orbit, struct OutputImgArrs outImgArrs, str
     
         // Leave out masking stuff for now (though it's doable)
     
-        // Finally write to master arrays
+        // Finally write to reference arrays
         outImgArrs.lat[pixel] = thrd_lat;
         outImgArrs.lon[pixel] = thrd_lon;
         outImgArrs.z[pixel] = thrd_z;

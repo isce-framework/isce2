@@ -25,8 +25,8 @@ def createParser():
             help = 'Number of range looks')
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
             help = 'Input DEM to use')
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help = 'Dir with master frame')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help = 'Dir with reference frame')
     parser.add_argument('-o', '--output', dest='outdir', type=str, required=True,
             help = 'Output directory')
     parser.add_argument('-n','--native', dest='nativedop', action='store_true',
@@ -373,7 +373,7 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
         msg += ' using gdal.Translate() ...'
     print('-'*50+'\n'+msg)
 
-    # create 'geom_master' directory
+    # create 'geom_reference' directory
     os.makedirs(out_dir, exist_ok=True)
 
     # multilook files one by one
@@ -426,7 +426,7 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
             else:
                 raise ValueError('un-supported multilook method: {}'.format(method))
 
-            # copy the full resolution xml/vrt file from ./merged/geom_master to ./geom_master
+            # copy the full resolution xml/vrt file from ./merged/geom_reference to ./geom_reference
             # to facilitate the number of looks extraction
             # the file path inside .xml file is not, but should, updated
             if in_file != out_file+'.full':
@@ -493,7 +493,7 @@ def main(iargs=None):
         runTopo = runTopoCPU
 
 
-    db = shelve.open(os.path.join(inps.master, 'data'))
+    db = shelve.open(os.path.join(inps.reference, 'data'))
     frame = db['frame']
     try:
         doppler = db['doppler']
@@ -520,9 +520,9 @@ def main(iargs=None):
     runTopo(info,demImage,dop=doppler,nativedop=inps.nativedop, legendre=inps.legendre)
     runSimamp(os.path.dirname(info.heightFilename),os.path.basename(info.heightFilename))
 
-    # write multilooked geometry files in "geom_master" directory, same level as "Igrams"
+    # write multilooked geometry files in "geom_reference" directory, same level as "Igrams"
     if inps.rlks * inps.rlks > 1:
-        out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_master')
+        out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_reference')
         runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
 
     return

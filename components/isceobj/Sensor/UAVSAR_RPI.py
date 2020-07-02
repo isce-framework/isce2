@@ -125,7 +125,7 @@ class UAVSAR_RPI(Sensor):
 
         if self.metadata['UAVSAR RPI Annotation File Version Number']:
 #            print("UAVSAR_RPI._populateFrame, pair = True")
-            if self.name.lower() == 'master':
+            if self.name.lower() == 'reference':
                 sip1 = str(1)
             else:
                 sip1 = str(2)
@@ -280,9 +280,9 @@ class UAVSAR_RPI(Sensor):
         self.populateMetadata()
 
         slcImage = isceobj.createSlcImage()
-        if self.name == 'master' or self.name == 'scene1':
+        if self.name == 'reference' or self.name == 'scene1':
             self.slcname = self.metadata['Single Look Complex Data of Pass 1']
-        elif self.name == 'slave' or self.name == 'scene2':
+        elif self.name == 'secondary' or self.name == 'scene2':
             self.slcname = self.metadata['Single Look Complex Data of Pass 2']
         else:
             print("Unrecognized sensor.name = ", sensor.name)

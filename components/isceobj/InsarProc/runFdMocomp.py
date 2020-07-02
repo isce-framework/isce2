@@ -32,10 +32,10 @@ import stdproc
 import sys
 logger = logging.getLogger('isce.insar.runFdMocomp')
 
-## Mapping from use_dop kewword to f(masterDop, slaveDrop)
+## Mapping from use_dop kewword to f(referenceDop, secondaryDrop)
 USE_DOP = {'AVERAGE' : lambda x, y: (x+y)/2.,
-           'MASTER': lambda x, y: x,
-           'SLAVE': lambda x, y: y}
+           'REFERENCE': lambda x, y: x,
+           'SECONDARY': lambda x, y: y}
 
 def runFdMocomp(self, use_dop="average"):
     """
@@ -45,27 +45,27 @@ def runFdMocomp(self, use_dop="average"):
     H2 = self.insar.fdH2
     peg = self.insar.peg
     lookSide = self.insar._lookSide
-    masterOrbit = self.insar.masterOrbit
-    slaveOrbit = self.insar.slaveOrbit
+    referenceOrbit = self.insar.referenceOrbit
+    secondaryOrbit = self.insar.secondaryOrbit
     rangeSamplingRate = (
-        self.insar.getMasterFrame().instrument.rangeSamplingRate)
+        self.insar.getReferenceFrame().instrument.rangeSamplingRate)
     rangePulseDuration = (
-        self.insar.getSlaveFrame().instrument.pulseLength)
+        self.insar.getSecondaryFrame().instrument.pulseLength)
     chirpExtension = self.insar.chirpExtension
     chirpSize = int(rangeSamplingRate * rangePulseDuration)
    
     number_range_bins = self.insar.numberRangeBins
    
-    masterCentroid = self.insar.masterDoppler.fractionalCentroid
-    slaveCentroid = self.insar.slaveDoppler.fractionalCentroid
+    referenceCentroid = self.insar.referenceDoppler.fractionalCentroid
+    secondaryCentroid = self.insar.secondaryDoppler.fractionalCentroid
     logger.info("Correcting Doppler centroid for motion compensation")
 
 
     result = []
-    for centroid, frame, orbit, H in zip((masterCentroid, slaveCentroid),
-                                      (self.insar.masterFrame,
-                                       self.insar.slaveFrame),
-                                         (masterOrbit, slaveOrbit),
+    for centroid, frame, orbit, H in zip((referenceCentroid, secondaryCentroid),
+                                      (self.insar.referenceFrame,
+                                       self.insar.secondaryFrame),
+                                         (referenceOrbit, secondaryOrbit),
                                          (H1, H2)
                                       ):
         fdmocomp = stdproc.createFdMocomp()
@@ -80,13 +80,13 @@ def runFdMocomp(self, use_dop="average"):
         result.append( fdmocomp.dopplerCentroid )
         pass
 
-    masterDopplerCorrection, slaveDopplerCorrection = result
+    referenceDopplerCorrection, secondaryDopplerCorrection = result
 
-#    print masterDopplerCorrection, slaveDopplerCorrection
+#    print referenceDopplerCorrection, secondaryDopplerCorrection
 #    use_dop = "F"
     try:
-        fd = USE_DOP[use_dop.upper()](masterDopplerCorrection,
-                                      slaveDopplerCorrection)
+        fd = USE_DOP[use_dop.upper()](referenceDopplerCorrection,
+                                      secondaryDopplerCorrection)
     except KeyError:
         print("Unrecognized use_dop option.  use_dop = ",use_dop)
         print("Not found in dictionary:",USE_DOP.keys())

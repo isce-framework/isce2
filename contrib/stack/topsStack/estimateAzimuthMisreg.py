@@ -41,10 +41,10 @@ def main(iargs=None):
 
     #catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
-    #master = self._insar.loadProduct( self._insar.masterSlcProduct + '.xml' )
+    #reference = self._insar.loadProduct( self._insar.referenceSlcProduct + '.xml' )
 
-    #minBurst, maxBurst = self._insar.commonMasterBurstLimits
-    #slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits
+    #minBurst, maxBurst = self._insar.commonReferenceBurstLimits
+    #secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits
 
     esdPath = inps.esdDirname
     swathList = ut.getSwathList(esdPath)
@@ -172,7 +172,7 @@ def main(iargs=None):
 #    catalog.printToLog(logger, "runESD")
 #    self._insar.procDoc.addAllFromCatalog(catalog)
 
-#    slaveTimingCorrection = medianval * master.bursts[0].azimuthTimeInterval
+#    secondaryTimingCorrection = medianval * reference.bursts[0].azimuthTimeInterval
 
     outputDir = os.path.dirname(inps.output)
     os.makedirs(outputDir, exist_ok=True)

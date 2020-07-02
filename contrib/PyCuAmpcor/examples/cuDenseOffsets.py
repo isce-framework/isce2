@@ -17,18 +17,18 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel slc')
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('-s', '--slave',type=str, dest='slave', required=True,
-            help='Slave image')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
+            help='Secondary image')
     parser.add_argument('-l', '--lat',type=str, dest='lat', required=False,
            help='Latitude')
     parser.add_argument('-L', '--lon',type=str, dest='lon', required=False,
            help='Longitude')
     parser.add_argument('--los',type=str, dest='los', required=False,
            help='Line of Sight')
-    parser.add_argument('--masterxml',type=str, dest='masterxml', required=False,
-           help='Master Image Xml File')
+    parser.add_argument('--referencexml',type=str, dest='referencexml', required=False,
+           help='Reference Image Xml File')
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
             help='Window Width')
     parser.add_argument('--wh', type=int, dest='winhgt', default=64,
@@ -90,20 +90,20 @@ def cmdLineParse(iargs = None):
     return inps
 
 @use_api
-def estimateOffsetField(master, slave, inps=None):
+def estimateOffsetField(reference, secondary, inps=None):
 
     import pathlib
 
-    ###Loading the slave image object
+    ###Loading the secondary image object
     sim = isceobj.createSlcImage()
-    sim.load(pathlib.Path(slave).with_suffix('.xml'))
+    sim.load(pathlib.Path(secondary).with_suffix('.xml'))
     sim.setAccessMode('READ')
     sim.createImage()
 
 
-    ###Loading the master image object
+    ###Loading the reference image object
     sar = isceobj.createSlcImage()
-    sar.load(pathlib.Path(master).with_suffix('.xml'))
+    sar.load(pathlib.Path(reference).with_suffix('.xml'))
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -117,12 +117,12 @@ def estimateOffsetField(master, slave, inps=None):
     objOffset.nStreams =   1 #cudaStreams 
     objOffset.derampMethod = inps.deramp
 
-    objOffset.masterImageName = master
-    objOffset.masterImageHeight = length
-    objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave
-    objOffset.slaveImageHeight = length
-    objOffset.slaveImageWidth = width
+    objOffset.referenceImageName = reference
+    objOffset.referenceImageHeight = length
+    objOffset.referenceImageWidth = width
+    objOffset.secondaryImageName = secondary
+    objOffset.secondaryImageHeight = length
+    objOffset.secondaryImageWidth = width
 
     print("image length:",length)
     print("image width:",width)
@@ -148,8 +148,8 @@ def estimateOffsetField(master, slave, inps=None):
     objOffset.halfSearchRangeAcross = inps.srcwidth
 
     # starting pixel
-    objOffset.masterStartPixelDownStatic = inps.margin
-    objOffset.masterStartPixelAcrossStatic = inps.margin
+    objOffset.referenceStartPixelDownStatic = inps.margin
+    objOffset.referenceStartPixelAcrossStatic = inps.margin
  
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
@@ -267,7 +267,7 @@ def main(iargs=None):
     if not os.path.exists(outDir):
          os.makedirs(outDir)
     
-    estimateOffsetField(inps.master, inps.slave, inps)
+    estimateOffsetField(inps.reference, inps.secondary, inps)
 
 if __name__ == '__main__':
     

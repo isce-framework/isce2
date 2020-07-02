@@ -12,7 +12,7 @@ InstallSameDir(
     runGeocode.py
     runInterferogram.py
     runPreprocessor.py
-    runRefineSlaveTiming.py
+    runRefineSecondaryTiming.py
     runResampleSlc.py
     runResampleSubbandSlc.py
     runROI.py

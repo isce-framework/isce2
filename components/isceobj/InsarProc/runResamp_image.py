@@ -37,11 +37,11 @@ from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 logger = logging.getLogger('isce.insar.runResamp_image')
 
 def runResamp_image(self):
-    imageSlc =  self._insar.getMasterSlcImage()
-    widthSlc = max(self._insar.getMasterSlcImage().getWidth(), self._insar.getSlaveSlcImage().getWidth())
+    imageSlc =  self._insar.getReferenceSlcImage()
+    widthSlc = max(self._insar.getReferenceSlcImage().getWidth(), self._insar.getSecondarySlcImage().getWidth())
     offsetField = self._insar.getRefinedOffsetField()                
     
-    instrument = self._insar.getMasterFrame().getInstrument()
+    instrument = self._insar.getReferenceFrame().getInstrument()
     
     dopplerCoeff = self._insar.getDopplerCentroid().getDopplerCoefficients(inHz=False)
     

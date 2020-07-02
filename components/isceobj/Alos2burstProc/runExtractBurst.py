@@ -23,13 +23,13 @@ def runExtractBurst(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     #demFile = os.path.abspath(self._insar.dem)
     #wbdFile = os.path.abspath(self._insar.wbd)
 ###############################################################################
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -41,21 +41,21 @@ def runExtractBurst(self):
             az_ratio1 = 20.0
             for k in range(2):
                 if k==0:
-                    #master
-                    swath = masterTrack.frames[i].swaths[j]
+                    #reference
+                    swath = referenceTrack.frames[i].swaths[j]
                     unsynLines = self._insar.burstUnsynchronizedTime * swath.prf
-                    extractDir = self._insar.masterBurstPrefix
-                    burstPrefix = self._insar.masterBurstPrefix
-                    fullApertureSlc = self._insar.masterSlc
-                    magnitude = self._insar.masterMagnitude
+                    extractDir = self._insar.referenceBurstPrefix
+                    burstPrefix = self._insar.referenceBurstPrefix
+                    fullApertureSlc = self._insar.referenceSlc
+                    magnitude = self._insar.referenceMagnitude
                 else:
-                    #slave
-                    swath = slaveTrack.frames[i].swaths[j]
+                    #secondary
+                    swath = secondaryTrack.frames[i].swaths[j]
                     unsynLines = -self._insar.burstUnsynchronizedTime * swath.prf
-                    extractDir = self._insar.slaveBurstPrefix
-                    burstPrefix = self._insar.slaveBurstPrefix
-                    fullApertureSlc = self._insar.slaveSlc
-                    magnitude = self._insar.slaveMagnitude
+                    extractDir = self._insar.secondaryBurstPrefix
+                    burstPrefix = self._insar.secondaryBurstPrefix
+                    fullApertureSlc = self._insar.secondarySlc
+                    magnitude = self._insar.secondaryMagnitude
 
                 #UPDATE SWATH PARAMETERS 1
                 #########################################################################################
@@ -125,8 +125,8 @@ def runExtractBurst(self):
 
                 os.chdir('../')
             os.chdir('../')
-        self._insar.saveProduct(masterTrack.frames[i], self._insar.masterFrameParameter)
-        self._insar.saveProduct(slaveTrack.frames[i], self._insar.slaveFrameParameter)
+        self._insar.saveProduct(referenceTrack.frames[i], self._insar.referenceFrameParameter)
+        self._insar.saveProduct(secondaryTrack.frames[i], self._insar.secondaryFrameParameter)
         os.chdir('../')
 
 ###############################################################################

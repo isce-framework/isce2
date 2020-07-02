@@ -31,7 +31,7 @@ endif
 
 
 # setting the filenames 
-set los_file = $curdir/master/geom/los.rdr$geom_suffix
+set los_file = $curdir/reference/geom/los.rdr$geom_suffix
 
 # extracting the enu conversion files
 if ( -f $curdir/e.raw & "$overwrite_flag" == "n" ) then

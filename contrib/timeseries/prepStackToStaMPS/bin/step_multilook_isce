@@ -1,6 +1,6 @@
 #!/bin/tcsh -f
 
-# Script which make an interferometric combination between slave and master
+# Script which make an interferometric combination between secondary and reference
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # copyright: 2017 to the present, california institute of technology.
@@ -67,10 +67,10 @@ else
 	set CURDIR = `pwd` 
 	echo $CURDIR
 	
-	# retrieve the current slave data folder being processed
+	# retrieve the current secondary data folder being processed
 	set date = `basename $CURDIR`
 	
-	# I included to be in the slave data folder, such one can reprocess easily without the need to manually specify the inputs
+	# I included to be in the secondary data folder, such one can reprocess easily without the need to manually specify the inputs
 	# move dir above
 	cd ..
 	

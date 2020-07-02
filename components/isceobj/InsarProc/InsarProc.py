@@ -36,8 +36,8 @@ from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTU
 from iscesys.Compatibility import Compatibility
 from isceobj.Scene.Frame import FrameMixin
 
-## Master Slave Hash Table
-MASTER_SLAVE = {0:'master', 1:'slave', 'master':'master', 'slave':'slave'}
+## Reference Secondary Hash Table
+REFERENCE_SECONDARY = {0:'reference', 1:'secondary', 'reference':'reference', 'secondary':'secondary'}
 
 PROCEED_IF_ZERO_DEM = Component.Parameter(
     '_proceedIfZeroDem',
@@ -419,16 +419,16 @@ SHADE_FACTOR = Component.Parameter('_shadeFactor',
                                    doc='')
 
 #ask
-MASTER_SQUINT = Component.Parameter('_masterSquint',
-                                    public_name='masterSquint',
+REFERENCE_SQUINT = Component.Parameter('_referenceSquint',
+                                    public_name='referenceSquint',
                                     default=0.,
                                     type=float,
                                     mandatory=False,
                                     doc='')
 
 #ask
-SLAVE_SQUINT = Component.Parameter('_slaveSquint',
-                                   public_name='slaveSquint',
+SECONDARY_SQUINT = Component.Parameter('_secondarySquint',
+                                   public_name='secondarySquint',
                                    default=0.,
                                    type=float,
                                    mandatory=False,
@@ -510,8 +510,8 @@ class InsarProc(Component, FrameMixin):
                       NUMBER_AZIMUTH_LOOKS,
                       NUMBER_RANGE_LOOKS,
                       SHADE_FACTOR,
-                      MASTER_SQUINT,
-                      SLAVE_SQUINT,
+                      REFERENCE_SQUINT,
+                      SECONDARY_SQUINT,
                       GEOCODE_LIST,
                       UNMASKED_PREFIX,
                       UNWRAPPED_2STAGE_FILENAME,
@@ -562,11 +562,11 @@ class InsarProc(Component, FrameMixin):
     def getLookSide(self):
         return self._lookSide
 
-    def getMasterSquint(self):
-        return self._masterSquint
+    def getReferenceSquint(self):
+        return self._referenceSquint
 
-    def getSlaveSquint(self):
-        return self._slaveSquint
+    def getSecondarySquint(self):
+        return self._secondarySquint
 
     def getFormSLC1(self):
         return self._formSLC1
@@ -619,38 +619,38 @@ class InsarProc(Component, FrameMixin):
     def getSecondProcVelocity(self):
         return self._pegV2
 
-    def getMasterFrame(self):
-        return self._masterFrame
+    def getReferenceFrame(self):
+        return self._referenceFrame
 
-    def getSlaveFrame(self):
-        return self._slaveFrame
+    def getSecondaryFrame(self):
+        return self._secondaryFrame
 
-    def getMasterOrbit(self):
-        return self._masterOrbit
+    def getReferenceOrbit(self):
+        return self._referenceOrbit
 
-    def getSlaveOrbit(self):
-        return self._slaveOrbit
+    def getSecondaryOrbit(self):
+        return self._secondaryOrbit
 
-    def getMasterDoppler(self):
-        return self._masterDoppler
+    def getReferenceDoppler(self):
+        return self._referenceDoppler
 
-    def getSlaveDoppler(self):
-        return self._slaveDoppler
+    def getSecondaryDoppler(self):
+        return self._secondaryDoppler
 
     def getPeg(self):
         return self._peg
 
-    def getMasterRawImage(self):
-        return self._masterRawImage
+    def getReferenceRawImage(self):
+        return self._referenceRawImage
 
-    def getSlaveRawImage(self):
-        return self._slaveRawImage
+    def getSecondaryRawImage(self):
+        return self._secondaryRawImage
 
-    def getMasterSlcImage(self):
-        return self._masterSlcImage
+    def getReferenceSlcImage(self):
+        return self._referenceSlcImage
 
-    def getSlaveSlcImage(self):
-        return self._slaveSlcImage
+    def getSecondarySlcImage(self):
+        return self._secondarySlcImage
 
     def getSimAmpImage(self):
         return self._simAmpImage
@@ -852,11 +852,11 @@ class InsarProc(Component, FrameMixin):
     def getGeocodeList(self):
         return self._geocode_list
 
-    def getRawMasterIQImage(self):
-        return self._rawMasterIQImage
+    def getRawReferenceIQImage(self):
+        return self._rawReferenceIQImage
 
-    def getRawSlaveIQImage(self):
-        return self._rawSlaveIQImage
+    def getRawSecondaryIQImage(self):
+        return self._rawSecondaryIQImage
     @property 
     def azResFactor(self):
         return self._azResFactor
@@ -877,11 +877,11 @@ class InsarProc(Component, FrameMixin):
     def setLookSide(self, lookSide):
         self._lookSide = lookSide
 
-    def setMasterSquint(self, squint):
-        self._masterSquint = squint
+    def setReferenceSquint(self, squint):
+        self._referenceSquint = squint
 
-    def setSlaveSquint(self, squint):
-        self._slaveSquint = squint
+    def setSecondarySquint(self, squint):
+        self._secondarySquint = squint
 
     def setFormSLC1(self, fslc):
         self._formSLC1 = fslc
@@ -917,38 +917,38 @@ class InsarProc(Component, FrameMixin):
         self._pegV2 = v2
 
 
-    def setMasterFrame(self, frame):
-        self._masterFrame = frame
+    def setReferenceFrame(self, frame):
+        self._referenceFrame = frame
 
-    def setSlaveFrame(self, frame):
-        self._slaveFrame = frame
+    def setSecondaryFrame(self, frame):
+        self._secondaryFrame = frame
 
-    def setMasterOrbit(self, orbit):
-        self._masterOrbit = orbit
+    def setReferenceOrbit(self, orbit):
+        self._referenceOrbit = orbit
 
-    def setSlaveOrbit(self, orbit):
-        self._slaveOrbit = orbit
+    def setSecondaryOrbit(self, orbit):
+        self._secondaryOrbit = orbit
 
-    def setMasterDoppler(self, doppler):
-        self._masterDoppler = doppler
+    def setReferenceDoppler(self, doppler):
+        self._referenceDoppler = doppler
 
-    def setSlaveDoppler(self, doppler):
-        self._slaveDoppler = doppler
+    def setSecondaryDoppler(self, doppler):
+        self._secondaryDoppler = doppler
 
     def setPeg(self, peg):
         self._peg = peg
 
-    def setMasterRawImage(self, image):
-        self._masterRawImage = image
+    def setReferenceRawImage(self, image):
+        self._referenceRawImage = image
 
-    def setSlaveRawImage(self, image):
-        self._slaveRawImage = image
+    def setSecondaryRawImage(self, image):
+        self._secondaryRawImage = image
 
-    def setMasterSlcImage(self, image):
-        self._masterSlcImage = image
+    def setReferenceSlcImage(self, image):
+        self._referenceSlcImage = image
 
-    def setSlaveSlcImage(self, image):
-        self._slaveSlcImage = image
+    def setSecondarySlcImage(self, image):
+        self._secondarySlcImage = image
 
     def setSimAmpImage(self, image):
         self._simAmpImage = image
@@ -1162,11 +1162,11 @@ class InsarProc(Component, FrameMixin):
     def setGeocodeList(self,prd):
         self._geocode_list = prd
 
-    def setRawMasterIQImage(self,im):
-        self._rawMasterIQImage = im
+    def setRawReferenceIQImage(self,im):
+        self._rawReferenceIQImage = im
 
-    def setRawSlaveIQImage(self,im):
-        self._rawSlaveIQImage = im
+    def setRawSecondaryIQImage(self,im):
+        self._rawSecondaryIQImage = im
     
     @azResFactor.setter
     def azResFactor(self,val):
@@ -1182,7 +1182,7 @@ class InsarProc(Component, FrameMixin):
         self._unmaskedPrefix = val
     ## folowing are tbd to split formSLC.
     def _hasher(self, index, Attr):
-        return getattr(self, MASTER_SLAVE[index] + Attr)
+        return getattr(self, REFERENCE_SECONDARY[index] + Attr)
 
     def select_frame(self, index): return self._hasher(index, 'Frame')
     def select_orbit(self, index): return self._hasher(index, 'Orbit')
@@ -1205,19 +1205,19 @@ class InsarProc(Component, FrameMixin):
     ## This overides the _FrameMixin.frame
     @property
     def frame(self):
-        return self.masterFrame
+        return self.referenceFrame
 
     # Some line violate PEP008 in order to facilitate using "grep"
     # for development
     refinedOffsetField = property(getRefinedOffsetField, setRefinedOffsetField)
     offsetField = property(getOffsetField, setOffsetField)
     demCropFilename = property(getDemCropFilename, setDemCropFilename)
-    masterFrame = property(getMasterFrame, setMasterFrame)
-    slaveFrame = property(getSlaveFrame, setSlaveFrame)
-    masterOrbit = property(getMasterOrbit, setMasterOrbit)
-    slaveOrbit = property(getSlaveOrbit, setSlaveOrbit)
-    masterDoppler = property(getMasterDoppler, setMasterDoppler)
-    slaveDoppler = property(getSlaveDoppler, setSlaveDoppler)
+    referenceFrame = property(getReferenceFrame, setReferenceFrame)
+    secondaryFrame = property(getSecondaryFrame, setSecondaryFrame)
+    referenceOrbit = property(getReferenceOrbit, setReferenceOrbit)
+    secondaryOrbit = property(getSecondaryOrbit, setSecondaryOrbit)
+    referenceDoppler = property(getReferenceDoppler, setReferenceDoppler)
+    secondaryDoppler = property(getSecondaryDoppler, setSecondaryDoppler)
     peg = property(getPeg, setPeg)
     pegH1 = property(getFirstAverageHeight, setFirstAverageHeight)
     pegH2 = property(getSecondAverageHeight, setSecondAverageHeight)
@@ -1225,10 +1225,10 @@ class InsarProc(Component, FrameMixin):
     fdH2 = property(getSecondFdHeight, setSecondFdHeight)
     pegV1 = property(getFirstProcVelocity, setFirstProcVelocity)
     pegV2 = property(getSecondProcVelocity, setSecondProcVelocity)
-    masterRawImage = property(getMasterRawImage, setMasterRawImage)
-    slaveRawImage = property(getSlaveRawImage, setSlaveRawImage)
-    masterSlcImage = property(getMasterSlcImage, setMasterSlcImage)
-    slaveSlcImage = property(getSlaveSlcImage, setSlaveSlcImage)
+    referenceRawImage = property(getReferenceRawImage, setReferenceRawImage)
+    secondaryRawImage = property(getSecondaryRawImage, setSecondaryRawImage)
+    referenceSlcImage = property(getReferenceSlcImage, setReferenceSlcImage)
+    secondarySlcImage = property(getSecondarySlcImage, setSecondarySlcImage)
     simAmpImage = property(getSimAmpImage, setSimAmpImage)
     demImage = property(getDemImage, setDemImage)
     demInitFile = property(getDemInitFile, setDemInitFile)
@@ -1294,16 +1294,16 @@ class InsarProc(Component, FrameMixin):
     mocompBaseline = property(getMocompBaseline, setMocompBaseline)
     topocorrect = property(getTopocorrect, setTopocorrect)
     topo = property(getTopo, setTopo)
-    masterSquint = property(getMasterSquint, setMasterSquint)
-    slaveSquint = property(getSlaveSquint, setSlaveSquint)
+    referenceSquint = property(getReferenceSquint, setReferenceSquint)
+    secondarySquint = property(getSecondarySquint, setSecondarySquint)
     geocode_list = property(getGeocodeList, setGeocodeList)
-    rawMasterIQImage = property(getRawMasterIQImage, setRawMasterIQImage)
-    rawSlaveIQImage = property(getRawSlaveIQImage, setRawSlaveIQImage)
+    rawReferenceIQImage = property(getRawReferenceIQImage, setRawReferenceIQImage)
+    rawSecondaryIQImage = property(getRawSecondaryIQImage, setRawSecondaryIQImage)
 
     pass
 
 
-## Why this: the code bloat with master this and slave that indicates the
+## Why this: the code bloat with reference this and secondary that indicates the
 ## design princple does not use composition, this is an attempt to
 ## fix that
 class RadarSwath(object):

@@ -56,9 +56,9 @@ def extractIsceMetadata(shelveFile):
    
     with shelve.open(shelveFile, flag='r') as mdb:
             burst = mdb['frame']
-    #master = ut.loadProduct(shelveFile)
-    #burst = master.bursts[0]
-    #burstEnd = master.bursts[-1]
+    #reference = ut.loadProduct(shelveFile)
+    #burst = reference.bursts[0]
+    #burstEnd = reference.bursts[-1]
     metadata = {}
     metadata['radarWavelength'] = burst.radarWavelegth
     metadata['rangePixelSize'] = burst.instrument.rangePixelSize

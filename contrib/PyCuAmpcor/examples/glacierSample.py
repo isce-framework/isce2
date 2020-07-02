@@ -20,12 +20,12 @@ def main():
     objOffset.algorithm = 0
     objOffset.deviceID = 0  # -1:let system find the best GPU
     objOffset.nStreams = 2  #cudaStreams
-    objOffset.masterImageName = "20131213.slc.vrt"
-    objOffset.masterImageHeight = 43008
-    objOffset.masterImageWidth = 24320
-    objOffset.slaveImageName = "20131221.slc.vrt"
-    objOffset.slaveImageHeight = 43008
-    objOffset.slaveImageWidth = 24320
+    objOffset.referenceImageName = "20131213.slc.vrt"
+    objOffset.referenceImageHeight = 43008
+    objOffset.referenceImageWidth = 24320
+    objOffset.secondaryImageName = "20131221.slc.vrt"
+    objOffset.secondaryImageHeight = 43008
+    objOffset.secondaryImageWidth = 24320
     objOffset.windowSizeWidth = 64
     objOffset.windowSizeHeight = 64
     objOffset.halfSearchRangeDown = 20
@@ -44,8 +44,8 @@ def main():
     objOffset.mmapSize = 8
 
     objOffset.setupParams()
-    objOffset.masterStartPixelDownStatic = 1000
-    objOffset.masterStartPixelAcrossStatic = 1000
+    objOffset.referenceStartPixelDownStatic = 1000
+    objOffset.referenceStartPixelAcrossStatic = 1000
     objOffset.setConstantGrossOffset(642, -30)
     objOffset.checkPixelInImageRange()
     objOffset.runAmpcor()

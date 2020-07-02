@@ -21,7 +21,7 @@ def mbf(inputfile, outputfile, prf, prf_frac, nb, nbg, nboff, bsl, kacoeff, dopc
     #                     (float, in terms of 1/PRF)
     # nboff:           number of unsynchronized lines in a burst
     #                     (float, in terms of 1/PRF, with sign, see burst_sync.py for rules of sign)
-    #                     (the image to be processed is always considered to be master)
+    #                     (the image to be processed is always considered to be reference)
     # bsl:             start line number of a burst
     #                     (float, the line number of the first line of the full-aperture SLC is zero)
     #                     (no need to be first burst, any one is OK)
@@ -197,13 +197,13 @@ def rg_filter(inputfile, nout, outputfile, bw, bc, nfilter, nfft, beta, zero_cf,
 def resamp(slc2, rslc2, rgoff_file, azoff_file, nrg1, naz1, prf, dopcoeff, rgcoef=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], azcoef=[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], azpos_off=0.0, verbose=0):
     #############################
     # mandatory:
-    # slc2:             slave image
-    # rslc2:            resampled slave image
+    # slc2:             secondary image
+    # rslc2:            resampled secondary image
     # rgoff_file:       range offset file. if no range offset file, specify 'fake'
     # azoff_file:       azimuth offset file. if no azimuth offset file, specify 'fake'
-    # nrg1:             number of columns in master image
-    # naz1:             number of lines in master image
-    # prf:              PRF of slave image
+    # nrg1:             number of columns in reference image
+    # naz1:             number of lines in reference image
+    # prf:              PRF of secondary image
     # dopcoeff[0]-[3]:  Doppler centroid frequency coefficents
     # optional:
     # rgcoef[0]-[9]:    range offset polynomial coefficents. First of two fit results of resamp_roi

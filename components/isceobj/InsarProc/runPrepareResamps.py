@@ -36,11 +36,11 @@ logger = logging.getLogger('isce.insar.runPrepareResamps')
 
 def runPrepareResamps(self, rangeLooks=None, azLooks=None):
     import math
-    slaveOrbit = self.insar.slaveOrbit
-    masterFrame = self.insar.masterFrame
+    secondaryOrbit = self.insar.secondaryOrbit
+    referenceFrame = self.insar.referenceFrame
     peg = self.insar.peg
-    masterSlcImage = self.insar.masterSlcImage
-    time2, schPosition2, schVelocity2, offset2 = slaveOrbit._unpackOrbit()
+    referenceSlcImage = self.insar.referenceSlcImage
+    time2, schPosition2, schVelocity2, offset2 = secondaryOrbit._unpackOrbit()
     
     s2 = schPosition2[0][0]
     s2_2 = schPosition2[1][0]
@@ -49,19 +49,19 @@ def runPrepareResamps(self, rangeLooks=None, azLooks=None):
     numPatches = self.insar.numberPatches
     lines = numPatches * valid_az_samples 
     
-    fs = masterFrame.getInstrument().getRangeSamplingRate()
+    fs = referenceFrame.getInstrument().getRangeSamplingRate()
     dr = (SPEED_OF_LIGHT / (2 * fs))
     
     self._insar.setSlantRangePixelSpacing(dr)
     
-#    widthSlc = max(self._insar.getMasterSlcImage().getWidth(), self._insar.getSlaveSlcImage().getWidth())
-    widthSlc = self._insar.getMasterSlcImage().getWidth()
+#    widthSlc = max(self._insar.getReferenceSlcImage().getWidth(), self._insar.getSecondarySlcImage().getWidth())
+    widthSlc = self._insar.getReferenceSlcImage().getWidth()
     
-    radarWavelength = masterFrame.getInstrument().getRadarWavelength()
+    radarWavelength = referenceFrame.getInstrument().getRadarWavelength()
     
     rc = peg.getRadiusOfCurvature()  
     ht = self._insar.getAverageHeight()
-    r0 = masterFrame.getStartingRange()
+    r0 = referenceFrame.getStartingRange()
     
     range = r0 + (widthSlc / 2 * dr)
     

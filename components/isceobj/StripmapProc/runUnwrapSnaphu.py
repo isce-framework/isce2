@@ -82,17 +82,17 @@ def runSnaphu(self, igramSpectrum = "full", costMode = None,initMethod = None, d
 
     corName = os.path.join(ifgDirname , self.insar.coherenceFilename)
 
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    wavelength = masterFrame.getInstrument().getRadarWavelength()
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    wavelength = referenceFrame.getInstrument().getRadarWavelength()
     img1 = isceobj.createImage()
     img1.load(wrapName + '.xml')
     width = img1.getWidth()
     #width      = self.insar.resampIntImage.width
 
-    orbit = masterFrame.orbit
-    prf = masterFrame.PRF
-    elp = copy.copy(masterFrame.instrument.platform.planet.ellipsoid)
-    sv = orbit.interpolate(masterFrame.sensingMid, method='hermite')
+    orbit = referenceFrame.orbit
+    prf = referenceFrame.PRF
+    elp = copy.copy(referenceFrame.instrument.platform.planet.ellipsoid)
+    sv = orbit.interpolate(referenceFrame.sensingMid, method='hermite')
     hdg = orbit.getHeading()
     llh = elp.xyz_to_llh(sv.getPosition())
     elp.setSCH(llh[0], llh[1], hdg)
@@ -113,12 +113,12 @@ def runSnaphu(self, igramSpectrum = "full", costMode = None,initMethod = None, d
     if not self.numberRangeLooks:
         self.numberRangeLooks = 1
 
-    azres = masterFrame.platform.antennaLength/2.0
+    azres = referenceFrame.platform.antennaLength/2.0
     azfact = self.numberAzimuthLooks * azres / azimuthSpacing
 
-    rBW = masterFrame.instrument.pulseLength * masterFrame.instrument.chirpSlope
+    rBW = referenceFrame.instrument.pulseLength * referenceFrame.instrument.chirpSlope
     rgres = abs(SPEED_OF_LIGHT / (2.0 * rBW))
-    rngfact = rgres/masterFrame.getInstrument().getRangePixelSize()
+    rngfact = rgres/referenceFrame.getInstrument().getRangePixelSize()
 
     corrLooks = self.numberRangeLooks * self.numberAzimuthLooks/(azfact*rngfact) 
     maxComponents = 20

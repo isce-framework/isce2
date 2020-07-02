@@ -194,12 +194,12 @@ GEOCODE_LIST = Application.Parameter(
 
 
 #Facility declarations
-MASTER = Application.Facility(
-    'master',
-    public_name='Master',
+REFERENCE = Application.Facility(
+    'reference',
+    public_name='Reference',
     module='isceobj.Sensor.GRD',
     factory='createSensor',
-    args=(SENSOR_NAME, 'master'),
+    args=(SENSOR_NAME, 'reference'),
     mandatory=True,
     doc="GRD data component"
                               )
@@ -246,7 +246,7 @@ class GRDSAR(Application):
                       POLARIZATIONS,
                       GEOCODE_LIST)
 
-    facility_list = (MASTER,
+    facility_list = (REFERENCE,
                      DEM_STITCHER,
                      _GRD)
 

@@ -21,13 +21,13 @@ def createParser():
     Create command line parser.
     '''
 
-    parser = argparse.ArgumentParser( description='extracts the overlap geometry between master bursts')
-    parser.add_argument('-m', '--master', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser = argparse.ArgumentParser( description='extracts the overlap geometry between reference bursts')
+    parser.add_argument('-m', '--reference', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
     parser.add_argument('-o', '--overlapDir', type=str, dest='overlapDir', default='overlap',
             help='overlap subdirectory name')
-    parser.add_argument('-g', '--geomMaster', type=str, dest='geom_master', required=True,
-            help='Directory with the master geometry')
+    parser.add_argument('-g', '--geomReference', type=str, dest='geom_reference', required=True,
+            help='Directory with the reference geometry')
 
     return parser
 
@@ -109,18 +109,18 @@ def subset(inname, outname, sliceline, slicepix,
 def main(iargs=None):
 
     inps = cmdLineParse(iargs)
-    swathList = ut.getSwathList(inps.master)
+    swathList = ut.getSwathList(inps.reference)
     for swath in swathList:
 
 
-        ####Load master metadata
-        mFrame = ut.loadProduct( os.path.join(inps.master, 'IW{0}.xml'.format(swath)))
+        ####Load reference metadata
+        mFrame = ut.loadProduct( os.path.join(inps.reference, 'IW{0}.xml'.format(swath)))
 
 
         ####Output directory for overlap geometry images
-        geomdir = os.path.join(inps.geom_master, 'IW{0}'.format(swath))
-        outdir = os.path.join(inps.geom_master, inps.overlapDir, 'IW{0}'.format(swath))
-        submasterdir = os.path.join(inps.master, inps.overlapDir, 'IW{0}'.format(swath))
+        geomdir = os.path.join(inps.geom_reference, 'IW{0}'.format(swath))
+        outdir = os.path.join(inps.geom_reference, inps.overlapDir, 'IW{0}'.format(swath))
+        subreferencedir = os.path.join(inps.reference, inps.overlapDir, 'IW{0}'.format(swath))
 
 
         if os.path.isdir(outdir):
@@ -129,10 +129,10 @@ def main(iargs=None):
             os.makedirs(outdir)
 
 
-        if os.path.isdir(submasterdir):
-            catalog.addItem('Submaster Overlap directory {0} already exists'.format(submasterdir))
+        if os.path.isdir(subreferencedir):
+            catalog.addItem('Subreference Overlap directory {0} already exists'.format(subreferencedir))
         else:
-            os.makedirs(submasterdir)
+            os.makedirs(subreferencedir)
 
 
          ###Azimuth time interval
@@ -190,13 +190,13 @@ def main(iargs=None):
             masname2 = botBurst.image.filename
 
 
-            master_outname1 = os.path.join(submasterdir , 'burst_top_%02d_%02d.slc'%(ind+1,ind+2))
-            master_outname2 = os.path.join(submasterdir , 'burst_bot_%02d_%02d.slc'%(ind+1,ind+2))
+            reference_outname1 = os.path.join(subreferencedir , 'burst_top_%02d_%02d.slc'%(ind+1,ind+2))
+            reference_outname2 = os.path.join(subreferencedir , 'burst_bot_%02d_%02d.slc'%(ind+1,ind+2))
 
 
 
-            subset(masname1, master_outname1, topslicey, topslicex)
-            subset(masname2, master_outname2, botslicey, botslicex)
+            subset(masname1, reference_outname1, topslicey, topslicex)
+            subset(masname2, reference_outname2, botslicey, botslicex)
 
 
             ####TOP frame
@@ -208,7 +208,7 @@ def main(iargs=None):
             burst.sensingStop = topBurst.sensingStart + datetime.timedelta(0,(topStart+overlapLen-1)*dt) # (topStart+overlapLen-1)*dt
 
             ###Replace file name in image
-            burst.image.filename = master_outname1
+            burst.image.filename = reference_outname1
             burst.image.setLength(overlapLen)
             burst.image.setWidth(width)
 
@@ -226,7 +226,7 @@ def main(iargs=None):
             burst.sensingStop = botBurst.sensingStart + datetime.timedelta(seconds=(botBurst.firstValidLine+overlapLen-1)*dt)
 
             ###Replace file name in image
-            burst.image.filename = master_outname2
+            burst.image.filename = reference_outname2
             burst.image.setLength(overlapLen)
             burst.image.setWidth(width)
 
@@ -240,8 +240,8 @@ def main(iargs=None):
         topFrame.numberOfBursts = len(topFrame.bursts)
         bottomFrame.numberOfBursts = len(bottomFrame.bursts)
 
-        #self._insar.saveProduct(topFrame, os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        #self._insar.saveProduct(bottomFrame, os.path.join(self._insar.masterSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        #self._insar.saveProduct(topFrame, os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        #self._insar.saveProduct(bottomFrame, os.path.join(self._insar.referenceSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
 
         topFrame.reference = mFrame
         bottomFrame.reference = mFrame
@@ -249,8 +249,8 @@ def main(iargs=None):
         topFrame.source = mFrame
         bottomFrame.source = mFrame
 
-        ut.saveProduct(topFrame, submasterdir + '_top.xml')
-        ut.saveProduct(bottomFrame, submasterdir + '_bottom.xml')
+        ut.saveProduct(topFrame, subreferencedir + '_top.xml')
+        ut.saveProduct(bottomFrame, subreferencedir + '_bottom.xml')
  
 
 

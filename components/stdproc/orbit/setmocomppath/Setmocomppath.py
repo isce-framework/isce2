@@ -52,7 +52,7 @@ FIRST_POSITION = Component.Parameter(
     default=None,
     units='m',
     mandatory=True,
-    doc="List of xyz positions for first (master) frame."
+    doc="List of xyz positions for first (reference) frame."
     )
 
 SECOND_POSITION = Component.Parameter(
@@ -62,7 +62,7 @@ SECOND_POSITION = Component.Parameter(
     default=None,
     units='m',
     mandatory=True,
-    doc="List of xyz positions for second (slave) frame."
+    doc="List of xyz positions for second (secondary) frame."
     )
 
 FIRST_VELOCITY = Component.Parameter(
@@ -72,7 +72,7 @@ FIRST_VELOCITY = Component.Parameter(
     default=None,
     units='m/s',
     mandatory=True,
-    doc="List of xyz velocities for first (master) frame."
+    doc="List of xyz velocities for first (reference) frame."
     )
 
 SECOND_POSITION = Component.Parameter(
@@ -82,7 +82,7 @@ SECOND_POSITION = Component.Parameter(
     default=None,
     units='m/s',
     mandatory=True,
-    doc="List of xyz velocities for second (slave) frame."
+    doc="List of xyz velocities for second (secondary) frame."
     )
 
 
@@ -269,23 +269,23 @@ class Setmocomppath(Component):
         setmocomppath.allocate_vxyz2_Py(self.dim1_velocity2, self.dim2_velocity2)
         return None
 
-    def addMasterOrbit(self):                
-        masterOrbit = self._inputPorts.getPort('masterOrbit').getObject()
-        if masterOrbit:
+    def addReferenceOrbit(self):                
+        referenceOrbit = self._inputPorts.getPort('referenceOrbit').getObject()
+        if referenceOrbit:
             try:
-                time, self.position1, self.velocity1, offset = masterOrbit._unpackOrbit()
+                time, self.position1, self.velocity1, offset = referenceOrbit._unpackOrbit()
             except AttributeError:
-                print("Object %s requires private method _unpackOrbit()" % (masterOrbit.__class__))                 
+                print("Object %s requires private method _unpackOrbit()" % (referenceOrbit.__class__))                 
                 raise AttributeError
 
 
-    def addSlaveOrbit(self):                
-        slaveOrbit = self._inputPorts.getPort('slaveOrbit').getObject()
-        if slaveOrbit:
+    def addSecondaryOrbit(self):                
+        secondaryOrbit = self._inputPorts.getPort('secondaryOrbit').getObject()
+        if secondaryOrbit:
             try:
-                time, self.position2, self.velocity2, offset = slaveOrbit._unpackOrbit()
+                time, self.position2, self.velocity2, offset = secondaryOrbit._unpackOrbit()
             except AttributeError:
-                print("Object %s requires private method _unpackOrbit()" % (slaveOrbit.__class__))                 
+                print("Object %s requires private method _unpackOrbit()" % (secondaryOrbit.__class__))                 
                 raise AttributeError
 
 
@@ -364,12 +364,12 @@ class Setmocomppath(Component):
     def createPorts(self):
         #Create ports
         planetPort = Port(name='planet',method=self.addPlanet)
-        masterOrbitPort = Port(name='masterOrbit',method=self.addMasterOrbit)
-        slaveOrbitPort = Port(name='slaveOrbit',method=self.addSlaveOrbit)
+        referenceOrbitPort = Port(name='referenceOrbit',method=self.addReferenceOrbit)
+        secondaryOrbitPort = Port(name='secondaryOrbit',method=self.addSecondaryOrbit)
         # Add the ports
         self._inputPorts.add(planetPort)
-        self._inputPorts.add(masterOrbitPort)
-        self._inputPorts.add(slaveOrbitPort)
+        self._inputPorts.add(referenceOrbitPort)
+        self._inputPorts.add(secondaryOrbitPort)
         return None
 
 

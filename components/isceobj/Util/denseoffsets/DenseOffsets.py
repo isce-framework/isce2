@@ -272,13 +272,13 @@ class DenseOffsets(Component):
         if image1 is not None:
             self.image1 = image1
         if (self.image1 == None):
-            raise ValueError("Error. master image not set.")
+            raise ValueError("Error. reference image not set.")
         
         if image2 is not None:
             self.image2 = image2
 
         if (self.image2 == None):
-            raise ValueError("Error. slave image not set.")
+            raise ValueError("Error. secondary image not set.")
         
         if band1 is not None:
             self.band1 = int(band1)
@@ -542,11 +542,11 @@ class DenseOffsets(Component):
         self.debugFlag = str(var)
         return
     
-    def setMasterImage(self,im):
+    def setReferenceImage(self,im):
         self.image1 = im
         return
     
-    def setSlaveImage(self,im):
+    def setSecondaryImage(self,im):
         self.image2 = im
         return
 
@@ -648,15 +648,15 @@ if __name__ == "__main__":
     def runDenseOffset(insar):
         from isceobj.Catalog import recordInputs
 
-        masterFrame = insar.getMasterFrame()
-        slaveFrame = insar.getSlaveFrame()
-        masterOrbit = insar.getMasterOrbit()
-        slaveOrbit = insar.getSlaveOrbit()
-        prf1 = masterFrame.getInstrument().getPulseRepetitionFrequency()
-        prf2 = slaveFrame.getInstrument().getPulseRepetitionFrequency()
+        referenceFrame = insar.getReferenceFrame()
+        secondaryFrame = insar.getSecondaryFrame()
+        referenceOrbit = insar.getReferenceOrbit()
+        secondaryOrbit = insar.getSecondaryOrbit()
+        prf1 = referenceFrame.getInstrument().getPulseRepetitionFrequency()
+        prf2 = secondaryFrame.getInstrument().getPulseRepetitionFrequency()
         nearRange1 = insar.formSLC1.startingRange
         nearRange2 = insar.formSLC2.startingRange
-        fs1 = masterFrame.getInstrument().getRangeSamplingRate()
+        fs1 = referenceFrame.getInstrument().getRangeSamplingRate()
 
         ###There seems to be no other way of determining image length - Piyush
         patchSize = insar.getPatchSize() 
@@ -666,7 +666,7 @@ if __name__ == "__main__":
         firstDown =  insar.getFirstSampleDownPrf()
         
 
-        objSlc =  insar.getMasterSlcImage()
+        objSlc =  insar.getReferenceSlcImage()
         widthSlc = objSlc.getWidth()
 
         coarseRange = (nearRange1 - nearRange2) / (CN.SPEED_OF_LIGHT / (2 * fs1))
@@ -675,8 +675,8 @@ if __name__ == "__main__":
             coarseAcross = int(coarseRange - 0.5)
 
 
-        time1, schPosition1, schVelocity1, offset1 = masterOrbit._unpackOrbit()
-        time2, schPosition2, schVelocity2, offset2 = slaveOrbit._unpackOrbit()
+        time1, schPosition1, schVelocity1, offset1 = referenceOrbit._unpackOrbit()
+        time2, schPosition2, schVelocity2, offset2 = secondaryOrbit._unpackOrbit()
         s1 = schPosition1[0][0]
         s1_2 = schPosition1[1][0]
         s2 = schPosition2[0][0]
@@ -695,7 +695,7 @@ if __name__ == "__main__":
         coarseAcross = 0 + coarseAcross
         coarseDown = 0 + coarseDown
 
-        mSlcImage = insar.getMasterSlcImage()
+        mSlcImage = insar.getReferenceSlcImage()
         mSlc = isceobj.createSlcImage()
         IU.copyAttributes(mSlcImage, mSlc)
     #    scheme = 'BIL'
@@ -704,7 +704,7 @@ if __name__ == "__main__":
         mSlc.setAccessMode(accessMode)
         mSlc.createImage()
         
-        sSlcImage = insar.getSlaveSlcImage()
+        sSlcImage = insar.getSecondarySlcImage()
         sSlc = isceobj.createSlcImage()
         IU.copyAttributes(sSlcImage, sSlc)
     #    scheme = 'BIL'

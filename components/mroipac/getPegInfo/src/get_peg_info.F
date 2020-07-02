@@ -160,7 +160,7 @@ c     determine the heading
 
 
 c     determine the peg lat,lon and heading to use - algorithm assumes a frame size scene and uses lat,lon at
-c     scene center and heading a scene center for peg coordinates. Orbit 1 is the master frame and peg is determined
+c     scene center and heading a scene center for peg coordinates. Orbit 1 is the reference frame and peg is determined
 c     using it's orbit only. It is rough but should suffice for most applications.
 
       r_time_first_line = r_timeslc + (i_startline-1)/r_prf               !time to first line in Interferogram

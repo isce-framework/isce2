@@ -11,12 +11,12 @@ def main():
     objOffset = PyCuAmpcor()
 
     #step 1 set constant parameters
-    objOffset.masterImageName = "master.slc.vrt"
-    objOffset.masterImageHeight = 128
-    objOffset.masterImageWidth = 128
-    objOffset.slaveImageName = "slave.slc.vrt"
-    objOffset.masterImageHeight = 128
-    objOffset.masterImageWidth = 128
+    objOffset.referenceImageName = "reference.slc.vrt"
+    objOffset.referenceImageHeight = 128
+    objOffset.referenceImageWidth = 128
+    objOffset.secondaryImageName = "secondary.slc.vrt"
+    objOffset.referenceImageHeight = 128
+    objOffset.referenceImageWidth = 128
     objOffset.skipSampleDown = 2
     objOffset.skipSampleAcross = 2
     objOffset.windowSizeHeight = 16
@@ -31,8 +31,8 @@ def main():
     objOffset.setupParams()
 
     #3 set gross offsets: constant or varying
-    objOffset.masterStartPixelDownStatic = objOffset.halfSearchRangeDown
-    objOffset.masterStartPixelAcrossStatic = objOffset.halfSearchRangeAcross
+    objOffset.referenceStartPixelDownStatic = objOffset.halfSearchRangeDown
+    objOffset.referenceStartPixelAcrossStatic = objOffset.halfSearchRangeAcross
     vD = np.random.randint(0, 10, size =objOffset.numberWindows, dtype=np.int32)
     vA = np.random.randint(0, 1, size = objOffset.numberWindows, dtype=np.int32)
     objOffset.setVaryingGrossOffset(vD, vA)

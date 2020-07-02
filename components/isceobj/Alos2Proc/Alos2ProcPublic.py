@@ -154,11 +154,11 @@ def cal_coherence_1(inf, win=5):
 
 
 
-def computeOffsetFromOrbit(masterSwath, masterTrack, slaveSwath, slaveTrack, masterSample, masterLine):
+def computeOffsetFromOrbit(referenceSwath, referenceTrack, secondarySwath, secondaryTrack, referenceSample, referenceLine):
     '''
     compute range and azimuth offsets using orbit. all range/azimuth indexes start with 0
-    masterSample:  master sample where offset is computed, no need to be integer
-    masterLine:    master line where offset is computed, no need to be integer
+    referenceSample:  reference sample where offset is computed, no need to be integer
+    referenceLine:    reference line where offset is computed, no need to be integer
     '''
     import datetime
 
@@ -166,14 +166,14 @@ def computeOffsetFromOrbit(masterSwath, masterTrack, slaveSwath, slaveTrack, mas
 
     #compute a pair of range and azimuth offsets using geometry
     #using Piyush's code for computing range and azimuth offsets
-    midRange = masterSwath.startingRange + masterSwath.rangePixelSize * masterSample
-    midSensingStart = masterSwath.sensingStart + datetime.timedelta(seconds = masterLine / masterSwath.prf)
-    llh = masterTrack.orbit.rdr2geo(midSensingStart, midRange, side=pointingDirection[masterTrack.pointingDirection])
-    slvaz, slvrng = slaveTrack.orbit.geo2rdr(llh, side=pointingDirection[masterTrack.pointingDirection])
+    midRange = referenceSwath.startingRange + referenceSwath.rangePixelSize * referenceSample
+    midSensingStart = referenceSwath.sensingStart + datetime.timedelta(seconds = referenceLine / referenceSwath.prf)
+    llh = referenceTrack.orbit.rdr2geo(midSensingStart, midRange, side=pointingDirection[referenceTrack.pointingDirection])
+    slvaz, slvrng = secondaryTrack.orbit.geo2rdr(llh, side=pointingDirection[referenceTrack.pointingDirection])
     ###Translate to offsets
-    #at this point, slave range pixel size and prf should be the same as those of master
-    rgoff = ((slvrng - slaveSwath.startingRange) / masterSwath.rangePixelSize) - masterSample
-    azoff = ((slvaz - slaveSwath.sensingStart).total_seconds() * masterSwath.prf) - masterLine
+    #at this point, secondary range pixel size and prf should be the same as those of reference
+    rgoff = ((slvrng - secondarySwath.startingRange) / referenceSwath.rangePixelSize) - referenceSample
+    azoff = ((slvaz - secondarySwath.sensingStart).total_seconds() * referenceSwath.prf) - referenceLine
 
     return (rgoff, azoff)
 
@@ -589,7 +589,7 @@ def cal_coherence(inf, win=5, edge=0):
     '''
     compute coherence uisng only interferogram (phase).
     This routine still follows the regular equation for computing coherence,
-    but assumes the amplitudes of master and slave are one, so that coherence
+    but assumes the amplitudes of reference and secondary are one, so that coherence
     can be computed using phase only.
 
     inf: interferogram
@@ -974,9 +974,9 @@ def mosaicBurstAmplitude(swath, burstPrefix, outputFile, numberOfLooksThreshold=
     create_xml(outputFile, swath.numberOfSamples, swath.numberOfLines, 'float')
 
 
-def resampleBursts(masterSwath, slaveSwath, 
-    masterBurstDir, slaveBurstDir, slaveBurstResampledDir, interferogramDir,
-    masterBurstPrefix, slaveBurstPrefix, slaveBurstResampledPrefix, interferogramPrefix, 
+def resampleBursts(referenceSwath, secondarySwath, 
+    referenceBurstDir, secondaryBurstDir, secondaryBurstResampledDir, interferogramDir,
+    referenceBurstPrefix, secondaryBurstPrefix, secondaryBurstResampledPrefix, interferogramPrefix, 
     rangeOffset, azimuthOffset, rangeOffsetResidual=0, azimuthOffsetResidual=0):
 
     import os
@@ -985,119 +985,119 @@ def resampleBursts(masterSwath, slaveSwath,
     import numpy.matlib
     from contrib.alos2proc.alos2proc import resamp
 
-    os.makedirs(slaveBurstResampledDir, exist_ok=True)
+    os.makedirs(secondaryBurstResampledDir, exist_ok=True)
     os.makedirs(interferogramDir, exist_ok=True)
 
     #get burst file names
-    masterBurstSlc = [masterBurstPrefix+'_%02d.slc'%(i+1) for i in range(masterSwath.numberOfBursts)]
-    slaveBurstSlc = [slaveBurstPrefix+'_%02d.slc'%(i+1) for i in range(slaveSwath.numberOfBursts)]
-    slaveBurstSlcResampled = [slaveBurstPrefix+'_%02d.slc'%(i+1) for i in range(masterSwath.numberOfBursts)]
-    interferogram = [interferogramPrefix+'_%02d.int'%(i+1) for i in range(masterSwath.numberOfBursts)]
+    referenceBurstSlc = [referenceBurstPrefix+'_%02d.slc'%(i+1) for i in range(referenceSwath.numberOfBursts)]
+    secondaryBurstSlc = [secondaryBurstPrefix+'_%02d.slc'%(i+1) for i in range(secondarySwath.numberOfBursts)]
+    secondaryBurstSlcResampled = [secondaryBurstPrefix+'_%02d.slc'%(i+1) for i in range(referenceSwath.numberOfBursts)]
+    interferogram = [interferogramPrefix+'_%02d.int'%(i+1) for i in range(referenceSwath.numberOfBursts)]
 
-    length = masterSwath.burstSlcNumberOfLines
-    width = masterSwath.burstSlcNumberOfSamples
-    lengthSlave = slaveSwath.burstSlcNumberOfLines
-    widthSlave = slaveSwath.burstSlcNumberOfSamples
+    length = referenceSwath.burstSlcNumberOfLines
+    width = referenceSwath.burstSlcNumberOfSamples
+    lengthSecondary = secondarySwath.burstSlcNumberOfLines
+    widthSecondary = secondarySwath.burstSlcNumberOfSamples
 
-    #slave burst slc start times
-    slaveBurstStartTimesSlc = [slaveSwath.firstBurstSlcStartTime + \
-                               datetime.timedelta(seconds=slaveSwath.burstSlcFirstLineOffsets[i]*slaveSwath.azimuthLineInterval) \
-                               for i in range(slaveSwath.numberOfBursts)]
-    #slave burst raw start times
-    slaveBurstStartTimesRaw = [slaveSwath.firstBurstRawStartTime + \
-                               datetime.timedelta(seconds=i*slaveSwath.burstCycleLength/slaveSwath.prf) \
-                               for i in range(slaveSwath.numberOfBursts)]
+    #secondary burst slc start times
+    secondaryBurstStartTimesSlc = [secondarySwath.firstBurstSlcStartTime + \
+                               datetime.timedelta(seconds=secondarySwath.burstSlcFirstLineOffsets[i]*secondarySwath.azimuthLineInterval) \
+                               for i in range(secondarySwath.numberOfBursts)]
+    #secondary burst raw start times
+    secondaryBurstStartTimesRaw = [secondarySwath.firstBurstRawStartTime + \
+                               datetime.timedelta(seconds=i*secondarySwath.burstCycleLength/secondarySwath.prf) \
+                               for i in range(secondarySwath.numberOfBursts)]
 
 
-    for i in range(masterSwath.numberOfBursts):
+    for i in range(referenceSwath.numberOfBursts):
 
         ##########################################################################
-        # 1. get offsets and corresponding slave burst
+        # 1. get offsets and corresponding secondary burst
         ##########################################################################
         #range offset
         with open(rangeOffset, 'rb') as f:
-            f.seek(masterSwath.burstSlcFirstLineOffsets[i] * width * np.dtype(np.float32).itemsize, 0)
+            f.seek(referenceSwath.burstSlcFirstLineOffsets[i] * width * np.dtype(np.float32).itemsize, 0)
             rgoffBurst = np.fromfile(f, dtype=np.float32, count=length*width).reshape(length,width)
             if type(rangeOffsetResidual) == np.ndarray:
-                residual = rangeOffsetResidual[0+masterSwath.burstSlcFirstLineOffsets[i]:length+masterSwath.burstSlcFirstLineOffsets[i],:]
+                residual = rangeOffsetResidual[0+referenceSwath.burstSlcFirstLineOffsets[i]:length+referenceSwath.burstSlcFirstLineOffsets[i],:]
                 rgoffBurst[np.nonzero(rgoffBurst!=-999999.0)] += residual[np.nonzero(rgoffBurst!=-999999.0)]
             else:
                 rgoffBurst[np.nonzero(rgoffBurst!=-999999.0)] += rangeOffsetResidual
         #azimuth offset
         with open(azimuthOffset, 'rb') as f:
-            f.seek(masterSwath.burstSlcFirstLineOffsets[i] * width * np.dtype(np.float32).itemsize, 0)
+            f.seek(referenceSwath.burstSlcFirstLineOffsets[i] * width * np.dtype(np.float32).itemsize, 0)
             azoffBurst = np.fromfile(f, dtype=np.float32, count=length*width).reshape(length,width)
             if type(azimuthOffsetResidual) == np.ndarray:
-                residual = azimuthOffsetResidual[0+masterSwath.burstSlcFirstLineOffsets[i]:length+masterSwath.burstSlcFirstLineOffsets[i],:]
+                residual = azimuthOffsetResidual[0+referenceSwath.burstSlcFirstLineOffsets[i]:length+referenceSwath.burstSlcFirstLineOffsets[i],:]
                 azoffBurst[np.nonzero(azoffBurst!=-999999.0)] += residual[np.nonzero(azoffBurst!=-999999.0)]
             else:
                 azoffBurst[np.nonzero(azoffBurst!=-999999.0)] += azimuthOffsetResidual
 
-        #find the corresponding slave burst
+        #find the corresponding secondary burst
         #get mean offset to use
         #remove BAD_VALUE = -999999.0 as defined in geo2rdr.f90
         #single precision is not accurate enough to compute mean
         azoffBurstMean = np.mean(azoffBurst[np.nonzero(azoffBurst!=-999999.0)], dtype=np.float64)
-        iSlave = -1
-        for j in range(slaveSwath.numberOfBursts): 
-            if abs(masterSwath.burstSlcFirstLineOffsets[i] + azoffBurstMean - slaveSwath.burstSlcFirstLineOffsets[j]) < (masterSwath.burstLength / masterSwath.prf * 2.0) / masterSwath.azimuthLineInterval:
-                iSlave = j
+        iSecondary = -1
+        for j in range(secondarySwath.numberOfBursts): 
+            if abs(referenceSwath.burstSlcFirstLineOffsets[i] + azoffBurstMean - secondarySwath.burstSlcFirstLineOffsets[j]) < (referenceSwath.burstLength / referenceSwath.prf * 2.0) / referenceSwath.azimuthLineInterval:
+                iSecondary = j
                 break
 
-        #output zero resampled burst/interferogram if no slave burst found
-        if iSlave == -1:
-            print('\nburst pair, master: %2d, slave:  no'%(i+1))
+        #output zero resampled burst/interferogram if no secondary burst found
+        if iSecondary == -1:
+            print('\nburst pair, reference: %2d, secondary:  no'%(i+1))
             #output an interferogram with all pixels set to zero
             os.chdir(interferogramDir)
             np.zeros((length, width), dtype=np.complex64).astype(np.complex64).tofile(interferogram[i])
             create_xml(interferogram[i], width, length, 'int')
             os.chdir('../')
-            #output a resampled slave image with all pixels set to zero
-            os.chdir(slaveBurstResampledDir)
-            np.zeros((length, width), dtype=np.complex64).astype(np.complex64).tofile(slaveBurstSlcResampled[i])
-            create_xml(slaveBurstSlcResampled[i], width, length, 'slc')
+            #output a resampled secondary image with all pixels set to zero
+            os.chdir(secondaryBurstResampledDir)
+            np.zeros((length, width), dtype=np.complex64).astype(np.complex64).tofile(secondaryBurstSlcResampled[i])
+            create_xml(secondaryBurstSlcResampled[i], width, length, 'slc')
             os.chdir('../')
             continue
         else:
-            print('\nburst pair, master: %2d, slave: %3d'%(i+1, iSlave+1))
+            print('\nburst pair, reference: %2d, secondary: %3d'%(i+1, iSecondary+1))
 
-        #adjust azimuth offset accordingly, since original azimuth offset assumes master and slave start with sensingStart
-        azoffBurst -= (slaveSwath.burstSlcFirstLineOffsets[iSlave]-masterSwath.burstSlcFirstLineOffsets[i])
+        #adjust azimuth offset accordingly, since original azimuth offset assumes reference and secondary start with sensingStart
+        azoffBurst -= (secondarySwath.burstSlcFirstLineOffsets[iSecondary]-referenceSwath.burstSlcFirstLineOffsets[i])
 
 
         ##########################################################################
         # 2. compute deramp and reramp signals
         ##########################################################################
         cj = np.complex64(1j)
-        tbase = (slaveBurstStartTimesSlc[iSlave] - (slaveBurstStartTimesRaw[iSlave] + \
-                 datetime.timedelta(seconds=(slaveSwath.burstLength - 1.0) / 2.0 / slaveSwath.prf))).total_seconds()
+        tbase = (secondaryBurstStartTimesSlc[iSecondary] - (secondaryBurstStartTimesRaw[iSecondary] + \
+                 datetime.timedelta(seconds=(secondarySwath.burstLength - 1.0) / 2.0 / secondarySwath.prf))).total_seconds()
 
         #compute deramp signal
-        index1 = np.matlib.repmat(np.arange(widthSlave), lengthSlave, 1)
-        index2 = np.matlib.repmat(np.arange(lengthSlave).reshape(lengthSlave, 1), 1, widthSlave)
-        ka = slaveSwath.azimuthFmrateVsPixel[3] * index1**3 + slaveSwath.azimuthFmrateVsPixel[2] * index1**2 + \
-             slaveSwath.azimuthFmrateVsPixel[1] * index1    + slaveSwath.azimuthFmrateVsPixel[0]
+        index1 = np.matlib.repmat(np.arange(widthSecondary), lengthSecondary, 1)
+        index2 = np.matlib.repmat(np.arange(lengthSecondary).reshape(lengthSecondary, 1), 1, widthSecondary)
+        ka = secondarySwath.azimuthFmrateVsPixel[3] * index1**3 + secondarySwath.azimuthFmrateVsPixel[2] * index1**2 + \
+             secondarySwath.azimuthFmrateVsPixel[1] * index1    + secondarySwath.azimuthFmrateVsPixel[0]
         #use the convention that ka > 0
         ka = -ka
-        t = tbase + index2*slaveSwath.azimuthLineInterval
+        t = tbase + index2*secondarySwath.azimuthLineInterval
         deramp = np.exp(cj * np.pi * (-ka) * t**2)
 
         #compute reramp signal
         index1 = np.matlib.repmat(np.arange(width), length, 1) + rgoffBurst
         index2 = np.matlib.repmat(np.arange(length).reshape(length, 1), 1, width) + azoffBurst
-        ka = slaveSwath.azimuthFmrateVsPixel[3] * index1**3 + slaveSwath.azimuthFmrateVsPixel[2] * index1**2 + \
-             slaveSwath.azimuthFmrateVsPixel[1] * index1    + slaveSwath.azimuthFmrateVsPixel[0]
+        ka = secondarySwath.azimuthFmrateVsPixel[3] * index1**3 + secondarySwath.azimuthFmrateVsPixel[2] * index1**2 + \
+             secondarySwath.azimuthFmrateVsPixel[1] * index1    + secondarySwath.azimuthFmrateVsPixel[0]
         #use the convention that ka > 0
         ka = -ka
-        t = tbase + index2*slaveSwath.azimuthLineInterval
+        t = tbase + index2*secondarySwath.azimuthLineInterval
         reramp = np.exp(cj * np.pi * (ka) * t**2)
 
 
         ##########################################################################
-        # 3. resample slave burst
+        # 3. resample secondary burst
         ##########################################################################
-        #go to slave directory to do resampling
-        os.chdir(slaveBurstDir)
+        #go to secondary directory to do resampling
+        os.chdir(secondaryBurstDir)
 
         #output offsets
         rgoffBurstFile = "burst_rg.off"
@@ -1105,39 +1105,39 @@ def resampleBursts(masterSwath, slaveSwath,
         rgoffBurst.astype(np.float32).tofile(rgoffBurstFile)
         azoffBurst.astype(np.float32).tofile(azoffBurstFile)
 
-        #deramp slave burst
-        slaveBurstDerampedFile = "slave.slc"
-        sburst = np.fromfile(slaveBurstSlc[iSlave], dtype=np.complex64).reshape(lengthSlave, widthSlave)
-        (deramp * sburst).astype(np.complex64).tofile(slaveBurstDerampedFile)
-        create_xml(slaveBurstDerampedFile, widthSlave, lengthSlave, 'slc')
+        #deramp secondary burst
+        secondaryBurstDerampedFile = "secondary.slc"
+        sburst = np.fromfile(secondaryBurstSlc[iSecondary], dtype=np.complex64).reshape(lengthSecondary, widthSecondary)
+        (deramp * sburst).astype(np.complex64).tofile(secondaryBurstDerampedFile)
+        create_xml(secondaryBurstDerampedFile, widthSecondary, lengthSecondary, 'slc')
 
-        #resampled slave burst
-        slaveBurstResampFile = 'slave_resamp.slc'
+        #resampled secondary burst
+        secondaryBurstResampFile = 'secondary_resamp.slc'
 
-        #resample slave burst
+        #resample secondary burst
         #now doppler has bigger impact now, as it's value is about 35 Hz (azimuth resampling frequency is now only 1/20 * PRF)
         #we don't know if this doppler value is accurate or not, so we set it to zero, which seems to give best resampling result
         #otherwise if it is not accurate and we still use it, it will significantly affect resampling result
-        dopplerVsPixel = slaveSwath.dopplerVsPixel
+        dopplerVsPixel = secondarySwath.dopplerVsPixel
         dopplerVsPixel = [0.0, 0.0, 0.0, 0.0]
 
-        resamp(slaveBurstDerampedFile, slaveBurstResampFile, rgoffBurstFile, azoffBurstFile, width, length, 1.0/slaveSwath.azimuthLineInterval, dopplerVsPixel, 
+        resamp(secondaryBurstDerampedFile, secondaryBurstResampFile, rgoffBurstFile, azoffBurstFile, width, length, 1.0/secondarySwath.azimuthLineInterval, dopplerVsPixel, 
                     rgcoef=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
                     azcoef=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
                     azpos_off=0.0)
 
-        #read resampled slave burst and reramp
-        sburstResamp = reramp * (np.fromfile(slaveBurstResampFile, dtype=np.complex64).reshape(length, width))
+        #read resampled secondary burst and reramp
+        sburstResamp = reramp * (np.fromfile(secondaryBurstResampFile, dtype=np.complex64).reshape(length, width))
 
         #clear up
         os.remove(rgoffBurstFile)
         os.remove(azoffBurstFile)
-        os.remove(slaveBurstDerampedFile)
-        os.remove(slaveBurstDerampedFile+'.vrt')
-        os.remove(slaveBurstDerampedFile+'.xml')
-        os.remove(slaveBurstResampFile)
-        os.remove(slaveBurstResampFile+'.vrt')
-        os.remove(slaveBurstResampFile+'.xml')
+        os.remove(secondaryBurstDerampedFile)
+        os.remove(secondaryBurstDerampedFile+'.vrt')
+        os.remove(secondaryBurstDerampedFile+'.xml')
+        os.remove(secondaryBurstResampFile)
+        os.remove(secondaryBurstResampFile+'.vrt')
+        os.remove(secondaryBurstResampFile+'.xml')
 
         os.chdir('../')
 
@@ -1145,14 +1145,14 @@ def resampleBursts(masterSwath, slaveSwath,
         ##########################################################################
         # 4. dump results
         ##########################################################################
-        #dump resampled slave burst
-        os.chdir(slaveBurstResampledDir)
-        sburstResamp.astype(np.complex64).tofile(slaveBurstSlcResampled[i])
-        create_xml(slaveBurstSlcResampled[i], width, length, 'slc')
+        #dump resampled secondary burst
+        os.chdir(secondaryBurstResampledDir)
+        sburstResamp.astype(np.complex64).tofile(secondaryBurstSlcResampled[i])
+        create_xml(secondaryBurstSlcResampled[i], width, length, 'slc')
         os.chdir('../')
 
         #dump burst interferogram
-        mburst = np.fromfile(os.path.join(masterBurstDir, masterBurstSlc[i]), dtype=np.complex64).reshape(length, width)
+        mburst = np.fromfile(os.path.join(referenceBurstDir, referenceBurstSlc[i]), dtype=np.complex64).reshape(length, width)
         os.chdir(interferogramDir)
         (mburst * np.conj(sburstResamp)).astype(np.complex64).tofile(interferogram[i])
         create_xml(interferogram[i], width, length, 'int')

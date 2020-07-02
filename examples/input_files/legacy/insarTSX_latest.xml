@@ -47,20 +47,20 @@
     <property name="unwrap">
         <value>False</value>
     </property>
-    <component name="Master">
+    <component name="Reference">
        <property name="XML">
            <value>dims_op_oc_dfd2_204281662_1/TSX-1.SAR.L1B/TSX1_SAR__SSC______SM_S_SRA_20091205T042212_20091205T042220/TSX1_SAR__SSC______SM_S_SRA_20091205T042212_20091205T042220.xml</value>
        </property>
        <property name="OUTPUT">
-           <value>master.slc</value>
+           <value>reference.slc</value>
        </property>
     </component>
-    <component name="Slave">
+    <component name="Secondary">
        <property name="XML">
            <value>dims_op_oc_dfd2_204281679_1/TSX-1.SAR.L1B/TSX1_SAR__SSC______SM_S_SRA_20091216T042211_20091216T042219/TSX1_SAR__SSC______SM_S_SRA_20091216T042211_20091216T042219.xml</value>
        </property>
        <property name="OUTPUT">
-           <value>slave.slc</value>
+           <value>secondary.slc</value>
        </property>
     </component>
 <!-- If the user has a DEM that she wants to use for processing,

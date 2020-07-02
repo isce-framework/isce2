@@ -24,10 +24,10 @@ def runNormalize(self):
     Make sure that a DEM is available for processing the given data.
     '''
     refPol = self._grd.polarizations[0]
-    master = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
+    reference = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
 
 
-    azlooks, rglooks = self._grd.getLooks( self.posting, master.groundRangePixelSize, master.azimuthPixelSize, self.numberAzimuthLooks, self.numberRangeLooks)
+    azlooks, rglooks = self._grd.getLooks( self.posting, reference.groundRangePixelSize, reference.azimuthPixelSize, self.numberAzimuthLooks, self.numberRangeLooks)
 
 
     for pol in self._grd.polarizations:

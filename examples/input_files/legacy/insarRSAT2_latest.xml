@@ -9,7 +9,7 @@
         </property>
         <property name="slc offset method">ampcor</property>
         <property name="posting">30</property>
-        <component name="master">
+        <component name="reference">
             <property name="xml">
                 <value>20100707/product.xml</value>
             </property>
@@ -23,7 +23,7 @@
                 <value>20100707.raw</value>
             </property>
         </component>
-        <component name="slave">
+        <component name="secondary">
             <property name="xml">
                 <value>20100402/product.xml</value>
             </property>

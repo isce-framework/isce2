@@ -55,8 +55,8 @@ def cmdLineParse():
             help = 'Number of range looks')
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
             help = 'Input DEM to use')
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help = 'Dir with master frame')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help = 'Dir with reference frame')
     parser.add_argument('-b', '--bbox', dest='bbox', type=float, nargs=4, required=True,
             help='SNWE bounding box')
     parser.add_argument('-i', '--input', dest='infile', type=str, required=True,
@@ -125,8 +125,8 @@ if __name__ == '__main__':
     #####Parse command line
     inps = cmdLineParse()
 
-    #####Load master metadata
-    db = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+    #####Load reference metadata
+    db = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
     frame = db['frame']
     try:
         dop = db['doppler']

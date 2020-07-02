@@ -18,8 +18,8 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-i', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser.add_argument('-i', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
     parser.add_argument('-n', action='store_true', dest='isnative', default=False,
             help='If product is native doppler')
     parser.add_argument('-m', type=float, dest='margin', default=0.05,
@@ -35,11 +35,11 @@ if __name__ == '__main__':
     inps = cmdLineParse()
 
     try:
-        mdb = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
 
     except:
         print('SLC not found ... trying RAW data')
-        mdb = shelve.open( os.path.join(inps.master, 'raw'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'raw'), flag='r')
         inps.isnative = True
 
     frame = mdb['frame']

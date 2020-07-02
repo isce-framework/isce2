@@ -129,14 +129,14 @@ if [ ! -d $wkdir ]; then
 fi
 
 # see if small baselines or not
-mastertemp=`pwd | awk '{print substr($0,length-7)}'`
+referencetemp=`pwd | awk '{print substr($0,length-7)}'`
 dir=pwd
 # what type of processing has been done
 flag_sb=0
 flag_sm=0
 if [ $flag_slc == 0 ];
 then
-	if [ $mastertemp == ASELINES ]; then
+	if [ $referencetemp == ASELINES ]; then
 	   echo "SMALL BASELINES"
 	   flag_sb=1
 	else
@@ -147,14 +147,14 @@ if [ $flag_sm == 1 ]; then
     for folder in  `ls -d [0-9]*/`
     do
         # doing nothing just want one date
-        master_slave=`basename $folder`
+        reference_secondary=`basename $folder`
     done
-    lengthstr=`echo "$master_slave" | awk '{print length($0)}'`
+    lengthstr=`echo "$reference_secondary" | awk '{print length($0)}'`
     if [ $lengthstr == 17 ]; then
         flag_sb=1
         echo "SMALL BASELINES"
     else
-        echo "SINGLE MASTER"                                                                                                                           
+        echo "SINGLE REFERENCE"                                                                                                                           
         flag_sm=1
     fi
 fi
@@ -165,22 +165,22 @@ do
 	echo $folder
 	if [ $flag_sb == 1 ];
 	then
-		master_slave=`echo "$folder" | awk '{print substr($0,1,17)}'` 
+		reference_secondary=`echo "$folder" | awk '{print substr($0,1,17)}'` 
 	elif [ $flag_sm == 1 ]; 
 	then
-        	slave=`echo "$folder" | awk '{print substr($0,1,8)}'`
-		master_slave=$mastertemp"_"$slave
+        	secondary=`echo "$folder" | awk '{print substr($0,1,8)}'`
+		reference_secondary=$referencetemp"_"$secondary
 	elif [ $flag_slc == 1 ];
 	then
-		master_slave=`basename $folder`
+		reference_secondary=`basename $folder`
 	fi
-	echo $master_slave
+	echo $reference_secondary
 
 	# if SLC the data of the folder will determine file name
 	if  [ $file_in_or == date.slc ]
 	then
-		file_in=${master_slave}.${extension_out}
-		wkfile=${master_slave}_${r_looks}l.${extension_out}
+		file_in=${reference_secondary}.${extension_out}
+		wkfile=${reference_secondary}_${r_looks}l.${extension_out}
 	fi
 
 
@@ -205,9 +205,9 @@ do
             fi
     
     	    # convert from ppm files to png
-            convert -despeckle -resize 50%  $folder/out.ppm $folder/$wkdir/ISCE_$master_slave.png
+            convert -despeckle -resize 50%  $folder/out.ppm $folder/$wkdir/ISCE_$reference_secondary.png
 	    rm $folder/out.ppm
-        cp $folder/$wkdir/ISCE_$master_slave.png $wkdir/.
+        cp $folder/$wkdir/ISCE_$reference_secondary.png $wkdir/.
 done
 
 cd $wkdir

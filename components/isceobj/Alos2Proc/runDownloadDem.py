@@ -20,10 +20,10 @@ def runDownloadDem(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
-    bboxGeo = getBboxGeo(masterTrack)
+    bboxGeo = getBboxGeo(referenceTrack)
     bbox = np.array(bboxGeo)
     bboxStr = '{} {} {} {}'.format(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
 
