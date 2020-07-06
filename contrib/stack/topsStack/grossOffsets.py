@@ -18,6 +18,7 @@ from scipy.interpolate import interp2d, griddata
 
 import matplotlib.pyplot as plt
 
+
 class grossOffsets:
 
     def __init__(self):
@@ -116,6 +117,7 @@ class grossOffsets:
 
         #x,y = np.meshgrid(self.x0,self.y0)
 
+        #from mpl_toolkits.basemap import Basemap
         #self.AntVeloDataMap = Basemap(width=5600000,height=5600000,\
         #                        resolution='l',projection='stere',\
         #                        lat_ts=-71,lat_0=-90,lon_0=0)
