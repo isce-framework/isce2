@@ -8,15 +8,14 @@ add_library(formslcLib SHARED
     formslcLib/src/io.c
     )
 set_property(TARGET formslcLib PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(formslcLib PRIVATE formslcLib/include)
 target_link_libraries(formslcLib PUBLIC
     utilLib
     )
-# TODO (fortran module include)
-# This seems to be needed to use this library's modules,
-# but is there a more idiomatic way to do this?
+
+set(mdir ${CMAKE_CURRENT_BINARY_DIR}/formslc_fortran_modules)
+set_property(TARGET formslcLib PROPERTY Fortran_MODULE_DIRECTORY ${mdir})
 target_include_directories(formslcLib INTERFACE
-    ${CMAKE_CURRENT_BINARY_DIR}
+    $<$<COMPILE_LANGUAGE:Fortran>:${mdir}>
     )
 
 add_subdirectory(correct)
