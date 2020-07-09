@@ -60,9 +60,9 @@ int reset_params(struct PRM *prm, long *, int *, int *);
 int fill_shift_data(int, int, int, int, int, char *, char *, FILE *);
 int handle_prf_change_ALOSE(struct PRM *, FILE *, long *, int); 
 
-struct 	sardata_record r1;
-struct	sardata_descriptor_ALOSE dfd;
-struct	sardata_info_ALOSE sdr;
+static struct sardata_record r1;
+static struct sardata_descriptor_ALOSE dfd;
+static struct sardata_info_ALOSE sdr;
 
 /*
 differences in include file from ALOS AUIG 
