@@ -146,19 +146,19 @@ radar_wavelength	lambda
 rng_spec_wgt		rhww
 
 */
-int	verbose;	/* controls minimal level of output 	*/ 
-int	debug; 		/* more output 				*/
-int	roi; 		/* more output 				*/
-int	swap; 		/* whether to swap bytes 		*/
-int	quad_pol; 	/* quad polarization data 		*/
-int	ALOS_format; 	/* AUIG:  ALOS_format = 0  		*/
-			/* ERSDAC:  ALOS_format = 1  		*/
-int	force_slope;	/* whether to set the slope	 	*/
-int	dopp;		/* whether to calculate doppler 	*/
-int	quiet_flag;	/* reduce output			*/
-int	SAR_mode;	/* 0 => high-res 			*/	
-			/* 1 => wide obs 			*/
-			/* 2 => polarimetry 			*/
-			/* from ALOS Product Format 3-2		*/
-double	forced_slope;	/* value to set chirp_slope to          */
-double  tbias;          /* time bias for bad orbit data         */
+extern int verbose;         /* controls minimal level of output */
+extern int debug;           /* more output                      */
+extern int roi;             /* more output                      */
+extern int swap;            /* whether to swap bytes            */
+extern int quad_pol;        /* quad polarization data           */
+extern int ALOS_format;     /* AUIG:  ALOS_format = 0           */
+                            /* ERSDAC:  ALOS_format = 1         */
+extern int force_slope;     /* whether to set the slope         */
+extern int dopp;            /* whether to calculate doppler     */
+extern int quiet_flag;      /* reduce output                    */
+extern int SAR_mode;        /* 0 => high-res                    */
+                            /* 1 => wide obs                    */
+                            /* 2 => polarimetry                 */
+                            /* from ALOS Product Format 3-2     */
+extern double forced_slope; /* value to set chirp_slope to      */
+extern double tbias;        /* time bias for bad orbit data     */

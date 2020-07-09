@@ -10,7 +10,10 @@ headerFiles = ['data_ALOS.h','data_ALOSE.h','image_sio.h','orbit_ALOS.h','sarlea
 sourceFiles = ['ALOSE_orbits_utils.c','ALOS_ldr_orbit.c','ALOS_pre_process.c','calc_dop.c','hermite_c.c','init_from_PRM.c',
                'interpolate_ALOS_orbit.c','null_sio_struct.c','parse_ALOS_commands.c','polyfit.c','read_ALOSE_data.c',
                'read_ALOS_data.c','read_ALOS_sarleader.c','roi_utils.c','set_ALOS_defaults.c','siocomplex.c',
-               'swap_ALOS_data_info.c','utils.c','write_ALOS_prm.c','readOrbitPulse.f','readOrbitPulseState.f','readOrbitPulseSetState.f']
+               'swap_ALOS_data_info.c','utils.c','write_ALOS_prm.c',
+               'readOrbitPulse.f','readOrbitPulseState.f',
+               'readOrbitPulseSetState.f','image_sio.c',
+               ]
 lib = envSensorSrc1.Library(target = 'alos', source = sourceFiles)
 envSensorSrc1.Install(install,lib)
 envSensorSrc1.Alias('install',install)
