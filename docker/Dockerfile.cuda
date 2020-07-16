@@ -1,4 +1,4 @@
-FROM hysds/dev:latest
+FROM hysds/cuda-dev:latest
 
 # Set an encoding to make things work smoothly.
 ENV LANG en_US.UTF-8
@@ -65,10 +65,11 @@ RUN set -ex \
  && cd /opt/isce2/src/isce2 \
  && source docker/build_env.sh \
  && mkdir -p $BUILD_DIR \
- && cp docker/SConfigISCE configuration/SConfigISCE \
+ && cp docker/SConfigISCE.cuda configuration/SConfigISCE \
  && scons install \
  && cp docker/isce_env.sh $ISCE_INSTALL_ROOT \
  && cd /tmp \
+ && rm -rf /opt/isce2/src \
  && mkdir -p /tmp/rpm-build/opt \
  && mv $ISCE_INSTALL_ROOT /tmp/rpm-build/opt \
  && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/master \
@@ -80,7 +81,7 @@ RUN set -ex \
       --maintainer=piyush.agram@jpl.nasa.gov \
       --description="InSAR Scientific Computing Environment v2 (${hash})"
 
-FROM hysds/pge-base:latest
+FROM hysds/cuda-pge-base:latest
 
 # Set an encoding to make things work smoothly.
 ENV LANG en_US.UTF-8
