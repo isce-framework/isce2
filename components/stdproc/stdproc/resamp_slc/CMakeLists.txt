@@ -13,6 +13,11 @@ target_link_libraries(resamp_slc PUBLIC
 target_compile_options(resamp_slc PRIVATE
     -ffree-line-length-none
     )
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(resamp_slc PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 
 InstallSameDir(
     resamp_slc
