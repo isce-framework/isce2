@@ -26,7 +26,7 @@ int mbf(char *inputfile, char *outputfile, int nrg, int naz, float prf, float pr
                       (float, in terms of 1/PRF)
   nboff:           number of unsynchronized lines in a burst
                       (float, in terms of 1/PRF, with sign, see burst_sync.py for rules of sign)
-                      (the image to be processed is always considered to be master)
+                      (the image to be processed is always considered to be reference)
   bsl:             start line number of a burst
                       (float, the line number of the first line of the full-aperture SLC is zero)
                       (no need to be first burst, any one is OK)
@@ -68,8 +68,8 @@ int mbf(char *inputfile, char *outputfile, int nrg, int naz, float prf, float pr
   float nbc; //burst cycle length in terms of pri. number of lines
   //float nboff; //number of unsynchronized lines in a burst with sign
               //see burst_sync.py for rules of sign.
-              //the image to be processed is always considered to be master
-              //and the other image is always considered to be slave
+              //the image to be processed is always considered to be reference
+              //and the other image is always considered to be secondary
   //float bsl; //burst start line, input float
   //float kacoeff[3]; //FM rate along range (experessed by quadratic polynomial
                     //as a function of range sample number)

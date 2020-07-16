@@ -66,7 +66,7 @@ void	get_seconds(struct PRM p, double *start, double *end)
 int	m;
 double	dyear, doy;
 double	n_secs_day;
-double  prf_master;
+double  prf_reference;
 
 n_secs_day = 24.0*60.0*60.0;
 dyear = 1000.0*floor(p.SC_clock_start/1000.0);
@@ -74,12 +74,12 @@ doy = p.SC_clock_start - dyear;
 m = p.nrows - p.num_valid_az;
 
 /*  adjust the prf to use the a_rsatretch_a scale factor which was
-    needed to match the slave image to the master image */
+    needed to match the secondary image to the reference image */
 
-prf_master = p.prf/(1.+p.a_stretch_a);
+prf_reference = p.prf/(1.+p.a_stretch_a);
 
-*start = n_secs_day*doy + (1.0*m)/(2.0*prf_master);
-*end = *start + p.num_patches * p.num_valid_az/prf_master;
+*start = n_secs_day*doy + (1.0*m)/(2.0*prf_reference);
+*end = *start + p.num_patches * p.num_valid_az/prf_reference;
 
 }
 /*---------------------------------------------------------------------------*/

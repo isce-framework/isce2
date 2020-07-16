@@ -26,7 +26,7 @@ def getBbox(frame, zrange=[-500., 9000.],geom='zero doppler', margin=0.05):
     '''
     from isceobj.Util.Poly2D import Poly2D
 
-    #### Master box
+    #### Reference box
     r0 = frame.startingRange
     rmax = frame.getFarRange()
     t0 = frame.getSensingStart()
@@ -106,8 +106,8 @@ def runVerifyDEM(self):
 
     else:
 
-        master = self._insar.loadProduct(self._insar.masterSlcCropProduct)
-        slave  = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
+        reference = self._insar.loadProduct(self._insar.referenceSlcCropProduct)
+        secondary  = self._insar.loadProduct(self._insar.secondarySlcCropProduct)
 
         bboxes = []
 
@@ -119,10 +119,10 @@ def runVerifyDEM(self):
             zrange = self.heightRange
         else:
             zrange = [-500., 9000.]
-        mbox = getBbox(master, geom=self._insar.masterGeometrySystem,
+        mbox = getBbox(reference, geom=self._insar.referenceGeometrySystem,
                                zrange = zrange)
 
-        sbox = getBbox(slave, geom=self._insar.slaveGeometrySystem,
+        sbox = getBbox(secondary, geom=self._insar.secondaryGeometrySystem,
                                 zrange = zrange)
 
         bboxes.append(mbox)

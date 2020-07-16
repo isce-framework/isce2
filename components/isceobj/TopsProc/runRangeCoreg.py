@@ -13,7 +13,7 @@ from isceobj.Location.Offset import OffsetField, Offset
 
 logger = logging.getLogger('isce.topsinsar.rangecoreg')
 
-def runAmpcor(master, slave):
+def runAmpcor(reference, secondary):
     '''
     Run one ampcor process.
     '''
@@ -21,12 +21,12 @@ def runAmpcor(master, slave):
     from mroipac.ampcor.Ampcor import Ampcor
 
     mImg = isceobj.createSlcImage()
-    mImg.load(master + '.xml')
+    mImg.load(reference + '.xml')
     mImg.setAccessMode('READ')
     mImg.createImage()
 
     sImg = isceobj.createSlcImage()
-    sImg.load(slave + '.xml')
+    sImg.load(secondary + '.xml')
     sImg.setAccessMode('READ')
     sImg.createImage()
 
@@ -123,17 +123,17 @@ def runRangeCoreg(self, debugPlot=True):
             print('Skipping range coreg for swath IW{0}'.format(swath))
             continue
 
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
 
         maxBurst = maxBurst - 1  ###For overlaps 
     
-        masterTop = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        masterBottom  = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
+        referenceTop = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        referenceBottom  = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
 
-        slaveTop = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct , 'top_IW{0}.xml'.format(swath)))
-        slaveBottom = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        secondaryTop = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct , 'top_IW{0}.xml'.format(swath)))
+        secondaryBottom = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
 
-        for pair in [(masterTop,slaveTop), (masterBottom,slaveBottom)]:
+        for pair in [(referenceTop,secondaryTop), (referenceBottom,secondaryBottom)]:
             for ii in range(minBurst,maxBurst):
                 mFile = pair[0].bursts[ii-minBurst].image.filename
                 sFile = pair[1].bursts[ii-minBurst].image.filename
@@ -188,4 +188,4 @@ def runRangeCoreg(self, debugPlot=True):
     catalog.printToLog(logger, "runRangeCoreg")
     self._insar.procDoc.addAllFromCatalog(catalog)
 
-    self._insar.slaveRangeCorrection = meanval * masterTop.bursts[0].rangePixelSize
+    self._insar.secondaryRangeCorrection = meanval * referenceTop.bursts[0].rangePixelSize

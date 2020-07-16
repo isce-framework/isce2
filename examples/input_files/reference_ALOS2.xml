@@ -1,4 +1,4 @@
-<component name="master">
+<component name="reference">
     <property name="IMAGEFILE">
         <value>data/20140902/IMG-HH-ALOS2015010600-140902-UBSR1.1__A</value>
     </property>
@@ -10,7 +10,7 @@
     </property>
 </component>
 
-<!-- Shown above is the bare minimum input XML file for ALOS2 sensor. The master and slave catalog xml files have the same structure.
+<!-- Shown above is the bare minimum input XML file for ALOS2 sensor. The reference and secondary catalog xml files have the same structure.
 
 All file paths in the input files should either be absolute paths or relative to the processing directory.
 

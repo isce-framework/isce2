@@ -41,16 +41,16 @@ def runOffsetprf(self):
     from isceobj.Catalog import recordInputs
 
     logger.info("Calculate offset between slcs using ampcor")
-    masterFrame = self._insar.getMasterFrame()
-    slaveFrame = self._insar.getSlaveFrame()
-    masterOrbit = self._insar.getMasterOrbit()
-    slaveOrbit = self._insar.getSlaveOrbit()
-    prf1 = masterFrame.getInstrument().getPulseRepetitionFrequency()
-    prf2 = slaveFrame.getInstrument().getPulseRepetitionFrequency()
+    referenceFrame = self._insar.getReferenceFrame()
+    secondaryFrame = self._insar.getSecondaryFrame()
+    referenceOrbit = self._insar.getReferenceOrbit()
+    secondaryOrbit = self._insar.getSecondaryOrbit()
+    prf1 = referenceFrame.getInstrument().getPulseRepetitionFrequency()
+    prf2 = secondaryFrame.getInstrument().getPulseRepetitionFrequency()
     nearRange1 = self.insar.formSLC1.startingRange
     nearRange2 = self.insar.formSLC2.startingRange
-    fs1 = masterFrame.getInstrument().getRangeSamplingRate()
-    fs2 = slaveFrame.getInstrument().getRangeSamplingRate()
+    fs1 = referenceFrame.getInstrument().getRangeSamplingRate()
+    fs2 = secondaryFrame.getInstrument().getRangeSamplingRate()
 
     ###There seems to be no other way of determining image length - Piyush
     patchSize = self._insar.getPatchSize() 
@@ -95,23 +95,23 @@ def runOffsetprf(self):
     coarseAcross = 0 + coarseAcross
     coarseDown = 0 + coarseDown
 
-    mSlcImage = self._insar.getMasterSlcImage()
+    mSlcImage = self._insar.getReferenceSlcImage()
     mSlc = isceobj.createSlcImage()
     IU.copyAttributes(mSlcImage, mSlc)
     accessMode = 'read'
     mSlc.setAccessMode(accessMode)
     mSlc.createImage()
-    masterWidth = mSlc.getWidth()
-    masterLength = mSlc.getLength()
+    referenceWidth = mSlc.getWidth()
+    referenceLength = mSlc.getLength()
     
-    sSlcImage = self._insar.getSlaveSlcImage()
+    sSlcImage = self._insar.getSecondarySlcImage()
     sSlc = isceobj.createSlcImage()
     IU.copyAttributes(sSlcImage, sSlc)
     accessMode = 'read'
     sSlc.setAccessMode(accessMode)
     sSlc.createImage()
-    slaveWidth = sSlc.getWidth()
-    slaveLength = sSlc.getLength()
+    secondaryWidth = sSlc.getWidth()
+    secondaryLength = sSlc.getLength()
 
     objAmpcor = Ampcor(name='insarapp_slcs_ampcor')
     objAmpcor.configure()
@@ -134,13 +134,13 @@ def runOffsetprf(self):
     offAc = max(firstAc,-coarseAcross)+xMargin
     offDn = max(firstDown,-coarseDown)+yMargin
 
-    offAcmax = int(coarseAcross + ((fs2/fs1)-1)*masterWidth)
+    offAcmax = int(coarseAcross + ((fs2/fs1)-1)*referenceWidth)
     logger.debug("Gross Max Across: %s" % (offAcmax))
-    lastAc = int(min(masterWidth, slaveWidth- offAcmax) - xMargin)
+    lastAc = int(min(referenceWidth, secondaryWidth- offAcmax) - xMargin)
 
-    offDnmax = int(coarseDown + ((prf2/prf1)-1)*masterLength)
+    offDnmax = int(coarseDown + ((prf2/prf1)-1)*referenceLength)
     logger.debug("Gross Max Down: %s" % (offDnmax))
-    lastDown = int( min(masterLength, slaveLength-offDnmax) - yMargin)
+    lastDown = int( min(referenceLength, secondaryLength-offDnmax) - yMargin)
 
 
     if not objAmpcor.firstSampleAcross:

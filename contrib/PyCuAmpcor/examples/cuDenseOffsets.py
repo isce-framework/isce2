@@ -15,7 +15,7 @@ from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
 
 EXAMPLE = '''example
   cuDenseOffsets.py -m ./merged/SLC/20151120/20151120.slc.full -s ./merged/SLC/20151214/20151214.slc.full
-      --masterxml ./master/IW1.xml --outprefix ./merged/offsets/20151120_20151214/offset
+      --referencexml ./reference/IW1.xml --outprefix ./merged/offsets/20151120_20151214/offset
       --ww 256 --wh 256 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --sw 8 --sh 8 --gpuid 2
 '''
 
@@ -25,28 +25,28 @@ def createParser():
     Command line parser.
     '''
 
+
     parser = argparse.ArgumentParser(description='Generate offset field between two Sentinel slc',
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=EXAMPLE)
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-                        help='Master image')
-    parser.add_argument('-s', '--slave',type=str, dest='slave', required=True,
-                        help='Slave image')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+                        help='Reference image')
+    parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
+                        help='Secondary image')
     parser.add_argument('-l', '--lat',type=str, dest='lat', required=False,
                         help='Latitude')
     parser.add_argument('-L', '--lon',type=str, dest='lon', required=False,
                         help='Longitude')
     parser.add_argument('--los',type=str, dest='los', required=False,
                         help='Line of Sight')
-    parser.add_argument('-x', '--masterxml',type=str, dest='masterxml', required=False,
-                        help='Master Image XML File')
+    parser.add_argument('-x', '--referencexml',type=str, dest='referencexml', required=False,
+                        help='Reference Image XML File')
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
                         help='Output prefix, default: offset.')
     parser.add_argument('--os','--outsuffix', type=str, dest='outsuffix', default='',
                         help='Output suffix, default:.')
-
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
                         help='Window width (default: %(default)s).')
     parser.add_argument('--wh', type=int, dest='winhgt', default=64,
@@ -117,17 +117,19 @@ def cmdLineParse(iargs = None):
 
 
 @use_api
-def estimateOffsetField(master, slave, inps=None):
+def estimateOffsetField(reference, secondary, inps=None):
 
-    ###Loading the slave image object
+
+    ###Loading the secondary image object
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
-    ###Loading the master image object
+    ###Loading the reference image object
     sar = isceobj.createSlcImage()
-    sar.load(master+'.xml')
+    sar.load(reference+'.xml')
+
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -142,12 +144,14 @@ def estimateOffsetField(master, slave, inps=None):
     objOffset.derampMethod = inps.deramp
     print('deramp method (0 for magnitude, 1 for complex): ', objOffset.derampMethod)
 
-    objOffset.masterImageName = master+'.vrt'
-    objOffset.masterImageHeight = length
-    objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave+'.vrt'
-    objOffset.slaveImageHeight = length
-    objOffset.slaveImageWidth = width
+
+    objOffset.referenceImageName = reference+'.vrt'
+    objOffset.referenceImageHeight = length
+    objOffset.referenceImageWidth = width
+    objOffset.secondaryImageName = secondary+'.vrt'
+    objOffset.secondaryImageHeight = length
+    objOffset.secondaryImageWidth = width
+
     print("image length:",length)
     print("image width:",width)
 
@@ -172,10 +176,12 @@ def estimateOffsetField(master, slave, inps=None):
     print('half search range: {} by {}'.format(inps.srchgt, inps.srcwidth))
 
     # starting pixel
-    objOffset.masterStartPixelDownStatic = inps.margin
-    objOffset.masterStartPixelAcrossStatic = inps.margin
 
-    # skip/step size
+    objOffset.referenceStartPixelDownStatic = inps.margin
+    objOffset.referenceStartPixelAcrossStatic = inps.margin
+ 
+    # skip size
+    
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
     print('search step: {} by {}'.format(inps.skiphgt, inps.skipwidth))
@@ -301,10 +307,12 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
     outDir = os.path.dirname(inps.outprefix)
     print(inps.outprefix)
+
     os.makedirs(outDir, exist_ok=True)
 
-    estimateOffsetField(inps.master, inps.slave, inps)
+    estimateOffsetField(inps.reference, inps.secondary, inps)
     return
+
 
 
 if __name__ == '__main__':

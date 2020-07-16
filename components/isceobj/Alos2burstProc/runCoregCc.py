@@ -26,15 +26,15 @@ def runCoregCc(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     #demFile = os.path.abspath(self._insar.dem)
     #wbdFile = os.path.abspath(self._insar.wbd)
 ###############################################################################
-    self._insar.rangeResidualOffsetCc = [[] for i in range(len(masterTrack.frames))]
-    self._insar.azimuthResidualOffsetCc = [[] for i in range(len(masterTrack.frames))]
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    self._insar.rangeResidualOffsetCc = [[] for i in range(len(referenceTrack.frames))]
+    self._insar.azimuthResidualOffsetCc = [[] for i in range(len(referenceTrack.frames))]
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -43,8 +43,8 @@ def runCoregCc(self):
 
             print('processing frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
             ##################################################
             # estimate cross-correlation offsets
@@ -64,11 +64,11 @@ def runCoregCc(self):
                 landRatio = np.sum(wbd==0) / length / width
                 del wbd
                 if (landRatio <= 0.00125):
-                    print('\n\nWARNING: land area too small for estimating offsets between master and slave magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber))
+                    print('\n\nWARNING: land area too small for estimating offsets between reference and secondary magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber))
                     print('set offsets to zero\n\n')
                     self._insar.rangeResidualOffsetCc[i].append(0.0)
                     self._insar.azimuthResidualOffsetCc[i].append(0.0)
-                    catalog.addItem('warning message', 'land area too small for estimating offsets between master and slave magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber), 'runCoregCc')
+                    catalog.addItem('warning message', 'land area too small for estimating offsets between reference and secondary magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber), 'runCoregCc')
                     continue
                 #total number of offsets to use
                 numberOfOffsets /= landRatio
@@ -102,37 +102,37 @@ def runCoregCc(self):
             catalog.addItem('number of azimuth offsets at frame {}, swath {}'.format(frameNumber, swathNumber), '{}'.format(numberOfOffsetsAzimuth), 'runCoregCc')
 
             #need to cp to current directory to make it (gdal) work
-            if not os.path.isfile(self._insar.masterMagnitude):
-                os.symlink(os.path.join(self._insar.masterBurstPrefix, self._insar.masterMagnitude), self._insar.masterMagnitude)
+            if not os.path.isfile(self._insar.referenceMagnitude):
+                os.symlink(os.path.join(self._insar.referenceBurstPrefix, self._insar.referenceMagnitude), self._insar.referenceMagnitude)
             #shutil.copy2() can overwrite
-            shutil.copy2(os.path.join(self._insar.masterBurstPrefix, self._insar.masterMagnitude+'.vrt'), self._insar.masterMagnitude+'.vrt')
-            shutil.copy2(os.path.join(self._insar.masterBurstPrefix, self._insar.masterMagnitude+'.xml'), self._insar.masterMagnitude+'.xml')
+            shutil.copy2(os.path.join(self._insar.referenceBurstPrefix, self._insar.referenceMagnitude+'.vrt'), self._insar.referenceMagnitude+'.vrt')
+            shutil.copy2(os.path.join(self._insar.referenceBurstPrefix, self._insar.referenceMagnitude+'.xml'), self._insar.referenceMagnitude+'.xml')
 
-            if not os.path.isfile(self._insar.slaveMagnitude):
-                os.symlink(os.path.join(self._insar.slaveBurstPrefix + '_1_coreg_geom', self._insar.slaveMagnitude), self._insar.slaveMagnitude)
+            if not os.path.isfile(self._insar.secondaryMagnitude):
+                os.symlink(os.path.join(self._insar.secondaryBurstPrefix + '_1_coreg_geom', self._insar.secondaryMagnitude), self._insar.secondaryMagnitude)
             #shutil.copy2() can overwrite
-            shutil.copy2(os.path.join(self._insar.slaveBurstPrefix + '_1_coreg_geom', self._insar.slaveMagnitude+'.vrt'), self._insar.slaveMagnitude+'.vrt')
-            shutil.copy2(os.path.join(self._insar.slaveBurstPrefix + '_1_coreg_geom', self._insar.slaveMagnitude+'.xml'), self._insar.slaveMagnitude+'.xml')
+            shutil.copy2(os.path.join(self._insar.secondaryBurstPrefix + '_1_coreg_geom', self._insar.secondaryMagnitude+'.vrt'), self._insar.secondaryMagnitude+'.vrt')
+            shutil.copy2(os.path.join(self._insar.secondaryBurstPrefix + '_1_coreg_geom', self._insar.secondaryMagnitude+'.xml'), self._insar.secondaryMagnitude+'.xml')
 
             #matching
             ampcor = Ampcor(name='insarapp_slcs_ampcor')
             ampcor.configure()
 
             mMag = isceobj.createImage()
-            mMag.load(self._insar.masterMagnitude+'.xml')
+            mMag.load(self._insar.referenceMagnitude+'.xml')
             mMag.setAccessMode('read')
             mMag.createImage()
 
             sMag = isceobj.createImage()
-            sMag.load(self._insar.slaveMagnitude+'.xml')
+            sMag.load(self._insar.secondaryMagnitude+'.xml')
             sMag.setAccessMode('read')
             sMag.createImage()
 
             ampcor.setImageDataType1('real')
             ampcor.setImageDataType2('real')
 
-            ampcor.setMasterSlcImage(mMag)
-            ampcor.setSlaveSlcImage(sMag)
+            ampcor.setReferenceSlcImage(mMag)
+            ampcor.setSecondarySlcImage(sMag)
 
             #MATCH REGION
             rgoff = 0
@@ -201,12 +201,12 @@ def runCoregCc(self):
             sMag.finalizeImage()
 
             #clear up
-            os.remove(self._insar.masterMagnitude)
-            os.remove(self._insar.masterMagnitude+'.vrt')
-            os.remove(self._insar.masterMagnitude+'.xml')
-            os.remove(self._insar.slaveMagnitude)
-            os.remove(self._insar.slaveMagnitude+'.vrt')
-            os.remove(self._insar.slaveMagnitude+'.xml')
+            os.remove(self._insar.referenceMagnitude)
+            os.remove(self._insar.referenceMagnitude+'.vrt')
+            os.remove(self._insar.referenceMagnitude+'.xml')
+            os.remove(self._insar.secondaryMagnitude)
+            os.remove(self._insar.secondaryMagnitude+'.vrt')
+            os.remove(self._insar.secondaryMagnitude+'.xml')
 
             #compute average offsets to use in resampling
             if refinedOffsets == None:
@@ -214,9 +214,9 @@ def runCoregCc(self):
                 azimuthOffset = 0
                 self._insar.rangeResidualOffsetCc[i].append(rangeOffset)
                 self._insar.azimuthResidualOffsetCc[i].append(azimuthOffset)
-                print('\n\nWARNING: too few offsets left in matching master and slave magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber))
+                print('\n\nWARNING: too few offsets left in matching reference and secondary magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber))
                 print('set offsets to zero\n\n')
-                catalog.addItem('warning message', 'too few offsets left in matching master and slave magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber), 'runCoregCc')
+                catalog.addItem('warning message', 'too few offsets left in matching reference and secondary magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber), 'runCoregCc')
             else:
                 rangeOffset, azimuthOffset = meanOffset(refinedOffsets)
                 #for range offset, need to compute from a polynomial
@@ -258,38 +258,38 @@ def runCoregCc(self):
             ##################################################
             # resample bursts
             ##################################################
-            slaveBurstResampledDir = self._insar.slaveBurstPrefix + '_2_coreg_cc'
-            #interferogramDir = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix + '_coreg_geom'
+            secondaryBurstResampledDir = self._insar.secondaryBurstPrefix + '_2_coreg_cc'
+            #interferogramDir = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix + '_coreg_geom'
             interferogramDir = 'burst_interf_2_coreg_cc'
-            interferogramPrefix = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix
-            resampleBursts(masterSwath, slaveSwath, 
-                self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, slaveBurstResampledDir, interferogramDir,
-                self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, self._insar.slaveBurstPrefix, interferogramPrefix, 
+            interferogramPrefix = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix
+            resampleBursts(referenceSwath, secondarySwath, 
+                self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, secondaryBurstResampledDir, interferogramDir,
+                self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, self._insar.secondaryBurstPrefix, interferogramPrefix, 
                 self._insar.rangeOffset, self._insar.azimuthOffset, rangeOffsetResidual=rangeOffset, azimuthOffsetResidual=azimuthOffset)
 
 
             ##################################################
             # mosaic burst amplitudes and interferograms
             ##################################################
-            os.chdir(slaveBurstResampledDir)
-            mosaicBurstAmplitude(masterSwath, self._insar.slaveBurstPrefix, self._insar.slaveMagnitude, numberOfLooksThreshold=4)
+            os.chdir(secondaryBurstResampledDir)
+            mosaicBurstAmplitude(referenceSwath, self._insar.secondaryBurstPrefix, self._insar.secondaryMagnitude, numberOfLooksThreshold=4)
             os.chdir('../')
 
             os.chdir(interferogramDir)
-            mosaicBurstInterferogram(masterSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
+            mosaicBurstInterferogram(referenceSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
             os.chdir('../')
 
 
             ##################################################
             # final amplitude and interferogram
             ##################################################
-            amp = np.zeros((masterSwath.numberOfLines, 2*masterSwath.numberOfSamples), dtype=np.float32)
-            amp[0:, 1:masterSwath.numberOfSamples*2:2] = np.fromfile(os.path.join(slaveBurstResampledDir, self._insar.slaveMagnitude), \
-                dtype=np.float32).reshape(masterSwath.numberOfLines, masterSwath.numberOfSamples)
-            amp[0:, 0:masterSwath.numberOfSamples*2:2] = np.fromfile(os.path.join(self._insar.masterBurstPrefix, self._insar.masterMagnitude), \
-                dtype=np.float32).reshape(masterSwath.numberOfLines, masterSwath.numberOfSamples)
+            amp = np.zeros((referenceSwath.numberOfLines, 2*referenceSwath.numberOfSamples), dtype=np.float32)
+            amp[0:, 1:referenceSwath.numberOfSamples*2:2] = np.fromfile(os.path.join(secondaryBurstResampledDir, self._insar.secondaryMagnitude), \
+                dtype=np.float32).reshape(referenceSwath.numberOfLines, referenceSwath.numberOfSamples)
+            amp[0:, 0:referenceSwath.numberOfSamples*2:2] = np.fromfile(os.path.join(self._insar.referenceBurstPrefix, self._insar.referenceMagnitude), \
+                dtype=np.float32).reshape(referenceSwath.numberOfLines, referenceSwath.numberOfSamples)
             amp.astype(np.float32).tofile(self._insar.amplitude)
-            create_xml(self._insar.amplitude, masterSwath.numberOfSamples, masterSwath.numberOfLines, 'amp')
+            create_xml(self._insar.amplitude, referenceSwath.numberOfSamples, referenceSwath.numberOfLines, 'amp')
 
             os.rename(os.path.join(interferogramDir, self._insar.interferogram), self._insar.interferogram)
             os.rename(os.path.join(interferogramDir, self._insar.interferogram+'.vrt'), self._insar.interferogram+'.vrt')

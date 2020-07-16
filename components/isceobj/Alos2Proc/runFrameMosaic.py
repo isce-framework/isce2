@@ -20,17 +20,17 @@ def runFrameMosaic(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     mosaicDir = 'insar'
     os.makedirs(mosaicDir, exist_ok=True)
     os.chdir(mosaicDir)
 
-    numberOfFrames = len(masterTrack.frames)
+    numberOfFrames = len(referenceTrack.frames)
     if numberOfFrames == 1:
         import shutil
-        frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.masterFrames[0]))
+        frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.referenceFrames[0]))
         if not os.path.isfile(self._insar.interferogram):
             os.symlink(os.path.join('../', frameDir, self._insar.interferogram), self._insar.interferogram)
         #shutil.copy2() can overwrite
@@ -51,75 +51,75 @@ def runFrameMosaic(self):
         #update track parameters
         #########################################################
         #mosaic size
-        masterTrack.numberOfSamples = masterTrack.frames[0].numberOfSamples
-        masterTrack.numberOfLines = masterTrack.frames[0].numberOfLines
+        referenceTrack.numberOfSamples = referenceTrack.frames[0].numberOfSamples
+        referenceTrack.numberOfLines = referenceTrack.frames[0].numberOfLines
         #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
         #range parameters
-        masterTrack.startingRange = masterTrack.frames[0].startingRange
-        masterTrack.rangeSamplingRate = masterTrack.frames[0].rangeSamplingRate
-        masterTrack.rangePixelSize = masterTrack.frames[0].rangePixelSize
+        referenceTrack.startingRange = referenceTrack.frames[0].startingRange
+        referenceTrack.rangeSamplingRate = referenceTrack.frames[0].rangeSamplingRate
+        referenceTrack.rangePixelSize = referenceTrack.frames[0].rangePixelSize
         #azimuth parameters
-        masterTrack.sensingStart = masterTrack.frames[0].sensingStart
-        masterTrack.prf = masterTrack.frames[0].prf
-        masterTrack.azimuthPixelSize = masterTrack.frames[0].azimuthPixelSize
-        masterTrack.azimuthLineInterval = masterTrack.frames[0].azimuthLineInterval
+        referenceTrack.sensingStart = referenceTrack.frames[0].sensingStart
+        referenceTrack.prf = referenceTrack.frames[0].prf
+        referenceTrack.azimuthPixelSize = referenceTrack.frames[0].azimuthPixelSize
+        referenceTrack.azimuthLineInterval = referenceTrack.frames[0].azimuthLineInterval
 
-        #update track parameters, slave
+        #update track parameters, secondary
         #########################################################
         #mosaic size
-        slaveTrack.numberOfSamples = slaveTrack.frames[0].numberOfSamples
-        slaveTrack.numberOfLines = slaveTrack.frames[0].numberOfLines
+        secondaryTrack.numberOfSamples = secondaryTrack.frames[0].numberOfSamples
+        secondaryTrack.numberOfLines = secondaryTrack.frames[0].numberOfLines
         #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
         #range parameters
-        slaveTrack.startingRange = slaveTrack.frames[0].startingRange
-        slaveTrack.rangeSamplingRate = slaveTrack.frames[0].rangeSamplingRate
-        slaveTrack.rangePixelSize = slaveTrack.frames[0].rangePixelSize
+        secondaryTrack.startingRange = secondaryTrack.frames[0].startingRange
+        secondaryTrack.rangeSamplingRate = secondaryTrack.frames[0].rangeSamplingRate
+        secondaryTrack.rangePixelSize = secondaryTrack.frames[0].rangePixelSize
         #azimuth parameters
-        slaveTrack.sensingStart = slaveTrack.frames[0].sensingStart
-        slaveTrack.prf = slaveTrack.frames[0].prf
-        slaveTrack.azimuthPixelSize = slaveTrack.frames[0].azimuthPixelSize
-        slaveTrack.azimuthLineInterval = slaveTrack.frames[0].azimuthLineInterval
+        secondaryTrack.sensingStart = secondaryTrack.frames[0].sensingStart
+        secondaryTrack.prf = secondaryTrack.frames[0].prf
+        secondaryTrack.azimuthPixelSize = secondaryTrack.frames[0].azimuthPixelSize
+        secondaryTrack.azimuthLineInterval = secondaryTrack.frames[0].azimuthLineInterval
 
     else:
         #choose offsets
         if self.frameOffsetMatching:
-            rangeOffsets = self._insar.frameRangeOffsetMatchingMaster
-            azimuthOffsets = self._insar.frameAzimuthOffsetMatchingMaster
+            rangeOffsets = self._insar.frameRangeOffsetMatchingReference
+            azimuthOffsets = self._insar.frameAzimuthOffsetMatchingReference
         else:
-            rangeOffsets = self._insar.frameRangeOffsetGeometricalMaster
-            azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalMaster
+            rangeOffsets = self._insar.frameRangeOffsetGeometricalReference
+            azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalReference
 
         #list of input files
         inputInterferograms = []
         inputAmplitudes = []
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             inputInterferograms.append(os.path.join('../', frameDir, 'mosaic', self._insar.interferogram))
             inputAmplitudes.append(os.path.join('../', frameDir, 'mosaic', self._insar.amplitude))
 
         #note that track parameters are updated after mosaicking
         #mosaic amplitudes
-        frameMosaic(masterTrack, inputAmplitudes, self._insar.amplitude, 
+        frameMosaic(referenceTrack, inputAmplitudes, self._insar.amplitude, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=False, phaseCompensation=False, resamplingMethod=0)
         #mosaic interferograms
-        frameMosaic(masterTrack, inputInterferograms, self._insar.interferogram, 
+        frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=True, phaseCompensation=True, resamplingMethod=1)
 
-        create_xml(self._insar.amplitude, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'amp')
-        create_xml(self._insar.interferogram, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'int')
+        create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
+        create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
 
-        #update slave parameters here
-        #do not match for slave, always use geometrical
-        rangeOffsets = self._insar.frameRangeOffsetGeometricalSlave
-        azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalSlave
-        frameMosaicParameters(slaveTrack, rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1)
+        #update secondary parameters here
+        #do not match for secondary, always use geometrical
+        rangeOffsets = self._insar.frameRangeOffsetGeometricalSecondary
+        azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalSecondary
+        frameMosaicParameters(secondaryTrack, rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1)
 
     os.chdir('../')
     #save parameter file
-    self._insar.saveProduct(masterTrack, self._insar.masterTrackParameter)
-    self._insar.saveProduct(slaveTrack, self._insar.slaveTrackParameter)
+    self._insar.saveProduct(referenceTrack, self._insar.referenceTrackParameter)
+    self._insar.saveProduct(secondaryTrack, self._insar.secondaryTrackParameter)
 
     catalog.printToLog(logger, "runFrameMosaic")
     self._insar.procDoc.addAllFromCatalog(catalog)

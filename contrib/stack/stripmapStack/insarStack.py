@@ -77,19 +77,19 @@ class insarStack:
                 dsq = qualityGroup.create_dataset(dsName, shape=(platTrackObj.numPairs, platTrackObj.length, platTrackObj.width),
                         dtype=dataType) # , chunks=chunk_shape
 
-                masterTimes = [None]*platTrackObj.numPairs
-                slaveTimes = [None]*platTrackObj.numPairs
+                referenceTimes = [None]*platTrackObj.numPairs
+                secondaryTimes = [None]*platTrackObj.numPairs
                 for i in range(platTrackObj.numPairs):
                    data, metadata = platTrackObj.pairs[pairs[i]].read(dsName)
                    dsq[i,:,:] = data
-                   master , slave = pairs[i]
-                   masterTimes[i] = master.strftime('%Y-%m-%d %H:%M:%S').encode('utf8')
-                   slaveTimes[i] = slave.strftime('%Y-%m-%d %H:%M:%S').encode('utf8')
+                   reference , secondary = pairs[i]
+                   referenceTimes[i] = reference.strftime('%Y-%m-%d %H:%M:%S').encode('utf8')
+                   secondaryTimes[i] = secondary.strftime('%Y-%m-%d %H:%M:%S').encode('utf8')
             
             ###############################
             # store the pair times as a 2D dataset
             if len(platTrackObj.dsetQualityNames) > 0:
-                piars_idx = vstack((masterTimes,slaveTimes)).T
+                piars_idx = vstack((referenceTimes,secondaryTimes)).T
                 dsq = qualityGroup.create_dataset('pairs_idx', data=piars_idx, dtype=piars_idx.dtype)
             ###############################
             # if the reference pixel is not given let's choose a pixel with maximum average coherence
@@ -107,21 +107,21 @@ class insarStack:
                 dso = obsGroup.create_dataset(dsName, shape=(platTrackObj.numPairs, platTrackObj.length, platTrackObj.width),
                         dtype=dataType) #, chunks=chunk_shape)
             
-                masterTimes = [None]*platTrackObj.numPairs
-                slaveTimes = [None]*platTrackObj.numPairs
+                referenceTimes = [None]*platTrackObj.numPairs
+                secondaryTimes = [None]*platTrackObj.numPairs
                 for i in range(platTrackObj.numPairs):
                    data, metadata = platTrackObj.pairs[pairs[i]].read(dsName)
                    #ds[i,:,:] = data - data[0, platTrackObj.ref_pixel[0] , platTrackObj.ref_pixel[1]]
                    dso[i,:,:] = data
-                   master , slave = pairs[i]
-                   masterTimes[i] = master.strftime('%Y-%m-%d %H:%M:%S').encode("ascii", "ignore")
-                   slaveTimes[i] = slave.strftime('%Y-%m-%d %H:%M:%S').encode("ascii", "ignore")
+                   reference , secondary = pairs[i]
+                   referenceTimes[i] = reference.strftime('%Y-%m-%d %H:%M:%S').encode("ascii", "ignore")
+                   secondaryTimes[i] = secondary.strftime('%Y-%m-%d %H:%M:%S').encode("ascii", "ignore")
             
             ###############################
             # A 2D dataset containing a 2D array of strings. First column 
-            # is the master time and second column the slave time of pairs.
+            # is the reference time and second column the secondary time of pairs.
             if len(platTrackObj.dsetObservationNames) > 0:
-                piars_idx = vstack((masterTimes,slaveTimes)).T
+                piars_idx = vstack((referenceTimes,secondaryTimes)).T
                 dspairs = obsGroup.create_dataset('pairs_idx', data=piars_idx, dtype=piars_idx.dtype)
             ###################################
             for key,value in metadata.items():

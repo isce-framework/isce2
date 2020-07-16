@@ -28,13 +28,13 @@ def runSlcOffset(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     demFile = os.path.abspath(self._insar.dem)
     wbdFile = os.path.abspath(self._insar.wbd)
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -43,8 +43,8 @@ def runSlcOffset(self):
 
             print('estimating offset frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
             ##########################################
             #1. set number of matching points
@@ -62,7 +62,7 @@ def runSlcOffset(self):
                 numberRangeLooks=100
                 numberAzimuthLooks=100
                 #compute land ratio using topo module
-                topo(masterSwath, masterTrack, demFile, 'lat.rdr', 'lon.rdr', 'hgt.rdr', losFile='los.rdr', 
+                topo(referenceSwath, referenceTrack, demFile, 'lat.rdr', 'lon.rdr', 'hgt.rdr', losFile='los.rdr', 
                     incFile=None, mskFile=None, 
                     numberRangeLooks=numberRangeLooks, numberAzimuthLooks=numberAzimuthLooks, multilookTimeOffset=False)
                 waterBodyRadar('lat.rdr', 'lon.rdr', wbdFile, 'wbd.rdr')
@@ -82,7 +82,7 @@ def runSlcOffset(self):
                     catalog.addItem('warning message', 'land too small for estimating slc offsets at frame {}, swath {}, use geometric offsets'.format(frameNumber, swathNumber), 'runSlcOffset')
                     
                     #compute geomtricla offsets
-                    geo2rdr(slaveSwath, slaveTrack, 'lat.rdr', 'lon.rdr', 'hgt.rdr', 'rg.rdr', 'az.rdr', numberRangeLooks=numberRangeLooks, numberAzimuthLooks=numberAzimuthLooks, multilookTimeOffset=False)
+                    geo2rdr(secondarySwath, secondaryTrack, 'lat.rdr', 'lon.rdr', 'hgt.rdr', 'rg.rdr', 'az.rdr', numberRangeLooks=numberRangeLooks, numberAzimuthLooks=numberAzimuthLooks, multilookTimeOffset=False)
                     reformatGeometricalOffset('rg.rdr', 'az.rdr', 'cull.off', rangeStep=numberRangeLooks, azimuthStep=numberAzimuthLooks, maximumNumberOfOffsets=2000)
 
                     os.remove('lat.rdr')
@@ -155,26 +155,26 @@ def runSlcOffset(self):
             ampcor.configure()
 
             mSLC = isceobj.createSlcImage()
-            mSLC.load(self._insar.masterSlc+'.xml')
+            mSLC.load(self._insar.referenceSlc+'.xml')
             mSLC.setAccessMode('read')
             mSLC.createImage()
 
             sSLC = isceobj.createSlcImage()
-            sSLC.load(self._insar.slaveSlc+'.xml')
+            sSLC.load(self._insar.secondarySlc+'.xml')
             sSLC.setAccessMode('read')
             sSLC.createImage()
 
             ampcor.setImageDataType1('complex')
             ampcor.setImageDataType2('complex')
 
-            ampcor.setMasterSlcImage(mSLC)
-            ampcor.setSlaveSlcImage(sSLC)
+            ampcor.setReferenceSlcImage(mSLC)
+            ampcor.setSecondarySlcImage(sSLC)
 
             #MATCH REGION
             #compute an offset at image center to use
-            rgoff, azoff = computeOffsetFromOrbit(masterSwath, masterTrack, slaveSwath, slaveTrack, 
-                masterSwath.numberOfSamples * 0.5, 
-                masterSwath.numberOfLines * 0.5)
+            rgoff, azoff = computeOffsetFromOrbit(referenceSwath, referenceTrack, secondarySwath, secondaryTrack, 
+                referenceSwath.numberOfSamples * 0.5, 
+                referenceSwath.numberOfLines * 0.5)
             #it seems that we cannot use 0, haven't look into the problem
             if rgoff == 0:
                 rgoff = 1

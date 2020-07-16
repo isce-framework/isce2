@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger('isce.insar.runDenseOffsets')
 
 @use_api
-def estimateOffsetField(master, slave, denseOffsetFileName,
+def estimateOffsetField(reference, secondary, denseOffsetFileName,
                         ww=64, wh=64,
                         sw=20, shh=20,
                         kw=32, kh=32):
@@ -19,15 +19,15 @@ def estimateOffsetField(master, slave, denseOffsetFileName,
     Estimate offset field between burst and simamp.
     '''
 
-    ###Loading the slave image object
+    ###Loading the secondary image object
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
-    ###Loading the master image object
+    ###Loading the reference image object
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(reference + '.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -84,17 +84,17 @@ def runDenseOffsets(self):
     else:
         return
 
-    masterFrame = self.insar.loadProduct( self._insar.masterSlcCropProduct)
-    masterSlc =  masterFrame.getImage().filename
+    referenceFrame = self.insar.loadProduct( self._insar.referenceSlcCropProduct)
+    referenceSlc =  referenceFrame.getImage().filename
 
-    slaveSlc = os.path.join(self.insar.coregDirname, self._insar.refinedCoregFilename )
+    secondarySlc = os.path.join(self.insar.coregDirname, self._insar.refinedCoregFilename )
 
     dirname = self.insar.denseOffsetsDirname
     os.makedirs(dirname, exist_ok=True)
 
     denseOffsetFilename = os.path.join(dirname , self.insar.denseOffsetFilename)
 
-    field = estimateOffsetField(masterSlc, slaveSlc, denseOffsetFilename,
+    field = estimateOffsetField(referenceSlc, secondarySlc, denseOffsetFilename,
                                 ww = self.denseWindowWidth,
                                 wh = self.denseWindowHeight,
                                 sw = self.denseSearchWidth,

@@ -1,4 +1,4 @@
-<component name="master">
+<component name="reference">
     <property name="IMAGEFILE">
         data/ASA_IM__0CNPDE20111119_071443_000000163108_00394_50839_4852.N1
     </property>
@@ -9,13 +9,13 @@
         data/DOR_POR_AXVF-P20111121_014700_20111118_215526_20111120_002326
     </property>
     <property name="OUTPUT">
-        master.raw
+        reference.raw
     </property>
 </component>
 
 <!--
 Shown above is the bare minimum input XML file for the EnviSAT sensor.
-The master and slave catalog xml files have the same structure.
+The reference and secondary catalog xml files have the same structure.
 
 The Envisat_SLC sensor has the same inputs, 
 except that it starts with an ASA_IMS_1 SLC image.

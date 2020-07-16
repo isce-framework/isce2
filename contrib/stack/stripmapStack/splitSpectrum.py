@@ -80,7 +80,7 @@ def main(iargs=None):
     '''
     Split the range spectrum
     '''
-    #Check if the master and slave are .slc files then go ahead and split the range spectrum
+    #Check if the reference and secondary are .slc files then go ahead and split the range spectrum
     tstart = time.time()
     inps = cmdLineParse(iargs)
     print ('input full-band SLC: ', inps.slc)

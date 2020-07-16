@@ -52,7 +52,7 @@ def runGeocode(self, prodlist, bbox, is_offset_mode=False):
 
 
     ###Read in the product
-    burst = self._insar.loadProduct( self._insar.masterSlcCropProduct)
+    burst = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
 
     ####Get required values from product
     t0 = burst.sensingStart
@@ -87,7 +87,7 @@ def runGeocode(self, prodlist, bbox, is_offset_mode=False):
 
 
     ###Ughhh!! Doppler handling
-    if self._insar.masterGeometrySystem.lower().startswith('native'):
+    if self._insar.referenceGeometrySystem.lower().startswith('native'):
         ###Need to fit polynomials
         ###Geozero fortran assumes that starting range for radar image and polynomial are same
         ###Also assumes that the polynomial spacing is original spacing at full looks

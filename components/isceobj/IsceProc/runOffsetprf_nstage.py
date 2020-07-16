@@ -115,16 +115,16 @@ def run(frame1, frame2, formSlc1, formSlc2, imSlc1, imSlc2, nstages, scale, info
     accessMode = 'read'
     mSlc.setAccessMode(accessMode)
     mSlc.createImage()
-    masterWidth = mSlc.getWidth()
-    masterLength = mSlc.getLength()
+    referenceWidth = mSlc.getWidth()
+    referenceLength = mSlc.getLength()
     
     sSlc = isceobj.createSlcImage()
     IU.copyAttributes(imSlc2, sSlc)
     accessMode = 'read'
     sSlc.setAccessMode(accessMode)
     sSlc.createImage()
-    slaveWidth = sSlc.getWidth()
-    slaveLength = sSlc.getLength()
+    secondaryWidth = sSlc.getWidth()
+    secondaryLength = sSlc.getLength()
 
     finalIteration = False
     for iterNum in xrange(nstages-1,-1,-1):
@@ -166,14 +166,14 @@ def run(frame1, frame2, formSlc1, formSlc2, imSlc1, imSlc2, nstages, scale, info
         offAc = max(firstAc,-coarseAcross)+xMargin
         offDn = max(firstDown,-coarseDown)+yMargin
 
-        offAcmax = int(coarseAcross + ((fs2/fs1)-1)*masterWidth)
+        offAcmax = int(coarseAcross + ((fs2/fs1)-1)*referenceWidth)
         logger.debug("Gross Max Across: %s" % (offAcmax))
-        lastAc = int(min(masterWidth, slaveWidth-offAcmax) - xMargin)
+        lastAc = int(min(referenceWidth, secondaryWidth-offAcmax) - xMargin)
 
-        offDnmax = int(coarseDown + ((prf2/prf1)-1)*masterLength)
+        offDnmax = int(coarseDown + ((prf2/prf1)-1)*referenceLength)
         logger.debug("Gross Max Down: %s" % (offDnmax))
 
-        lastDn = int(min(masterLength, slaveLength-offDnmax)  - yMargin)
+        lastDn = int(min(referenceLength, secondaryLength-offDnmax)  - yMargin)
 
         objAmpcor.setFirstSampleAcross(offAc)
         objAmpcor.setLastSampleAcross(lastAc)
@@ -190,8 +190,8 @@ def run(frame1, frame2, formSlc1, formSlc2, imSlc1, imSlc2, nstages, scale, info
         logger.debug('Looks = %d'%scaleFactor)
         logger.debug('Correlation window sizes: %d  %d'%(objAmpcor.windowSizeWidth, objAmpcor.windowSizeHeight))
         logger.debug('Search window sizes: %d %d'%(objAmpcor.searchWindowSizeWidth, objAmpcor.searchWindowSizeHeight))
-        logger.debug(' Across pos: %d %d out of (%d,%d)'%(objAmpcor.firstSampleAcross, objAmpcor.lastSampleAcross, masterWidth, slaveWidth))
-        logger.debug(' Down pos: %d %d out of (%d,%d)'%(objAmpcor.firstSampleDown, objAmpcor.lastSampleDown, masterLength, slaveLength))
+        logger.debug(' Across pos: %d %d out of (%d,%d)'%(objAmpcor.firstSampleAcross, objAmpcor.lastSampleAcross, referenceWidth, secondaryWidth))
+        logger.debug(' Down pos: %d %d out of (%d,%d)'%(objAmpcor.firstSampleDown, objAmpcor.lastSampleDown, referenceLength, secondaryLength))
         if (iterNum == 0) or finalIteration:
             if catalog is not None:
                 # Record the inputs

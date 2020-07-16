@@ -58,7 +58,7 @@ def runTopo(self):
     objDem = isceobj.createDemImage()
     objDem.load(demFilename + '.xml')
 
-    info = self._insar.loadProduct(self._insar.masterSlcCropProduct)
+    info = self._insar.loadProduct(self._insar.referenceSlcCropProduct)
     intImage = info.getImage()
 
 
@@ -95,7 +95,7 @@ def runTopo(self):
     doppler.setWidth(topo.width // topo.numberRangeLooks)
     doppler.setLength(topo.length // topo.numberAzimuthLooks)
 
-    if self._insar.masterGeometrySystem.lower().startswith('native'):
+    if self._insar.referenceGeometrySystem.lower().startswith('native'):
         doppler.initPoly(rangeOrder = len(dop)-1, azimuthOrder=0, coeffs=[dop])
     else:
         doppler.initPoly(rangeOrder=0, azimuthOrder=0, coeffs=[[0.]])

@@ -15,15 +15,15 @@ void normalize_kernel(float *kernel, long start_index, long end_index);
 int resamp(char *slc2, char *rslc2, char *rgoff_file, char *azoff_file, int nrg1, int naz1, int nrg2, int naz2, float prf, float *dopcoeff, float *rgcoef, float *azcoef, float azpos_off, int byteorder, long imageoffset, long lineoffset, int verbose){
   /*
     mandatory:
-    slc2:  slave image
-    rslc2: resampled slave image
+    slc2:  secondary image
+    rslc2: resampled secondary image
     rgoff_file: range offset file. if no range offset file, specify fake
     azoff_file: azimuth offset file. if no azimuth offset file, specify fake
-    nrg1:  number of columns in master image
-    naz1:  number of lines in master image
-    nrg2:  number of columns in slave image
-    naz2:  number of lines in slave image
-    prf:   PRF of slave image
+    nrg1:  number of columns in reference image
+    naz1:  number of lines in reference image
+    nrg2:  number of columns in secondary image
+    naz2:  number of lines in secondary image
+    prf:   PRF of secondary image
     dopcoeff[0]-[3]: Doppler centroid frequency coefficents
     optional:
     rgcoef[0]-[9]:   range offset polynomial coefficents. First of two fit results of resamp_roi

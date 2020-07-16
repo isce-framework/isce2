@@ -106,7 +106,7 @@ def runRgoffset(self):
     self._stdWriter.setFileTag("rgoffset", "err")
     self._stdWriter.setFileTag("rgoffset", "out")
     objOffset.setStdWriter(self._stdWriter)
-    prf = self._insar.getMasterFrame().getInstrument().getPulseRepetitionFrequency()
+    prf = self._insar.getReferenceFrame().getInstrument().getPulseRepetitionFrequency()
    
     objOffset.setFirstPRF(prf)
     objOffset.setSecondPRF(prf)

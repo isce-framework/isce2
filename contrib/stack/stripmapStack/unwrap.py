@@ -64,8 +64,8 @@ def createParser():
 
     parser.add_argument('-d', '--defomax', dest='defomax', type=float, default=2.0,
             help='Max cycles of deformation')
-    parser.add_argument('-s', '--master', dest='master', type=str, default='master',
-            help='Master directory')
+    parser.add_argument('-s', '--reference', dest='reference', type=str, default='reference',
+            help='Reference directory')
     
     parser.add_argument('-m', '--method', dest='method', type=str, default='icu',
             help='unwrapping method')
@@ -299,18 +299,18 @@ def main(iargs=None):
         raise Exception("Unwrapping method needs to be either icu, snaphu or snaphu2stage")
 
     ########
-    # pckfile = os.path.join(inps.master, 'data')
+    # pckfile = os.path.join(inps.reference, 'data')
     interferogramDir = os.path.dirname(inps.intfile)
 
     if inps.method != 'icu':
     
-        masterShelveDir = os.path.join(interferogramDir , 'masterShelve')
-        os.makedirs(masterShelveDir, exist_ok=True)
+        referenceShelveDir = os.path.join(interferogramDir , 'referenceShelve')
+        os.makedirs(referenceShelveDir, exist_ok=True)
 
-        inps.master = os.path.dirname(inps.master)
-        cpCmd='cp ' + os.path.join(inps.master, 'data*') +' '+masterShelveDir
+        inps.reference = os.path.dirname(inps.reference)
+        cpCmd='cp ' + os.path.join(inps.reference, 'data*') +' '+referenceShelveDir
         os.system(cpCmd)
-        pckfile = os.path.join(masterShelveDir,'data')
+        pckfile = os.path.join(referenceShelveDir,'data')
         print(pckfile)
         metadata = extractInfoFromPickle(pckfile, inps)
 

@@ -157,8 +157,8 @@ if __name__ == '__main__':
     iObj = load_pickle()
     print('Done loading pickle')
 
-    width = iObj.getMasterSlcImage().getWidth()
-    length = iObj.getMasterSlcImage().getLength()
+    width = iObj.getReferenceSlcImage().getWidth()
+    length = iObj.getReferenceSlcImage().getLength()
     print('Image Dimensions: ', length, width)
 
     print('Results from numpy code')

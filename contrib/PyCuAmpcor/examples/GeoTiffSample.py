@@ -19,12 +19,12 @@ def main():
     objOffset.algorithm = 0 # cross-correlation method 0=freq 1=time
     objOffset.deviceID = 0  # GPU device id to be used
     objOffset.nStreams = 2  # cudaStreams; multiple streams to overlap data transfer with gpu calculations
-    objOffset.masterImageName = "master.tif"
-    objOffset.masterImageHeight = 16480 # RasterYSize
-    objOffset.masterImageWidth = 17000 # RasterXSize
-    objOffset.slaveImageName = "slave.tif"
-    objOffset.slaveImageHeight = 16480
-    objOffset.slaveImageWidth = 17000
+    objOffset.referenceImageName = "reference.tif"
+    objOffset.referenceImageHeight = 16480 # RasterYSize
+    objOffset.referenceImageWidth = 17000 # RasterXSize
+    objOffset.secondaryImageName = "secondary.tif"
+    objOffset.secondaryImageHeight = 16480
+    objOffset.secondaryImageWidth = 17000
     objOffset.windowSizeWidth = 64 # template window size
     objOffset.windowSizeHeight = 64
     objOffset.halfSearchRangeDown = 20 # search range
@@ -48,13 +48,13 @@ def main():
     objOffset.numberWindowAcross = 100
     # if to process the whole image; some math needs to be done
     # margin = 0 # margins to be neglected
-    #objOffset.numberWindowDown = (objOffset.slaveImageHeight - 2*margin - 2*objOffset.halfSearchRangeDown - objOffset.windowSizeHeight) // objOffset.skipSampleDown
-    #objOffset.numberWindowAcross = (objOffset.slaveImageWidth - 2*margin - 2*objOffset.halfSearchRangeAcross - objOffset.windowSizeWidth) // objOffset.skipSampleAcross
+    #objOffset.numberWindowDown = (objOffset.secondaryImageHeight - 2*margin - 2*objOffset.halfSearchRangeDown - objOffset.windowSizeHeight) // objOffset.skipSampleDown
+    #objOffset.numberWindowAcross = (objOffset.secondaryImageWidth - 2*margin - 2*objOffset.halfSearchRangeAcross - objOffset.windowSizeWidth) // objOffset.skipSampleAcross
 
     objOffset.setupParams()
-    objOffset.masterStartPixelDownStatic = objOffset.halfSearchRangeDown # starting pixel offset
-    objOffset.masterStartPixelAcrossStatic = objOffset.halfSearchRangeDown
-    objOffset.setConstantGrossOffset(0, 0) # gross offset between master and slave images
+    objOffset.referenceStartPixelDownStatic = objOffset.halfSearchRangeDown # starting pixel offset
+    objOffset.referenceStartPixelAcrossStatic = objOffset.halfSearchRangeDown
+    objOffset.setConstantGrossOffset(0, 0) # gross offset between reference and secondary images
     objOffset.checkPixelInImageRange() # check whether there is something wrong with
     objOffset.runAmpcor()
 

@@ -15,25 +15,25 @@ import datetime
 def cmdLineParse():
     parser = argparse.ArgumentParser( description='Use polynomial offsets and create burst by burst interferograms')
 
-    parser.add_argument('-i', dest='master', type=str, required=True,
-            help='Directory with master acquisition')
+    parser.add_argument('-i', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition')
 
     inps = parser.parse_args()
 
-    if inps.master.endswith('/'):
-        inps.master = inps.master[:-1]
+    if inps.reference.endswith('/'):
+        inps.reference = inps.reference[:-1]
     return inps
 
 
-def resampSlave(master, burst, doppler, azpoly, flatten=False):
+def resampSecondary(reference, burst, doppler, azpoly, flatten=False):
     '''
     Resample burst by burst.
     '''
   
 
     inimg = isceobj.createSlcImage()
-    base = os.path.basename(master)
-    inimg.load(os.path.join(master, base+ '_orig.slc.xml'))
+    base = os.path.basename(reference)
+    inimg.load(os.path.join(reference, base+ '_orig.slc.xml'))
     inimg.setAccessMode('READ')
     width = inimg.getWidth()
     length = inimg.getLength()
@@ -64,7 +64,7 @@ def resampSlave(master, burst, doppler, azpoly, flatten=False):
 
     imgOut = isceobj.createSlcImage()
     imgOut.setWidth(width)
-    imgOut.filename = os.path.join(master, base+'.slc')
+    imgOut.filename = os.path.join(reference, base+'.slc')
     imgOut.setAccessMode('write')
     
     rObj.flatten = flatten
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     '''
     inps = cmdLineParse()
 
-    db = shelve.open(os.path.join(inps.master, 'original'), flag='r')
+    db = shelve.open(os.path.join(inps.reference, 'original'), flag='r')
     frame = db['frame']
     doppler = db['doppler']
     fmrate = db['fmrate']
@@ -124,7 +124,7 @@ if __name__ == '__main__':
 
     azpoly, dt0 = estimateAzShift(frame, doppler, fmrate)
 
-    imgout = resampSlave(inps.master, frame, doppler, azpoly)
+    imgout = resampSecondary(inps.reference, frame, doppler, azpoly)
     
     imgout.setAccessMode('READ')
     frame.image = imgout
@@ -137,7 +137,7 @@ if __name__ == '__main__':
 #    frame.sensingMid -= delta
 #    frame.sensingStop -= delta
 
-    db = shelve.open(os.path.join(inps.master, 'data'))
+    db = shelve.open(os.path.join(inps.reference, 'data'))
     db['frame'] = frame
     db['doppler'] = doppler
     db['fmrate'] = fmrate

@@ -153,13 +153,13 @@ __global__ void prepBlocks(struct StepZeroData s0Data) {
     *               since they're consecutive
     */
 
-    // Calculate "master" thread number (analogous in this usage to the overall image block number)
+    // Calculate "reference" thread number (analogous in this usage to the overall image block number)
     int imgBlock = (blockDim.x * blockIdx.x) + threadIdx.x;
     
     // Make sure the image block exists (since we have threads that may be empty due to trying to keep warp-size % THREAD_PER_BLOCK == 0)
     if (imgBlock < ini[9]) {
 
-        // Maintain local copy of pointer to particular block since the master array is linearly-contiguous
+        // Maintain local copy of pointer to particular block since the reference array is linearly-contiguous
         cuFloatComplex *refChip = &(s0Data.refBlocks[IDX1D(imgBlock,0,ini[0]*ini[1])]);        // Non-zero data in ini[0] x ini[1]
         cuFloatComplex *schWin = &(s0Data.schBlocks[IDX1D(imgBlock,0,ini[2]*ini[3])]);         // Non-zero data in ini[2] x ini[3]
         cuFloatComplex *padRefChip = &(s0Data.padRefChips[IDX1D(imgBlock,0,ini[6]*ini[7])]);   // Non-zero data in ini[0] x ini[1]
@@ -245,7 +245,7 @@ __global__ void accumulate(struct StepOneData s1Data) {
     *   Data usage: 100 bytes (9 pointers, 7 floats/ints) - does not factor cuBLAS calls
     */
 
-    // Master thread number (also the master image block number)
+    // Reference thread number (also the reference image block number)
     int block = (blockDim.x * blockIdx.x) + threadIdx.x;
     
     // Make sure we're operating on an existing block of data (and not in an empty thread)
@@ -396,7 +396,7 @@ __global__ void calcRough(struct StepTwoData s2Data) {
     *   Data usage: 212 bytes (17 pointers, 19 ints) - does not factor cuBLAS calls
     */
 
-    // Master thread/image block index
+    // Reference thread/image block index
     int block = (blockDim.x * blockIdx.x) + threadIdx.x;
 
     // Make sure we're operating on an existing block
@@ -578,7 +578,7 @@ __global__ void calcFine(struct StepThreeData s3Data) {
     *   Data usage: 72 bytes (7 pointers, 4 ints) - does not factor cuBLAS calls
     */
 
-    // Master thread/image block index
+    // Reference thread/image block index
     int block = (blockDim.x * blockIdx.x) + threadIdx.x;
 
     // Make sure we're operating on an existing image block
@@ -705,7 +705,7 @@ void runGPUAmpcor(float *h_inpts_flt, int *h_inpts_int, void **refBlocks, void *
 
     // To avoid adding an extra layer of complexity to each kernel, the input/output arrays in the 
     // CUDA code will be linearly contiguous in 1D. Each kernel will handle selecting the right starting
-    // point in the master array to use as the kernel's "copy" of the array (does not actually copy data)
+    // point in the reference array to use as the kernel's "copy" of the array (does not actually copy data)
     cuFloatComplex *d_refBlocks, *d_schBlocks;
 
     // Device output arrays

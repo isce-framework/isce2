@@ -37,7 +37,7 @@ def compute_FlatEarth(self,ifgFilename,width,length,radarWavelength):
     
     # If rubbersheeting has been performed add back the range sheet offsets
     
-    info = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
+    info = self._insar.loadProduct(self._insar.secondarySlcCropProduct)
     #radarWavelength = info.getInstrument().getRadarWavelength() 
     rangePixelSize = info.getInstrument().getRangePixelSize()
     fact = 4 * np.pi* rangePixelSize / radarWavelength
@@ -210,13 +210,13 @@ def generateIgram(self,imageSlc1, imageSlc2, resampName, azLooks, rgLooks,radarW
     return imageInt, imageAmp
 
 
-def subBandIgram(self, masterSlc, slaveSlc, subBandDir,radarWavelength):
+def subBandIgram(self, referenceSlc, secondarySlc, subBandDir,radarWavelength):
 
     img1 = isceobj.createImage()
-    img1.load(masterSlc + '.xml')
+    img1.load(referenceSlc + '.xml')
 
     img2 = isceobj.createImage()
-    img2.load(slaveSlc + '.xml')
+    img2.load(secondarySlc + '.xml')
 
     azLooks = self.numberAzimuthLooks
     rgLooks = self.numberRangeLooks
@@ -235,10 +235,10 @@ def runSubBandInterferograms(self):
     
     logger.info("Generating sub-band interferograms")
 
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    slaveFrame = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    secondaryFrame = self._insar.loadProduct( self._insar.secondarySlcCropProduct)
 
-    azLooks, rgLooks = self.insar.numberOfLooks( masterFrame, self.posting,
+    azLooks, rgLooks = self.insar.numberOfLooks( referenceFrame, self.posting,
                                         self.numberAzimuthLooks, self.numberRangeLooks)
 
     self.numberAzimuthLooks = azLooks
@@ -247,41 +247,41 @@ def runSubBandInterferograms(self):
     print("azimuth and range looks: ", azLooks, rgLooks)
 
     ###########
-    masterSlc =  masterFrame.getImage().filename
+    referenceSlc =  referenceFrame.getImage().filename
     lowBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.lowBandSlcDirname)
     highBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.highBandSlcDirname)
-    masterLowBandSlc = os.path.join(lowBandDir, os.path.basename(masterSlc))
-    masterHighBandSlc = os.path.join(highBandDir, os.path.basename(masterSlc))
+    referenceLowBandSlc = os.path.join(lowBandDir, os.path.basename(referenceSlc))
+    referenceHighBandSlc = os.path.join(highBandDir, os.path.basename(referenceSlc))
     ##########
-    slaveSlc = slaveFrame.getImage().filename
+    secondarySlc = secondaryFrame.getImage().filename
     coregDir = os.path.join(self.insar.coregDirname, self.insar.lowBandSlcDirname) 
-    slaveLowBandSlc = os.path.join(coregDir , os.path.basename(slaveSlc))
+    secondaryLowBandSlc = os.path.join(coregDir , os.path.basename(secondarySlc))
     coregDir = os.path.join(self.insar.coregDirname, self.insar.highBandSlcDirname)
-    slaveHighBandSlc = os.path.join(coregDir , os.path.basename(slaveSlc))
+    secondaryHighBandSlc = os.path.join(coregDir , os.path.basename(secondarySlc))
     ##########
 
-    interferogramName = subBandIgram(self, masterLowBandSlc, slaveLowBandSlc, self.insar.lowBandSlcDirname,self.insar.lowBandRadarWavelength)
+    interferogramName = subBandIgram(self, referenceLowBandSlc, secondaryLowBandSlc, self.insar.lowBandSlcDirname,self.insar.lowBandRadarWavelength)
 
-    interferogramName = subBandIgram(self, masterHighBandSlc, slaveHighBandSlc, self.insar.highBandSlcDirname,self.insar.highBandRadarWavelength)
+    interferogramName = subBandIgram(self, referenceHighBandSlc, secondaryHighBandSlc, self.insar.highBandSlcDirname,self.insar.highBandRadarWavelength)
     
 def runFullBandInterferogram(self):
     logger.info("Generating interferogram")
 
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    masterSlc =  masterFrame.getImage().filename
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    referenceSlc =  referenceFrame.getImage().filename
    
     if (self.doRubbersheetingRange | self.doRubbersheetingAzimuth):    
-        slaveSlc = os.path.join(self._insar.coregDirname, self._insar.fineCoregFilename)
+        secondarySlc = os.path.join(self._insar.coregDirname, self._insar.fineCoregFilename)
     else:
-        slaveSlc = os.path.join(self._insar.coregDirname, self._insar.refinedCoregFilename)
+        secondarySlc = os.path.join(self._insar.coregDirname, self._insar.refinedCoregFilename)
 
     img1 = isceobj.createImage()
-    img1.load(masterSlc + '.xml')
+    img1.load(referenceSlc + '.xml')
 
     img2 = isceobj.createImage()
-    img2.load(slaveSlc + '.xml')
+    img2.load(secondarySlc + '.xml')
 
-    azLooks, rgLooks = self.insar.numberOfLooks( masterFrame, self.posting, 
+    azLooks, rgLooks = self.insar.numberOfLooks( referenceFrame, self.posting, 
                             self.numberAzimuthLooks, self.numberRangeLooks) 
 
     self.numberAzimuthLooks = azLooks
@@ -297,7 +297,7 @@ def runFullBandInterferogram(self):
 
     interferogramName = os.path.join(ifgDir , self.insar.ifgFilename)
     
-    info = self._insar.loadProduct(self._insar.slaveSlcCropProduct)
+    info = self._insar.loadProduct(self._insar.secondarySlcCropProduct)
     radarWavelength = info.getInstrument().getRadarWavelength()
     
     generateIgram(self,img1, img2, interferogramName, azLooks, rgLooks,radarWavelength)
@@ -305,7 +305,7 @@ def runFullBandInterferogram(self):
 
     ###Compute coherence
     cohname = os.path.join(self.insar.ifgDirname, self.insar.correlationFilename)
-    computeCoherence(masterSlc, slaveSlc, cohname+'.full')
+    computeCoherence(referenceSlc, secondarySlc, cohname+'.full')
     multilook(cohname+'.full', outname=cohname, alks=azLooks, rlks=rgLooks)
 
 

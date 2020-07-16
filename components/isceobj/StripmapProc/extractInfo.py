@@ -34,16 +34,16 @@ import isceobj.Catalog
 import logging
 logger = logging.getLogger('isce.insar.extractInfo')
 
-def extractInfo(self, master, slave):
+def extractInfo(self, reference, secondary):
     from contrib.frameUtils.FrameInfoExtractor import FrameInfoExtractor
     FIE = FrameInfoExtractor()
-    masterInfo = FIE.extractInfoFromFrame(master)
-    slaveInfo = FIE.extractInfoFromFrame(slave)
-    masterInfo.sensingStart = [masterInfo.sensingStart, slaveInfo.sensingStart]
-    masterInfo.sensingStop = [masterInfo.sensingStop, slaveInfo.sensingStop]
+    referenceInfo = FIE.extractInfoFromFrame(reference)
+    secondaryInfo = FIE.extractInfoFromFrame(secondary)
+    referenceInfo.sensingStart = [referenceInfo.sensingStart, secondaryInfo.sensingStart]
+    referenceInfo.sensingStop = [referenceInfo.sensingStop, secondaryInfo.sensingStop]
     # for stitched frames do not make sense anymore
-    mbb = masterInfo.getBBox()
-    sbb = slaveInfo.getBBox()
+    mbb = referenceInfo.getBBox()
+    sbb = secondaryInfo.getBBox()
     latEarlyNear = mbb[0][0]
     latLateNear = mbb[2][0]
  
@@ -65,7 +65,7 @@ def extractInfo(self, master, slave):
         ret.append([min(mbb[2][0], sbb[2][0]), max(mbb[2][1], sbb[2][1])])
         ret.append([min(mbb[3][0], sbb[3][0]), min(mbb[3][1], sbb[3][1])])
     
-    masterInfo.bbox = ret
-    return masterInfo
+    referenceInfo.bbox = ret
+    return referenceInfo
     # the track should be the same for both
 

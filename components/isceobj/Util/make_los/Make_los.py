@@ -8,15 +8,15 @@ class Make_los(Component):
     def make_los(self):
         """calculate incidence and squint angles to radar data points"""
 
-        orbit = self._insar.getMasterOrbit()
+        orbit = self._insar.getReferenceOrbit()
         r0 = sensor.getFrame().getStartingRange()  # slant range of first pixel
-        rsamp = self._insar.getMasterFrame().getInstrument().rangePixelSize
+        rsamp = self._insar.getReferenceFrame().getInstrument().rangePixelSize
         asamp = self._insar.getAzimuthPixelSize()
-        t0 = self._insar.getMasterFrame().getSensingStart()
-        prf = self._insar.getMasterFrame().getInstrument().getPulseRepetitionFrequency()
-        sc_az_nom = self._insar.getMasterSquint()
+        t0 = self._insar.getReferenceFrame().getSensingStart()
+        prf = self._insar.getReferenceFrame().getInstrument().getPulseRepetitionFrequency()
+        sc_az_nom = self._insar.getReferenceSquint()
         fd_coef = self._insar.getDopplerCentroid().getDopplerCoefficients()
-        wvl = self._insar.getMasterFrame().getInstrument().getRadarWavelength()
+        wvl = self._insar.getReferenceFrame().getInstrument().getRadarWavelength()
 
         # get first pos and vel
         sv = orbit.InterpolateOrbit(t0,method='hermite')

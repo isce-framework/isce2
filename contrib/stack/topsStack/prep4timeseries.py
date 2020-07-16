@@ -40,7 +40,7 @@ def createParser():
     parser.add_argument('-o', '--orbit_direction', dest='orbitDirection', type=str, default=None,
                     help='Direction of the orbit: ascending, or descending ')
     parser.add_argument('-x', '--xml_file', dest='xmlFile', type=str, default=None,
-                    help='An xml file to extract common metada for the stack: e.g.: master/IW3.xml')
+                    help='An xml file to extract common metada for the stack: e.g.: reference/IW3.xml')
     parser.add_argument('-b', '--baseline_dir', dest='baselineDir', type=str, default=None,
                     help=' directory with baselines ')
     parser.add_argument('-g', '--geometry_dir', dest='geometryDir', type=str, default=None,
@@ -53,9 +53,9 @@ def cmdLineParse(iargs = None):
 
 def extractIsceMetadata(xmlFile):
     
-    master = ut.loadProduct(xmlFile)
-    burst = master.bursts[0]
-    burstEnd = master.bursts[-1]
+    reference = ut.loadProduct(xmlFile)
+    burst = reference.bursts[0]
+    burstEnd = reference.bursts[-1]
     metadata = {}
     metadata['radarWavelength'] = burst.radarWavelength
     metadata['rangePixelSize'] = burst.rangePixelSize

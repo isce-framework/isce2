@@ -39,10 +39,10 @@
                 integer (C_INT):: looksac          !c Looks across
                 integer (C_INT):: looksdn          !c Looks down
                 integer (C_INT):: blocksize        !c Number of azimuth lines in a block
-                real(C_DOUBLE) :: wvl1  !c Master wavelength
-                real(C_DOUBLE) :: wvl2  !c Slave wavelength
-                real(C_DOUBLE) :: drg1  !c Master slant range spacing
-                real(C_DOUBLE) :: drg2  !c Slave slant range spacing
+                real(C_DOUBLE) :: wvl1  !c Reference wavelength
+                real(C_DOUBLE) :: wvl2  !c Secondary wavelength
+                real(C_DOUBLE) :: drg1  !c Reference slant range spacing
+                real(C_DOUBLE) :: drg2  !c Secondary slant range spacing
                 integer(C_INT) :: flatten  !c Flatten flag
                 real(C_DOUBLE) :: wgt  !c Range filter weight
             end type crossmulType

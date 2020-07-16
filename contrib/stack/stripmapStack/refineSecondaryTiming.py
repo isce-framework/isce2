@@ -19,14 +19,14 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('--mm', type=str, dest='metamaster', default=None,
-            help='Master meta data dir')
-    parser.add_argument('-s', '--slave', type=str, dest='slave', required=True,
-            help='Slave image')
-    parser.add_argument('--ss', type=str, dest='metaslave', default=None,
-            help='Slave meta data dir')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('--mm', type=str, dest='metareference', default=None,
+            help='Reference meta data dir')
+    parser.add_argument('-s', '--secondary', type=str, dest='secondary', required=True,
+            help='Secondary image')
+    parser.add_argument('--ss', type=str, dest='metasecondary', default=None,
+            help='Secondary meta data dir')
     parser.add_argument('-o', '--outfile',type=str, required=True, dest='outfile',
             help='Misregistration in subpixels')
 
@@ -53,26 +53,26 @@ def cmdLineParse(iargs = None):
     return parser.parse_args(args=iargs)
 
 
-def estimateOffsetField(master, slave, azoffset=0, rgoffset=0):
+def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     '''
     Estimate offset field between burst and simamp.
     '''
 
 
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(reference + '.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = Ampcor(name='master_offset1')
+    objOffset = Ampcor(name='reference_offset1')
     objOffset.configure()
     objOffset.setAcrossGrossOffset(rgoffset)
     objOffset.setDownGrossOffset(azoffset)
@@ -173,7 +173,7 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
 
 
-    field = estimateOffsetField(inps.master, inps.slave,
+    field = estimateOffsetField(inps.reference, inps.secondary,
             azoffset=inps.azoff, rgoffset=inps.rgoff)
 
     if os.path.exists(inps.outfile):
@@ -182,31 +182,31 @@ def main(iargs=None):
     outDir = os.path.dirname(inps.outfile)
     os.makedirs(outDir, exist_ok=True)
 
-    if inps.metamaster is not None:
-        masterShelveDir = os.path.join(outDir, 'masterShelve')
-        os.makedirs(masterShelveDir, exist_ok=True)
+    if inps.metareference is not None:
+        referenceShelveDir = os.path.join(outDir, 'referenceShelve')
+        os.makedirs(referenceShelveDir, exist_ok=True)
 
-        cmd = 'cp ' + inps.metamaster + '/data* ' + masterShelveDir
+        cmd = 'cp ' + inps.metareference + '/data* ' + referenceShelveDir
         os.system(cmd)
         
 
-    if inps.metaslave is not None:
-        slaveShelveDir = os.path.join(outDir, 'slaveShelve')
-        os.makedirs(slaveShelveDir, exist_ok=True)
-        cmd = 'cp ' + inps.metaslave + '/data* ' + slaveShelveDir
+    if inps.metasecondary is not None:
+        secondaryShelveDir = os.path.join(outDir, 'secondaryShelve')
+        os.makedirs(secondaryShelveDir, exist_ok=True)
+        cmd = 'cp ' + inps.metasecondary + '/data* ' + secondaryShelveDir
         os.system(cmd)
 
     rgratio = 1.0
     azratio = 1.0
 
-    if (inps.metamaster is not None) and (inps.metaslave is not None):
+    if (inps.metareference is not None) and (inps.metasecondary is not None):
         
-       # with shelve.open( os.path.join(inps.metamaster, 'data'), 'r') as db:
-        with shelve.open( os.path.join(masterShelveDir, 'data'), 'r') as db:
+       # with shelve.open( os.path.join(inps.metareference, 'data'), 'r') as db:
+        with shelve.open( os.path.join(referenceShelveDir, 'data'), 'r') as db:
             mframe = db['frame']
 
-       # with shelve.open( os.path.join(inps.metaslave, 'data'), 'r') as db:
-        with shelve.open( os.path.join(slaveShelveDir, 'data'), 'r') as db:
+       # with shelve.open( os.path.join(inps.metasecondary, 'data'), 'r') as db:
+        with shelve.open( os.path.join(secondaryShelveDir, 'data'), 'r') as db:
             sframe = db['frame']
 
         rgratio = mframe.instrument.getRangePixelSize()/sframe.instrument.getRangePixelSize()

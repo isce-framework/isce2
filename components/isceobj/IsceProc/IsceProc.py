@@ -417,7 +417,7 @@ class IsceProc(Component, FrameMixin):
 
 
 
-## Why this: the code bloat with master this and slave that indicates the
+## Why this: the code bloat with reference this and secondary that indicates the
 ## design princple does not use composition, this is an attempt to
 ## fix that
 class RadarSwath(object):

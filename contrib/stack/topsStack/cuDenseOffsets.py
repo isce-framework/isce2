@@ -27,18 +27,18 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel slc')
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('-s', '--slave',type=str, dest='slave', required=True,
-            help='Slave image')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
+            help='Secondary image')
     parser.add_argument('-l', '--lat',type=str, dest='lat', required=False,
            help='Latitude')
     parser.add_argument('-L', '--lon',type=str, dest='lon', required=False,
            help='Longitude')
     parser.add_argument('--los',type=str, dest='los', required=False,
            help='Line of Sight')
-    parser.add_argument('--masterxml',type=str, dest='masterxml', required=False,
-           help='Master Image Xml File')
+    parser.add_argument('--referencexml',type=str, dest='referencexml', required=False,
+           help='Reference Image Xml File')
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
             help='Window Width')
     parser.add_argument('--wh', type=int, dest='winhgt', default=64,
@@ -96,18 +96,18 @@ def cmdLineParse(iargs = None):
     return inps
 
 @use_api
-def estimateOffsetField(master, slave, inps=None):
+def estimateOffsetField(reference, secondary, inps=None):
 
-    ###Loading the slave image object
+    ###Loading the secondary image object
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
 
-    ###Loading the master image object
+    ###Loading the reference image object
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(reference + '.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -123,12 +123,12 @@ def estimateOffsetField(master, slave, inps=None):
     objOffset.derampMethod = inps.deramp
     print(objOffset.derampMethod)
 
-    objOffset.masterImageName = master + '.vrt'
-    objOffset.masterImageHeight = length
-    objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave + '.vrt'
-    objOffset.slaveImageHeight = length
-    objOffset.slaveImageWidth = width
+    objOffset.referenceImageName = reference + '.vrt'
+    objOffset.referenceImageHeight = length
+    objOffset.referenceImageWidth = width
+    objOffset.secondaryImageName = secondary + '.vrt'
+    objOffset.secondaryImageHeight = length
+    objOffset.secondaryImageWidth = width
 
     print("image length:",length)
     print("image width:",width)
@@ -160,8 +160,8 @@ def estimateOffsetField(master, slave, inps=None):
     print(inps.srchgt,inps.srcwidth)
 
     # starting pixel
-    objOffset.masterStartPixelDownStatic = inps.margin
-    objOffset.masterStartPixelAcrossStatic = inps.margin
+    objOffset.referenceStartPixelDownStatic = inps.margin
+    objOffset.referenceStartPixelAcrossStatic = inps.margin
 
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
@@ -222,7 +222,7 @@ def estimateOffsetField(master, slave, inps=None):
             objGrossOff.setLatFile(inps.lat)
             objGrossOff.setLonFile(inps.lon)
             objGrossOff.setLosFile(inps.los)
-            objGrossOff.setMasterFile(inps.masterxml)
+            objGrossOff.setReferenceFile(inps.referencexml)
             objGrossOff.setbTemp(inps.bTemp)
 
 
@@ -305,7 +305,7 @@ def main(iargs=None):
     print(inps.outprefix)
     os.makedirs(outDir, exist_ok=True)
 
-    objOffset = estimateOffsetField(inps.master, inps.slave, inps)
+    objOffset = estimateOffsetField(inps.reference, inps.secondary, inps)
 
 if __name__ == '__main__':
 

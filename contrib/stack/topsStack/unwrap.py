@@ -66,8 +66,8 @@ def createParser():
 
     parser.add_argument('-d', '--defomax', dest='defomax', type=float, default=2.0,
             help='Max cycles of deformation')
-    parser.add_argument('-s', '--master', dest='master', type=str, default='master',
-            help='Master directory')
+    parser.add_argument('-s', '--reference', dest='reference', type=str, default='reference',
+            help='Reference directory')
     
     parser.add_argument('-m', '--method', dest='method', type=str, default='icu',
             help='unwrapping method')
@@ -328,9 +328,9 @@ def main(iargs=None):
            fncall =  runUnwrap
        else:
            fncall = runUnwrapMcf
-       swathList = ut.getSwathList(inps.master) 
-       #metadata = extractInfo(inps.master+'.xml', inps)
-       xmlFile = os.path.join(inps.master , 'IW{0}.xml'.format(swathList[0]))
+       swathList = ut.getSwathList(inps.reference) 
+       #metadata = extractInfo(inps.reference+'.xml', inps)
+       xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
        metadata = extractInfo(xmlFile, inps)
        fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
 

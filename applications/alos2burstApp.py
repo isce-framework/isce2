@@ -28,49 +28,49 @@ logging.config.fileConfig(
 logger = logging.getLogger('isce.insar')
 
 
-MASTER_DIR = Application.Parameter('masterDir',
-                                public_name='master directory',
+REFERENCE_DIR = Application.Parameter('referenceDir',
+                                public_name='reference directory',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc="master data directory")
+                                doc="reference data directory")
 
-SLAVE_DIR = Application.Parameter('slaveDir',
-                                public_name='slave directory',
+SECONDARY_DIR = Application.Parameter('secondaryDir',
+                                public_name='secondary directory',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc="slave data directory")
+                                doc="secondary data directory")
 
-MASTER_FRAMES = Application.Parameter('masterFrames',
-                                public_name = 'master frames',
+REFERENCE_FRAMES = Application.Parameter('referenceFrames',
+                                public_name = 'reference frames',
                                 default = None,
                                 type=str,
                                 container=list,
                                 mandatory=False,
-                                doc = 'master frames to process')
+                                doc = 'reference frames to process')
 
-SLAVE_FRAMES = Application.Parameter('slaveFrames',
-                                public_name = 'slave frames',
+SECONDARY_FRAMES = Application.Parameter('secondaryFrames',
+                                public_name = 'secondary frames',
                                 default = None,
                                 type=str,
                                 container=list,
                                 mandatory=False,
-                                doc = 'slave frames to process')
+                                doc = 'secondary frames to process')
 
-MASTER_POLARIZATION = Application.Parameter('masterPolarization',
-                                public_name='master polarization',
+REFERENCE_POLARIZATION = Application.Parameter('referencePolarization',
+                                public_name='reference polarization',
                                 default='HH',
                                 type=str,
                                 mandatory=False,
-                                doc="master polarization to process")
+                                doc="reference polarization to process")
 
-SLAVE_POLARIZATION = Application.Parameter('slavePolarization',
-                                public_name='slave polarization',
+SECONDARY_POLARIZATION = Application.Parameter('secondaryPolarization',
+                                public_name='secondary polarization',
                                 default='HH',
                                 type=str,
                                 mandatory=False,
-                                doc="slave polarization to process")
+                                doc="secondary polarization to process")
 
 STARTING_SWATH = Application.Parameter('startingSwath',
                                 public_name='starting swath',
@@ -460,21 +460,21 @@ RENDERER = Application.Parameter('renderer',
 #####################################################################
 
 #Facility declarations
-MASTER = Application.Facility('master',
-                                public_name='master',
+REFERENCE = Application.Facility('reference',
+                                public_name='reference',
                                 module='isceobj.Sensor.MultiMode',
                                 factory='createSensor',
-                                args=('ALOS2', 'master'),
+                                args=('ALOS2', 'reference'),
                                 mandatory=True,
-                                doc="master component")
+                                doc="reference component")
 
-SLAVE = Application.Facility('slave',
-                                public_name='slave',
+SECONDARY = Application.Facility('secondary',
+                                public_name='secondary',
                                 module='isceobj.Sensor.MultiMode',
                                 factory='createSensor',
-                                args=('ALOS2','slave'),
+                                args=('ALOS2','secondary'),
                                 mandatory=True,
-                                doc="slave component")
+                                doc="secondary component")
 
 # RUN_UNWRAPPER = Application.Facility('runUnwrapper',
 #                                 public_name='Run unwrapper',
@@ -504,12 +504,12 @@ _INSAR = Application.Facility('_insar',
 ## Common interface for all insar applications.
 class Alos2burstInSAR(Application):
     family = 'alos2burstinsar'
-    parameter_list = (MASTER_DIR,
-                        SLAVE_DIR,
-                        MASTER_FRAMES,
-                        SLAVE_FRAMES,
-                        MASTER_POLARIZATION,
-                        SLAVE_POLARIZATION,
+    parameter_list = (REFERENCE_DIR,
+                        SECONDARY_DIR,
+                        REFERENCE_FRAMES,
+                        SECONDARY_FRAMES,
+                        REFERENCE_POLARIZATION,
+                        SECONDARY_POLARIZATION,
                         STARTING_SWATH,
                         ENDING_SWATH,
                         DEM,
@@ -566,8 +566,8 @@ class Alos2burstInSAR(Application):
                         PICKLE_LOAD_DIR,
                         RENDERER)
 
-    facility_list = (MASTER,
-                     SLAVE,
+    facility_list = (REFERENCE,
+                     SECONDARY,
                      #RUN_UNWRAPPER,
                      #RUN_UNWRAP_2STAGE,
                      _INSAR)
@@ -720,7 +720,7 @@ class Alos2burstInSAR(Application):
         # Run a preprocessor for the two acquisitions
         self.step('preprocess', func=self.runPreprocessor,
                   doc=(
-                """Preprocess the master and slave sensor data to raw images"""
+                """Preprocess the reference and secondary sensor data to raw images"""
                 )
                   )
 
@@ -991,17 +991,17 @@ class Alos2burstInSAR(Application):
         if self.wbd != None:
             self._insar.wbd = self.wbd
 
-        if self._insar.masterDate != None and self._insar.slaveDate != None and \
+        if self._insar.referenceDate != None and self._insar.secondaryDate != None and \
             self._insar.numberRangeLooks1 != None and self._insar.numberAzimuthLooks1 != None and \
             self._insar.numberRangeLooks2 != None and self._insar.numberAzimuthLooks2 != None:
-            self._insar.setFilename(masterDate=self._insar.masterDate, slaveDate=self._insar.slaveDate, 
+            self._insar.setFilename(referenceDate=self._insar.referenceDate, secondaryDate=self._insar.secondaryDate, 
                 nrlks1=self._insar.numberRangeLooks1, nalks1=self._insar.numberAzimuthLooks1, 
                 nrlks2=self._insar.numberRangeLooks2, nalks2=self._insar.numberAzimuthLooks2)
 
-        if self._insar.masterDate != None and self._insar.slaveDate != None and \
+        if self._insar.referenceDate != None and self._insar.secondaryDate != None and \
             self._insar.numberRangeLooks1 != None and self._insar.numberAzimuthLooks1 != None and \
             self._insar.numberRangeLooksSd != None and self._insar.numberAzimuthLooksSd != None:
-            self._insar.setFilenameSd(masterDate=self._insar.masterDate, slaveDate=self._insar.slaveDate, 
+            self._insar.setFilenameSd(referenceDate=self._insar.referenceDate, secondaryDate=self._insar.secondaryDate, 
                 nrlks1=self._insar.numberRangeLooks1, nalks1=self._insar.numberAzimuthLooks1, 
                 nrlks_sd=self._insar.numberRangeLooksSd, nalks_sd=self._insar.numberAzimuthLooksSd, nsd=3)
 

@@ -33,7 +33,7 @@
 	<rec name="Range lines rejected before start time" type="2" num="8"/>
 	<rec name="Range lines rejected due to too few frames" type="2" num="8"/>
 	<rec name="Range lines rejected due to too many frames" type="2" num="8"/>
-	<rec name="Frames rejected due to master channel error" type="2" num="8"/>
+	<rec name="Frames rejected due to reference channel error" type="2" num="8"/>
 	<rec name="Frames rejected due to virtual channel error" type="2" num="8"/>
 	<rec name="Frames rejected due to incorrect recording type" type="2" num="8"/>
 	<rec name="Sensor configuration" type="1" num="10"/>

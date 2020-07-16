@@ -50,7 +50,7 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
 
     v = self.insar.getFirstProcVelocity()
     h = self.insar.averageHeight
-    imageSlc1 =  self.insar.masterRawImage
+    imageSlc1 =  self.insar.referenceRawImage
     imSlc1 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc1, imSlc1)
     imSlc1.setAccessMode('read')
@@ -62,18 +62,18 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc1.wireInputPort(name='doppler',
                            object = self.insar.dopplerCentroid)
     formSlc1.wireInputPort(name='peg', object=self.insar.peg)
-    formSlc1.wireInputPort(name='frame', object=self.insar.masterFrame)
-    formSlc1.wireInputPort(name='orbit', object=self.insar.masterOrbit)
+    formSlc1.wireInputPort(name='frame', object=self.insar.referenceFrame)
+    formSlc1.wireInputPort(name='orbit', object=self.insar.referenceOrbit)
     formSlc1.wireInputPort(name='rawImage', object=None)
     formSlc1.wireInputPort(name='planet',
-        object=self.insar.masterFrame.instrument.platform.planet)
+        object=self.insar.referenceFrame.instrument.platform.planet)
     for item in formSlc1.inputPorts:
         item()
     formSlc1.slcWidth = imSlc1.getWidth()
     formSlc1.startingRange = formSlc1.rangeFirstSample
     formSlc1.rangeChirpExtensionPoints = 0
-    formSlc1.slcSensingStart = self.insar.masterFrame.getSensingStart()
-    formSlc1.outOrbit = self.insar.masterOrbit
+    formSlc1.slcSensingStart = self.insar.referenceFrame.getSensingStart()
+    formSlc1.outOrbit = self.insar.referenceOrbit
 
     self._stdWriter.setFileTag("formslcISCE", "log")
     self._stdWriter.setFileTag("formslcISCE", "err")
@@ -81,11 +81,11 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc1.setStdWriter(self._stdWriter)
     formSlc1.setLookSide(self.insar._lookSide)
 
-#    self.insar.setMasterSlcImage(formSlc1.formslc())
-#    self.insar.masterSlcImage = formSlc1()
+#    self.insar.setReferenceSlcImage(formSlc1.formslc())
+#    self.insar.referenceSlcImage = formSlc1()
     self.insar.formSLC1 = formSlc1
-    self.insar.masterSlcImage = imSlc1
-    time, position, velocity, relTo = self.insar.masterOrbit._unpackOrbit()
+    self.insar.referenceSlcImage = imSlc1
+    time, position, velocity, relTo = self.insar.referenceOrbit._unpackOrbit()
     mocomp_array = [[],[]]
     for (t, p) in zip(time, position):
         mocomp_array[0].append(t-time[0])
@@ -97,7 +97,7 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc1.dim2_mocompPosition = len(time)
     formSlc1.dim1_mocompIndx = len(time)
 
-    imageSlc2 =  self.insar.slaveRawImage
+    imageSlc2 =  self.insar.secondaryRawImage
     imSlc2 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc2, imSlc2)
     imSlc2.setAccessMode('read')
@@ -109,28 +109,28 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc2.wireInputPort(name='doppler',
                            object=self.insar.dopplerCentroid)
     formSlc2.wireInputPort(name='peg', object=self.insar.peg)
-    formSlc2.wireInputPort(name='frame', object=self.insar.slaveFrame)
-    formSlc2.wireInputPort(name='orbit', object=self.insar.slaveOrbit)
+    formSlc2.wireInputPort(name='frame', object=self.insar.secondaryFrame)
+    formSlc2.wireInputPort(name='orbit', object=self.insar.secondaryOrbit)
     formSlc2.wireInputPort(name='rawImage', object=None)
     formSlc2.wireInputPort(name='planet',
-        object=self.insar.slaveFrame.instrument.platform.planet)
+        object=self.insar.secondaryFrame.instrument.platform.planet)
     for item in formSlc2.inputPorts:
         item()
     formSlc2.slcWidth = imSlc2.getWidth()
     formSlc2.startingRange = formSlc2.rangeFirstSample
     formSlc2.rangeChirpExtensionPoints = 0
-    formSlc2.slcSensingStart = self.insar.slaveFrame.getSensingStart()
-    formSlc2.outOrbit = self.insar.slaveOrbit
+    formSlc2.slcSensingStart = self.insar.secondaryFrame.getSensingStart()
+    formSlc2.outOrbit = self.insar.secondaryOrbit
 
     self._stdWriter.setFileTag("formslcISCE", "log")
     self._stdWriter.setFileTag("formslcISCE", "err")
     self._stdWriter.setFileTag("formslcISCE", "out")
     formSlc2.setStdWriter(self._stdWriter)
     formSlc2.setLookSide(self.insar._lookSide)
-#    self.insar.setSlaveSlcImage(formSlc2.formslc())
+#    self.insar.setSecondarySlcImage(formSlc2.formslc())
     self.insar.formSLC2 = formSlc2
-    self.insar.slaveSlcImage = imSlc2
-    time, position, velocity, relTo = self.insar.slaveOrbit._unpackOrbit()
+    self.insar.secondarySlcImage = imSlc2
+    time, position, velocity, relTo = self.insar.secondaryOrbit._unpackOrbit()
     mocomp_array = [[],[]]
     for (t, p) in zip(time, position):
         mocomp_array[0].append(t-time[0])
@@ -148,9 +148,9 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     imSlc1.finalizeImage()
     imSlc2.finalizeImage()
     recordInputsAndOutputs(self.insar.procDoc, formSlc1,
-        "runFormSLC.master", logger, "runFormSLC.master")
+        "runFormSLC.reference", logger, "runFormSLC.reference")
     recordInputsAndOutputs(self.insar.procDoc, formSlc2,
-        "runFormSLC.slave", logger, "runFormSLC.slave")
+        "runFormSLC.secondary", logger, "runFormSLC.secondary")
 
     self.insar.setFormSLC1(formSlc1)
     self.insar.setFormSLC2(formSlc2)

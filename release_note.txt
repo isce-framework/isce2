@@ -55,7 +55,7 @@ Additions and Bug Fixes in this release:
 
 * applications/gdal2isce_xml.py: removed the hard coded scheme of the data in favor of directly capturing it from gdal
 
-* topsApp.xml: minor updates (see examples/input_files/master_TOPS_SENTINEL1.xml)
+* topsApp.xml: minor updates (see examples/input_files/reference_TOPS_SENTINEL1.xml)
 
 
 =====================

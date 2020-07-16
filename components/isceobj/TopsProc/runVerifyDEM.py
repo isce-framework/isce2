@@ -54,16 +54,16 @@ def runVerifyDEM(self):
         bboxes = []
         for swath in swathList:
             if self._insar.numberOfCommonBursts[swath-1] > 0:
-                master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
+                reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
 
-                slave  = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct,  'IW{0}.xml'.format(swath)))
+                secondary  = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct,  'IW{0}.xml'.format(swath)))
 
                 ####Merges orbit as needed for multi-stitched frames
-                mOrb = self._insar.getMergedOrbit([master])
-                sOrb = self._insar.getMergedOrbit([slave])
+                mOrb = self._insar.getMergedOrbit([reference])
+                sOrb = self._insar.getMergedOrbit([secondary])
 
-                mbox = master.getBbox()
-                sbox = slave.getBbox()
+                mbox = reference.getBbox()
+                sbox = secondary.getBbox()
 
                 ####Union of bounding boxes
                 bbox = [min(mbox[0], sbox[0]), max(mbox[1], sbox[1]),
