@@ -11,6 +11,11 @@ set_property(TARGET formslcLib PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(formslcLib PUBLIC
     utilLib
     )
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(formslcLib PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 
 set(mdir ${CMAKE_CURRENT_BINARY_DIR}/formslc_fortran_modules)
 set_property(TARGET formslcLib PROPERTY Fortran_MODULE_DIRECTORY ${mdir})
