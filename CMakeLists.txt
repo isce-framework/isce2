@@ -18,6 +18,8 @@ find_package(Python 3.5 REQUIRED COMPONENTS Interpreter Development
 find_package(FFTW REQUIRED)
 find_package(Motif)
 find_package(OpenMP REQUIRED COMPONENTS C CXX Fortran)
+find_package(OpenCV COMPONENTS core highgui imgproc)
+
 # Find these, and create IMPORTED INTERFACE libraries for them if they exist
 include(TargetGDAL)
 include(TargetMotif)
