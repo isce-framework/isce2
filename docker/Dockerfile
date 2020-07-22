@@ -38,6 +38,7 @@ RUN set -ex \
       libgcc \
       libstdcxx-ng \
       cmake \
+      opencv \
  && yum install -y uuid-devel x11-devel motif-devel jq \
  && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3 \
  && mkdir -p /opt/isce2/src
