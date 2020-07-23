@@ -4,6 +4,7 @@ add_subdirectory(demUtils)
 add_subdirectory(frameUtils)
 #add_subdirectory(unwUtils)
 add_subdirectory(downsample_unwrapper)
+add_subdirectory(geo_autoRIFT)
 
 add_subdirectory(PyCuAmpcor)
 add_subdirectory(splitSpectrum)

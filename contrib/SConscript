@@ -80,6 +80,4 @@ SConscript('splitSpectrum/SConscript')
 SConscript('alos2filter/SConscript')
 SConscript('alos2proc/SConscript')
 SConscript('alos2proc_f/SConscript')
-
-if os.path.exists('geo_autoRIFT'):
-    SConscript('geo_autoRIFT/SConscript')
+SConscript('geo_autoRIFT/SConscript')
