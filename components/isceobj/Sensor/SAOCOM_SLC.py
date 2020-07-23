@@ -17,7 +17,7 @@
 # between the licensee and the california institute of technology. it is the
 # user's responsibility to abide by the terms of the license agreement.
 #
-# Author: Andrés Solarte
+# Author: Andrés Solarte - Leonardo Euillades
 # Instituto de Capacitación Especial y Desarrollo de la Ingeniería Asistida por Computadora (CEDIAC) Fac. Ing. UNCuyo
 # Instituto de Altos Estudios Espaciales "Mario Gulich" CONAE-UNC
 # Consejo Nacional de Investigaciones Científicas y Técnicas (CONICET)
@@ -89,7 +89,6 @@ class SAOCOM_SLC(Sensor):
         self._imageryFileData = None
         self.dopplerRangeTime = None
         self.rangeRefTime = None
-        self.dopplerAzimuthTime = []
         self.azimuthRefTime = None
         self.rangeFirstTime = None
         self.rangeLastTime = None
@@ -183,7 +182,7 @@ class SAOCOM_SLC(Sensor):
         instrument.setPulseLength(self._xmlFileParser.pulseLength)
         instrument.setChirpSlope(float(self._xmlFileParser.pulseBandwidth)/float(self._xmlFileParser.pulseLength))
 
-        instrument.setRangeSamplingRate(self._xmlFileParser.frg) #Preguntar PulseSamplingRate/RangeSamplingFrequency?
+        instrument.setRangeSamplingRate(self._xmlFileParser.frg)
 
         incAngle = 0.5*(self.nearIncidenceAngle[self._xemtFileParser.beamID] + self.farIncidenceAngle[self._xemtFileParser.beamID])
         instrument.setIncidenceAngle(incAngle)
@@ -230,12 +229,12 @@ class SAOCOM_SLC(Sensor):
             vec.setPosition([position[i*3],position[i*3+1],position[i*3+2]])
             vec.setVelocity([velocity[i*3],velocity[i*3+1],velocity[i*3+2]])
             orbit.addStateVector(vec)
+            print("valor "+str(i)+": "+str(dt))
         
     def _populateExtras(self):
         from isceobj.Doppler.Doppler import Doppler
         
         self.dopplerRangeTime = self._xmlFileParser.dopRngTime
-        self.dopplerAzimuthTime = self._xmlFileParser.dopAzTime
         self.rangeRefTime = self._xmlFileParser.trg
         self.rangeFirstTime = self._xmlFileParser.rangeStartTime
         
@@ -300,6 +299,7 @@ class SAOCOM_SLC(Sensor):
 
         fd_mid = 0.0
         tpow = midtime
+        
         for kk in self.dopplerRangeTime:
             fd_mid += kk * tpow
             tpow *= midtime
@@ -401,16 +401,15 @@ class XMLFile():
                     trg.append(float(feat2.text))
             self.trg = np.mean(np.array(trg))
             
+            self.dopRngTime_old = []
             self.dopRngTime = []
-            self.dopAzTime = []
+
             for feat in dopplerCentroid:
                 for feat2 in feat.findall("pol"):
                     for val in feat2.findall("val"):
-                        if val.get("N")=="2":
+                        if feat.get("Number")=='2':
                             self.dopRngTime.append(float(val.text))
-                        elif val.get("N")=="3":
-                            self.dopAzTime.append(float(val.text))
-                                                
+                      
         except IOError as errs:
             errno,strerr = errs
             print("IOError: {} {}".format(strerr,self.fileName))
