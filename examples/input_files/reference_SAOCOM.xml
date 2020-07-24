@@ -11,6 +11,7 @@
     <property name="OUTPUT">
         slc-acqid0000076824-a-sm8-s8dp-vv.slc
     </property>
+    <property name="unwrapper name">snaphu</property> 
 </component>
 
 <!--
@@ -19,20 +20,23 @@ The reference and secondary catalog xml files have the same structure.
 
 All file paths in the input files should either be absolute paths or relative to the processing directory.
 
+    Note 1: Sample data
+    ========================
+    Reference and secondary images can be downloaded from:
 
-    Note 1: Multiple Frames
+    https://catalogos.conae.gov.ar/catalogo/catalogoSatSaocomAdel.html
+
+
+    Note 2: Multiple Frames
     ========================
 
     Stitching multiple SLC frames is not possible with ISCE. Each frame is typically focussed with different parameters and they cannot be seamlessly stitched into a larger frame.
 
 
-    Note 2: XML/XEMT data
+    Note 3: XML/XEMT data
     ========================
 
     The SAOCOM metadata does not contain information about the angle of incidence, however the xemt file provides the acquisition beam. This file is downloaded separately, so its path needs to be configured. The xml is usually located in the same folder as the image, but since they are separate files, as the xemt, file location is required.
-
-
-    
 
 
 -->
