@@ -286,7 +286,7 @@ class SAOCOM_SLC(Sensor):
 
     def extractDoppler(self):
         """
-        Return the doppler centroid as defined in the ASAR file.
+        Return the doppler centroid.
         """
         quadratic = {}
 
