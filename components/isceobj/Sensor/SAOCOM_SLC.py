@@ -35,8 +35,6 @@ from isceobj.Planet.AstronomicalHandbook import Const
 from isceobj.Scene.Frame import Frame
 from iscesys.Component.Component import Component
 
-import gdal
-
 XEMTFILE = Component.Parameter(
     'xemtFile',
     public_name='XEMTFILE',
@@ -242,7 +240,7 @@ class SAOCOM_SLC(Sensor):
         """
         Exports GeoTiff to ISCE format.
         """
-        import gdal
+        from osgeo import gdal
         
         ds = gdal.Open(self._imageFileName)
         metadata = ds.GetMetadata()
