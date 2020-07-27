@@ -71,7 +71,7 @@ def extract_offset(filename):
   azCoefs = np.array(azpoly.getCoeffs())
   rgCoefs = np.array(rgpoly.getCoeffs())
 
-  return azCoefs.flatten(0), rgCoefs.flatten(0)
+  return azCoefs.flatten(), rgCoefs.flatten()
 
 def getPolyInfo(filename):
   with shelve.open(os.path.join(filename,'misreg'),flag='r') as db:
