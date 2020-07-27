@@ -311,6 +311,12 @@ class DenseAmpcor(Component):
 
     @use_api
     def denseampcor(self,slcImage1 = None,slcImage2 = None):
+
+        # Fix for changes in Python 3.8
+        if (sys.version_info.major == 3) and \
+                (sys.version_info.minor >= 8):
+            mp.set_start_method("fork")
+
         if not (slcImage1 == None):
             self.slcImage1 = slcImage1
         if (self.slcImage1 == None):
