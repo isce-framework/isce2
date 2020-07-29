@@ -43,6 +43,7 @@ set(installfiles
     UAVSAR_Polsar.py
     UAVSAR_RPI.py
     UAVSAR_Stack.py
+    SAOCOM_SLC.py
     )
 
 if(HDF5_FOUND)

@@ -172,7 +172,8 @@ def reformatscene(scenedict, pol, sensorname):
         'ERS_ENVI': 'imagefile', #KK 2013-11-26 (ers in envi format)
         'UAVSAR_RPI':'annotationfile',
         'UAVSAR_STACK':'annotationfile',
-        'SENTINEL1A':'tiff'
+        'SENTINEL1A':'tiff',
+        'SAOCOM':'tiff'
         }
     try:
         key = imageKey[sensorname.upper()]

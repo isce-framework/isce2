@@ -44,7 +44,7 @@ def createFormSLC(sensor=None, name=''):
     if sensor is None or 'uavsar' in sensor.lower():
         from .formslc.Formslc import Formslc as cls
         return cls(name=name)
-    elif str(sensor).lower() in ['terrasarx','cosmo_skymed_slc','radarsat2','sentinel1a','tandemx','kompsat5','risat1_slc','alos2','ers_slc','alos_slc','envisat_slc', 'ers_envisat_slc']:
+    elif str(sensor).lower() in ['terrasarx','cosmo_skymed_slc','radarsat2','sentinel1a','tandemx','kompsat5','risat1_slc','alos2','ers_slc','alos_slc','envisat_slc', 'ers_envisat_slc','saocom_slc']:
         from .mocompTSX.MocompTSX import MocompTSX as cls
     else:
         raise ValueError("Unrecognized Sensor: %s" % str(sensor))
@@ -58,7 +58,7 @@ def getFactoriesInfo():
                      {'args':
                            {
                             'sensor':{'value':['None','uavsar','terrasarx','cosmo_skymed_slc','radarsat2','sentinel1a','tandemx',
-                                               'kompsat5','risat1_slc','alos2','ers_slc','alos_slc','envisat_slc'],
+                                               'kompsat5','risat1_slc','alos2','ers_slc','alos_slc','envisat_slc','saocom_slc'],
                                       'type':'str','optional':True,'default':None}
                             },
                      'factory':'createFormSLC'

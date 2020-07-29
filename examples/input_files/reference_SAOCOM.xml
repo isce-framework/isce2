@@ -1,0 +1,45 @@
+<component name="reference">
+    <property name="IMAGEFILE">
+        S1A_OPER_SAR_EOSSP__CORE_L1A_OLF_20200610T203550/Data/slc-acqId0000076824-a-sm8-0000000000-s8dp-vv
+    </property>
+    <property name="XEMTFILE">
+        S1A_OPER_SAR_EOSSP__CORE_L1A_OLF_20200610T203550.xemt
+    </property>
+    <property name="XMLFILE">
+        S1A_OPER_SAR_EOSSP__CORE_L1A_OLF_20200610T203550/Data/slc-acqId0000076824-a-sm8-0000000000-s8dp-vv.xml
+    </property>
+    <property name="OUTPUT">
+        slc-acqid0000076824-a-sm8-s8dp-vv.slc
+    </property>
+</component>
+
+<!--
+Shown above is the bare minimum input XML file for the SAOCOM1A sensor.
+The reference and secondary catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: Sample data
+    ========================
+    Reference and secondary images can be downloaded from:
+
+    https://catalogos.conae.gov.ar/catalogo/catalogoSatSaocomAdel.html
+
+
+    Note 2: Multiple Frames
+    ========================
+
+    Stitching multiple SLC frames is not possible with ISCE. Each frame is typically focussed with different parameters and they cannot be seamlessly stitched into a larger frame.
+
+
+    Note 3: XML/XEMT data
+    ========================
+
+    The SAOCOM metadata does not contain information about the angle of incidence, however the xemt file provides the acquisition beam. This file is downloaded separately, so its path needs to be configured. The xml is usually located in the same folder as the image, but since they are separate files, as the xemt, file location is required.
+
+
+-->
+
+
+
+
