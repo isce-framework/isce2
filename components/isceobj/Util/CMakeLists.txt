@@ -16,7 +16,7 @@ target_link_libraries(utilLib PRIVATE
     FFTW::Float
     )
 
-add_library(combinedLib SHARED
+isce2_add_staticlib(combinedLib
     Library/geometry/src/geometryModule.F
     Library/linalg3/src/linalg3Module.F
     Library/linalg3/src/linalg3.c
@@ -43,7 +43,7 @@ target_include_directories(combinedlibmodule PUBLIC
     Library/include
     )
 target_link_libraries(combinedlibmodule PUBLIC
-    combinedLib
+    isce2::combinedLib
     )
 
 # Set up fortran module paths
@@ -56,12 +56,6 @@ set(mdir ${CMAKE_CURRENT_BINARY_DIR}/combinelib_fortran_modules)
 set_property(TARGET combinedLib PROPERTY Fortran_MODULE_DIRECTORY ${mdir})
 target_include_directories(combinedLib INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>:${mdir}>
-    )
-
-install(TARGETS
-    utilLib
-    combinedLib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     )
 
 InstallSameDir(

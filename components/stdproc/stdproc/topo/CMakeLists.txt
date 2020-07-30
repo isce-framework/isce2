@@ -8,7 +8,7 @@ Python_add_library(topo MODULE
     )
 target_include_directories(topo PUBLIC include)
 target_link_libraries(topo PUBLIC
-    combinedLib
+    isce2::combinedLib
     isce2::utilLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)

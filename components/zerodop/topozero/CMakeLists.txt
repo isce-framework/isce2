@@ -8,7 +8,7 @@ Python_add_library(topozero MODULE
     )
 target_include_directories(topozero PUBLIC include)
 target_link_libraries(topozero PRIVATE
-    combinedLib
+    isce2::combinedLib
     isce2::utilLib
     DataAccessor_static
     )

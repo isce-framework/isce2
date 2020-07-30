@@ -8,7 +8,7 @@ Python_add_library(fitoff MODULE
     )
 target_include_directories(fitoff PUBLIC include)
 target_link_libraries(fitoff PUBLIC
-    combinedLib
+    isce2::combinedLib
     isce2::utilLib
     )
 

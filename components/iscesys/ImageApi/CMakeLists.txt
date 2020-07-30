@@ -27,7 +27,7 @@ target_include_directories(DataAccessor_static PUBLIC
     InterleavedAccessor/include
     )
 target_link_libraries(DataAccessor_static PUBLIC
-    combinedLib
+    isce2::combinedLib
     )
 
 if(TARGET GDAL::GDAL)

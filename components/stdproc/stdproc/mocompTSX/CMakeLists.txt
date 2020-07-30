@@ -8,7 +8,7 @@ Python_add_library(mocompTSX MODULE
 target_include_directories(mocompTSX PUBLIC include)
 target_link_libraries(mocompTSX
     PUBLIC
-    combinedLib
+    isce2::combinedLib
     isce2::formslcLib
     isce2::utilLib
     )

@@ -14,7 +14,7 @@ target_link_libraries(geocode PUBLIC
     DataAccessor_static
     OpenMP::OpenMP_CXX
     stdoel_static
-    combinedLib
+    isce2::combinedLib
     isce2::utilLib
     )
 

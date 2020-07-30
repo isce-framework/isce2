@@ -10,7 +10,7 @@ target_link_libraries(formslcSoiLib PRIVATE
     isce2::formslcLib
     )
 target_link_libraries(formslcSoiLib PUBLIC
-    combinedLib
+    isce2::combinedLib
     )
 
 Python_add_library(stdproc_formslc MODULE
