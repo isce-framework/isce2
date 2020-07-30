@@ -131,8 +131,6 @@ foreach(dtype Float Double LongDouble)
 
         # Tell find_package whether this component was found
         set(FFTW_${component}_FIND_QUIETLY TRUE)
-        find_package_handle_standard_args(FFTW_${component}
-            HANDLE_COMPONENTS REQUIRED_VARS ${libvar} FFTW_INCLUDE_DIRS)
         # Also set the value of the legacy library-variable
         # (Will be set to *-NOTFOUND if not found)
         set(${libvar} ${FFTW_${component}})
