@@ -7,7 +7,7 @@ Python_add_library(correct MODULE
 target_include_directories(correct PUBLIC include)
 target_link_libraries(correct PRIVATE
     DataAccessor_static
-    utilLib
+    isce2::utilLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(correct PUBLIC

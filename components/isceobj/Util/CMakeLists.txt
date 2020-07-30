@@ -8,70 +8,7 @@ Python_add_library(offoutliers MODULE
 target_link_libraries(offoutliers PRIVATE isce2::offoutliersLib)
 
 add_definitions(-DHAVE_CONFIG_H -DHAVE_FFTW=1)
-
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-add_library(utilLib STATIC
-    src/akima_reg.F
-    src/args_roi.F
-    src/besseldiffs.F
-    src/bilinear.F
-    src/cfft1d_jpl.F
-    src/cfft2d.F
-    src/cffts.F
-    src/config.h
-    src/convert_schdot_to_xyzdot.F
-    src/convert_sch_to_xyz.F
-    src/cross.F
-    src/curvature.F
-    src/derampc.F
-    src/dop.F
-    src/dot.F
-    src/enubasis.F
-    src/fc.F
-    src/fc.f.org
-    src/fftw3stub.c
-    src/fftw3stub.cc
-    src/fortranUtils.f90
-    src/fourn.F
-    src/fournnr.F
-    src/getangs.F
-    src/gettcn_tcvec.F
-    src/hunt.F
-    src/inter_motion.F
-    src/interp.F
-    src/intp_coef.f90
-    src/intpcoefnorm.F
-    src/io.c
-    src/latlon.F
-    src/latlon_nostruct.F
-    src/lfit.F
-    src/linalg.f90
-    src/lincomb.F
-    src/lookvec.F
-    src/lsq.f90
-    src/matmat.F
-    src/matvec.F
-    src/norm.F
-    src/orrmread1.F
-    src/polint.F
-    src/PowerOfTwo.cc
-    src/quadfit.f90
-    src/radar_to_xyz.F
-    src/rdf_common.inc
-    src/roi_exit.cc
-    src/schbasis.F
-    src/second.c
-    src/sfftw_import.c
-    src/spline.f
-    src/svd.F
-    src/svdvecfit9.F
-    src/svdvecfit.F
-    src/tranmat.F
-    src/uniform_interp.f90
-    src/unitvec.F
-    src/utmtoll.F
-    src/zbrent.F
-    )
+add_subdirectory(src)
 target_include_directories(utilLib PUBLIC
     include
     )

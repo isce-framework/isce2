@@ -15,7 +15,7 @@ target_link_libraries(geocode PUBLIC
     OpenMP::OpenMP_CXX
     stdoel_static
     combinedLib
-    utilLib
+    isce2::utilLib
     )
 
 InstallSameDir(

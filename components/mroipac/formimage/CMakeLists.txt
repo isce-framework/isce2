@@ -17,7 +17,7 @@ target_link_libraries(formslc PRIVATE
     )
 
 target_link_libraries(formslc PUBLIC
-    utilLib
+    isce2::utilLib
     )
 
 InstallSameDir(

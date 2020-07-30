@@ -1,4 +1,4 @@
-isce2_add_staticlib(formslcSoi
+isce2_add_staticlib(formslcSoiLib
     src/formslcAllocateDeallocate.F
     src/formslcGetState.F
     src/formslcSetState.F
@@ -6,7 +6,7 @@ isce2_add_staticlib(formslcSoi
     )
 target_include_directories(formslcSoiLib PUBLIC include)
 target_link_libraries(formslcSoiLib PRIVATE
-    utilLib
+    isce2::utilLib
     isce2::formslcLib
     )
 target_link_libraries(formslcSoiLib PUBLIC

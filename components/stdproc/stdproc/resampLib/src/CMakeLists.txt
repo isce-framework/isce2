@@ -4,5 +4,5 @@ isce2_add_staticlib(resampLib
     svdvecfit.f
     )
 target_link_libraries(resampLib PRIVATE
-    utilLib
+    isce2::utilLib
     )

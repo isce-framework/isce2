@@ -6,7 +6,7 @@ isce2_add_staticlib(offsetpolyLib
     src/offsetpolyGetState.F
     )
 target_link_libraries(offsetpolyLib PRIVATE
-    utilLib
+    isce2::utilLib
     )
 
 Python_add_library(offsetpoly MODULE

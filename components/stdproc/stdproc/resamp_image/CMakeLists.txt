@@ -11,7 +11,7 @@ target_include_directories(resamp_image PUBLIC include)
 target_link_libraries(resamp_image PUBLIC
     DataAccessor_static
     isce2::resampLib
-    utilLib
+    isce2::utilLib
     stdoel_static
     )
 

@@ -9,7 +9,7 @@ Python_add_library(resamp MODULE
 target_include_directories(resamp PUBLIC include)
 target_link_libraries(resamp PUBLIC
     isce2::resampLib
-    utilLib
+    isce2::utilLib
     stdoel_static
     DataAccessor_static
     )

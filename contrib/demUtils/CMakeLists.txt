@@ -10,7 +10,7 @@ target_include_directories(correct_geoid_i2_srtm PUBLIC
 target_link_libraries(correct_geoid_i2_srtm PUBLIC
     DataAccessor_static
     stdoel_static
-    utilLib
+    isce2::utilLib
     )
 
 isce2_add_cdll(demStitch
@@ -29,7 +29,7 @@ target_include_directories(upsampledem PRIVATE
 target_link_libraries(upsampledem PRIVATE
     DataAccessor_static
     stdoel_static
-    utilLib
+    isce2::utilLib
     )
 
 Python_add_library(watermask MODULE

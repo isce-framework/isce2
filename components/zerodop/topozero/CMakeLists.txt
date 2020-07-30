@@ -9,7 +9,7 @@ Python_add_library(topozero MODULE
 target_include_directories(topozero PUBLIC include)
 target_link_libraries(topozero PRIVATE
     combinedLib
-    utilLib
+    isce2::utilLib
     DataAccessor_static
     )
 set_source_files_properties(src/topozero.f90 PROPERTIES COMPILE_OPTIONS -cpp)

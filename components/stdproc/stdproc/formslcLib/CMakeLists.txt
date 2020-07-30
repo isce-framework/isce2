@@ -4,7 +4,7 @@ isce2_add_staticlib(formslcLib
     src/io.c
     )
 target_link_libraries(formslcLib PUBLIC
-    utilLib
+    isce2::utilLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(formslcLib PUBLIC

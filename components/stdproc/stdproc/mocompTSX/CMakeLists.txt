@@ -10,7 +10,7 @@ target_link_libraries(mocompTSX
     PUBLIC
     combinedLib
     isce2::formslcLib
-    utilLib
+    isce2::utilLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(mocompTSX PUBLIC

@@ -12,7 +12,7 @@ target_include_directories(geozero PUBLIC include)
 target_link_libraries(geozero PUBLIC
     DataAccessor_static
     combinedLib
-    utilLib
+    isce2::utilLib
     OpenMP::OpenMP_Fortran
     )
 

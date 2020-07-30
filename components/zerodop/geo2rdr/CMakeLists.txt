@@ -8,7 +8,7 @@ target_include_directories(geo2rdr PUBLIC include)
 target_link_libraries(geo2rdr PUBLIC
     DataAccessor_static
     combinedLib
-    utilLib
+    isce2::utilLib
     )
 
 if(TARGET OpenMP::OpenMP_Fortran)
