@@ -1,4 +1,4 @@
-Python_add_library(orbitHermite MODULE
+isce2_add_cdll(orbitHermite
     src/orbitHermiteC.c
     src/orbithermite.F
     )

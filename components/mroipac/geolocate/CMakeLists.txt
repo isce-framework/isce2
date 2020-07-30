@@ -1,4 +1,4 @@
-Python_add_library(libgeolocate MODULE
+isce2_add_cdll(libgeolocate
     src/geolocate_wrapper.c
     src/geolocate.f
     )

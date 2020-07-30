@@ -1,15 +1,23 @@
-Python_add_library(stdproc_formslc MODULE
-    bindings/formslcmodule.cpp
+isce2_add_staticlib(formslcSoi
     src/formslcAllocateDeallocate.F
     src/formslcGetState.F
     src/formslcSetState.F
     src/formslcStateSoi.f90
     )
-target_include_directories(stdproc_formslc PUBLIC include)
-target_link_libraries(stdproc_formslc PUBLIC
-    combinedLib
-    formslcLib
+target_include_directories(formslcSoiLib PUBLIC include)
+target_link_libraries(formslcSoiLib PRIVATE
     utilLib
+    isce2::formslcLib
+    )
+target_link_libraries(formslcSoiLib PUBLIC
+    combinedLib
+    )
+
+Python_add_library(stdproc_formslc MODULE
+    bindings/formslcmodule.cpp
+    )
+target_link_libraries(stdproc_formslc PUBLIC
+    isce2::formslcSoiLib
     )
 
 set_target_properties(stdproc_formslc

@@ -13,7 +13,7 @@ target_link_libraries(correct_geoid_i2_srtm PUBLIC
     utilLib
     )
 
-Python_add_library(demStitch MODULE
+isce2_add_cdll(demStitch
     demstitcher/bindings/demStitch.c
     )
 
@@ -27,6 +27,8 @@ target_include_directories(upsampledem PRIVATE
     upsampledem/include
     )
 target_link_libraries(upsampledem PRIVATE
+    DataAccessor_static
+    stdoel_static
     utilLib
     )
 

@@ -9,7 +9,7 @@ target_include_directories(mocompTSX PUBLIC include)
 target_link_libraries(mocompTSX
     PUBLIC
     combinedLib
-    formslcLib
+    isce2::formslcLib
     utilLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)

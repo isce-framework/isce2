@@ -1,22 +1,16 @@
 add_subdirectory(ImageUtil)
 add_subdirectory(geo)
+add_subdirectory(offoutliers)
 
 Python_add_library(offoutliers MODULE
     offoutliers/bindings/offoutliersmodule.cpp
-    offoutliers/src/offoutliers.F
-    offoutliers/src/offoutliersAllocateDeallocate.F
-    offoutliers/src/offoutliersGetState.F
-    offoutliers/src/offoutliersSetState.F
-    offoutliers/src/offoutliersState.F
     )
-target_include_directories(offoutliers PUBLIC offoutliers/include)
-target_link_libraries(offoutliers PUBLIC
-    stdoel_static
-    )
+target_link_libraries(offoutliers PRIVATE isce2::offoutliersLib)
 
 add_definitions(-DHAVE_CONFIG_H -DHAVE_FFTW=1)
 
-add_library(utilLib SHARED
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+add_library(utilLib STATIC
     src/akima_reg.F
     src/args_roi.F
     src/besseldiffs.F
@@ -50,7 +44,7 @@ add_library(utilLib SHARED
     src/io.c
     src/latlon.F
     src/latlon_nostruct.F
-    #src/lfit.F
+    src/lfit.F
     src/linalg.f90
     src/lincomb.F
     src/lookvec.F
@@ -69,9 +63,9 @@ add_library(utilLib SHARED
     src/second.c
     src/sfftw_import.c
     src/spline.f
-    #src/svd.F
-    #src/svdvecfit9.F
-    #src/svdvecfit.F
+    src/svd.F
+    src/svdvecfit9.F
+    src/svdvecfit.F
     src/tranmat.F
     src/uniform_interp.f90
     src/unitvec.F

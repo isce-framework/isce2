@@ -296,7 +296,7 @@ and then try "scons install" again.
 
 ### CMake (experimental)
 Make sure you have the following prerequisites:
-* CMake ≥ 3.12
+* CMake ≥ 3.13
 * GCC ≥ 4.8  (with C++11 support)
 * Python ≥ 3.5
 * Cython

@@ -4,6 +4,10 @@ Python_add_library(crossmul MODULE
     src/crossmul.f90
     )
 target_include_directories(crossmul PUBLIC include)
+target_link_libraries(crossmul PRIVATE
+    utilLib
+    DataAccessor_static
+    )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(crossmul PUBLIC
         OpenMP::OpenMP_Fortran

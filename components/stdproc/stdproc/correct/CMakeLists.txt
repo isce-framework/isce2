@@ -5,6 +5,10 @@ Python_add_library(correct MODULE
     src/correctState.f
     )
 target_include_directories(correct PUBLIC include)
+target_link_libraries(correct PRIVATE
+    DataAccessor_static
+    utilLib
+    )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(correct PUBLIC
         OpenMP::OpenMP_Fortran

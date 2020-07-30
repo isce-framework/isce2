@@ -1,3 +1,5 @@
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 Python_add_library(resamp_image MODULE
     bindings/resamp_imagemodule.cpp
     src/resamp_imageState.F
@@ -7,7 +9,10 @@ Python_add_library(resamp_image MODULE
     )
 target_include_directories(resamp_image PUBLIC include)
 target_link_libraries(resamp_image PUBLIC
+    DataAccessor_static
+    isce2::resampLib
     utilLib
+    stdoel_static
     )
 
 InstallSameDir(

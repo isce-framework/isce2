@@ -7,6 +7,11 @@ Python_add_library(get_peg_info MODULE
     src/get_peg_infoState.F
     )
 target_include_directories(get_peg_info PUBLIC include)
+target_link_libraries(get_peg_info PRIVATE
+    utilLib
+    stdoel_static
+    isce2::stdoeLib
+    )
 
 InstallSameDir(
     get_peg_info
