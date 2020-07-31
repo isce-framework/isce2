@@ -2,11 +2,7 @@ add_subdirectory(db)
 add_subdirectory(TOPS)
 add_subdirectory(MultiMode)
 
-add_library(asa_im_decode src/asa_im_decode/asa_im_decode.c)
-set_target_properties(asa_im_decode PROPERTIES
-    PREFIX ""
-    OUTPUT_NAME envisat
-    SUFFIX .so)
+isce2_add_cdll(asa_im_decode src/asa_im_decode/asa_im_decode.c)
 
 set(installfiles
     asa_im_decode
