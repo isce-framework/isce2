@@ -8,7 +8,7 @@ Python_add_library(resamp_amps MODULE
     )
 target_include_directories(resamp_amps PUBLIC include)
 target_link_libraries(resamp_amps PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     isce2::resampLib
     )
 

@@ -10,7 +10,7 @@ Python_add_library(ampcor MODULE
 target_include_directories(ampcor PUBLIC include)
 target_link_libraries(ampcor PUBLIC
     isce2::utilLib
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 InstallSameDir(

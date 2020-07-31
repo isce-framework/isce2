@@ -9,7 +9,7 @@ target_include_directories(resamp_slc PUBLIC include)
 target_link_libraries(resamp_slc PUBLIC
     isce2::combinedLib
     isce2::utilLib
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 target_compile_options(resamp_slc PRIVATE
     -ffree-line-length-none

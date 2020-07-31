@@ -90,6 +90,6 @@ target_include_directories(alos PUBLIC
     include
     src/ALOS_pre_process
     )
-target_link_libraries(alos PUBLIC DataAccessor_static)
+target_link_libraries(alos PUBLIC isce2::DataAccessorLib)
 
 InstallSameDir(${installfiles})

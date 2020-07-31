@@ -22,7 +22,7 @@ Python_add_library(icu MODULE
     )
 target_include_directories(icu PUBLIC include)
 target_link_libraries(icu PUBLIC
-    DataAccessor_static
+    isce2::DataAccessorLib
     isce2::utilLib
     )
 

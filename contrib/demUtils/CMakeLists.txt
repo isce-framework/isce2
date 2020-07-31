@@ -8,7 +8,7 @@ target_include_directories(correct_geoid_i2_srtm PUBLIC
     correct_geoid_i2_srtm/include
     )
 target_link_libraries(correct_geoid_i2_srtm PUBLIC
-    DataAccessor_static
+    isce2::DataAccessorLib
     isce2::stdoelLib
     isce2::utilLib
     )
@@ -27,7 +27,7 @@ target_include_directories(upsampledem PRIVATE
     upsampledem/include
     )
 target_link_libraries(upsampledem PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     isce2::stdoelLib
     isce2::utilLib
     )

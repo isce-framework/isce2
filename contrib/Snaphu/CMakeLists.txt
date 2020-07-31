@@ -10,7 +10,7 @@ Python_add_library(snaphu MODULE
     )
 target_include_directories(snaphu PUBLIC include)
 target_link_libraries(snaphu PUBLIC
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 InstallSameDir(

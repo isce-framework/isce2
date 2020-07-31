@@ -7,7 +7,7 @@ Python_add_library(doppler MODULE
     src/dopplerState.f
     )
 target_include_directories(doppler PUBLIC include)
-target_link_libraries(doppler PUBLIC DataAccessor_static)
+target_link_libraries(doppler PUBLIC isce2::DataAccessorLib)
 
 InstallSameDir(
     doppler

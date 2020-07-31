@@ -6,7 +6,7 @@ Python_add_library(crossmul MODULE
 target_include_directories(crossmul PUBLIC include)
 target_link_libraries(crossmul PRIVATE
     isce2::utilLib
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(crossmul PUBLIC

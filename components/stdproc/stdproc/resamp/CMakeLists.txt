@@ -11,7 +11,7 @@ target_link_libraries(resamp PUBLIC
     isce2::resampLib
     isce2::utilLib
     isce2::stdoelLib
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(resamp PUBLIC
