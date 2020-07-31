@@ -1,4 +1,4 @@
-add_library(alos_lib STATIC
+isce2_add_staticlib(alosLib
     ALOS_lib/src/cfft1d.c
     ALOS_lib/src/find_fft_length.c
     ALOS_lib/src/utils.c
@@ -13,8 +13,7 @@ add_library(alos_lib STATIC
     ALOS_lib/src/read_ALOS_sarleader.c
     ALOS_lib/src/rng_compress.c
     )
-target_include_directories(alos_lib PUBLIC include)
-set_property(TARGET alos_lib PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(alosLib PUBLIC include)
 
 add_subdirectory(ALOS_fbd2fbs)
 add_subdirectory(ALOS_fbs2fbd)

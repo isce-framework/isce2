@@ -3,7 +3,7 @@ Python_add_library(ALOS_fbd2fbs MODULE
     )
 target_include_directories(ALOS_fbd2fbs PUBLIC include)
 target_link_libraries(ALOS_fbd2fbs PUBLIC
-    alos_lib
+    isce2::alosLib
     isce2::utilLib
     )
 
