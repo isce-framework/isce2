@@ -9,7 +9,7 @@ Python_add_library(get_peg_info MODULE
 target_include_directories(get_peg_info PUBLIC include)
 target_link_libraries(get_peg_info PRIVATE
     isce2::utilLib
-    stdoel_static
+    isce2::stdoelLib
     isce2::stdoeLib
     )
 

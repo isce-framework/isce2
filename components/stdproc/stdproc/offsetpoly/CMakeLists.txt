@@ -16,7 +16,7 @@ target_include_directories(offsetpoly PUBLIC include)
 target_link_libraries(offsetpoly PRIVATE
     isce2::offsetpolyLib
     isce2::resampLib
-    stdoel_static
+    isce2::stdoelLib
     )
 if(TARGET OpenMP::OpenMP_Fortran)
     target_link_libraries(offsetpoly PUBLIC

@@ -10,7 +10,7 @@ target_include_directories(resamp_only PUBLIC include)
 target_link_libraries(resamp_only PRIVATE
     DataAccessor_static
     isce2::resampLib
-    stdoel_static
+    isce2::stdoelLib
     )
 
 InstallSameDir(

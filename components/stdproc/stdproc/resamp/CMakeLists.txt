@@ -10,7 +10,7 @@ target_include_directories(resamp PUBLIC include)
 target_link_libraries(resamp PUBLIC
     isce2::resampLib
     isce2::utilLib
-    stdoel_static
+    isce2::stdoelLib
     DataAccessor_static
     )
 if(TARGET OpenMP::OpenMP_Fortran)

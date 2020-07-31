@@ -12,7 +12,7 @@ target_link_libraries(resamp_image PUBLIC
     DataAccessor_static
     isce2::resampLib
     isce2::utilLib
-    stdoel_static
+    isce2::stdoelLib
     )
 
 InstallSameDir(
