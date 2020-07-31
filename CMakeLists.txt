@@ -33,7 +33,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
         _Python_add_library(${target} ${ARGN})
         add_test(NAME import_${target}
                  COMMAND ${Python_EXECUTABLE} -c
-                     "import $<TARGET_FILE_BASE_NAME:${target}>"
+                     "import ${target}"
                  )
     endfunction()
 endif()
