@@ -43,7 +43,6 @@ data acquired by ALOS-2,"
 IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-4506, Aug. 2018.
 ======================================================================================================-->
 
-
     <!--Note that, in ScanSAR-stripmap interferometry, ScanSAR must be reference!-->
     <!--<property name="reference directory">None</property>-->
     <!--<property name="secondary directory">None</property>-->
@@ -236,9 +235,20 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     [[100, 200, 100, 200],[1000, 1200, 500, 600]]
     ==========================================================================================-->
     <!--<property name="areas masked out in ionospheric phase estimation">None</property>-->
+
+    <!--=========================================================================================
+    a 2-D list. e.g. if you are processing two ScanSAR frames, each with five swaths, and you do
+    not want phase difference of swath 1 and 2 in frame 2 snap to fixed values, the parameter can be specified
+    as:
+    [[True, True, True, True], [False, True, True, True]]
+    ==========================================================================================-->
+    <!--<property name="swath phase difference snap to fixed values">None</property>-->
+
     <!--<property name="apply polynomial fit before filtering ionosphere phase">True</property>-->
-    <!--<property name="maximum window size for filtering ionosphere phase">151</property>-->
-    <!--<property name="minimum window size for filtering ionosphere phase">41</property>-->
+    <!--<property name="whether filtering ionosphere phase">True</property>-->
+    <!--<property name="apply polynomial fit in adaptive filtering window">True</property>-->
+    <!--<property name="maximum window size for filtering ionosphere phase">301</property>-->
+    <!--<property name="minimum window size for filtering ionosphere phase">11</property>-->
 
     <!--=========================================================================================
     parameters for filtering subband interferograms used for ionospheric phase estimation

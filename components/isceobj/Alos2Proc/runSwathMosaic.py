@@ -162,7 +162,7 @@ def runSwathMosaic(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateFrame=False, phaseCompensation=False, phaseDiff=None, phaseDiffFixed=None, snapThreshold=None, pcRangeLooks=1, pcAzimuthLooks=4, filt=False, resamplingMethod=0):
+def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateFrame=False, phaseCompensation=False, phaseDiff=None, phaseDiffFixed=None, snapThreshold=None, snapSwath=None, pcRangeLooks=1, pcAzimuthLooks=4, filt=False, resamplingMethod=0):
     '''
     mosaic swaths
     
@@ -181,6 +181,7 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     phaseDiff:             pre-computed compensation phase for each swath
     phaseDiffFixed:        if provided, the estimated value will snap to one of these values, which is nearest to the estimated one.
     snapThreshold:         this is used with phaseDiffFixed
+    snapSwath:             indicate whether snap to fixed values for each swath phase diff, must be specified if phaseDiffFixed!=None
     pcRangeLooks:          number of range looks to take when compute swath phase difference
     pcAzimuthLooks:        number of azimuth looks to take when compute swath phase difference
     filt:                  whether do filtering when compute swath phase difference
@@ -193,6 +194,8 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     from isceobj.Alos2Proc.Alos2ProcPublic import multilook
     from isceobj.Alos2Proc.Alos2ProcPublic import cal_coherence_1
     from isceobj.Alos2Proc.Alos2ProcPublic import filterInterferogram
+    from isceobj.Alos2Proc.Alos2ProcPublic import computePhaseDiff
+    from isceobj.Alos2Proc.Alos2ProcPublic import snap
 
     numberOfSwaths = len(frame.swaths)
     swaths = frame.swaths
@@ -355,6 +358,8 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     # 2. 'estimated+snap': estimated from subswath overlap and snap to a fixed value
     # 3. 'input': pre-computed
     # confidence level: 3 > 2 > 1
+    numberOfValidSamples = [None for i in range(numberOfSwaths)]
+    # only record when (filt == False) and (index[0].size >= 4000)
     if phaseCompensation:
         #compute swath phase offset
         diffMean = [0.0]
@@ -469,48 +474,30 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
                     data2 *= np.exp(np.complex64(1j) * angle)
                     print('phase offset: %15.12f rad with filter strength: %f, window size: %3d'%(diffMean0, filterStrength, filterWinSize))
             else:
-                diffMean0 = 0.0
-                for k in range(30):
-                    dataDiff = data1 * np.conj(data2)
-                    cor = cal_coherence_1(dataDiff, win=5)
-                    if filt:
-                        index = np.nonzero(np.logical_and(cor>0.95, dataDiff!=0))
-                    else:
-                        index = np.nonzero(np.logical_and(cor>0.85, dataDiff!=0))
-                    if index[0].size < 100:
-                        diffMean0 = 0.0
-                        print('\n\nWARNING: too few high coherence pixels for swath phase difference estimation')
-                        print('         number of high coherence pixels: {}\n\n'.format(index[0].size))
-                        break
-                    angle = np.mean(np.angle(dataDiff[index]), dtype=np.float64)
-                    diffMean0 += angle
-                    data2 *= np.exp(np.complex64(1j) * angle)
-                    print('phase offset: %15.12f rad after loop: %3d'%(diffMean0, k))
+                if filt:
+                    (diffMean0, numberOfValidSamples[i]) = computePhaseDiff(data1, data2, coherenceWindowSize=5, coherenceThreshold=0.95)
+                else:
+                    (diffMean0, numberOfValidSamples[i]) = computePhaseDiff(data1, data2, coherenceWindowSize=5, coherenceThreshold=0.85)
+                if numberOfValidSamples[i] < 100:
+                    diffMean0 = 0.0
+                    print('\n\nWARNING: too few high coherence pixels for swath phase difference estimation')
+                    print('         number of high coherence pixels: {}\n\n'.format(numberOfValidSamples[i]))
 
-                    DEBUG=False
-                    if DEBUG and (k==0):
-                        from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
-                        (length7, width7)=dataDiff.shape
-                        filename = 'diff_ori_s{}-s{}_loop_{}.int'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, k)
-                        dataDiff.astype(np.complex64).tofile(filename)
-                        create_xml(filename, width7, length7, 'int')
-                        filename = 'cor_ori_s{}-s{}_loop_{}.cor'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, k)
-                        cor.astype(np.float32).tofile(filename)
-                        create_xml(filename, width7, length7, 'float')
-
+                #do not record when filt
+                if filt:
+                    numberOfValidSamples[i] = None
+                
 
             #save purely estimated diff phase
             phaseDiffEst[i] = diffMean0
             
             #if fixed diff phase provided and the estimated diff phase is close enough to a fixed value, snap to it
-            ############################################################################################################
             if phaseDiffFixed != None:
-                phaseDiffTmp = np.absolute(np.absolute(np.array(phaseDiffFixed)) - np.absolute(diffMean0))
-                phaseDiffTmpMinIndex = np.argmin(phaseDiffTmp)
-                if phaseDiffTmp[phaseDiffTmpMinIndex] < snapThreshold:
-                   diffMean0 = np.sign(diffMean0) * np.absolute(phaseDiffFixed[phaseDiffTmpMinIndex])
-                   phaseDiffSource[i] = 'estimated+snap'
-            ############################################################################################################
+                if snapSwath[i-1] == True:
+                    (outputValue, snapped) = snap(diffMean0, phaseDiffFixed, snapThreshold)
+                    if snapped == True:
+                        diffMean0 = outputValue
+                        phaseDiffSource[i] = 'estimated+snap'
 
             diffMean.append(diffMean0)
             print('phase offset: subswath{} - subswath{}: {}'.format(frame.swaths[i-1].swathNumber, frame.swaths[i].swathNumber, diffMean0))
@@ -550,7 +537,7 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
 
     if phaseCompensation:
         # estimated phase diff, used phase diff, used phase diff source
-        return (phaseDiffEst, diffMean, phaseDiffSource)
+        return (phaseDiffEst, diffMean, phaseDiffSource, numberOfValidSamples)
 
 def swathMosaicParameters(frame, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks):
     '''

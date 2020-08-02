@@ -536,6 +536,7 @@ def waterBodyRadar(latFile, lonFile, wbdFile, wbdOutFile):
     latFp = open(latFile, 'rb')
     lonFp = open(lonFile, 'rb')
     wbdOutFp = open(wbdOutFile, 'wb')
+    wbdOutIndex = np.arange(width, dtype=np.int32)
     print("create water body in radar coordinates...")
     for i in range(length):
         if (((i+1)%200) == 0):
@@ -551,7 +552,7 @@ def waterBodyRadar(latFile, lonFile, wbdFile, wbdOutFile):
             np.logical_and(sampleIndex>=0, sampleIndex<=demImage.width-1)
             )
         #keep SRTM convention. water body. (0) --- land; (-1) --- water; (-2 or other value) --- no data.
-        wbdOut = wbd[(lineIndex[inboundIndex], sampleIndex[inboundIndex])]
+        wbdOut[(wbdOutIndex[inboundIndex],)] = wbd[(lineIndex[inboundIndex], sampleIndex[inboundIndex])]
         wbdOut.astype(np.int8).tofile(wbdOutFp)
     print("processing line %6d of %6d" % (length, length))
     #create_xml(wbdOutFile, width, length, 'byte')
@@ -1183,7 +1184,74 @@ def create_multi_index2(width2, l1, l2):
     return ((l2 - l1) / 2.0  + np.arange(width2) * l2) / l1
 
 
+def computePhaseDiff(data1, data22, coherenceWindowSize=5, coherenceThreshold=0.85):
+    import copy
+    import numpy as np
+    from isceobj.Alos2Proc.Alos2ProcPublic import cal_coherence_1
 
+    #data22 will be changed in the processing, so make a copy here
+    data2 = copy.deepcopy(data22)
+
+    dataDiff = data1 * np.conj(data2)
+    cor = cal_coherence_1(dataDiff, win=coherenceWindowSize)
+    index = np.nonzero(np.logical_and(cor>coherenceThreshold, dataDiff!=0))
+
+    #check if there are valid pixels
+    if index[0].size == 0:
+        phaseDiff = 0.0
+        numberOfValidSamples = 0
+        return (phaseDiff, numberOfValidSamples)
+    else:
+        numberOfValidSamples = index[0].size
+
+    #in case phase difference is around PI, sum of +PI and -PI is zero, which affects the following
+    #mean phase difference computation.
+    #remove magnitude before doing sum?
+    dataDiff = dataDiff / (np.absolute(dataDiff)+(dataDiff==0))
+    phaseDiff0 = np.angle(np.sum(dataDiff[index], dtype=np.complex128))
+    #now the phase difference values are mostly centered at 0
+    data2 *= np.exp(np.complex64(1j) * phaseDiff0)
+    phaseDiff = phaseDiff0
+
+    #compute phase difference
+    numberOfIterations = 1000000
+    threshold = 0.000001
+    for k in range(numberOfIterations):
+        dataDiff = data1 * np.conj(data2)
+        angle = np.mean(np.angle(dataDiff[index]), dtype=np.float64)
+        phaseDiff += angle
+        data2 *= np.exp(np.complex64(1j) * angle)
+        print('phase offset: %15.12f rad after iteration: %3d'%(phaseDiff, k+1))
+        if (k+1 >= 5) and (angle <= threshold):
+            break
+
+    #only take the value within -pi--pi
+    if phaseDiff > np.pi:
+        phaseDiff -= 2.0 * np.pi
+    if phaseDiff < -np.pi:
+        phaseDiff += 2.0 * np.pi
+
+    # mean phase difference
+    # number of valid samples to compute the phase difference
+    return (phaseDiff, numberOfValidSamples)
+
+
+def snap(inputValue, fixedValues, snapThreshold):
+    '''
+    fixedValues can be a list or numpy array
+    '''
+    import numpy as np
+
+    diff = np.absolute(np.absolute(np.array(fixedValues)) - np.absolute(inputValue))
+    indexMin = np.argmin(diff)
+    if diff[indexMin] < snapThreshold:
+        outputValue = np.sign(inputValue) * np.absolute(fixedValues[indexMin])
+        snapped = True
+    else:
+        outputValue = inputValue
+        snapped = False
+
+    return (outputValue, snapped)
 
 
 

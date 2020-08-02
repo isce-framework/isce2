@@ -323,6 +323,14 @@ MASKED_AREAS_ION = Application.Parameter('maskedAreasIon',
                                 container = list,
                                 doc = 'areas masked out in ionospheric phase estimation')
 
+SWATH_PHASE_DIFF_SNAP_ION = Application.Parameter('swathPhaseDiffSnapIon',
+                                public_name = 'swath phase difference snap to fixed values',
+                                default = None,
+                                type = bool,
+                                mandatory = False,
+                                container = list,
+                                doc = 'swath phase difference snap to fixed values')
+
 FIT_ION = Application.Parameter('fitIon',
                                 public_name = 'apply polynomial fit before filtering ionosphere phase',
                                 default = True,
@@ -330,16 +338,30 @@ FIT_ION = Application.Parameter('fitIon',
                                 mandatory = False,
                                 doc = 'apply polynomial fit before filtering ionosphere phase')
 
+FILT_ION = Application.Parameter('filtIon',
+                                public_name = 'whether filtering ionosphere phase',
+                                default = True,
+                                type = bool,
+                                mandatory = False,
+                                doc = 'whether filtering ionosphere phase')
+
+FIT_ADAPTIVE_ION = Application.Parameter('fitAdaptiveIon',
+                                public_name = 'apply polynomial fit in adaptive filtering window',
+                                default = True,
+                                type = bool,
+                                mandatory = False,
+                                doc = 'apply polynomial fit in adaptive filtering window')
+
 FILTERING_WINSIZE_MAX_ION = Application.Parameter('filteringWinsizeMaxIon',
                                 public_name='maximum window size for filtering ionosphere phase',
-                                default=151,
+                                default=301,
                                 type=int,
                                 mandatory=False,
                                 doc='maximum window size for filtering ionosphere phase')
 
 FILTERING_WINSIZE_MIN_ION = Application.Parameter('filteringWinsizeMinIon',
                                 public_name='minimum window size for filtering ionosphere phase',
-                                default=41,
+                                default=11,
                                 type=int,
                                 mandatory=False,
                                 doc='minimum window size for filtering ionosphere phase')
@@ -608,7 +630,10 @@ class Alos2InSAR(Application):
                         NUMBER_RANGE_LOOKS_ION,
                         NUMBER_AZIMUTH_LOOKS_ION,
                         MASKED_AREAS_ION,
+                        SWATH_PHASE_DIFF_SNAP_ION,
                         FIT_ION,
+                        FILT_ION,
+                        FIT_ADAPTIVE_ION,
                         FILTERING_WINSIZE_MAX_ION,
                         FILTERING_WINSIZE_MIN_ION,
                         FILTER_SUBBAND_INT,
