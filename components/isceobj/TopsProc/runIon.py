@@ -199,13 +199,13 @@ def setup(self):
         ionParam.calIonWithMerged = False
     else:
         ionParam.calIonWithMerged = True
+    #for cross Sentinel-1A/B interferogram, always not using merged interferogram
+    if reference.mission != secondary.mission:
+        ionParam.calIonWithMerged = False
     #there is no need to process swath by swath when there is only one swath
     #ionSwathBySwath only works when number of swaths >=2
     if len(swathList) == 1:
         ionParam.calIonWithMerged = True
-    #for cross Sentinel-1A/B interferogram, always not using merged interferogram
-    if reference.mission != secondary.mission:
-        ionParam.calIonWithMerged = False
 
     #determine if remove an empirical ramp
     if reference.mission == secondary.mission:
