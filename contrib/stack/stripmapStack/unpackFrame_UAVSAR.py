@@ -20,7 +20,7 @@ def cmdLineParse():
             required=True, help='Input UAVSAR directory')
     parser.add_argument('-d','--dop_file', dest='dopFile', type=str,
             default=None, help='Doppler file')
-    parser.add_argument('-s','--segment', dest='stackSegment', type=int,
+    parser.add_argument('-s','--segment', dest='stackSegment', type=str,
             default=1, help='stack segment')
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output SLC directory')
