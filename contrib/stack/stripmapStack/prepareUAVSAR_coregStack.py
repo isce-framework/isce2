@@ -23,7 +23,7 @@ def createParser():
             help='Doppler file for the stack. Needs to be in directory where command is run.')
     parser.add_argument('-o', '--output', dest='output', type=str, required=True,
             help='output directory which will be used for unpacking.')
-    parser.add_argument('-s', '--segment', dest='segment', type=str, default='1',
+    parser.add_argument('-s', '--segment', dest='segment', type=int, default='1',
             help='segment of the UAVSAR stack to prepare. For "s2" use "2", etc. Default is "1" ')
     parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='source ~/.bash_profile;', 
             help='text command to be added to the beginning of each line of the run files. Default: source ~/.bash_profile;')
