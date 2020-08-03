@@ -171,8 +171,23 @@ class TerraSARX(Sensor):
         instrument.setIncidenceAngle(incidenceAngle)
         instrument.setPulseRepetitionFrequency(prf)
         instrument.setRangePixelSize(rangePixelSize)
+
+
+        #Cunren Liang, 2015
+        #the chirp bandwidth extracted before is definetely wrong
+        #I re-extract it here.
+        rangeSamplingFrequency = float(self.grab_from_xml('instrument/settings/RSF'))
+        chirpPulseBandwidth = float(self.grab_from_xml('instrument/settings/rxBandwidth'))
+        # this is not a correct value, TSX product does not provide pulse length
+        rangePulseLength = 1
+        #print("\n\n\n\n\n\n\n\n{0}\n\n\n\n\n\n\n\n\n".format(rangeSamplingFrequency))
+        #print("\n\n\n\n\n\n\n\n{0}\n\n\n\n\n\n\n\n\n".format(chirpPulseBandwidth))
+
+
         #jng no sampling rate extracted before.
-        instrument.setRangeSamplingRate(1/rowSpacing)
+        #instrument.setRangeSamplingRate(1/rowSpacing)
+        #the upper setting should be wrong, I change it. Cunren Liang, 2015
+        instrument.setRangeSamplingRate(rangeSamplingFrequency)
         instrument.setPulseLength(rangePulseLength)
         instrument.setChirpSlope(chirpPulseBandwidth/rangePulseLength)
         #instrument.setRangeBias(0)
