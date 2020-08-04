@@ -152,6 +152,10 @@ extern "C"
   PyObject * setScaleFactorX_C(PyObject*, PyObject*);
   PyObject * setScaleFactorY_C(PyObject*, PyObject*);
 
+  void setOversamplingFactorFilt_f(int*);
+  PyObject* setOversamplingFactorFilt_C(PyObject*, PyObject*);
+  void setWinsizeFilt_f(int*);
+  PyObject* setWinsizeFilt_C(PyObject*, PyObject*);
 }
 
 
@@ -225,6 +229,9 @@ static PyMethodDef ampcor_methods[] =
  { "deallocate_cov1Ret_Py", deallocate_cov1Ret_C, METH_VARARGS, " "},
  { "deallocate_cov2Ret_Py", deallocate_cov2Ret_C, METH_VARARGS, " "},
  { "deallocate_cov3Ret_Py", deallocate_cov3Ret_C, METH_VARARGS, " "},
+
+ { "setWinsizeFilt_Py", setWinsizeFilt_C, METH_VARARGS, " "},
+ { "setOversamplingFactorFilt_Py", setOversamplingFactorFilt_C, METH_VARARGS, " "},
 
  {NULL, NULL, 0 , NULL}
 };

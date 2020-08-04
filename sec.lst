@@ -1,0 +1,162 @@
+applications/focus.py:194:        focus.setSecondaryRangeMigrationFlag('n')
+components/isceobj/InsarProc/InsarProc.py:366:SECONDARY_RANGE_MIGRATION_FLAG = Component.Parameter('_secondaryRangeMigrationFlag',
+components/isceobj/InsarProc/InsarProc.py:367:     public_name='secondaryRangeMigrationFlag',
+components/isceobj/InsarProc/InsarProc.py:506:                      SECONDARY_RANGE_MIGRATION_FLAG,
+components/isceobj/InsarProc/InsarProc.py:768:    def getSecondaryRangeMigrationFlag(self):
+components/isceobj/InsarProc/InsarProc.py:769:        return self._secondaryRangeMigrationFlag
+components/isceobj/InsarProc/InsarProc.py:1068:    def setSecondaryRangeMigrationFlag(self, yorn):
+components/isceobj/InsarProc/InsarProc.py:1070:        self._secondaryRangeMigrationFlag = yorn
+components/isceobj/InsarProc/InsarProc.py:1264:    secondaryRangeMigrationFlag = property(getSecondaryRangeMigrationFlag, setSecondaryRangeMigrationFlag)
+components/isceobj/IsceProc/IsceProc.py:263:        self.secondaryRangeMigrationFlag = None
+components/isceobj/StripmapProc/StripmapProc.py:425:SECONDARY_RANGE_MIGRATION_FLAG = Component.Parameter('secondaryRangeMigrationFlag',
+components/isceobj/StripmapProc/StripmapProc.py:426:                                public_name='secondaryRangeMigrationFlag',
+components/isceobj/StripmapProc/StripmapProc.py:501:                      SECONDARY_RANGE_MIGRATION_FLAG,
+components/isceobj/StripmapProc/runROI.py:143:    ####Secondary range migration
+components/isceobj/StripmapProc/runROI.py:144:    form.secondaryRangeMigrationFlag = False
+components/mroipac/formimage/formslc/FormSLC.py:324:SECONDARY_RANGE_MIGRATION_FLAG = Component.Parameter(
+components/mroipac/formimage/formslc/FormSLC.py:325:    'secondaryRangeMigrationFlag',
+components/mroipac/formimage/formslc/FormSLC.py:326:    public_name='SECONDARY_RANGE_MIGRATION_FLAG',
+components/mroipac/formimage/formslc/FormSLC.py:330:    doc='If secondary range migration is desired'
+components/mroipac/formimage/formslc/FormSLC.py:474:                      SECONDARY_RANGE_MIGRATION_FLAG,
+components/mroipac/formimage/formslc/FormSLC.py:523:        formslc.setSecondaryRangeMigrationFlag_Py(int(self.secondaryRangeMigrationFlag))
+components/mroipac/formimage/formslc/FormSLC.py:704:    def setSecondaryRangeMigrationFlag(self,var):
+components/mroipac/formimage/formslc/FormSLC.py:705:        self.secondaryRangeMigrationFlag = str(var)
+components/mroipac/formimage/formslc/bindings/formslcmodule.cpp:109:PyObject * setSecondaryRangeMigrationFlag_C(PyObject* self, PyObject* args)
+components/mroipac/formimage/formslc/bindings/formslcmodule.cpp:116:        setSecondaryRangeMigrationFlag_f(&varInt);
+components/mroipac/formimage/formslc/include/formslcmodule.h:29:        void setSecondaryRangeMigrationFlag_f(int *);
+components/mroipac/formimage/formslc/include/formslcmodule.h:30:        PyObject * setSecondaryRangeMigrationFlag_C(PyObject *, PyObject *);
+components/mroipac/formimage/formslc/include/formslcmodule.h:109:        {"setSecondaryRangeMigrationFlag_Py", setSecondaryRangeMigrationFlag_C, METH_VARARGS, " "},
+components/mroipac/formimage/formslc/include/formslcmoduleFortTrans.h:64:                        #define setSecondaryRangeMigrationFlag_f setsecondaryrangemigrationflag_
+components/mroipac/formimage/formslc/include/formslcmoduleFortTrans.h:117:                        #define setSecondaryRangeMigrationFlag_f setSecondaryRangeMigrationFlag
+components/mroipac/formimage/formslc/include/formslcmoduleFortTrans.h:168:                        #define setSecondaryRangeMigrationFlag_f setSecondaryRangeMigrationFlag__
+components/mroipac/formimage/formslc/include/formslcmoduleFortTrans.h:219:                        #define setSecondaryRangeMigrationFlag_f SETSECONDARYRANGEMIGRATIONFLAG
+components/mroipac/formimage/formslc/include/formslcmoduleFortTrans.h:270:                        #define setSecondaryRangeMigrationFlag_f setSecondaryRangeMigrationFlag_
+components/mroipac/formimage/formslc/src/formslc.F:129:      write(6,*) 'Secondary Range Correction ', isrm
+components/mroipac/formimage/formslc/src/formslc.F:267:c secondary range migration correction to chirp rate (from CY memo)
+components/mroipac/formimage/formslc/src/formslcSetState.F:39:        subroutine setSecondaryRangeMigrationFlag(varInt)
+components/mroipac/formimage/formslc/test/FormSCL930110.xml:16:        <name>SECONDARY_RANGE_MIGRATION_FLAG</name>
+components/mroipac/formimage/formslc/test/exampleCommandLine:23:SECONDARY_RANGE_MIGRATION_FLAG = n
+components/mroipac/formimage/formslc/test/formslcInit.ini:20:SECONDARY_RANGE_MIGRATION_FLAG n
+components/mroipac/formimage/formslc/test/platform930110Init.ini:20:SECONDARY_RANGE_MIGRATION_FLAG n
+components/mroipac/formimage/formslc/test/platform950523Init.ini:19:SECONDARY_RANGE_MIGRATION_FLAG n
+components/stdproc/stdproc/estamb/Estamb.py:532:        estamb.setSecondaryRangeMigrationFlag_Py(
+components/stdproc/stdproc/estamb/Estamb.py:533:            self.secondaryRangeMigrationFlag
+components/stdproc/stdproc/estamb/Estamb.py:912:        self.secondaryRangeMigrationFlag = 'n'
+components/stdproc/stdproc/estamb/bindings/estambmodule.cpp:553:PyObject * setSecondaryRangeMigrationFlag_C(PyObject* self, PyObject* args)
+components/stdproc/stdproc/estamb/bindings/estambmodule.cpp:561:    setSecondaryRangeMigrationFlag_f(var,&varInt);
+components/stdproc/stdproc/estamb/include/estambmodule.h:116:    void setSecondaryRangeMigrationFlag_f(char *, int *);
+components/stdproc/stdproc/estamb/include/estambmodule.h:117:    PyObject * setSecondaryRangeMigrationFlag_C(PyObject *, PyObject *);
+components/stdproc/stdproc/estamb/include/estambmodule.h:212:    {"setSecondaryRangeMigrationFlag_Py", setSecondaryRangeMigrationFlag_C,
+components/stdproc/stdproc/estamb/include/estambmoduleFortTrans.h:86:                        #define setSecondaryRangeMigrationFlag_f setsecondaryrangemigrationflag_
+components/stdproc/stdproc/estamb/src/estambSetState.F:301:        subroutine setSecondaryRangeMigrationFlag(varString, varInt)
+components/stdproc/stdproc/estamb/src/estambStateSoi.f90:70:      character*1 srm              !Secondary range migration flag
+components/stdproc/stdproc/formslc/Formslc.py:302:SECONDARY_RANGE_MIGRATION_FLAG = Component.Parameter(
+components/stdproc/stdproc/formslc/Formslc.py:303:    'secondaryRangeMigrationFlag',
+components/stdproc/stdproc/formslc/Formslc.py:304:    public_name='SECONDARY_RANGE_MIGRATION_FLAG',
+components/stdproc/stdproc/formslc/Formslc.py:308:    doc='If secondary range migration is desired'
+components/stdproc/stdproc/formslc/Formslc.py:495:                      SECONDARY_RANGE_MIGRATION_FLAG,
+components/stdproc/stdproc/formslc/Formslc.py:774:        formslc.setSecondaryRangeMigrationFlag_Py(
+components/stdproc/stdproc/formslc/Formslc.py:775:            self.secondaryRangeMigrationFlag
+components/stdproc/stdproc/formslc/Formslc.py:920:    def setSecondaryRangeMigrationFlag(self, var):
+components/stdproc/stdproc/formslc/Formslc.py:921:        self.secondaryRangeMigrationFlag = str(var)
+components/stdproc/stdproc/formslc/bindings/formslcmodule.cpp:585:PyObject * setSecondaryRangeMigrationFlag_C(PyObject* self, PyObject* args)
+components/stdproc/stdproc/formslc/bindings/formslcmodule.cpp:593:    setSecondaryRangeMigrationFlag_f(var,&varInt);
+components/stdproc/stdproc/formslc/include/formslcmodule.h:120:    void setSecondaryRangeMigrationFlag_f(char *, int *);
+components/stdproc/stdproc/formslc/include/formslcmodule.h:121:    PyObject * setSecondaryRangeMigrationFlag_C(PyObject *, PyObject *);
+components/stdproc/stdproc/formslc/include/formslcmodule.h:229:    {"setSecondaryRangeMigrationFlag_Py", setSecondaryRangeMigrationFlag_C,
+components/stdproc/stdproc/formslc/include/formslcmoduleFortTrans.h:90:                        #define setSecondaryRangeMigrationFlag_f setsecondaryrangemigrationflag_
+components/stdproc/stdproc/formslc/src/formslcSetState.F:334:        subroutine setSecondaryRangeMigrationFlag(varString, varInt)
+components/stdproc/stdproc/formslc/src/formslcSetState.F:348:     +          "formslcSetState.setSecondaryRangeMigrationFlag: ",
+components/stdproc/stdproc/formslc/src/formslcStateSoi.f90:73:      character*1 srm              !Secondary range migration flag
+components/zerodop/GPUtopozero/src/Topo.cpp:366:    printf("Secondary iterations: %d\n", extraiter);
+components/zerodop/topozero/Topozero.py:143:        if self.secondaryIterations is None:
+components/zerodop/topozero/Topozero.py:144:            self.secondaryIterations = 10
+components/zerodop/topozero/Topozero.py:397:        topozero.setSecondaryIterations_Py(int(self.secondaryIterations))
+components/zerodop/topozero/Topozero.py:616:        self.secondaryIterations = None
+components/zerodop/topozero/bindings/topozeromodule.cpp:382:PyObject * setSecondaryIterations_C(PyObject* self, PyObject *args)
+components/zerodop/topozero/bindings/topozeromodule.cpp:389:    setSecondaryIterations_f(&var);
+components/zerodop/topozero/include/topozeromodule.h:107:        void setSecondaryIterations_f(int *);
+components/zerodop/topozero/include/topozeromodule.h:108:        PyObject *setSecondaryIterations_C(PyObject *, PyObject *);
+components/zerodop/topozero/include/topozeromodule.h:151:        {"setSecondaryIterations_Py", setSecondaryIterations_C, METH_VARARGS, " "},
+components/zerodop/topozero/include/topozeromoduleFortTrans.h:70:                        #define setSecondaryIterations_f setsecondaryiterations_
+components/zerodop/topozero/src/topozero.f90:348:        print *, 'Secondary iterations: ', extraiter
+components/zerodop/topozero/src/topozeroSetState.f:221:        subroutine setSecondaryIterations(var)
+contrib/Snaphu/include/snaphu.h:451:/* secondary arc data structure */
+contrib/Snaphu/include/snaphu.h:453:  short arcrow;                 /* row of arc in secondary network array */
+contrib/Snaphu/include/snaphu.h:454:  short arccol;                 /* col of arc in secondary network array */
+contrib/Snaphu/include/snaphu.h:455:  nodeT *from;                  /* secondary node at tail of arc */
+contrib/Snaphu/include/snaphu.h:456:  nodeT *to;                    /* secondary node at head of arc */
+contrib/Snaphu/include/snaphu.h:461:/* supplementary data structure for secondary nodes */
+contrib/Snaphu/include/snaphu.h:465:  nodeT **neighbornodes;        /* pointers to neighboring secondary nodes */
+contrib/Snaphu/include/snaphu.h:466:  scndryarcT **outarcs;         /* pointers to secondary arcs to neighbors */
+contrib/Snaphu/include/snaphu.h:578:  double tileedgeweight;  /* weight applied to tile-edge secondary arc costs */
+contrib/Snaphu/include/snaphu.h:747:void TraceSecondaryArc(nodeT *primaryhead, nodeT **scndrynodes, 
+contrib/Snaphu/include/snaphu.h:764:void IntegrateSecondaryFlows(long linelen, long nlines, nodeT **scndrynodes, 
+contrib/Snaphu/include/snaphu.h:769:void ParseSecondaryFlows(long tilenum, short *nscndryarcs, short **tileflows, 
+contrib/Snaphu/src/snaphu_solver.c:1197: * arc arrays, assuming secondary (arbitrary topology) network.
+contrib/Snaphu/src/snaphu_solver.c:1904: * ncol=0 for nongrid mode (secondary network).
+contrib/Snaphu/src/snaphu_tile.c:964:  /* trace regions and parse secondary nodes and arcs for each tile */
+contrib/Snaphu/src/snaphu_tile.c:1013:  /* scale costs based on average number of primary arcs per secondary arc */
+contrib/Snaphu/src/snaphu_tile.c:1056:  /* get memory for nongrid arrays of secondary network problem */
+contrib/Snaphu/src/snaphu_tile.c:1070:  /* set up network for secondary solver */
+contrib/Snaphu/src/snaphu_tile.c:1077:  /* set pointers to functions for nongrid secondary network */
+contrib/Snaphu/src/snaphu_tile.c:1084:  /* solve the secondary network problem */
+contrib/Snaphu/src/snaphu_tile.c:1086:  fprintf(sp1,"Running optimizer for secondary network\n");
+contrib/Snaphu/src/snaphu_tile.c:1155:  /* integrate phase from secondary network problem */
+contrib/Snaphu/src/snaphu_tile.c:1156:  IntegrateSecondaryFlows(linelen,nlines,scndrynodes,nodesupp,scndryarcs,
+contrib/Snaphu/src/snaphu_tile.c:1470: * Trace edges of region data to form nodes and arcs of secondary
+contrib/Snaphu/src/snaphu_tile.c:1579:    /* secondary node exists if region edges fork */
+contrib/Snaphu/src/snaphu_tile.c:1582:      /* mark primary node to indicate that secondary node exists for it */
+contrib/Snaphu/src/snaphu_tile.c:1585:      /* create secondary node if not already created in another tile */
+contrib/Snaphu/src/snaphu_tile.c:1588:	/* create the secondary node */
+contrib/Snaphu/src/snaphu_tile.c:1603:      /* create the secondary arc to this node if it doesn't already exist */
+contrib/Snaphu/src/snaphu_tile.c:1608:	TraceSecondaryArc(from,scndrynodes,nodesupp,scndryarcs,scndrycosts,
+contrib/Snaphu/src/snaphu_tile.c:1634:  /* reset temporary secondary node and arc pointers in data structures */
+contrib/Snaphu/src/snaphu_tile.c:1635:  /* secondary node row, col stored level, incost of primary node pointed to */
+contrib/Snaphu/src/snaphu_tile.c:1656:  /* update secondary arcs */
+contrib/Snaphu/src/snaphu_tile.c:1659:    /* update node pointers in secondary arc structure */
+contrib/Snaphu/src/snaphu_tile.c:1669:    /* update secondary arc pointers in nodesupp strcutres */
+contrib/Snaphu/src/snaphu_tile.c:1831:	  TraceSecondaryArc(to,scndrynodes,nodesupp,scndryarcs,scndrycosts,
+contrib/Snaphu/src/snaphu_tile.c:1858:	  TraceSecondaryArc(to,scndrynodes,nodesupp,scndryarcs,scndrycosts,
+contrib/Snaphu/src/snaphu_tile.c:1885:	  TraceSecondaryArc(to,scndrynodes,nodesupp,scndryarcs,scndrycosts,
+contrib/Snaphu/src/snaphu_tile.c:1912:	  TraceSecondaryArc(to,scndrynodes,nodesupp,scndryarcs,scndrycosts,
+contrib/Snaphu/src/snaphu_tile.c:2361:/* function: TraceSecondaryArc()
+contrib/Snaphu/src/snaphu_tile.c:2364:void TraceSecondaryArc(nodeT *primaryhead, nodeT **scndrynodes, 
+contrib/Snaphu/src/snaphu_tile.c:2425:    /* loop over primary arcs on secondary arc again to get costs */
+contrib/Snaphu/src/snaphu_tile.c:2585:      /* break if found the secondary arc tail */
+contrib/Snaphu/src/snaphu_tile.c:2594:    } /* end while loop for tracing secondary arc for costs */
+contrib/Snaphu/src/snaphu_tile.c:2641:  /* see if we have a secondary arc on the edge of the full-sized array */
+contrib/Snaphu/src/snaphu_tile.c:2645:    /* set sum of standard deviations to indicate zero-cost secondary arc */
+contrib/Snaphu/src/snaphu_tile.c:2669:    /* store sum of primary cost variances at end of secondary cost array */
+contrib/Snaphu/src/snaphu_tile.c:2681:  /* find secondary nodes corresponding to primary head, tail */
+contrib/Snaphu/src/snaphu_tile.c:2707:  /* see if there is already arc between secondary head, tail */
+contrib/Snaphu/src/snaphu_tile.c:2719:      /* see if secondary arc traverses only one primary arc */
+contrib/Snaphu/src/snaphu_tile.c:2743:	/* recursively call TraceSecondaryArc() to set up arcs */
+contrib/Snaphu/src/snaphu_tile.c:2744:	TraceSecondaryArc(primarydummy,scndrynodes,nodesupp,scndryarcs,
+contrib/Snaphu/src/snaphu_tile.c:2753:	TraceSecondaryArc(primaryhead,scndrynodes,nodesupp,scndryarcs,
+contrib/Snaphu/src/snaphu_tile.c:2764:	/* only one primary arc; just delete other secondary arc */
+contrib/Snaphu/src/snaphu_tile.c:2765:	/* find existing secondary arc (must be in this tile) */
+contrib/Snaphu/src/snaphu_tile.c:2766:	/* swap direction of existing secondary arc if necessary */
+contrib/Snaphu/src/snaphu_tile.c:2781:	/* assign cost of this secondary arc to existing secondary arc */
+contrib/Snaphu/src/snaphu_tile.c:2785:	/* update direction data in secondary arc structure */
+contrib/Snaphu/src/snaphu_tile.c:2802:  /* set up secondary arc datastructures */
+contrib/Snaphu/src/snaphu_tile.c:2813:  /* update secondary node data */
+contrib/Snaphu/src/snaphu_tile.c:2815:  /* secondary node addresses change in ReAlloc() calls in TraceRegions() */
+contrib/Snaphu/src/snaphu_tile.c:2841:  /* keep track of updated secondary nodes that were not in this tile */
+contrib/Snaphu/src/snaphu_tile.c:2869:  /* set up node data in secondary arc structure */
+contrib/Snaphu/src/snaphu_tile.c:2873:  /* set up direction data in secondary arc structure */
+contrib/Snaphu/src/snaphu_tile.c:2885:  /* add number of primary arcs in secondary arc to counter */
+contrib/Snaphu/src/snaphu_tile.c:2913:/* function: IntegrateSecondaryFlows()
+contrib/Snaphu/src/snaphu_tile.c:2916:void IntegrateSecondaryFlows(long linelen, long nlines, nodeT **scndrynodes, 
+contrib/Snaphu/src/snaphu_tile.c:2939:  fprintf(sp1,"Integrating secondary flows\n");
+contrib/Snaphu/src/snaphu_tile.c:3033:      /* loop over each secondary arc in this tile and parse flows */
+contrib/Snaphu/src/snaphu_tile.c:3035:      /* flip flow for integration in ParseSecondaryFlows() */
+contrib/Snaphu/src/snaphu_tile.c:3037:      ParseSecondaryFlows(tilenum,nscndryarcs,tileflows,regions,scndryflows,
+contrib/Snaphu/src/snaphu_tile.c:3131:/* function: ParseSecondaryFlows()
+contrib/Snaphu/src/snaphu_tile.c:3134:void ParseSecondaryFlows(long tilenum, short *nscndryarcs, short **tileflows, 
+contrib/Snaphu/src/snaphu_tile.c:3156:    /* do nothing if prev arc has no secondary flow */
+contrib/Snaphu/src/snaphu_tile.c:3192:      /* set initial direction out of secondary arc head */
+contrib/Snaphu/src/snaphu_tile.c:3216:      /* use region data to trace path between secondary from, to */
+contrib/issi/applications/ISSI.py:270:        focus.setSecondaryRangeMigrationFlag('n')
+contrib/stack/stripmapStack/focus.py:156:    ####Secondary range migration
+contrib/stack/stripmapStack/focus.py:157:    form.secondaryRangeMigrationFlag = False

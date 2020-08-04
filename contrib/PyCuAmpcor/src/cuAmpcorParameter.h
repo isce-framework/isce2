@@ -25,7 +25,7 @@
 /// 1. Create an instance of cuAmpcorParameter: param = new cuAmpcorParameter()
 /// 2. Provide/set constant parameters, including numberWindows such as : param->numberWindowDown = 100
 /// 3. Call setupParameters() to determine related parameters and allocate starting pixels for each window: param->setupParameters()
-/// 4. Provide/set Master window starting pixel(s), and gross offset(s): param->setStartPixels(masterStartDown, masterStartAcross, grossOffsetDown, grossOffsetAcross)
+/// 4. Provide/set Reference window starting pixel(s), and gross offset(s): param->setStartPixels(referenceStartDown, referenceStartAcross, grossOffsetDown, grossOffsetAcross)
 /// 4a. Optionally, check the range of windows is within the SLC image range: param->checkPixelInImageRange()
 /// Steps 1, 3, 4 are mandatory. If step 2 is missing, default values will be used
 
@@ -78,17 +78,17 @@ public:
 
     float thresholdSNR;      /// Threshold of Signal noise ratio to remove noisy data
 
-    //master image
-    std::string masterImageName;    /// master SLC image name
-    int imageDataType1;             /// master image data type, 2=cfloat=complex=float2 1=float
-    int masterImageHeight;          /// master image height
-    int masterImageWidth;           /// master image width
+    //reference image
+    std::string referenceImageName;    /// reference SLC image name
+    int imageDataType1;             /// reference image data type, 2=cfloat=complex=float2 1=float
+    int referenceImageHeight;          /// reference image height
+    int referenceImageWidth;           /// reference image width
 
-    //slave image
-    std::string slaveImageName;     /// slave SLC image name
-    int imageDataType2;             /// slave image data type, 2=cfloat=complex=float2 1=float
-    int slaveImageHeight;           /// slave image height
-    int slaveImageWidth;            /// slave image width
+    //secondary image
+    std::string secondaryImageName;     /// secondary SLC image name
+    int imageDataType2;             /// secondary image data type, 2=cfloat=complex=float2 1=float
+    int secondaryImageHeight;           /// secondary image height
+    int secondaryImageWidth;            /// secondary image width
 
     // total number of chips/windows
     int numberWindowDown;           /// number of total windows (down)
@@ -106,27 +106,27 @@ public:
     int useMmap;                    /// whether to use mmap 0=not 1=yes (default = 0)
     int mmapSizeInGB;               /// size for mmap buffer(useMmap=1) or a cpu memory buffer (useMmap=0)
 
-    int masterStartPixelDown0;
-    int masterStartPixelAcross0;
-    int *masterStartPixelDown;  /// master starting pixels for each window (down)
-    int *masterStartPixelAcross;/// master starting pixels for each window (across)
-    int *slaveStartPixelDown;   /// slave starting pixels for each window (down)
-    int *slaveStartPixelAcross; /// slave starting pixels for each window (across)
+    int referenceStartPixelDown0;
+    int referenceStartPixelAcross0;
+    int *referenceStartPixelDown;  /// reference starting pixels for each window (down)
+    int *referenceStartPixelAcross;/// reference starting pixels for each window (across)
+    int *secondaryStartPixelDown;   /// secondary starting pixels for each window (down)
+    int *secondaryStartPixelAcross; /// secondary starting pixels for each window (across)
     int grossOffsetDown0;
     int grossOffsetAcross0;
-    int *grossOffsetDown;		/// Gross offsets between master and slave windows (down) : slaveStartPixel - masterStartPixel
-    int *grossOffsetAcross;     /// Gross offsets between master and slave windows (across)
+    int *grossOffsetDown;		/// Gross offsets between reference and secondary windows (down) : secondaryStartPixel - referenceStartPixel
+    int *grossOffsetAcross;     /// Gross offsets between reference and secondary windows (across)
 
-    int *masterChunkStartPixelDown;
-    int *masterChunkStartPixelAcross;
-    int *slaveChunkStartPixelDown;
-    int *slaveChunkStartPixelAcross;
-    int *masterChunkHeight;
-    int *masterChunkWidth;
-    int *slaveChunkHeight;
-    int *slaveChunkWidth;
-    int maxMasterChunkHeight, maxMasterChunkWidth;
-    int maxSlaveChunkHeight, maxSlaveChunkWidth;
+    int *referenceChunkStartPixelDown;
+    int *referenceChunkStartPixelAcross;
+    int *secondaryChunkStartPixelDown;
+    int *secondaryChunkStartPixelAcross;
+    int *referenceChunkHeight;
+    int *referenceChunkWidth;
+    int *secondaryChunkHeight;
+    int *secondaryChunkWidth;
+    int maxReferenceChunkHeight, maxReferenceChunkWidth;
+    int maxSecondaryChunkHeight, maxSecondaryChunkWidth;
 
     std::string grossOffsetImageName;
     std::string offsetImageName;    /// Output Offset fields filename
@@ -140,10 +140,10 @@ public:
     void deallocateArrays();    /// Deallocate arrays on exit
 
 
-    /// Three methods to set master/slave starting pixels and gross offsets from input master start pixel(s) and gross offset(s)
-	/// 1 (int *, int *, int *, int *): varying master start pixels and gross offsets
-	/// 2 (int, int, int *, int *): fixed master start pixel (first window) and varying gross offsets
-	/// 3 (int, int, int, int): fixed master start pixel(first window) and fixed gross offsets
+    /// Three methods to set reference/secondary starting pixels and gross offsets from input reference start pixel(s) and gross offset(s)
+	/// 1 (int *, int *, int *, int *): varying reference start pixels and gross offsets
+	/// 2 (int, int, int *, int *): fixed reference start pixel (first window) and varying gross offsets
+	/// 3 (int, int, int, int): fixed reference start pixel(first window) and fixed gross offsets
     void setStartPixels(int*, int*, int*, int*);
     void setStartPixels(int, int, int*, int*);
     void setStartPixels(int, int, int, int);

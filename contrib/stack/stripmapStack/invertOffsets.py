@@ -24,11 +24,11 @@ def createParser():
     Create command line parser.
     '''
 
-    parser = argparse.ArgumentParser( description='extracts the overlap geometry between master bursts')
+    parser = argparse.ArgumentParser( description='extracts the overlap geometry between reference bursts')
     parser.add_argument('-i', '--input', type=str, dest='input', required=True,
             help='Directory with the pair directories that includes dense offsets for each pair')
     parser.add_argument('-o', '--output', type=str, dest='output', required=True,
-            help='output directory to save dense-offsets for each date with respect to the stack Master date')
+            help='output directory to save dense-offsets for each date with respect to the stack Reference date')
 
     return parser
 
@@ -48,7 +48,7 @@ def write2h5(inps):
   dirs = glob.glob(os.path.join(inps.input,'*'))
   pairsDict = {}
   for dir in dirs:
-    #Assuming the directory name for a pair is master_slave dates (eg: 20100506_20101112)
+    #Assuming the directory name for a pair is reference_secondary dates (eg: 20100506_20101112)
     d12 = os.path.basename(dir)
     #if os.path.exists(os.path.join(dir,d12+'.bil')):
     if os.path.exists(os.path.join(dir,'filtAzimuth.off')):
@@ -80,15 +80,15 @@ def date_list(h5file):
   numPiars = pairs.shape[0]
   dateList = []
   tbase = []
-  masters = [None]*numPiars
-  slaves = [None]*numPiars
+  references = [None]*numPiars
+  secondarys = [None]*numPiars
   for i in range(numPiars):
-      master = pairs[i,0].decode("utf-8")
-      slave = pairs[i,1].decode("utf-8")
-      if master not in dateList: dateList.append(master)
-      if slave not in dateList: dateList.append(slave)
-      masters[i]=master
-      slaves[i]=slave
+      reference = pairs[i,0].decode("utf-8")
+      secondary = pairs[i,1].decode("utf-8")
+      if reference not in dateList: dateList.append(reference)
+      if secondary not in dateList: dateList.append(secondary)
+      references[i]=reference
+      secondarys[i]=secondary
 
   dateList.sort()
   d1 = datetime.datetime(*time.strptime(dateList[0],"%Y-%m-%d %H:%M:%S")[0:6])
@@ -100,20 +100,20 @@ def date_list(h5file):
   dateDict = {}
   for i in range(len(dateList)): dateDict[dateList[i]] = tbase[i]
 
-  return tbase,dateList,dateDict, masters, slaves
+  return tbase,dateList,dateDict, references, secondarys
 
 #####################################
 
 def design_matrix(h5File):
-  tbase,dateList,dateDict, masters, slaves = date_list(h5File)
+  tbase,dateList,dateDict, references, secondarys = date_list(h5File)
   numDates = len(dateDict)
-  numPairs = len(masters)
+  numPairs = len(references)
   A = np.zeros((numPairs,numDates))
   B = np.zeros_like(A)
   tbase = np.array(tbase)
   for ni in range(numPairs):
-     ndxt1 = dateList.index(masters[ni])
-     ndxt2 = dateList.index(slaves[ni])
+     ndxt1 = dateList.index(references[ni])
+     ndxt2 = dateList.index(secondarys[ni])
      A[ni,ndxt1] = -1
      A[ni,ndxt2] = 1
      B[ni,ndxt1:ndxt2] = tbase[ndxt1+1:ndxt2+1]-tbase[ndxt1:ndxt2]
@@ -126,8 +126,8 @@ def design_matrix(h5File):
   return A, B  
 
 def invert_wlq(inps,h5File):
-    tbase,dateList,dateDict, masters, slaves = date_list(h5File)
-    numPairs = len(masters)
+    tbase,dateList,dateDict, references, secondarys = date_list(h5File)
+    numPairs = len(references)
     A,B = design_matrix(h5File)
    
     h5 = h5py.File(h5File,'r')
@@ -218,8 +218,8 @@ def invert_wlq(inps,h5File):
     '''
 def invert(inps,h5File):
 
-    tbase,dateList,dateDict, masters, slaves = date_list(h5File)
-    numPairs = len(masters)
+    tbase,dateList,dateDict, references, secondarys = date_list(h5File)
+    numPairs = len(references)
     A,B = design_matrix(h5File)
 
     h5 = h5py.File(h5File,'r')
@@ -272,8 +272,7 @@ def writeDateOffsets(inps, h5File):
         d = dateList[i].decode("utf-8")
         d = datetime.datetime(*time.strptime(d,"%Y-%m-%d %H:%M:%S")[0:6]).strftime('%Y%m%d')
         outDir = os.path.join(inps.output, d)
-        if not os.path.exists(outDir):
-           os.makedirs(outDir)
+        os.makedirs(outDir, exist_ok=True)
         outName = os.path.join(outDir , d + '.bil')
         write(ds[i,:,:], outName, 1, 6)
  #       outName = os.path.join(outDir , d + '_snr.bil')
@@ -351,8 +350,7 @@ def getChunks(Ny,Nx, chunk_y, chunk_x):
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  if not os.path.exists(inps.output):
-      os.makedirs(inps.output)
+  os.makedirs(inps.output, exist_ok=True)
 
   h5File = write2h5(inps) 
 
@@ -363,7 +361,7 @@ def main(iargs=None):
 if __name__ == '__main__' :
   ''' 
   invert a network of the pair's mis-registrations to
-  estimate the mis-registrations wrt the Master date.
+  estimate the mis-registrations wrt the Reference date.
   '''
 
   main()

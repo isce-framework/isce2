@@ -46,8 +46,8 @@ def runVerifyDEM(self):
 
         refPol = self._grd.polarizations[0]
         
-        master = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
-        bbox = master.getBbox()
+        reference = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
+        bbox = reference.getBbox()
 
         ####Truncate to integers
         tbox = [np.floor(bbox[0]), np.ceil(bbox[1]),

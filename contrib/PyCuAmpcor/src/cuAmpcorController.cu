@@ -17,10 +17,10 @@ void cuAmpcorController::runAmpcor() {
     param->deviceID = gpuDeviceInit(param->deviceID);
     // initialize the gdal driver
     GDALAllRegister();
-    // master and slave images; use band=1 as default
+    // reference and secondary images; use band=1 as default
     // TODO: selecting band
-    GDALImage *masterImage = new GDALImage(param->masterImageName, 1, param->mmapSizeInGB);
-    GDALImage *slaveImage = new GDALImage(param->slaveImageName, 1, param->mmapSizeInGB);
+    GDALImage *referenceImage = new GDALImage(param->referenceImageName, 1, param->mmapSizeInGB);
+    GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
 
     cuArrays<float2> *offsetImage, *offsetImageRun;
     cuArrays<float> *snrImage, *snrImageRun;
@@ -69,7 +69,7 @@ void cuAmpcorController::runAmpcor() {
     for(int ist=0; ist<param->nStreams; ist++)
     {
         cudaStreamCreate(&streams[ist]);
-        chunk[ist]= new cuAmpcorChunk(param, masterImage, slaveImage, offsetImageRun, snrImageRun, covImageRun, intImage1, floatImage1, streams[ist]);
+        chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage, offsetImageRun, snrImageRun, covImageRun, intImage1, floatImage1, streams[ist]);
 
     }
 
@@ -127,8 +127,8 @@ void cuAmpcorController::runAmpcor() {
     for (int ist=0; ist<param->nStreams; ist++)
         delete chunk[ist];
 
-    delete masterImage;
-    delete slaveImage;
+    delete referenceImage;
+    delete secondaryImage;
 
 }
 
@@ -181,18 +181,18 @@ void cuAmpcorController::setThresholdSNR(float n) { param->thresholdSNR = n; } /
 //void cuAmpcorController::setThresholdCov(float n) { param->thresholdCov = n; } // deprecated(?)
 //void cuAmpcorController::setBand1(int n) { param->band1 = n; }
 //void cuAmpcorController::setBand2(int n) { param->band2 = n; }
-void cuAmpcorController::setMasterImageName(std::string s) { param->masterImageName = s; }
-std::string cuAmpcorController::getMasterImageName() {return param->masterImageName;}
-void cuAmpcorController::setSlaveImageName(std::string s) { param->slaveImageName = s; }
-std::string cuAmpcorController::getSlaveImageName() {return param->slaveImageName;}
-void cuAmpcorController::setMasterImageWidth(int n) { param->masterImageWidth = n; }
-void cuAmpcorController::setMasterImageHeight(int n) { param->masterImageHeight = n; }
-void cuAmpcorController::setSlaveImageWidth(int n) { param->slaveImageWidth = n; }
-void cuAmpcorController::setSlaveImageHeight(int n) { param->slaveImageHeight = n; }
-//void cuAmpcorController::setMasterStartPixelAcross(int n) { param->masterStartPixelAcross = n; }
-//void cuAmpcorController::setMasterStartPixelDown(int n) { param->masterStartPixelDown = n; }
-//void cuAmpcorController::setSlaveStartPixelAcross(int n) { param->slaveStartPixelAcross = n; }
-//void cuAmpcorController::setSlaveStartPixelDown(int n) { param->slaveStartPixelDown = n; }
+void cuAmpcorController::setReferenceImageName(std::string s) { param->referenceImageName = s; }
+std::string cuAmpcorController::getReferenceImageName() {return param->referenceImageName;}
+void cuAmpcorController::setSecondaryImageName(std::string s) { param->secondaryImageName = s; }
+std::string cuAmpcorController::getSecondaryImageName() {return param->secondaryImageName;}
+void cuAmpcorController::setReferenceImageWidth(int n) { param->referenceImageWidth = n; }
+void cuAmpcorController::setReferenceImageHeight(int n) { param->referenceImageHeight = n; }
+void cuAmpcorController::setSecondaryImageWidth(int n) { param->secondaryImageWidth = n; }
+void cuAmpcorController::setSecondaryImageHeight(int n) { param->secondaryImageHeight = n; }
+//void cuAmpcorController::setReferenceStartPixelAcross(int n) { param->referenceStartPixelAcross = n; }
+//void cuAmpcorController::setReferenceStartPixelDown(int n) { param->referenceStartPixelDown = n; }
+//void cuAmpcorController::setSecondaryStartPixelAcross(int n) { param->secondaryStartPixelAcross = n; }
+//void cuAmpcorController::setSecondaryStartPixelDown(int n) { param->secondaryStartPixelDown = n; }
 //void cuAmpcorController::setGrossOffsetMethod(int n) { param->grossOffsetMethod = n; }
 //int cuAmpcorController::getGrossOffsetMethod() { return param->grossOffsetMethod; }
 //void cuAmpcorController::setAcrossGrossOffset(int n) { param->acrossGrossOffset = n; }

@@ -184,28 +184,27 @@ def runFineOffsets(self):
     ##Catalog
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
-    misreg_az = self._insar.slaveTimingCorrection
-    catalog.addItem('Initial slave azimuth timing correction', misreg_az, 'fineoff')
+    misreg_az = self._insar.secondaryTimingCorrection
+    catalog.addItem('Initial secondary azimuth timing correction', misreg_az, 'fineoff')
 
-    misreg_rg = self._insar.slaveRangeCorrection
-    catalog.addItem('Initial slave range timing correction', misreg_rg, 'fineoff')
+    misreg_rg = self._insar.secondaryRangeCorrection
+    catalog.addItem('Initial secondary range timing correction', misreg_rg, 'fineoff')
 
     swathList = self._insar.getValidSwathList(self.swaths)
 
     for swath in swathList:
 
-        ##Load slave metadata
-        slave = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
+        ##Load secondary metadata
+        secondary = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
 
         ###Offsets output directory
         outdir = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
 
-        ###Burst indices w.r.t master
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        ###Burst indices w.r.t reference
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         geomDir = os.path.join(self._insar.geometryDirname, 'IW{0}'.format(swath))
 
         if minBurst == maxBurst:
@@ -213,17 +212,17 @@ def runFineOffsets(self):
             continue
 
 
-        slaveBurstStart = self._insar.commonBurstStartSlaveIndex[swath-1]
+        secondaryBurstStart = self._insar.commonBurstStartSecondaryIndex[swath-1]
 
         catalog.addItem('Number of bursts - IW{0}'.format(swath), maxBurst - minBurst, 'fineoff')
 
         for mBurst in range(minBurst, maxBurst):
 
-            ###Corresponding slave burst
-            sBurst = slaveBurstStart + (mBurst - minBurst)
-            burst = slave.bursts[sBurst]
+            ###Corresponding secondary burst
+            sBurst = secondaryBurstStart + (mBurst - minBurst)
+            burst = secondary.bursts[sBurst]
 
-            logger.info('IW{3} - Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst, sBurst, swath))
+            logger.info('IW{3} - Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst, swath))
             ####Generate offsets for top burst
             rdict = {'lat': os.path.join(geomDir,'lat_%02d.rdr'%(mBurst+1)),
                      'lon': os.path.join(geomDir,'lon_%02d.rdr'%(mBurst+1)),

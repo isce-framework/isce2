@@ -225,52 +225,44 @@ def focus(frame, outname, amb=0.0):
 
 def runFormSLC(self):
 
-    if self._insar.masterRawProduct is None:
-        print('Master product was unpacked as an SLC. Skipping focusing ....')
-        if self._insar.masterSlcProduct is None:
-            raise Exception('However, No master SLC product found')
+    if self._insar.referenceRawProduct is None:
+        print('Reference product was unpacked as an SLC. Skipping focusing ....')
+        if self._insar.referenceSlcProduct is None:
+            raise Exception('However, No reference SLC product found')
 
     else:
-        frame = self._insar.loadProduct(self._insar.masterRawProduct)
-        outdir = os.path.join(self.master.output + '_slc')
-        outname = os.path.join( outdir, os.path.basename(self.master.output) + '.slc')
+        frame = self._insar.loadProduct(self._insar.referenceRawProduct)
+        outdir = os.path.join(self.reference.output + '_slc')
+        outname = os.path.join( outdir, os.path.basename(self.reference.output) + '.slc')
         xmlname = outdir + '.xml'
-        if not os.path.isdir(outdir):
-            print('Creating directory: {0}'.format(outdir))
-            os.makedirs(outdir)
-        else:
-            print('SLC directory {0} already exists'.format(outdir))
+        os.makedirs(outdir, exist_ok=True)
 
         slcFrame = focus(frame, outname)
 
-        self._insar.masterGeometrySystem = 'Native Doppler'
+        self._insar.referenceGeometrySystem = 'Native Doppler'
         self._insar.saveProduct( slcFrame, xmlname)
-        self._insar.masterSlcProduct = xmlname
+        self._insar.referenceSlcProduct = xmlname
 
         slcFrame = None
         frame = None
 
-    if self._insar.slaveRawProduct is None:
-        print('Slave product was unpacked as an SLC. Skipping focusing ....')
-        if self._insar.slaveSlcProduct is None:
-            raise Exception('However, No slave SLC product found')
+    if self._insar.secondaryRawProduct is None:
+        print('Secondary product was unpacked as an SLC. Skipping focusing ....')
+        if self._insar.secondarySlcProduct is None:
+            raise Exception('However, No secondary SLC product found')
 
     else:
-        frame = self._insar.loadProduct(self._insar.slaveRawProduct)
-        outdir = os.path.join(self.slave.output + '_slc')
-        outname = os.path.join( outdir, os.path.basename(self.slave.output) + '.slc')
+        frame = self._insar.loadProduct(self._insar.secondaryRawProduct)
+        outdir = os.path.join(self.secondary.output + '_slc')
+        outname = os.path.join( outdir, os.path.basename(self.secondary.output) + '.slc')
         xmlname = outdir + '.xml'
-        if not os.path.isdir(outdir):
-            print('Creating directory: {0}'.format(outdir))
-            os.makedirs(outdir)
-        else:
-            print('SLC directory {0} already exists'.format(outdir))
+        os.makedirs(outdir, exist_ok=True)
 
         slcFrame = focus(frame, outname)
 
-        self._insar.slaveGeometrySystem = 'Native Doppler'
+        self._insar.secondaryGeometrySystem = 'Native Doppler'
         self._insar.saveProduct( slcFrame, xmlname)
-        self._insar.slaveSlcProduct = xmlname
+        self._insar.secondarySlcProduct = xmlname
 
         slcFrame = None
         frame = None

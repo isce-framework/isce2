@@ -24,8 +24,8 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-i', '--inp_master', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser.add_argument('-i', '--inp_reference', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
 
     parser.add_argument('-s', '--stack', type=str, dest='stack', default = None,
                 help='Directory with the stack xml files which includes the common valid region of the stack')
@@ -40,7 +40,7 @@ def createParser():
             help = 'Method: top / bot/ avg')
 
     parser.add_argument('-a', '--aligned', action='store_true', dest='isaligned',
-            default=False, help='Use master information instead of coreg for merged grid.')
+            default=False, help='Use reference information instead of coreg for merged grid.')
 
     parser.add_argument('-l', '--multilook', action='store_true', dest='multilook', default=False,
                     help = 'Multilook the merged products. True or False')
@@ -179,14 +179,14 @@ def mergeBursts(frame, fileList, outfile,
     scheme = img.scheme
     npType = IML.NUMPY_type(img.dataType)
 
-    azMasterOff = []
+    azReferenceOff = []
     for index in range(frame.numberOfBursts):
         burst = frame.bursts[index]
         soff = burst.sensingStart + datetime.timedelta(seconds = (burst.firstValidLine*dt)) 
         start = int(np.round((soff - tstart).total_seconds() / dt))
         end = start + burst.numValidLines
 
-        azMasterOff.append([start,end])
+        azReferenceOff.append([start,end])
 
         print('Burst: ', index, [start,end])
 
@@ -198,14 +198,14 @@ def mergeBursts(frame, fileList, outfile,
 
     for index in range(frame.numberOfBursts):
         curBurst = frame.bursts[index]
-        curLimit = azMasterOff[index]
+        curLimit = azReferenceOff[index]
 
         curMap = IML.mmapFromISCE(fileList[index], logging)
 
         #####If middle burst
         if index > 0:
             topBurst = frame.bursts[index-1]
-            topLimit = azMasterOff[index-1]
+            topLimit = azReferenceOff[index-1]
             topMap = IML.mmapFromISCE(fileList[index-1], logging)
 
             olap = topLimit[1] - curLimit[0]
@@ -243,7 +243,7 @@ def mergeBursts(frame, fileList, outfile,
             
         if index != (frame.numberOfBursts-1):
             botBurst = frame.bursts[index+1]
-            botLimit = azMasterOff[index+1]
+            botLimit = azReferenceOff[index+1]
             
             olap = curLimit[1] - botLimit[0]
 
@@ -350,14 +350,14 @@ def main(iargs=None):
     inps=cmdLineParse(iargs)
     virtual = inps.useVirtualFiles
      
-    swathList = ut.getSwathList(inps.master)
+    swathList = ut.getSwathList(inps.reference)
     referenceFrames = [] 
     frames=[]
     fileList = []
     namePattern = inps.namePattern.split('*')
 
     for swath in swathList:
-        ifg = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
+        ifg = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
         if inps.stack:
             stack =  ut.loadProduct(os.path.join(inps.stack , 'IW{0}.xml'.format(swath)))
         if inps.isaligned:
@@ -390,9 +390,8 @@ def main(iargs=None):
         fileList.append([os.path.join(inps.dirname, 'IW{0}'.format(swath), namePattern[0] + '_%02d.%s'%(x,namePattern[1])) for x in range(minBurst, maxBurst+1)])
 
     mergedir = os.path.dirname(inps.outfile)
-    if not os.path.isdir(mergedir):
-        os.makedirs(mergedir)
-    
+    os.makedirs(mergedir, exist_ok=True)
+
     suffix = '.full'
     if (inps.numberRangeLooks == 1) and (inps.numberAzimuthLooks==1):
         suffix=''

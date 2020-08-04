@@ -104,7 +104,7 @@ if __name__ == '__main__':
     
     ####Get the wavelength information.
     ###This is available in multiple locations within insarProc
-    #wvl = iObj.getMasterFrame().getInstrument().getRadarWavelength()
+    #wvl = iObj.getReferenceFrame().getInstrument().getRadarWavelength()
     wvl = topo.radarWavelength
     
     

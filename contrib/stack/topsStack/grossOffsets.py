@@ -11,12 +11,13 @@ import isceobj
 from iscesys.Component.ProductManager import ProductManager as PM
 import numpy as np
 from netCDF4 import Dataset
-from mpl_toolkits.basemap import Basemap
+#from mpl_toolkits.basemap import Basemap
 import gdal
 
 from scipy.interpolate import interp2d, griddata
 
 import matplotlib.pyplot as plt
+
 
 class grossOffsets:
 
@@ -116,6 +117,7 @@ class grossOffsets:
 
         #x,y = np.meshgrid(self.x0,self.y0)
 
+        #from mpl_toolkits.basemap import Basemap
         #self.AntVeloDataMap = Basemap(width=5600000,height=5600000,\
         #                        resolution='l',projection='stere',\
         #                        lat_ts=-71,lat_0=-90,lon_0=0)

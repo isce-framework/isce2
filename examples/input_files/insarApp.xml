@@ -1,11 +1,11 @@
 <insarApp>
     <component name="insar">
         <property  name="Sensor name">ALOS</property>
-        <component name="master">
-            <catalog>master.xml</catalog>
+        <component name="reference">
+            <catalog>reference.xml</catalog>
         </component>
-        <component name="slave">
-            <catalog>slave.xml</catalog>
+        <component name="secondary">
+            <catalog>secondary.xml</catalog>
         </component>
     </component>
 </insarApp>
@@ -48,24 +48,24 @@ There are other types of tags that may be used as shown in examples below.
 <!--
     The 11 lines at the top of this file give the minimal input file for running
  insarApp.py, but most of the input information is contained in the two xml
-files master.xml and slave.xml sandwiched between the <catalog> tag and the
+files reference.xml and secondary.xml sandwiched between the <catalog> tag and the
 </catalog> tag.
-    The master.xml and slave.xml files are different in structure for different
+    The reference.xml and secondary.xml files are different in structure for different
 sensors but identical to each other in structure for a given sensor.  Examples
-of master.xml for each sensor type are given in this directory with names like
-master_alos.xml. You can use these files as templates for creating your own
-master.xml and slave.xml files.  You can also in-line the contents of those
+of reference.xml for each sensor type are given in this directory with names like
+reference_alos.xml. You can use these files as templates for creating your own
+reference.xml and secondary.xml files.  You can also in-line the contents of those
 files directly in the insarApp.xml file as in the following example for ALOS:
 
 <insarApp>
     <component name="insar">
         <property  name="Sensor name">ALOS</property>
-        <component name="master">
+        <component name="reference">
             <property name="IMAGEFILE">IMG-HH-ALPSRP028910640-H1.0__A</property>
             <property name="LEADERFILE">LED-ALPSRP028910640-H1.0__A</property>
             <property name="OUTPUT">060810.raw</property>
         </component>
-        <component name="slave">
+        <component name="secondary">
             <property name="IMAGEFILE">IMG-HH-ALPSRP042330640-H1.0__A</property>
             <property name="LEADERFILE">LED-ALPSRP042330640-H1.0__A</property>
             <property name="OUTPUT">061110.raw</property>
@@ -126,14 +126,14 @@ files directly in the insarApp.xml file as in the following example for ALOS:
         <property name="doppler method">useDOPIQ</property>
 
 
-        Master and slave information are provided through catalogs.
+        Reference and secondary information are provided through catalogs.
         The structure of these catalog files are sensor dependent.
-        See "master_SENSOR.xml" for examples of different sensors.
-        <component name="master">
-            <catalog>master.xml</catalog> Grabs information from master.xml
+        See "reference_SENSOR.xml" for examples of different sensors.
+        <component name="reference">
+            <catalog>reference.xml</catalog> Grabs information from reference.xml
         </component>
-        <component name="slave">
-            <catalog>slave.xml</catalog>  Grabs information from slave.xml
+        <component name="secondary">
+            <catalog>secondary.xml</catalog>  Grabs information from secondary.xml
         </component>
 
 -->

@@ -172,12 +172,7 @@ class Catalog(OrderedDict):
         return the normal value."""
         if self._isLargeList(v):
             # Make the catalog directory if it doesn't already exist
-            try:
-                os.makedirs('catalog')
-            except OSError as e:
-                if e.errno != errno.EEXIST:
-                    print("Couldn't create directory, 'catalog'! Please check your permissions.")
-                    raise
+            os.makedirs('catalog', exist_ok=True)
             fileName = 'catalog/%s.%s.%03i' % ('.'.join(nodePath), key, Catalog.bigArrayNum)
             Catalog.bigArrayNum += 1
             f = open(fileName, 'w')

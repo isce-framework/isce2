@@ -35,11 +35,11 @@ def createParser():
     parser.add_argument('-d', '--demfilename', dest='demfilename', type=str, required=True,
             help='DEM filename')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition')
 
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition')
 
     parser.add_argument('-r', '--numberRangeLooks', dest='numberRangeLooks', type=int, required=True,
             help='number range looks')
@@ -99,14 +99,14 @@ def runGeocode(inps, prodlist, bbox, demfilename, is_offset_mode=False):
 
     #swathList = self._insar.getValidSwathList(self.swaths)
 
-    masterSwathList = ut.getSwathList(inps.master)
-    slaveSwathList = ut.getSwathList(inps.slave)
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    referenceSwathList = ut.getSwathList(inps.reference)
+    secondarySwathList = ut.getSwathList(inps.secondary)
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     frames = []
     for swath in swathList:
-        #topMaster = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
-        referenceProduct = ut.loadProduct(os.path.join(inps.slave , 'IW{0}.xml'.format(swath)))
+        #topReference = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
+        referenceProduct = ut.loadProduct(os.path.join(inps.secondary , 'IW{0}.xml'.format(swath)))
         #referenceProduct = insar.loadProduct( os.path.join(insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
         frames.append(referenceProduct)
 

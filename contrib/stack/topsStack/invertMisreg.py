@@ -15,11 +15,11 @@ def createParser():
     Create command line parser.
     '''
 
-    parser = argparse.ArgumentParser( description='extracts the overlap geometry between master bursts')
+    parser = argparse.ArgumentParser( description='extracts the overlap geometry between reference bursts')
     parser.add_argument('-i', '--input', type=str, dest='input', required=True,
             help='Directory with the overlap directories that has calculated misregistration for each pair')
     parser.add_argument('-o', '--output', type=str, dest='output', required=True,
-            help='output directory to save misregistration for each date with respect to the stack Master date')
+            help='output directory to save misregistration for each date with respect to the stack Reference date')
 #    parser.add_argument('-f', '--misregFileName', type=str, dest='misregFileName', default='misreg.txt',
 #            help='misreg file name that contains the calculated misregistration for a pair')
 
@@ -107,8 +107,7 @@ def design_matrix(overlapDirs):
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  if not os.path.exists(inps.output):
-      os.makedirs(inps.output)
+  os.makedirs(inps.output, exist_ok=True)
 
   overlapPairs = glob.glob(os.path.join(inps.input,'*/*.txt'))
 
@@ -139,7 +138,7 @@ def main(iargs=None):
      print('Using a fully connected network is recommended.')
   print('RMSE : '+str(RMSE)+' pixels')
   print('')
-  print('Estimated offsets with respect to the stack master date')    
+  print('Estimated offsets with respect to the stack reference date')    
   print('')
 
   offset_dict={}
@@ -153,7 +152,7 @@ def main(iargs=None):
 if __name__ == '__main__' :
   ''' 
   invert a network of the pair's mis-registrations to
-  estimate the mis-registrations wrt the Master date.
+  estimate the mis-registrations wrt the Reference date.
   '''
 
   main()

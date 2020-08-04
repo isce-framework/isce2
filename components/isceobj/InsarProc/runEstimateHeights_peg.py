@@ -37,11 +37,11 @@ logger = logging.getLogger('isce.isceProc.runEstimateHeights')
 def runEstimateHeights(self):
     from isceobj.Catalog import recordInputsAndOutputs
     chv = []
-    for frame, orbit, tag in zip((self._insar.getMasterFrame(),
-                                  self._insar.getSlaveFrame()),
-                                 (self.insar.masterOrbit,
-                                  self.insar.slaveOrbit),
-                                 ('master', 'slave')):
+    for frame, orbit, tag in zip((self._insar.getReferenceFrame(),
+                                  self._insar.getSecondaryFrame()),
+                                 (self.insar.referenceOrbit,
+                                  self.insar.secondaryOrbit),
+                                 ('reference', 'secondary')):
 
         (time, position, velocity, offset) = orbit._unpackOrbit()
 

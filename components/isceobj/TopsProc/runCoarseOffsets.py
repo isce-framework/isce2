@@ -78,11 +78,11 @@ def runCoarseOffsets(self):
 
     ##Catalog
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
-    misreg_az = self._insar.slaveTimingCorrection
-    catalog.addItem('Initial slave azimuth timing correction', misreg_az, 'coarseoff')
+    misreg_az = self._insar.secondaryTimingCorrection
+    catalog.addItem('Initial secondary azimuth timing correction', misreg_az, 'coarseoff')
 
-    misreg_rg = self._insar.slaveRangeCorrection
-    catalog.addItem('Initial slave range timing correction', misreg_rg, 'coarseoff')
+    misreg_rg = self._insar.secondaryRangeCorrection
+    catalog.addItem('Initial secondary range timing correction', misreg_rg, 'coarseoff')
 
     swathList = self._insar.getValidSwathList(self.swaths)
     
@@ -92,35 +92,34 @@ def runCoarseOffsets(self):
             print('Skipping coarse offsets for swath IW{0}'.format(swath))
             continue
 
-        ##Load slave metadata
-        slave = self._insar.loadProduct(os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
+        ##Load secondary metadata
+        secondary = self._insar.loadProduct(os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
 
     
         ###Offsets output directory
         outdir = os.path.join(self._insar.coarseOffsetsDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
 
-        ###Burst indices w.r.t master
-        minBurst = self._insar.commonBurstStartMasterIndex[swath-1]
+        ###Burst indices w.r.t reference
+        minBurst = self._insar.commonBurstStartReferenceIndex[swath-1]
         maxBurst =  minBurst + self._insar.numberOfCommonBursts[swath-1] - 1 ###-1 for overlaps
-        masterOverlapDir = os.path.join(self._insar.masterSlcOverlapProduct, 'IW{0}'.format(swath))
+        referenceOverlapDir = os.path.join(self._insar.referenceSlcOverlapProduct, 'IW{0}'.format(swath))
         geomOverlapDir = os.path.join(self._insar.geometryDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
 
-        slaveBurstStart = self._insar.commonBurstStartSlaveIndex[swath-1]
+        secondaryBurstStart = self._insar.commonBurstStartSecondaryIndex[swath-1]
 
         catalog.addItem('Number of overlap pairs - IW-{0}'.format(swath), maxBurst - minBurst, 'coarseoff')
 
         for mBurst in range(minBurst, maxBurst):
 
-            ###Corresponding slave burst
-            sBurst = slaveBurstStart + (mBurst - minBurst)
-            burstTop = slave.bursts[sBurst]
-            burstBot = slave.bursts[sBurst+1]
+            ###Corresponding secondary burst
+            sBurst = secondaryBurstStart + (mBurst - minBurst)
+            burstTop = secondary.bursts[sBurst]
+            burstBot = secondary.bursts[sBurst+1]
 
-            logger.info('Overlap pair {0}, IW-{3}: Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst, sBurst, swath))
+            logger.info('Overlap pair {0}, IW-{3}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst, swath))
             ####Generate offsets for top burst
             rdict = {'lat': os.path.join(geomOverlapDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
                      'lon': os.path.join(geomOverlapDir,'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
@@ -130,7 +129,7 @@ def runCoarseOffsets(self):
        
             runGeo2rdr(burstTop, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
 
-            logger.info('Overlap pair {0} - IW-{3}: Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst+1, sBurst+1, swath))
+            logger.info('Overlap pair {0} - IW-{3}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst+1, sBurst+1, swath))
 
             ####Generate offsets for bottom burst
             rdict = {'lat': os.path.join(geomOverlapDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),

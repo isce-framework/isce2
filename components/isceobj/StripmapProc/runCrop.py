@@ -190,12 +190,7 @@ def cropFrame(frame, limits, outname, israw=False):
     inname = frame.image.filename
     suffix = os.path.splitext(inname)[1]
     outdirname = os.path.dirname(outname)
-
-    if os.path.isdir(outdirname):
-        print('Output directory already exists. Will be overwritten ....')
-    else:
-        os.makedirs(outdirname)
-        print('Creating {0} directory.'.format(outdirname))
+    os.makedirs(outdirname, exist_ok=True)
 
     indata = IML.mmapFromISCE(inname, logging)
     indata.bands[0][ymin:ymax,xmin*factor:xmax*factor].tofile(outname)
@@ -225,20 +220,20 @@ def runCrop(self, raw=False):
 
     if raw:
         if self.regionOfInterest is None:
-            self._insar.masterRawCropProduct = self._insar.masterRawProduct
-            self._insar.slaveRawCropProduct = self._insar.slaveRawProduct
+            self._insar.referenceRawCropProduct = self._insar.referenceRawProduct
+            self._insar.secondaryRawCropProduct = self._insar.secondaryRawProduct
             print('No region of interesting provided, skipping cropping of raw data')
             return
 
-        ###Check if master started at raw
-        if self._insar.masterRawProduct is None:
-            self._insar.masterRawCropProduct = self._insar.masterRawProduct
-            print('Looks like master product is SLC, skipping raw cropping')
+        ###Check if reference started at raw
+        if self._insar.referenceRawProduct is None:
+            self._insar.referenceRawCropProduct = self._insar.referenceRawProduct
+            print('Looks like reference product is SLC, skipping raw cropping')
         else:
-            frame = self._insar.loadProduct( self._insar.masterRawProduct)
+            frame = self._insar.loadProduct( self._insar.referenceRawProduct)
 
-            outdir = os.path.splitext(self._insar.masterRawProduct)[0] + '_crop'
-            outname = os.path.join( outdir, os.path.basename(self.master.output) + '.raw')
+            outdir = os.path.splitext(self._insar.referenceRawProduct)[0] + '_crop'
+            outname = os.path.join( outdir, os.path.basename(self.reference.output) + '.raw')
 
             limits = geoboxToAzrgbox(frame, self.regionOfInterest,
                         israw=True, zrange=self.heightRange)
@@ -246,20 +241,20 @@ def runCrop(self, raw=False):
                                     israw=True)
 
             self._insar.saveProduct( outframe, outdir + '.xml')
-            self._insar.masterRawCropProduct = outdir + '.xml'
+            self._insar.referenceRawCropProduct = outdir + '.xml'
             frame = None
             outframe = None
 
 
-        ###Check if slave started at raw
-        if self._insar.slaveRawProduct is None:
-            self._insar.slaveRawCropProduct = self._insar.slaveRawProduct
-            print('Looks like slave product is SLC, skipping raw cropping')
+        ###Check if secondary started at raw
+        if self._insar.secondaryRawProduct is None:
+            self._insar.secondaryRawCropProduct = self._insar.secondaryRawProduct
+            print('Looks like secondary product is SLC, skipping raw cropping')
         else:
-            frame = self._insar.loadProduct( self._insar.slaveRawProduct)
+            frame = self._insar.loadProduct( self._insar.secondaryRawProduct)
 
-            outdir = os.path.splitext(self._insar.slaveRawProduct)[0] + '_crop'
-            outname = os.path.join( outdir, os.path.basename(self.slave.output) + '.raw')
+            outdir = os.path.splitext(self._insar.secondaryRawProduct)[0] + '_crop'
+            outname = os.path.join( outdir, os.path.basename(self.secondary.output) + '.raw')
 
             limits = geoboxToAzrgbox(frame, self.regionOfInterest,
                         israw=True, zrange=self.heightRange)
@@ -267,7 +262,7 @@ def runCrop(self, raw=False):
                                     israw=True)
 
             self._insar.saveProduct( outframe, outdir + '.xml')
-            self._insar.slaveRawCropProduct = outdir + '.xml'
+            self._insar.secondaryRawCropProduct = outdir + '.xml'
 
             frame = None
             outframe = None
@@ -275,45 +270,45 @@ def runCrop(self, raw=False):
         return
     else:
         if self.regionOfInterest is None:
-            self._insar.masterSlcCropProduct = self._insar.masterSlcProduct
-            self._insar.slaveSlcCropProduct = self._insar.slaveSlcProduct
+            self._insar.referenceSlcCropProduct = self._insar.referenceSlcProduct
+            self._insar.secondarySlcCropProduct = self._insar.secondarySlcProduct
             print('No region of interesting provided, skipping cropping of slc data')
             return
 
         
-        ###Crop master SLC
-        frame = self._insar.loadProduct( self._insar.masterSlcProduct)
+        ###Crop reference SLC
+        frame = self._insar.loadProduct( self._insar.referenceSlcProduct)
 
-        outdir = os.path.splitext(self._insar.masterSlcProduct)[0] + '_crop'
-        outname = os.path.join( outdir, os.path.basename(self.master.output) + '.slc')
+        outdir = os.path.splitext(self._insar.referenceSlcProduct)[0] + '_crop'
+        outname = os.path.join( outdir, os.path.basename(self.reference.output) + '.slc')
 
         limits = geoboxToAzrgbox(frame, self.regionOfInterest,
-                        israw=False, isnative=self.insar.masterGeometrySystem.upper().startswith('NATIVE'),
+                        israw=False, isnative=self.insar.referenceGeometrySystem.upper().startswith('NATIVE'),
                         zrange=self.heightRange)
         
         outframe = cropFrame(frame, limits, outname,
                                     israw=False)
 
         self._insar.saveProduct( outframe, outdir + '.xml')
-        self._insar.masterSlcCropProduct = outdir + '.xml'
+        self._insar.referenceSlcCropProduct = outdir + '.xml'
         frame = None
         outframe = None
 
-        ###Crop master SLC
-        frame = self._insar.loadProduct( self._insar.slaveSlcProduct)
+        ###Crop reference SLC
+        frame = self._insar.loadProduct( self._insar.secondarySlcProduct)
 
-        outdir = os.path.splitext(self._insar.slaveSlcProduct)[0] + '_crop'
-        outname = os.path.join( outdir, os.path.basename(self.slave.output) + '.slc')
+        outdir = os.path.splitext(self._insar.secondarySlcProduct)[0] + '_crop'
+        outname = os.path.join( outdir, os.path.basename(self.secondary.output) + '.slc')
 
         limits = geoboxToAzrgbox(frame, self.regionOfInterest,
-                        israw=False, isnative=self.insar.masterGeometrySystem.upper().startswith('NATIVE'),
+                        israw=False, isnative=self.insar.referenceGeometrySystem.upper().startswith('NATIVE'),
                         zrange=self.heightRange)
         
         outframe = cropFrame(frame, limits, outname,
                                     israw=False)
 
         self._insar.saveProduct( outframe, outdir + '.xml')
-        self._insar.slaveSlcCropProduct = outdir + '.xml'
+        self._insar.secondarySlcCropProduct = outdir + '.xml'
         frame = None
         outframe = None
 

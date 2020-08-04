@@ -23,11 +23,9 @@ def runPreprocessor(self):
         polList = ['HH', 'HV', 'VV', 'VH', 'RH', 'RV']
 
 
-    self.master.configure()
+    self.reference.configure()
 
-
-    if not os.path.isdir(self.master.output):
-        os.makedirs(self.master.output)
+    os.makedirs(self.reference.output, exist_ok=True)
 
 
     slantRangeExtracted = False
@@ -35,16 +33,16 @@ def runPreprocessor(self):
     r0max = 0.
 
     for pol in polList:
-        ###Process master pol-by-pol
-        frame = copy.deepcopy(self.master)
+        ###Process reference pol-by-pol
+        frame = copy.deepcopy(self.reference)
         frame.polarization = pol
-        frame.output = os.path.join(self.master.output, 'beta_{0}.img'.format(pol))
-        frame.slantRangeFile = os.path.join(self.master.output, 'slantrange.img')
+        frame.output = os.path.join(self.reference.output, 'beta_{0}.img'.format(pol))
+        frame.slantRangeFile = os.path.join(self.reference.output, 'slantrange.img')
         frame.product.startingSlantRange = r0min
         frame.product.endingSlantRange = r0max
 
         try:
-            master = extract_slc(frame, slantRange=(not slantRangeExtracted))
+            reference = extract_slc(frame, slantRange=(not slantRangeExtracted))
             success=True
             if not slantRangeExtracted:
                 r0min = frame.product.startingSlantRange
@@ -60,16 +58,16 @@ def runPreprocessor(self):
 
 
         if success:
-            catalog.addInputsFrom(frame.product, 'master.sensor')
-            catalog.addItem('numberOfSamples', frame.product.numberOfSamples, 'master')
-            catalog.addItem('numberOfLines', frame.product.numberOfLines, 'master')
-            catalog.addItem('groundRangePixelSize', frame.product.groundRangePixelSize, 'master')
+            catalog.addInputsFrom(frame.product, 'reference.sensor')
+            catalog.addItem('numberOfSamples', frame.product.numberOfSamples, 'reference')
+            catalog.addItem('numberOfLines', frame.product.numberOfLines, 'reference')
+            catalog.addItem('groundRangePixelSize', frame.product.groundRangePixelSize, 'reference')
             self._grd.polarizations.append(pol)
 
             self._grd.saveProduct( frame.product, os.path.splitext(frame.output)[0] + '.xml')
 
 
-    self._grd.outputFolder = self.master.output
+    self._grd.outputFolder = self.reference.output
 
     catalog.printToLog(logger, "runPreprocessor")
     self._grd.procDoc.addAllFromCatalog(catalog)

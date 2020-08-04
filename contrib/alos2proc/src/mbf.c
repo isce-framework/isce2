@@ -6,14 +6,17 @@
 
 #include "resamp.h"
 #include <fftw3.h>
+#include <omp.h>
 
+#define SWAP4(a) (*(unsigned int *)&(a) = (((*(unsigned int *)&(a) & 0x000000ff) << 24) | ((*(unsigned int *)&(a) & 0x0000ff00) << 8) | ((*(unsigned int *)&(a) >> 8) & 0x0000ff00) | ((*(unsigned int *)&(a) >> 24) & 0x000000ff)))
 
-int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, float nb, float nbg, float nboff, float bsl, float *kacoeff, float *dopcoeff1, float *dopcoeff2){
+int mbf(char *inputfile, char *outputfile, int nrg, int naz, float prf, float prf_frac, float nb, float nbg, float nboff, float bsl, float *kacoeff, float *dopcoeff1, float *dopcoeff2, int byteorder, long imageoffset, long lineoffset){
   /*
 
   inputfile:       input file
   outputfile:      output file
   nrg:             file width
+  naz:             file length
   prf:             PRF
   prf_frac:        fraction of PRF processed
                       (represents azimuth bandwidth)
@@ -23,13 +26,13 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
                       (float, in terms of 1/PRF)
   nboff:           number of unsynchronized lines in a burst
                       (float, in terms of 1/PRF, with sign, see burst_sync.py for rules of sign)
-                      (the image to be processed is always considered to be master)
+                      (the image to be processed is always considered to be reference)
   bsl:             start line number of a burst
                       (float, the line number of the first line of the full-aperture SLC is zero)
                       (no need to be first burst, any one is OK)
 
-  kacoeff[0-2]:    FM rate coefficients
-                      (three coefficients of a quadratic polynomial with regard to)
+  kacoeff[0-3]:    FM rate coefficients
+                      (four coefficients of a third order polynomial with regard to)
                       (range sample number. range sample number starts with zero)
 
   dopcoeff1[0-3]:  Doppler centroid frequency coefficients of this image
@@ -40,6 +43,9 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
                       (four coefficients of a third order polynomial with regard to)
                       (range sample number. range sample number starts with zero)
 
+  byteorder:      (0) LSB, little endian; (1) MSB, big endian of intput file
+  imageoffset:    offset from start of the image of input file
+  lineoffset:     length of each line of input file
   */
 
   FILE *infp;
@@ -54,7 +60,7 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
   fcomplex *data; //data to be filtered.
 
   //int nrg; //file width
-  int naz; //file length
+  //int naz; //file length
   //float prf; //assume prf are the same
   //float prf_frac; // azimuth processed bandwidth = prf_frac * prf
   //float nb; //burst length in terms of pri. number of lines
@@ -62,8 +68,8 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
   float nbc; //burst cycle length in terms of pri. number of lines
   //float nboff; //number of unsynchronized lines in a burst with sign
               //see burst_sync.py for rules of sign.
-              //the image to be processed is always considered to be master
-              //and the other image is always considered to be slave
+              //the image to be processed is always considered to be reference
+              //and the other image is always considered to be secondary
   //float bsl; //burst start line, input float
   //float kacoeff[3]; //FM rate along range (experessed by quadratic polynomial
                     //as a function of range sample number)
@@ -168,17 +174,36 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
   printf("nboff: %f\n", nboff);
   printf("bsl: %f\n", bsl);
 
-  printf("kacoeff: %f, %f, %f\n", kacoeff[0], kacoeff[1], kacoeff[2]);
+  printf("kacoeff: %f, %f, %f, %f\n", kacoeff[0], kacoeff[1], kacoeff[2], kacoeff[3]);
   printf("dopcoeff1: %f, %f, %f, %f\n", dopcoeff1[0], dopcoeff1[1], dopcoeff1[2], dopcoeff1[3]);
   printf("dopcoeff2: %f, %f, %f, %f\n", dopcoeff2[0], dopcoeff2[1], dopcoeff2[2], dopcoeff2[3]);
 
+  if(byteorder == 0){
+    printf("inputfile byte order: little endian\n");
+  }
+  else{
+    printf("inputfile byte order: big endian\n");
+  }
+  printf("input file image offset [byte]: %ld\n", imageoffset);
+  printf("input file line offset [byte]: %ld\n", lineoffset);
+  if(imageoffset < 0){
+    fprintf(stderr, "image offset must be >= 0\n");
+    exit(1);
+  }
+  if(lineoffset < 0){
+    fprintf(stderr, "lineoffset offset must be >= 0\n");
+    exit(1);
+  }
 
   if(nfilter % 2 != 1){
     fprintf(stderr, "filter length must be odd!\n");
     exit(1);
   }
 
-  naz  = file_length(infp, nrg, sizeof(fcomplex));
+  //naz  = file_length(infp, nrg, sizeof(fcomplex));
+  //fseeko(infp,0L,SEEK_END);
+  //naz = (ftello(infp) - imageoffset) / (lineoffset + nrg*sizeof(fcomplex));
+  //rewind(infp);
   printf("file width: %d, file length: %d\n\n", nrg, naz);
 
 
@@ -216,14 +241,14 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
   for(i = 0; i < nrg; i++){
     
     //azimuth FM rate. we follow the convention ka > 0
-    ka[i] = kacoeff[2] * i * i + kacoeff[1] * i + kacoeff[0];
+    ka[i] = kacoeff[3] * i * i * i + kacoeff[2] * i * i + kacoeff[1] * i + kacoeff[0];
     ka[i] = -ka[i];
 
     //doppler centroid frequency
     dop1[i] = dopcoeff1[0] + dopcoeff1[1] * i + dopcoeff1[2] * i * i + dopcoeff1[3] * i * i * i;
-    dop1[i] *= prf;
+    //dop1[i] *= prf;
     dop2[i] = dopcoeff2[0] + dopcoeff2[1] * i + dopcoeff2[2] * i * i + dopcoeff2[3] * i * i * i;
-    dop2[i] *= prf;
+    //dop2[i] *= prf;
 
     //full aperture length
     nfa[i] = prf * prf_frac / ka[i] / pri;
@@ -299,9 +324,47 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
     }
   }
 
-  
-  //read in data
-  readdata((fcomplex *)in[0], (size_t)naz * (size_t)nrg * sizeof(fcomplex), infp);
+///////////////////////////////////////////////////////////////////////////////////////
+  //This section is for reading data
+  printf("reading data...\n");
+
+  //skip image header
+  fseek(infp, imageoffset, SEEK_SET);
+
+  for(i = 0; i < naz; i++){
+    if(i!=0)
+      fseek(infp, lineoffset-(size_t)nrg*sizeof(fcomplex), SEEK_CUR);
+    readdata((fcomplex *)in[i], (size_t)nrg * sizeof(fcomplex), infp);
+  }
+
+  //read image data
+  //if(lineoffset == 0){
+  //  readdata((fcomplex *)in[0], (size_t)naz * (size_t)nrg * sizeof(fcomplex), infp);
+  //}
+  //else{
+  //  for(i = 0; i < naz; i++){
+  //    fseek(infp, lineoffset, SEEK_CUR);
+  //    readdata((fcomplex *)in[i], (size_t)nrg * sizeof(fcomplex), infp);
+  //  }
+  //}
+
+  //swap bytes
+  if(byteorder!=0){
+    printf("swapping bytes...\n");
+    for(i = 0; i < naz; i++)
+      for(j = 0; j < nrg; j++){
+        SWAP4(in[i][j].re);
+        SWAP4(in[i][j].im);
+      }
+  }
+
+  int debug=0;
+  if(debug){
+    printf("%f, %f\n", in[0][0].re, in[0][0].im);
+    printf("%f, %f\n", in[100][100].re, in[100][100].im);
+    printf("%f, %f\n", in[naz-1][nrg-1].re, in[naz-1][nrg-1].im);
+  }
+///////////////////////////////////////////////////////////////////////////////////////
 
   //initialize output data
   //for(j = 0; j < naz; j++){
@@ -311,7 +374,7 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
   //  }
   //}
 
-
+  printf("filtering image...\n");
   for(i = 0; i < nrg; i++){
 
     if((i + 1) % 100 == 0 || (i+1) == nrg)
@@ -566,6 +629,7 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
 
   }//i: each column
 
+  printf("writing filtering result...\n");
   writedata((fcomplex *)in[0], (size_t)naz * (size_t)nrg * sizeof(fcomplex), outfp);
 
   //free arrays
@@ -590,9 +654,3 @@ int mbf(char *inputfile, char *outputfile, int nrg, float prf, float prf_frac, f
 
   return 0;
 }//end main()
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-

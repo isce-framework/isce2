@@ -16,13 +16,13 @@ from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct
 def createParser():
     parser = argparse.ArgumentParser( description='Resampling burst by burst SLCs ')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition')
 
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition')
 
-    parser.add_argument('-o', '--coregdir', dest='coreg', type=str, default='coreg_slave',
+    parser.add_argument('-o', '--coregdir', dest='coreg', type=str, default='coreg_secondary',
             help='Directory with coregistered SLCs and IFGs')
 
     parser.add_argument('-a', '--azimuth_misreg', dest='misreg_az', type=str, default=0.0,
@@ -38,7 +38,7 @@ def createParser():
             help='Is this an overlap burst slc. default: False')
 
     parser.add_argument('-d', '--overlapDir', dest='overlapDir', type=str, default='overlap',
-            help='master overlap directory')
+            help='reference overlap directory')
 
     return parser
 
@@ -46,7 +46,7 @@ def cmdLineParse(iargs = None):
     parser = createParser()
     return parser.parse_args(args=iargs)
 
-def resampSlave(mas, slv, rdict, outname, flatten):
+def resampSecondary(mas, slv, rdict, outname, flatten):
     '''
     Resample burst by burst.
     '''
@@ -100,26 +100,26 @@ def resampSlave(mas, slv, rdict, outname, flatten):
 
 def main(iargs=None):
     '''
-    Create coregistered overlap slaves.
+    Create coregistered overlap secondarys.
     '''
     inps = cmdLineParse(iargs)
-    masterSwathList = ut.getSwathList(inps.master)
-    slaveSwathList = ut.getSwathList(inps.slave)
+    referenceSwathList = ut.getSwathList(inps.reference)
+    secondarySwathList = ut.getSwathList(inps.secondary)
 
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     for swath in swathList:
     
-        ####Load slave metadata
-        master = ut.loadProduct( os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
-        slave = ut.loadProduct( os.path.join(inps.slave , 'IW{0}.xml'.format(swath)))
+        ####Load secondary metadata
+        reference = ut.loadProduct( os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
+        secondary = ut.loadProduct( os.path.join(inps.secondary , 'IW{0}.xml'.format(swath)))
         if inps.overlap:
-            masterTop = ut.loadProduct(os.path.join(inps.master, inps.overlapDir , 'IW{0}_top.xml'.format(swath)))
-            masterBottom = ut.loadProduct(os.path.join(inps.master, inps.overlapDir , 'IW{0}_bottom.xml'.format(swath)))
+            referenceTop = ut.loadProduct(os.path.join(inps.reference, inps.overlapDir , 'IW{0}_top.xml'.format(swath)))
+            referenceBottom = ut.loadProduct(os.path.join(inps.reference, inps.overlapDir , 'IW{0}_bottom.xml'.format(swath)))
 
     
-        dt = slave.bursts[0].azimuthTimeInterval
-        dr = slave.bursts[0].rangePixelSize
+        dt = secondary.bursts[0].azimuthTimeInterval
+        dr = secondary.bursts[0].rangePixelSize
 
         if os.path.exists(str(inps.misreg_az)):
              with open(inps.misreg_az, 'r') as f:
@@ -140,16 +140,15 @@ def main(iargs=None):
         else:
             outdir = os.path.join(inps.coreg, inps.overlapDir, 'IW{0}'.format(swath))
             offdir = os.path.join(inps.coreg, inps.overlapDir, 'IW{0}'.format(swath))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
     
-        ####Indices w.r.t master
-        burstoffset, minBurst, maxBurst = master.getCommonBurstLimits(slave)
-        slaveBurstStart = minBurst +  burstoffset
-        slaveBurstEnd = maxBurst
+        ####Indices w.r.t reference
+        burstoffset, minBurst, maxBurst = reference.getCommonBurstLimits(secondary)
+        secondaryBurstStart = minBurst +  burstoffset
+        secondaryBurstEnd = maxBurst
     
-        relShifts = ut.getRelativeShifts(master, slave, minBurst, maxBurst, slaveBurstStart)
+        relShifts = ut.getRelativeShifts(reference, secondary, minBurst, maxBurst, secondaryBurstStart)
         if inps.overlap:
             maxBurst = maxBurst - 1 ###For overlaps
     
@@ -173,22 +172,22 @@ def main(iargs=None):
             botCoreg.configure()
 
         for ii in range(minBurst, maxBurst):
-            jj = slaveBurstStart + ii - minBurst
+            jj = secondaryBurstStart + ii - minBurst
 
             if inps.overlap:
-                botBurst = masterBottom.bursts[ii]
-                topBurst = masterTop.bursts[ii]
+                botBurst = referenceBottom.bursts[ii]
+                topBurst = referenceTop.bursts[ii]
             else:
-                topBurst = master.bursts[ii]
+                topBurst = reference.bursts[ii]
 
 
-            slvBurst = slave.bursts[jj]
+            slvBurst = secondary.bursts[jj]
 
             #####Top burst processing
             try:
                 offset = relShifts[jj]
             except:
-                raise Exception('Trying to access shift for slave burst index {0}, which may not overlap with master'.format(jj))
+                raise Exception('Trying to access shift for secondary burst index {0}, which may not overlap with reference'.format(jj))
         
             if inps.overlap:         
                 outname = os.path.join(outdir, 'burst_top_%02d_%02d.slc'%(ii+1,ii+2))
@@ -203,12 +202,12 @@ def main(iargs=None):
 
         
             ###For future - should account for azimuth and range misreg here .. ignoring for now. 
-                azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+                azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
         
                 rdict['carrPoly'] = azCarrPoly
                 rdict['doppPoly'] = dpoly
         
-                outimg = resampSlave(topBurst, slvBurst, rdict, outname, (not inps.noflat))
+                outimg = resampSecondary(topBurst, slvBurst, rdict, outname, (not inps.noflat))
         
                 copyBurst = copy.deepcopy(topBurst)
                 ut.adjustValidSampleLine(copyBurst)
@@ -218,7 +217,7 @@ def main(iargs=None):
             #######################################################
 
         
-                slvBurst = slave.bursts[jj+1]
+                slvBurst = secondary.bursts[jj+1]
                 outname = os.path.join(outdir, 'burst_bot_%02d_%02d.slc'%(ii+1,ii+2))
         
         ####Setup initial polynomials
@@ -229,12 +228,12 @@ def main(iargs=None):
                      'rangeOff' : os.path.join(offdir, 'range_bot_%02d_%02d.off'%(ii+1,ii+2)),
                      'azimuthOff': os.path.join(offdir, 'azimuth_bot_%02d_%02d.off'%(ii+1,ii+2))}
         
-                azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+                azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
         
                 rdict['carrPoly'] = azCarrPoly
                 rdict['doppPoly'] = dpoly
         
-                outimg = resampSlave(botBurst, slvBurst, rdict, outname, (not inps.noflat))
+                outimg = resampSecondary(botBurst, slvBurst, rdict, outname, (not inps.noflat))
         
                 copyBurst = copy.deepcopy(botBurst)
                 ut.adjustValidSampleLine(copyBurst)
@@ -257,12 +256,12 @@ def main(iargs=None):
                  
 
         ###For future - should account for azimuth and range misreg here .. ignoring for now.
-                azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+                azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
         
                 rdict['carrPoly'] = azCarrPoly
                 rdict['doppPoly'] = dpoly
         
-                outimg = resampSlave(topBurst, slvBurst, rdict, outname, (not inps.noflat))
+                outimg = resampSecondary(topBurst, slvBurst, rdict, outname, (not inps.noflat))
                 minAz, maxAz, minRg, maxRg = ut.getValidLines(slvBurst, rdict, outname,
                     misreg_az = misreg_az - offset, misreg_rng = misreg_rg)
                 
@@ -277,18 +276,18 @@ def main(iargs=None):
 
  
         topCoreg.numberOfBursts = len(topCoreg.bursts)
-        topCoreg.source = ut.asBaseClass(slave)
+        topCoreg.source = ut.asBaseClass(secondary)
 
         if inps.overlap:
             botCoreg.numberOfBursts = len(botCoreg.bursts)
-            topCoreg.reference = ut.asBaseClass(masterTop)
-            botCoreg.reference = ut.asBaseClass(masterBottom)
-            botCoreg.source = ut.asBaseClass(slave)
+            topCoreg.reference = ut.asBaseClass(referenceTop)
+            botCoreg.reference = ut.asBaseClass(referenceBottom)
+            botCoreg.source = ut.asBaseClass(secondary)
             ut.saveProduct(topCoreg, outdir + '_top.xml')
             ut.saveProduct(botCoreg, outdir + '_bottom.xml')
 
         else:
-            topCoreg.reference = master
+            topCoreg.reference = reference
             ut.saveProduct(topCoreg, outdir + '.xml')    
 
 if __name__ == '__main__':

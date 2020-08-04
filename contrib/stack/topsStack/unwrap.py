@@ -38,9 +38,11 @@ from isceobj.Constants import SPEED_OF_LIGHT
 import argparse
 import os
 import pickle
-import sys
+import gdal
+import numpy as np
 #import shelve
 import s1a_isce_utils as ut
+from isceobj.Util.ImageUtil import ImageLib as IML
 
 def createParser():
     '''
@@ -64,11 +66,14 @@ def createParser():
 
     parser.add_argument('-d', '--defomax', dest='defomax', type=float, default=2.0,
             help='Max cycles of deformation')
-    parser.add_argument('-s', '--master', dest='master', type=str, default='master',
-            help='Master directory')
+    parser.add_argument('-s', '--reference', dest='reference', type=str, default='reference',
+            help='Reference directory')
     
     parser.add_argument('-m', '--method', dest='method', type=str, default='icu',
             help='unwrapping method')
+
+    parser.add_argument('--rmfilter', action='store_true', default=False,
+            help='remove the effect of filtering from final unwrapped interferograms')
 
     return parser
 
@@ -276,27 +281,68 @@ def runUnwrapIcu(infile, outfile):
     #unwImage.finalizeImage()
     unwImage.renderHdr()
 
+
+def remove_filter(intfile, filtfile, unwfile):
+
+    outunw = os.path.abspath(unwfile).split('filt_')
+    outunw = outunw[0] + outunw[1]
+
+    ds_unw = gdal.Open(unwfile + ".vrt", gdal.GA_ReadOnly)
+    width = ds_unw.RasterXSize
+    length = ds_unw.RasterYSize
+
+    unw_phase = np.memmap(unwfile, dtype='f', mode='r', shape=(2, length, width))
+    filt_phase = np.memmap(filtfile, dtype='f', mode='r', shape=(length, width))
+    int_phase = np.memmap(intfile, dtype='f', mode='r', shape=(length, width))
+
+    outfile = np.memmap(outunw, dtype='f', mode='w+', shape=(2, length, width))
+
+    for line in range(length):
+        integer_jumps = unw_phase[1, line, :] - np.angle(filt_phase[line, :])
+        outfile[1, line, :] = integer_jumps + np.angle(int_phase[line, :])
+        outfile[0, line, :] = unw_phase[0, line, :]
+    
+    unwImage = isceobj.Image.createImage()
+    unwImage.setFilename(outunw)
+    unwImage.setWidth(width)
+    unwImage.setLength(length)
+    unwImage.imageType = 'unw'
+    unwImage.bands = 2
+    unwImage.scheme = 'BIL'
+    unwImage.dataType = 'FLOAT'
+    unwImage.setAccessMode('read')
+    unwImage.renderHdr()
+
+    return
+
 def main(iargs=None):
     '''
     The main driver.
     '''
 
     inps = cmdLineParse(iargs)
-    interferogramDir = os.path.dirname(inps.intfile)
     print ('unwrapping method : ' , inps.method)
+    
     if inps.method == 'snaphu':
        if inps.nomcf: 
            fncall =  runUnwrap
        else:
            fncall = runUnwrapMcf
-       swathList = ut.getSwathList(inps.master) 
-       #metadata = extractInfo(inps.master+'.xml', inps)
-       xmlFile = os.path.join(inps.master , 'IW{0}.xml'.format(swathList[0]))
+       swathList = ut.getSwathList(inps.reference) 
+       #metadata = extractInfo(inps.reference+'.xml', inps)
+       xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
        metadata = extractInfo(xmlFile, inps)
        fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
 
     elif inps.method == 'icu':
        runUnwrapIcu(inps.intfile, inps.unwfile)
+
+    if inps.rmfilter:
+        filtfile = os.path.abspath(inps.intfile)
+        intfile = filtfile.split('filt_')
+        intfile = intfile[0] + intfile[1]
+
+        remove_filter(intfile, filtfile, inps.unwfile)
 
 
 if __name__ == '__main__':

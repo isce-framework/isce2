@@ -26,10 +26,10 @@ def createParser():
     parser.add_argument('-t', '--snr_threshold', type=float, dest='offsetSNRThreshold', default=6.0,
             help='SNR threshold for overlap masking')
 
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('-s', '--slave',type=str, dest='slave', required=True,
-            help='Slave image')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
+            help='Secondary image')
 
     return parser
 
@@ -41,7 +41,7 @@ def cmdLineParse(iargs=None):
     return parser.parse_args(args=iargs)
 
 
-def runAmpcor(master, slave):
+def runAmpcor(reference, secondary):
     '''
     Run one ampcor process.
     '''
@@ -49,12 +49,12 @@ def runAmpcor(master, slave):
     from mroipac.ampcor.Ampcor import Ampcor
 
     mImg = isceobj.createSlcImage()
-    mImg.load(master + '.xml')
+    mImg.load(reference + '.xml')
     mImg.setAccessMode('READ')
     mImg.createImage()
 
     sImg = isceobj.createSlcImage()
-    sImg.load(slave + '.xml')
+    sImg.load(secondary + '.xml')
     sImg.setAccessMode('READ')
     sImg.createImage()
 
@@ -144,9 +144,9 @@ def main(iargs=None):
     #catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
     #swathList = self._insar.getValidSwathList(self.swaths)
-    masterSwathList = ut.getSwathList(os.path.join(inps.master, 'overlap'))
-    slaveSwathList = ut.getSwathList(os.path.join(inps.slave, 'overlap'))
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    referenceSwathList = ut.getSwathList(os.path.join(inps.reference, 'overlap'))
+    secondarySwathList = ut.getSwathList(os.path.join(inps.secondary, 'overlap'))
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     rangeOffsets = []
     snr = []
@@ -157,33 +157,34 @@ def main(iargs=None):
         #    print('Skipping range coreg for swath IW{0}'.format(swath))
         #    continue
 
-        #minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        #minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         
         #maxBurst = maxBurst - 1  ###For overlaps 
     
-        #masterTop = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        #masterBottom  = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
-        masterTop = ut.loadProduct(os.path.join(inps.master , 'overlap','IW{0}_top.xml'.format(swath)))
-        masterBottom  = ut.loadProduct(os.path.join(inps.master ,'overlap', 'IW{0}_bottom.xml'.format(swath)))
-        slaveTop = ut.loadProduct(os.path.join(inps.slave, 'overlap', 'IW{0}_top.xml'.format(swath)))
-        slaveBottom = ut.loadProduct(os.path.join(inps.slave, 'overlap', 'IW{0}_bottom.xml'.format(swath)))
+        #referenceTop = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        #referenceBottom  = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
+        referenceTop = ut.loadProduct(os.path.join(inps.reference , 'overlap','IW{0}_top.xml'.format(swath)))
+        referenceBottom  = ut.loadProduct(os.path.join(inps.reference ,'overlap', 'IW{0}_bottom.xml'.format(swath)))
+        secondaryTop = ut.loadProduct(os.path.join(inps.secondary, 'overlap', 'IW{0}_top.xml'.format(swath)))
+        secondaryBottom = ut.loadProduct(os.path.join(inps.secondary, 'overlap', 'IW{0}_bottom.xml'.format(swath)))
 
-        #slaveTop = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct , 'top_IW{0}.xml'.format(swath)))
-        #slaveBottom = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
-        minMaster = masterTop.bursts[0].burstNumber
-        maxMaster = masterTop.bursts[-1].burstNumber
+        #secondaryTop = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct , 'top_IW{0}.xml'.format(swath)))
+        #secondaryBottom = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        minReference = referenceTop.bursts[0].burstNumber
+        maxReference = referenceTop.bursts[-1].burstNumber
 
-        minSlave = slaveTop.bursts[0].burstNumber
-        maxSlave = slaveTop.bursts[-1].burstNumber
+        minSecondary = secondaryTop.bursts[0].burstNumber
+        maxSecondary = secondaryTop.bursts[-1].burstNumber
 
-        minBurst = max(minSlave, minMaster)
-        maxBurst = min(maxSlave, maxMaster)
-        maxBurst = maxBurst - 1 ###For overlaps
+        minBurst = max(minSecondary, minReference)
+        maxBurst = min(maxSecondary, maxReference)
+        #maxBurst = maxBurst - 1 ###For overlaps
+        maxBurst = maxBurst + 1
 
-        for pair in [(masterTop,slaveTop), (masterBottom,slaveBottom)]:
+        for pair in [(referenceTop,secondaryTop), (referenceBottom,secondaryBottom)]:
             for ii in range(minBurst,maxBurst):
-                mFile = pair[0].bursts[ii-minMaster].image.filename
-                sFile = pair[1].bursts[ii-minSlave].image.filename
+                mFile = pair[0].bursts[ii-minReference].image.filename
+                sFile = pair[1].bursts[ii-minSecondary].image.filename
             
                 field = runAmpcor(mFile, sFile)
 
@@ -200,16 +201,15 @@ def main(iargs=None):
     stdval = np.std(val)
 
     # convert the estimations to meters 
-    medianval = medianval * masterTop.bursts[0].rangePixelSize
-    meanval = meanval * masterTop.bursts[0].rangePixelSize
-    stdval = stdval * masterTop.bursts[0].rangePixelSize
+    medianval = medianval * referenceTop.bursts[0].rangePixelSize
+    meanval = meanval * referenceTop.bursts[0].rangePixelSize
+    stdval = stdval * referenceTop.bursts[0].rangePixelSize
 
     hist, bins = np.histogram(val, 50, normed=1)
     center = 0.5*(bins[:-1] + bins[1:])
 
     outputDir = os.path.dirname(inps.output)
-    if not os.path.exists(outputDir):
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
 
     try:
         import matplotlib as mpl

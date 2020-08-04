@@ -15,7 +15,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "LineAccessor.h"
 using namespace std;
 
 static const char * const __doc__ = "Python extension for formslc.F";

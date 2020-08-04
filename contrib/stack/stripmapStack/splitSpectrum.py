@@ -80,7 +80,7 @@ def main(iargs=None):
     '''
     Split the range spectrum
     '''
-    #Check if the master and slave are .slc files then go ahead and split the range spectrum
+    #Check if the reference and secondary are .slc files then go ahead and split the range spectrum
     tstart = time.time()
     inps = cmdLineParse(iargs)
     print ('input full-band SLC: ', inps.slc)
@@ -138,11 +138,8 @@ def main(iargs=None):
         outDirH = os.path.join(inps.outDir,'HighBand')
         outDirL = os.path.join(inps.outDir,'LowBand')
 
-        if not os.path.exists(outDirH):
-           os.makedirs(outDirH)
-
-        if not os.path.exists(outDirL):
-           os.makedirs(outDirL)
+        os.makedirs(outDirH, exist_ok=True)
+        os.makedirs(outDirL, exist_ok=True)
 
         fullBandSlc = os.path.basename(inps.slc)
         lowBandSlc = os.path.join(outDirL, fullBandSlc)

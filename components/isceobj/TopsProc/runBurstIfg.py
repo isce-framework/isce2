@@ -23,7 +23,7 @@ def loadVirtualArray(fname):
     ds = None
     return data
 
-def multiply(masname, slvname, outname, rngname, fact, masterFrame,
+def multiply(masname, slvname, outname, rngname, fact, referenceFrame,
         flatten=True, alks=3, rlks=7, virtual=True):
 
 
@@ -35,11 +35,11 @@ def multiply(masname, slvname, outname, rngname, fact, masterFrame,
 
 
     if not virtual:
-        master = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
+        reference = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
     else:
-        master = loadVirtualArray(masname + '.vrt')
+        reference = loadVirtualArray(masname + '.vrt')
     
-    slave = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
+    secondary = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
    
     if os.path.exists(rngname):
         rng2 = np.memmap(rngname, dtype=np.float32, mode='r', shape=(length,width))
@@ -51,19 +51,19 @@ def multiply(masname, slvname, outname, rngname, fact, masterFrame,
     
     #Zero out anytging outside the valid region:
     ifg = np.memmap(outname, dtype=np.complex64, mode='w+', shape=(length,width))
-    firstS = masterFrame.firstValidSample
-    lastS = masterFrame.firstValidSample + masterFrame.numValidSamples -1
-    firstL = masterFrame.firstValidLine
-    lastL = masterFrame.firstValidLine + masterFrame.numValidLines - 1
+    firstS = referenceFrame.firstValidSample
+    lastS = referenceFrame.firstValidSample + referenceFrame.numValidSamples -1
+    firstL = referenceFrame.firstValidLine
+    lastL = referenceFrame.firstValidLine + referenceFrame.numValidLines - 1
     for kk in range(firstL,lastL + 1):
-        ifg[kk,firstS:lastS + 1] = master[kk,firstS:lastS + 1] * np.conj(slave[kk,firstS:lastS + 1])
+        ifg[kk,firstS:lastS + 1] = reference[kk,firstS:lastS + 1] * np.conj(secondary[kk,firstS:lastS + 1])
         if flatten:
             phs = np.exp(cJ*fact*rng2[kk,firstS:lastS + 1])
             ifg[kk,firstS:lastS + 1] *= phs
 
     ####
-    master=None
-    slave=None
+    reference=None
+    secondary=None
     ifg = None
 
     objInt = isceobj.createIntImage()
@@ -134,21 +134,21 @@ def computeCoherence(slc1name, slc2name, corname, virtual=True):
     return
 
 
-def adjustValidLineSample(master,slave):
+def adjustValidLineSample(reference,secondary):
 
-    master_lastValidLine = master.firstValidLine + master.numValidLines - 1
-    master_lastValidSample = master.firstValidSample + master.numValidSamples - 1
-    slave_lastValidLine = slave.firstValidLine + slave.numValidLines - 1
-    slave_lastValidSample = slave.firstValidSample + slave.numValidSamples - 1
+    reference_lastValidLine = reference.firstValidLine + reference.numValidLines - 1
+    reference_lastValidSample = reference.firstValidSample + reference.numValidSamples - 1
+    secondary_lastValidLine = secondary.firstValidLine + secondary.numValidLines - 1
+    secondary_lastValidSample = secondary.firstValidSample + secondary.numValidSamples - 1
 
-    igram_lastValidLine = min(master_lastValidLine, slave_lastValidLine)
-    igram_lastValidSample = min(master_lastValidSample, slave_lastValidSample)
+    igram_lastValidLine = min(reference_lastValidLine, secondary_lastValidLine)
+    igram_lastValidSample = min(reference_lastValidSample, secondary_lastValidSample)
 
-    master.firstValidLine = max(master.firstValidLine, slave.firstValidLine)
-    master.firstValidSample = max(master.firstValidSample, slave.firstValidSample)
+    reference.firstValidLine = max(reference.firstValidLine, secondary.firstValidLine)
+    reference.firstValidSample = max(reference.firstValidSample, secondary.firstValidSample)
 
-    master.numValidLines = igram_lastValidLine - master.firstValidLine + 1
-    master.numValidSamples = igram_lastValidSample - master.firstValidSample + 1
+    reference.numValidLines = igram_lastValidLine - reference.firstValidLine + 1
+    reference.numValidSamples = igram_lastValidSample - reference.firstValidSample + 1
 
 def runBurstIfg(self):
     '''Create burst interferograms.
@@ -161,19 +161,18 @@ def runBurstIfg(self):
 
     for swath in swathList:
 
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         nBurst = maxBurst - minBurst
 
         if nBurst == 0:
             continue
     
         ifgdir = os.path.join(self._insar.fineIfgDirname, 'IW{0}'.format(swath))
-        if not os.path.exists(ifgdir):
-            os.makedirs(ifgdir)
+        os.makedirs(ifgdir, exist_ok=True)
 
         ####Load relevant products
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
 
         coregdir = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath))
 
@@ -186,11 +185,11 @@ def runBurstIfg(self):
 
 
             ####Process the top bursts
-            masBurst = master.bursts[ii] 
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii] 
+            slvBurst = secondary.bursts[jj]
 
-            mastername = masBurst.image.filename
-            slavename = slvBurst.image.filename
+            referencename = masBurst.image.filename
+            secondaryname = slvBurst.image.filename
             rdict = {'rangeOff' : os.path.join(coregdir, 'range_%02d.off'%(ii+1)),
                      'azimuthOff': os.path.join(coregdir, 'azimuth_%02d.off'%(ii+1))}
             
@@ -201,7 +200,7 @@ def runBurstIfg(self):
             if self.doInSAR:
                 intname = os.path.join(ifgdir, '%s_%02d.int'%('burst',ii+1))
                 fact = 4 * np.pi * slvBurst.rangePixelSize / slvBurst.radarWavelength
-                intimage = multiply(mastername, slavename, intname,
+                intimage = multiply(referencename, secondaryname, intname,
                         rdict['rangeOff'], fact, masBurst, flatten=True,
                         alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks,
                         virtual=virtual)
@@ -217,7 +216,7 @@ def runBurstIfg(self):
             if self.doInSAR:
                 ####Estimate coherence
                 corname =  os.path.join(ifgdir, '%s_%02d.cor'%('burst',ii+1))
-                computeCoherence(mastername, slavename, corname) 
+                computeCoherence(referencename, secondaryname, corname) 
 
 
         fineIfg.numberOfBursts = len(fineIfg.bursts)

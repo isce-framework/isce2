@@ -215,12 +215,12 @@ class Dpm(_InsarBase):
         
         minLat, maxLat, minLon, maxLon = self.insar.topo.snwe
 
-        planet = self.insar.masterFrame.instrument.getPlatform().getPlanet()
+        planet = self.insar.referenceFrame.instrument.getPlatform().getPlanet()
              
         objGeo = stdproc.createGeocode() 
         objGeo.listInputPorts()
         objGeo.wireInputPort(name='peg',object=self.insar.peg)
-        objGeo.wireInputPort(name='frame',object=self.insar.masterFrame)
+        objGeo.wireInputPort(name='frame',object=self.insar.referenceFrame)
         objGeo.wireInputPort(name='planet',object=planet)
         objGeo.wireInputPort(name='dem',object=demImage)
         objGeo.wireInputPort(name='interferogram',object=intImage)
@@ -240,7 +240,7 @@ class Dpm(_InsarBase):
         mocompPosition1 = objFormSlc1.getMocompPosition()
         posIndx = 1
         objGeo.referenceOrbit = mocompPosition1[posIndx]
-        prf1 = self.insar.masterFrame.instrument.getPulseRepetitionFrequency()
+        prf1 = self.insar.referenceFrame.instrument.getPulseRepetitionFrequency()
         dp = self.insar.dopplerCentroid.getDopplerCoefficients(inHz=False)[0]
         v = self.insar.procVelocity
         h = self.insar.averageHeight
@@ -311,16 +311,16 @@ class Dpm(_InsarBase):
         print("objTopo.maxLon = ", maxLon)
         pause(message="Paused in runGeocode4rlks")
         
-        planet = self.insar.masterFrame.instrument.getPlatform().getPlanet()
+        planet = self.insar.referenceFrame.instrument.getPlatform().getPlanet()
              
         objGeo = stdproc.createGeocode()       
         objGeo.listInputPorts()
         objGeo.wireInputPort(name='peg',object=self.insar.peg)
-#        objGeo.wireInputPort(name='frame',object=self.insar.masterFrame)
-        objGeo.rangeFirstSample = self.insar.masterFrame.getStartingRange()
-        objGeo.slantRangePixelSpacing = self.insar.masterFrame.instrument.getRangePixelSize()*4
-        objGeo.prf = self.insar.masterFrame.instrument.getPulseRepetitionFrequency()
-        objGeo.radarWavelength = self.insar.masterFrame.instrument.getRadarWavelength()
+#        objGeo.wireInputPort(name='frame',object=self.insar.referenceFrame)
+        objGeo.rangeFirstSample = self.insar.referenceFrame.getStartingRange()
+        objGeo.slantRangePixelSpacing = self.insar.referenceFrame.instrument.getRangePixelSize()*4
+        objGeo.prf = self.insar.referenceFrame.instrument.getPulseRepetitionFrequency()
+        objGeo.radarWavelength = self.insar.referenceFrame.instrument.getRadarWavelength()
         objGeo.wireInputPort(name='planet',object=planet)
         objGeo.wireInputPort(name='dem',object=demImage)
         objGeo.wireInputPort(name='interferogram',object=intImage)
@@ -340,7 +340,7 @@ class Dpm(_InsarBase):
         mocompPosition1 = objFormSlc1.getMocompPosition()
         posIndx = 1
         objGeo.setReferenceOrbit(mocompPosition1[posIndx])
-        prf1 = self.insar.masterFrame.instrument.getPulseRepetitionFrequency()
+        prf1 = self.insar.referenceFrame.instrument.getPulseRepetitionFrequency()
         dp = self.insar.dopplerCentroid.getDopplerCoefficients(inHz=False)[0]
         v = self.insar.procVelocity
         h = self.insar.averageHeight
@@ -425,11 +425,11 @@ class Dpm(_InsarBase):
                    
         minLat, maxLat, minLon, maxLon = self.insar.topo.snwe
 
-        planet = self.insar.masterFrame.instrument.getPlatform().getPlanet()
+        planet = self.insar.referenceFrame.instrument.getPlatform().getPlanet()
              
         objGeo = stdproc.createGeocode()       
         objGeo.wireInputPort(name='peg',object=self.insar.peg)
-        objGeo.wireInputPort(name='frame',object=self.insar.masterFrame)
+        objGeo.wireInputPort(name='frame',object=self.insar.referenceFrame)
         objGeo.wireInputPort(name='planet',object=planet)
         objGeo.wireInputPort(name='dem',object=demImage)
         objGeo.wireInputPort(name='interferogram',object=intImage)
@@ -443,7 +443,7 @@ class Dpm(_InsarBase):
         objGeo.stdWriter = self.stdWriter.set_file_tags("geocode", "log", "err", "out")
         # see mocompbaseline
         objGeo.setReferenceOrbit(mocompPosition1[posIndx])
-        prf1 = self.insar.masterFrame.instrument.getPulseRepetitionFrequency()
+        prf1 = self.insar.referenceFrame.instrument.getPulseRepetitionFrequency()
         dp = self.insar.dopplerCentroid.getDopplerCoefficients(inHz=False)[0]
         v = self.insar.procVelocity
         h = self.insar.averageHeight

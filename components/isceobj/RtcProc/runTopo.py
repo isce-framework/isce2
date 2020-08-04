@@ -22,20 +22,20 @@ def runTopo(self, method='legendre'):
 
 
     refPol = self._grd.polarizations[0]
-    master = self._grd.loadProduct( os.path.join(self._grd.outputFolder,
+    reference = self._grd.loadProduct( os.path.join(self._grd.outputFolder,
                                         'beta_{0}.xml'.format(refPol)))
 
 
-    azlooks, rglooks = self._grd.getLooks(self.posting, master.azimuthPixelSize,
-            master.groundRangePixelSize, self.numberAzimuthLooks,
+    azlooks, rglooks = self._grd.getLooks(self.posting, reference.azimuthPixelSize,
+            reference.groundRangePixelSize, self.numberAzimuthLooks,
             self.numberRangeLooks)
 
 
     if (azlooks == 1) and (rglooks == 1):
-        rangeName = master.slantRangeImage.filename
+        rangeName = reference.slantRangeImage.filename
 
     else:
-        rangeName = filenameWithLooks(master.slantRangeImage.filename,
+        rangeName = filenameWithLooks(reference.slantRangeImage.filename,
                         azlooks, rglooks)
 
     print('Range name : ', rangeName)
@@ -46,24 +46,23 @@ def runTopo(self, method='legendre'):
     demImg.load(demname + '.xml')
 
 
-    if not os.path.isdir(self._grd.geometryFolder):
-        os.makedirs(self._grd.geometryFolder)
+    os.makedirs(self._grd.geometryFolder, exist_ok=True)
 
 
     #####Run Topo
     planet = Planet(pname='Earth')
     topo = createTopozero()
-    topo.prf = 1.0  / master.azimuthTimeInterval
-    topo.radarWavelength = master.radarWavelength
-    topo.orbit = master.orbit
-    topo.width = master.numberOfSamples // rglooks
-    topo.length = master.numberOfLines // azlooks
+    topo.prf = 1.0  / reference.azimuthTimeInterval
+    topo.radarWavelength = reference.radarWavelength
+    topo.orbit = reference.orbit
+    topo.width = reference.numberOfSamples // rglooks
+    topo.length = reference.numberOfLines // azlooks
     topo.wireInputPort(name='dem', object=demImg)
     topo.wireInputPort(name='planet', object=planet)
     topo.numberRangeLooks = 1
     topo.numberAzimuthLooks = azlooks
-    topo.lookSide = master.side
-    topo.sensingStart = master.sensingStart + datetime.timedelta(seconds = ((azlooks - 1) /2) * master.azimuthTimeInterval) 
+    topo.lookSide = reference.side
+    topo.sensingStart = reference.sensingStart + datetime.timedelta(seconds = ((azlooks - 1) /2) * reference.azimuthTimeInterval) 
     topo.slantRangeFilename = rangeName
 
     topo.demInterpolationMethod='BIQUINTIC'
@@ -110,5 +109,4 @@ def runSimamp(outdir, hname='z.rdr'):
     simImage.renderHdr()
     hgtImage.finalizeImage()
     simImage.finalizeImage()
-
 

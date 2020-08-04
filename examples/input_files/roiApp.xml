@@ -2,11 +2,11 @@
 <insarApp>
   <component name="insar">
     <property name="sensor name">ALOS</property>
-    <component name="master">
-        <catalog>master.xml</catalog>
+    <component name="reference">
+        <catalog>reference.xml</catalog>
     </component>
-    <component name="slave">
-        <catalog>slave.xml</catalog>
+    <component name="secondary">
+        <catalog>secondary.xml</catalog>
     </component>
     <property name="demFilename">
         <value>/Users/fattahi/process/test_roiApp/Alos_Maule_T116/demLat_S39_S35_Lon_W074_W071.dem.wgs84</value>

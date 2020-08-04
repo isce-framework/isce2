@@ -19,12 +19,12 @@ def createParser():
             help = 'Number of azimuth looks')
     parser.add_argument('-r','--rlks', dest='rlks', type=int, default=1,
             help = 'Number of range looks')
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help = 'Dir with master frame')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help = 'Dir with reference frame')
     parser.add_argument('-g', '--geom', dest='geom', type=str, default=None,
             help = 'Dir with geometry products')
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help = 'Dir with slave frame')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help = 'Dir with secondary frame')
     parser.add_argument('-o', '--outdir', dest='outdir', type=str, default=None,
             help='Output directory')
     parser.add_argument('-p', '--poly', dest='poly', type=str, default=None,
@@ -43,17 +43,17 @@ def cmdLineParse(iargs = None):
 
     inps =  parser.parse_args(args=iargs)
 
-    if inps.master.endswith('/'):
-        inps.master = inps.master[:-1]
+    if inps.reference.endswith('/'):
+        inps.reference = inps.reference[:-1]
 
-    if inps.slave.endswith('/'):
-        inps.slave = inps.slave[:-1]
+    if inps.secondary.endswith('/'):
+        inps.secondary = inps.secondary[:-1]
 
     if inps.geom is None:
-        inps.geom = 'geometry_' + os.path.basename(inps.master)
+        inps.geom = 'geometry_' + os.path.basename(inps.reference)
 
     if inps.outdir is None:
-        inps.outdir = os.path.join('coreg', os.path.basename(inps.slave))
+        inps.outdir = os.path.join('coreg', os.path.basename(inps.secondary))
 
     return inps
 
@@ -258,7 +258,7 @@ def runGeo2rdrCPU(info, latImage, lonImage, demImage, outdir,
 
 def main(iargs=None): 
     inps = cmdLineParse(iargs)
-    print(inps.slave)
+    print(inps.secondary)
 
     # see if the user compiled isce with GPU enabled
     run_GPU = False
@@ -281,8 +281,8 @@ def main(iargs=None):
         print('CPU mode')
         runGeo2rdr = runGeo2rdrCPU
 
-    db = shelve.open( os.path.join(inps.slave, 'data'), flag='r')
-    print( os.path.join(inps.slave, 'data'))
+    db = shelve.open( os.path.join(inps.secondary, 'data'), flag='r')
+    print( os.path.join(inps.secondary, 'data'))
     frame = db['frame']
     try:
         dop = db['doppler']
@@ -304,8 +304,7 @@ def main(iargs=None):
     lonImage.load(os.path.join(inps.geom, 'lon.rdr.xml'))
     lonImage.setAccessMode('read')
 
-    if not os.path.isdir(inps.outdir):
-        os.makedirs(inps.outdir)
+    os.makedirs(inps.outdir, exist_ok=True)
 
     
     azoff = 0.0

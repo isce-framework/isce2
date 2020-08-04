@@ -90,7 +90,7 @@ def run(objFormSlc1, intImage, frame1, velocity, height, infos, stdWriter, catal
     objTopo.wireInputPort(name='planet', object=planet)
     objTopo.wireInputPort(name='dem', object=objDem)
     objTopo.wireInputPort(name='interferogram', object=intImage) #ML 2014-09-26
-    objTopo.wireInputPort(name='masterslc', object=objFormSlc1) #Piyush
+    objTopo.wireInputPort(name='referenceslc', object=objFormSlc1) #Piyush
     objTopo.setDopplerCentroidConstantTerm(centroid)
 
     objTopo.setBodyFixedVelocity(velocity)

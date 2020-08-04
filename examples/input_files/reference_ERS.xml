@@ -1,0 +1,53 @@
+<component>
+        <property name="IMAGEFILE">
+            <value>data/IMAGERY2001121804295244T1Of1</value>
+        </property>
+        <property name="LEADERFILE">
+            <value>data/SARLEADER2001121804295244T1Of1</value>
+        </property>
+        <property name="ORBIT_TYPE">
+            <value>"ODR"</value>
+        </property>
+        <property name="ORBIT_DIRECTORY">
+            <value>/Users/agram/orbit/ODR/ERS2</value>
+        </property>
+        <property name="OUTPUT">
+            <value>20011218.raw</value>
+        </property>
+</component>
+
+<!-- Shown above is the bare minimum input XML file for ERS sensor. The reference and secondary catalog xml files have the same structure.
+
+    All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: Orbits
+    ================
+
+    ISCE can handle ODR, PRC and PDS orbits for ERS data. These data should be packaged into a directory with appropriate arcinfo files (same format as ROI_PAC). If the user wants to use a specific orbit file, one can directly specify the file using the following XML structure
+    <property name="ORBIT_FILE">
+        <value>filepath</value>
+    </property>
+
+    Note 2: File naming conventions
+    ================================
+
+    ISCE does not enforce strict naming conventions for the image and leader files like ROI_PAC. File names are treated like any other strings and the names are not used for metadata parsing.
+
+    Note 3: Multiple frames
+    ========================
+    ISCE can automatically stitch multiple raw data frames before focusing them. Modify your image file and leader file entries should be provided as lists as follows:
+
+    <property name="IMAGEFILE">
+        <value>['data/IMAGERY1','data/IMAGERY2']</value>
+    </property>
+    <property name="LEADERFILE">
+        <value>['data/LEADER1','data/LEADER2']</value>
+    </property>
+
+    The entries for image file and leader file should match up, i.e, entry 1 in imagefile list should correspond to entry 1 in leaderfile list.
+
+    Note 4: Doppler Centroid
+    =========================
+    ERS raw data leaders do not include any doppler centroid information. These are always estimated from the data, and lie between -0.5 and 0.5 PRF. An ambiguity estimator module (estamb) is under development and can be selectively turned on in the future for processing post-2001 ERS2 data.
+
+-->

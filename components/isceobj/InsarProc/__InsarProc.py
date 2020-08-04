@@ -117,36 +117,36 @@ LOOK_SIDE = Component.Parameter('_lookSide',
                                 private=True,
                                 doc='')
 
-MASTER_FRAME = Component.Facility('_masterFrame',
-                                   public_name='masterFrame',
+REFERENCE_FRAME = Component.Facility('_referenceFrame',
+                                   public_name='referenceFrame',
                                    factory='default',
                                    mandatory=True,
                                    private=True,
-                                   doc='Master frame')
+                                   doc='Reference frame')
 
 
-SLAVE_FRAME = Component.Facility('_slaveFrame',
-                                  public_name='slaveFrame',
+SECONDARY_FRAME = Component.Facility('_secondaryFrame',
+                                  public_name='secondaryFrame',
                                   factory='default',
                                   mandatory=True,
                                   private=True,
-                                  doc='Slave frame')
+                                  doc='Secondary frame')
 
 
-MASTER_ORBIT = Component.Facility('_masterOrbit',
-                                   public_name='masterOrbit',
+REFERENCE_ORBIT = Component.Facility('_referenceOrbit',
+                                   public_name='referenceOrbit',
                                    factory='default',
                                    mandatory=True,
                                    private=True,
-                                   doc='Master orbit')
+                                   doc='Reference orbit')
 
 
-SLAVE_ORBIT = Component.Facility('_slaveOrbit',
-                                  public_name='slaveOrbit',
+SECONDARY_ORBIT = Component.Facility('_secondaryOrbit',
+                                  public_name='secondaryOrbit',
                                   factory='default',
                                   mandatory=True,
                                   private=True,
-                                  doc='Slave orbit')
+                                  doc='Secondary orbit')
 
 #ask
 DOPPLER_CENTROID = Component.Facility('_dopplerCentroid',
@@ -156,47 +156,47 @@ DOPPLER_CENTROID = Component.Facility('_dopplerCentroid',
                                        private=True,
                                        doc='')
 
-MASTER_DOPPLER = Component.Facility('_masterDoppler',
-                                     public_name='masterDoppler',
+REFERENCE_DOPPLER = Component.Facility('_referenceDoppler',
+                                     public_name='referenceDoppler',
                                      factory='default',
                                      mandatory=True,
                                      private=True,
                                      doc='')
 
 
-SLAVE_DOPPLER = Component.Facility('_slaveDoppler',
-                                    public_name='slaveDoppler',
+SECONDARY_DOPPLER = Component.Facility('_secondaryDoppler',
+                                    public_name='secondaryDoppler',
                                     factory='default',
                                     mandatory=True,
                                     private=True,
                                     doc='')
 
-MASTER_RAW_IMAGE = Component.Facility('_masterRawImage',
-                                       public_name='masterRawImage',
+REFERENCE_RAW_IMAGE = Component.Facility('_referenceRawImage',
+                                       public_name='referenceRawImage',
                                        factory='default',
                                        mandatory=True,
                                        private=True,
                                        doc='')
 
 
-SLAVE_RAW_IMAGE = Component.Facility('_slaveRawImage',
-                                      public_name='slaveRawImage',
+SECONDARY_RAW_IMAGE = Component.Facility('_secondaryRawImage',
+                                      public_name='secondaryRawImage',
                                       factory='default',
                                       mandatory=True,
                                       private=True,
                                       doc='')
 
 
-MASTER_SLC_IMAGE = Component.Facility('_masterSlcImage',
-                                       public_name='masterSlcImage',
+REFERENCE_SLC_IMAGE = Component.Facility('_referenceSlcImage',
+                                       public_name='referenceSlcImage',
                                        factory='default',
                                        mandatory=True,
                                        private=True,
                                        doc='')
 
 
-SLAVE_SLC_IMAGE = Component.Facility('_slaveSlcImage',
-                                      public_name='slaveSlcImage',
+SECONDARY_SLC_IMAGE = Component.Facility('_secondarySlcImage',
+                                      public_name='secondarySlcImage',
                                       factory='default',
                                       mandatory=True,
                                       private=True,
@@ -334,16 +334,16 @@ TOPO = Component.Facility('_topo',
                            private=True,
                            doc='')
 
-RAW_MASTER_IQ_IMAGE = Component.Facility('_rawMasterIQImage',
-                                           public_name='rawMasterIQImage',
+RAW_REFERENCE_IQ_IMAGE = Component.Facility('_rawReferenceIQImage',
+                                           public_name='rawReferenceIQImage',
                                            factory='default',
                                            mandatory=True,
                                            private=True,
                                            doc='')
 
 
-RAW_SLAVE_IQ_IMAGE = Component.Facility('_rawSlaveIQImage',
-                                          public_name='rawSlaveIQImage',
+RAW_SECONDARY_IQ_IMAGE = Component.Facility('_rawSecondaryIQImage',
+                                          public_name='rawSecondaryIQImage',
                                           factory='default',
                                           mandatory=True,
                                           private=True,
@@ -403,17 +403,17 @@ parameter_list = (
                       NUMBER_RESAMP_LINES
                      )
 facility_list = (
-                    MASTER_FRAME,
-                    SLAVE_FRAME,
-                    MASTER_ORBIT,
-                    SLAVE_ORBIT,
-                    MASTER_DOPPLER,
-                    SLAVE_DOPPLER,
+                    REFERENCE_FRAME,
+                    SECONDARY_FRAME,
+                    REFERENCE_ORBIT,
+                    SECONDARY_ORBIT,
+                    REFERENCE_DOPPLER,
+                    SECONDARY_DOPPLER,
                     DOPPLER_CENTROID,
-                    MASTER_RAW_IMAGE,
-                    SLAVE_RAW_IMAGE,
-                    MASTER_SLC_IMAGE,
-                    SLAVE_SLC_IMAGE,
+                    REFERENCE_RAW_IMAGE,
+                    SECONDARY_RAW_IMAGE,
+                    REFERENCE_SLC_IMAGE,
+                    SECONDARY_SLC_IMAGE,
                     OFFSET_AZIMUTH_IMAGE,
                     OFFSET_RANGE_IMAGE,
                     RESAMP_AMP_IMAGE,
@@ -430,8 +430,8 @@ facility_list = (
                     MOCOMP_BASELINE,
                     TOPOCORRECT,
                     TOPO,
-                    RAW_MASTER_IQ_IMAGE,
-                    RAW_SLAVE_IQ_IMAGE,
+                    RAW_REFERENCE_IQ_IMAGE,
+                    RAW_SECONDARY_IQ_IMAGE,
                     TOPOCORRECT_FLAT_IMAGE,
                     OFFSET_FIELD,
                     REFINED_OFFSET_FIELD,

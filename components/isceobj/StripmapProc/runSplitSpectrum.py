@@ -88,40 +88,40 @@ def runSplitSpectrum(self):
         print('Split spectrum processing not requested. Skipping ....')
         return
 
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    slaveFrame = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    secondaryFrame = self._insar.loadProduct( self._insar.secondarySlcCropProduct)
 
-    masterSlc =  masterFrame.getImage().filename
-    slaveSlc = slaveFrame.getImage().filename
+    referenceSlc =  referenceFrame.getImage().filename
+    secondarySlc = secondaryFrame.getImage().filename
 
-    width1 = masterFrame.getImage().getWidth()
-    width2 = slaveFrame.getImage().getWidth()
+    width1 = referenceFrame.getImage().getWidth()
+    width2 = secondaryFrame.getImage().getWidth()
 
-    fs_master = masterFrame.rangeSamplingRate
-    pulseLength_master = masterFrame.instrument.pulseLength
-    chirpSlope_master = masterFrame.instrument.chirpSlope
-
-    #Bandwidth
-    B_master = np.abs(chirpSlope_master)*pulseLength_master
-
-    fs_slave = slaveFrame.rangeSamplingRate
-    pulseLength_slave = slaveFrame.instrument.pulseLength
-    chirpSlope_slave = slaveFrame.instrument.chirpSlope
+    fs_reference = referenceFrame.rangeSamplingRate
+    pulseLength_reference = referenceFrame.instrument.pulseLength
+    chirpSlope_reference = referenceFrame.instrument.chirpSlope
 
     #Bandwidth
-    B_slave = np.abs(chirpSlope_slave)*pulseLength_slave
+    B_reference = np.abs(chirpSlope_reference)*pulseLength_reference
 
-    print("master image range sampling rate: {0} MHz".format(fs_master/(1.0e6)))
-    print("slave image range sampling rate: {0} MHz".format(fs_slave/(1.0e6)))
+    fs_secondary = secondaryFrame.rangeSamplingRate
+    pulseLength_secondary = secondaryFrame.instrument.pulseLength
+    chirpSlope_secondary = secondaryFrame.instrument.chirpSlope
+
+    #Bandwidth
+    B_secondary = np.abs(chirpSlope_secondary)*pulseLength_secondary
+
+    print("reference image range sampling rate: {0} MHz".format(fs_reference/(1.0e6)))
+    print("secondary image range sampling rate: {0} MHz".format(fs_secondary/(1.0e6)))
 
 
-    print("master image total range bandwidth: {0} MHz".format(B_master/(1.0e6)))
-    print("slave image total range bandwidth: {0} MHz".format(B_slave/(1.0e6)))
+    print("reference image total range bandwidth: {0} MHz".format(B_reference/(1.0e6)))
+    print("secondary image total range bandwidth: {0} MHz".format(B_secondary/(1.0e6)))
 
 
-    # If the bandwidth of master and slave are different, choose the smaller bandwidth 
+    # If the bandwidth of reference and secondary are different, choose the smaller bandwidth 
     # for range split spectrum
-    B = np.min([B_slave, B_master])
+    B = np.min([B_secondary, B_reference])
     print("Bandwidth used for split spectrum: {0} MHz".format(B/(1.e6)))
 
     # Dividing the total bandwidth of B to three bands and consider the sub bands on
@@ -142,40 +142,33 @@ def runSplitSpectrum(self):
     lowBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.lowBandSlcDirname)
     highBandDir = os.path.join(self.insar.splitSpectrumDirname, self.insar.highBandSlcDirname)
 
-    if os.path.isdir(lowBandDir):
-        logger.info('low-band slc directory {0} already exists.'.format(lowBandDir))
-    else:
-        os.makedirs(lowBandDir)
+    os.makedirs(lowBandDir, exist_ok=True)
+    os.makedirs(highBandDir, exist_ok=True)
 
-    if os.path.isdir(highBandDir):
-        logger.info('high-band slc directory {0} already exists.'.format(highBandDir))
-    else:
-        os.makedirs(highBandDir)
+    referenceLowBandSlc = os.path.join(lowBandDir, os.path.basename(referenceSlc)) 
+    referenceHighBandSlc = os.path.join(highBandDir, os.path.basename(referenceSlc)) 
 
-    masterLowBandSlc = os.path.join(lowBandDir, os.path.basename(masterSlc)) 
-    masterHighBandSlc = os.path.join(highBandDir, os.path.basename(masterSlc)) 
+    secondaryLowBandSlc = os.path.join(lowBandDir, os.path.basename(secondarySlc))
+    secondaryHighBandSlc = os.path.join(highBandDir, os.path.basename(secondarySlc))
 
-    slaveLowBandSlc = os.path.join(lowBandDir, os.path.basename(slaveSlc))
-    slaveHighBandSlc = os.path.join(highBandDir, os.path.basename(slaveSlc))
-
-    radarWavelength = masterFrame.radarWavelegth
+    radarWavelength = referenceFrame.radarWavelegth
 
     print("deviation of low-band's center frequency from full-band's center frequency: {0} MHz".format(fL/1.0e6))
 
     print("deviation of high-band's center frequency from full-band's center frequency: {0} MHz".format(fH/1.0e6))
 
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print("splitting the range-spectrum of master SLC")
-    split(masterSlc, masterLowBandSlc, masterHighBandSlc, fs_master, bL, bH, fL, fH)
+    print("splitting the range-spectrum of reference SLC")
+    split(referenceSlc, referenceLowBandSlc, referenceHighBandSlc, fs_reference, bL, bH, fL, fH)
     print("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-    print("splitting the range-spectrum of slave SLC")
-    split(slaveSlc, slaveLowBandSlc, slaveHighBandSlc, fs_slave, bL, bH, fL, fH)
+    print("splitting the range-spectrum of secondary SLC")
+    split(secondarySlc, secondaryLowBandSlc, secondaryHighBandSlc, fs_secondary, bL, bH, fL, fH)
     ########################
     
-    createSlcImage(masterLowBandSlc, width1)
-    createSlcImage(masterHighBandSlc, width1)
-    createSlcImage(slaveLowBandSlc, width2)
-    createSlcImage(slaveHighBandSlc, width2)
+    createSlcImage(referenceLowBandSlc, width1)
+    createSlcImage(referenceHighBandSlc, width1)
+    createSlcImage(secondaryLowBandSlc, width2)
+    createSlcImage(secondaryHighBandSlc, width2)
 
     ########################
 
@@ -188,11 +181,11 @@ def runSplitSpectrum(self):
     self.insar.lowBandRadarWavelength = wavelengthL
     self.insar.highBandRadarWavelength = wavelengthH
 
-    self.insar.lowBandSlc1 = masterLowBandSlc
-    self.insar.lowBandSlc2 = slaveLowBandSlc
+    self.insar.lowBandSlc1 = referenceLowBandSlc
+    self.insar.lowBandSlc2 = secondaryLowBandSlc
 
-    self.insar.highBandSlc1 = masterHighBandSlc
-    self.insar.highBandSlc2 = slaveHighBandSlc
+    self.insar.highBandSlc1 = referenceHighBandSlc
+    self.insar.highBandSlc2 = secondaryHighBandSlc
 
     ########################
     

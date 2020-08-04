@@ -160,18 +160,18 @@ def test():
 
     insar = Component('insar')
 
-    ####Master info
-    master = {}
-    master['hdf5'] = 'master.h5'
-    master['output'] = 'master.raw'
+    ####Reference info
+    reference = {}
+    reference['hdf5'] = 'reference.h5'
+    reference['output'] = 'reference.raw'
 
-    ####Slave info
-    slave = {}
-    slave['hdf5'] = 'slave.h5'
-    slave['output'] = 'slave.raw'
+    ####Secondary info
+    secondary = {}
+    secondary['hdf5'] = 'secondary.h5'
+    secondary['output'] = 'secondary.raw'
 
-    insar['master'] = master
-    insar['slave'] = slave
+    insar['reference'] = reference
+    insar['secondary'] = secondary
 
     ####Set properties
     insar['doppler method'] = 'useDEFAULT'

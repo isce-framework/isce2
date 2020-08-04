@@ -16,11 +16,11 @@ import glob
 def createParser():
     parser = argparse.ArgumentParser( description='Extract valid overlap region for the stack')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition')
 
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition')
 
     return parser
 
@@ -28,43 +28,43 @@ def cmdLineParse(iargs = None):
     parser = createParser()
     return parser.parse_args(args=iargs)
 
-def updateValidRegion(topMaster, slavePath, swath):
+def updateValidRegion(topReference, secondaryPath, swath):
 
-    #slaveSwathList = ut.getSwathList(slave)
-    #swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    #secondarySwathList = ut.getSwathList(secondary)
+    #swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     #for swath in swathList:
         #IWstr = 'IW{0}'.format(swath)
     ####Load relevant products
-        #topMaster = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
+        #topReference = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
 
-    topCoreg = ut.loadProduct(os.path.join(slavePath , 'IW{0}.xml'.format(swath)))
+    topCoreg = ut.loadProduct(os.path.join(secondaryPath , 'IW{0}.xml'.format(swath)))
 
     topIfg = ut.coregSwathSLCProduct()
     topIfg.configure()
 
 
-    minMaster = topMaster.bursts[0].burstNumber
-    maxMaster = topMaster.bursts[-1].burstNumber
+    minReference = topReference.bursts[0].burstNumber
+    maxReference = topReference.bursts[-1].burstNumber
 
-    minSlave = topCoreg.bursts[0].burstNumber
-    maxSlave = topCoreg.bursts[-1].burstNumber
+    minSecondary = topCoreg.bursts[0].burstNumber
+    maxSecondary = topCoreg.bursts[-1].burstNumber
 
-    minBurst = max(minSlave, minMaster)
-    maxBurst = min(maxSlave, maxMaster)
-    print ('minSlave,maxSlave',minSlave, maxSlave)
-    print ('minMaster,maxMaster',minMaster, maxMaster)
+    minBurst = max(minSecondary, minReference)
+    maxBurst = min(maxSecondary, maxReference)
+    print ('minSecondary,maxSecondary',minSecondary, maxSecondary)
+    print ('minReference,maxReference',minReference, maxReference)
     print ('minBurst, maxBurst: ', minBurst, maxBurst)
 
     for ii in range(minBurst, maxBurst + 1):
 
             ####Process the top bursts
-        master = topMaster.bursts[ii-minMaster]
-        slave  = topCoreg.bursts[ii-minSlave]
-        ut.adjustCommonValidRegion(master,slave)
-        #topMaster.bursts[ii-minMaster].firstValidLine = master.firstValidLine
+        reference = topReference.bursts[ii-minReference]
+        secondary  = topCoreg.bursts[ii-minSecondary]
+        ut.adjustCommonValidRegion(reference,secondary)
+        #topReference.bursts[ii-minReference].firstValidLine = reference.firstValidLine
 
-    return topMaster
+    return topReference
 
 
 def main(iargs=None):
@@ -72,35 +72,34 @@ def main(iargs=None):
     '''
     inps=cmdLineParse(iargs)
 
-    stackDir = os.path.join(os.path.dirname(inps.master),'stack')
+    stackDir = os.path.join(os.path.dirname(inps.reference),'stack')
     if not os.path.exists(stackDir):
         print('creating ', stackDir)
         os.makedirs(stackDir)
     else:
         print(stackDir , ' already exists.')
-        print('Replacing master with existing stack.')
-        inps.master = stackDir
+        print('Replacing reference with existing stack.')
+        inps.reference = stackDir
         print('updating the valid overlap region of:')
         print(stackDir)
 
-    masterSwathList = ut.getSwathList(inps.master)
-    slaveList = glob.glob(os.path.join(inps.slave,'2*'))
-    slaveSwathList = ut.getSwathList(slaveList[0]) # assuming all slaves have the same swaths
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    referenceSwathList = ut.getSwathList(inps.reference)
+    secondaryList = glob.glob(os.path.join(inps.secondary,'2*'))
+    secondarySwathList = ut.getSwathList(secondaryList[0]) # assuming all secondarys have the same swaths
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     for swath in swathList:
         print('******************')
         print('swath: ', swath)
         ####Load relevant products
-        topMaster = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
-        #print('master.firstValidLine: ', topMaster.bursts[4].firstValidLine)
-        for slave in slaveList:
-            topMaster = updateValidRegion(topMaster, slave, swath)
+        topReference = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
+        #print('reference.firstValidLine: ', topReference.bursts[4].firstValidLine)
+        for secondary in secondaryList:
+            topReference = updateValidRegion(topReference, secondary, swath)
 
         print('writing ', os.path.join(stackDir , 'IW{0}.xml'.format(swath)))
-        ut.saveProduct(topMaster, os.path.join(stackDir , 'IW{0}.xml'.format(swath)))
-        if not os.path.exists(os.path.join(stackDir ,'IW{0}'.format(swath))):
-            os.makedirs(os.path.join(stackDir ,'IW{0}'.format(swath)))
+        ut.saveProduct(topReference, os.path.join(stackDir , 'IW{0}.xml'.format(swath)))
+        os.makedirs(os.path.join(stackDir ,'IW{0}'.format(swath)), exist_ok=True)
 
 
 if __name__ == '__main__':
@@ -110,11 +109,11 @@ if __name__ == '__main__':
     main()
 
 
-#swathList = ut.getSwathList(master)
+#swathList = ut.getSwathList(reference)
 #swathList[2]
 #frames = []
 #for swath in swathList:
-#        ifg = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
+#        ifg = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
 
 #        if inps.isaligned:
 #            reference = ifg.reference
@@ -135,7 +134,7 @@ if __name__ == '__main__':
 
 '''
 
-slcPath = '/home/hfattahi/PROCESSDIR/MexicoCity_Test/TestStack_offsets/master'
+slcPath = '/home/hfattahi/PROCESSDIR/MexicoCity_Test/TestStack_offsets/reference'
 swath = ut.loadProduct(os.path.join(slcPath , 'IW{0}.xml'.format(2)))
 
 tref = swath.sensingStart

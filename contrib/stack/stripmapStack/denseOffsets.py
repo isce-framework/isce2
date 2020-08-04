@@ -20,10 +20,10 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m','--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('-s', '--slave',type=str, dest='slave', required=True,
-            help='Slave image')
+    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
+            help='Secondary image')
 
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
             help='Window Width')
@@ -60,20 +60,20 @@ def cmdLineParse(iargs = None):
     return inps
 
 @use_api
-def estimateOffsetField(master, slave, inps=None):
+def estimateOffsetField(reference, secondary, inps=None):
     '''
     Estimate offset field between burst and simamp.
     '''
 
-    ###Loading the slave image object
+    ###Loading the secondary image object
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
-    ###Loading the master image object
+    ###Loading the reference image object
     sar = isceobj.createSlcImage()
-    sar.load(master + '.xml')
+    sar.load(reference + '.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -127,10 +127,9 @@ def main(iargs=None):
 
     inps = cmdLineParse(iargs)
     outDir = os.path.dirname(inps.outprefix)
-    if not os.path.exists(outDir):
-         os.makedirs(outDir)
-    
-    objOffset = estimateOffsetField(inps.master, inps.slave, inps)
+    os.makedirs(outDir, exist_ok=True)
+
+    objOffset = estimateOffsetField(inps.reference, inps.secondary, inps)
 
     
     print('Top left corner of offset image: ', objOffset.locationDown[0][0],objOffset.locationAcross[0][0])

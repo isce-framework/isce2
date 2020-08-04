@@ -14,7 +14,7 @@ import copy
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct
 from .runFineResamp import getRelativeShifts, adjustValidSampleLine
 
-def resampSlave(mas, slv, rdict, outname ):
+def resampSecondary(mas, slv, rdict, outname ):
     '''
     Resample burst by burst.
     '''
@@ -75,7 +75,7 @@ def resampSlave(mas, slv, rdict, outname ):
 
 def runCoarseResamp(self):
     '''
-    Create coregistered overlap slaves.
+    Create coregistered overlap secondarys.
     '''
 
     if not self.doESD:
@@ -90,32 +90,31 @@ def runCoarseResamp(self):
             print('Skipping coarse resamp for swath IW{0}'.format(swath))
             continue
 
-        ####Load slave metadata
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
-        masterTop = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        masterBottom = self._insar.loadProduct( os.path.join(self._insar.masterSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        ####Load secondary metadata
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
+        referenceTop = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        referenceBottom = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
 
 
-        dt = slave.bursts[0].azimuthTimeInterval
-        dr = slave.bursts[0].rangePixelSize
+        dt = secondary.bursts[0].azimuthTimeInterval
+        dr = secondary.bursts[0].rangePixelSize
 
 
         ###Output directory for coregistered SLCs
         outdir = os.path.join(self._insar.coarseCoregDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
     
         ###Directory with offsets
         offdir = os.path.join(self._insar.coarseOffsetsDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
 
-        ####Indices w.r.t master
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
-        slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits(swath-1)
+        ####Indices w.r.t reference
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits(swath-1)
 
 
-        relShifts = getRelativeShifts(master, slave, minBurst, maxBurst, slaveBurstStart)
+        relShifts = getRelativeShifts(reference, secondary, minBurst, maxBurst, secondaryBurstStart)
         maxBurst = maxBurst - 1 ###For overlaps
 
         print('Shifts for swath IW-{0}: {1}'.format(swath,relShifts))
@@ -136,11 +135,11 @@ def runCoarseResamp(self):
         botCoreg.configure()
 
         for ii in range(minBurst, maxBurst):
-            jj = slaveBurstStart + ii - minBurst 
+            jj = secondaryBurstStart + ii - minBurst 
         
-            topBurst = masterTop.bursts[ii-minBurst]
-            botBurst = masterBottom.bursts[ii-minBurst]
-            slvBurst = slave.bursts[jj]
+            topBurst = referenceTop.bursts[ii-minBurst]
+            botBurst = referenceBottom.bursts[ii-minBurst]
+            slvBurst = secondary.bursts[jj]
 
 
 
@@ -148,7 +147,7 @@ def runCoarseResamp(self):
             try:
                 offset = relShifts[jj]
             except:
-                raise Exception('Trying to access shift for slave burst index {0}, which may not overlap with master - IW-{1}'.format(jj, swath))
+                raise Exception('Trying to access shift for secondary burst index {0}, which may not overlap with reference - IW-{1}'.format(jj, swath))
 
             outname = os.path.join(outdir, 'burst_top_%02d_%02d.slc'%(ii+1,ii+2))
         
@@ -162,12 +161,12 @@ def runCoarseResamp(self):
 
 
             ###For future - should account for azimuth and range misreg here .. ignoring for now.
-            azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+            azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
 
             rdict['carrPoly'] = azCarrPoly
             rdict['doppPoly'] = dpoly
 
-            outimg = resampSlave(topBurst, slvBurst, rdict, outname)
+            outimg = resampSecondary(topBurst, slvBurst, rdict, outname)
 
             copyBurst = topBurst.clone()
             adjustValidSampleLine(copyBurst, slvBurst)
@@ -177,7 +176,7 @@ def runCoarseResamp(self):
             #######################################################
 
 
-            slvBurst = slave.bursts[jj+1]
+            slvBurst = secondary.bursts[jj+1]
             outname = os.path.join(outdir, 'burst_bot_%02d_%02d.slc'%(ii+1,ii+2))
 
             ####Setup initial polynomials
@@ -188,12 +187,12 @@ def runCoarseResamp(self):
                      'rangeOff' : os.path.join(offdir, 'range_bot_%02d_%02d.off'%(ii+1,ii+2)),
                     'azimuthOff': os.path.join(offdir, 'azimuth_bot_%02d_%02d.off'%(ii+1,ii+2))}
 
-            azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+            azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
 
             rdict['carrPoly'] = azCarrPoly
             rdict['doppPoly'] = dpoly
 
-            outimg = resampSlave(botBurst, slvBurst, rdict, outname)
+            outimg = resampSecondary(botBurst, slvBurst, rdict, outname)
 
             copyBurst = botBurst.clone()
             adjustValidSampleLine(copyBurst, slvBurst)

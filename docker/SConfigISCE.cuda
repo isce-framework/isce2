@@ -1,0 +1,41 @@
+# The directory in which ISCE will be built
+PRJ_SCONS_BUILD = $ISCE_BUILD_ROOT/isce2
+
+# The directory into which ISCE will be installed
+PRJ_SCONS_INSTALL = $ISCE_INSTALL_ROOT/isce
+
+# The location of libraries, such as libstdc++, libfftw3 (for most system
+# it's /usr/lib and/or /usr/local/lib/ and/or /opt/local/lib)
+LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib
+
+# The location of Python.h. If you have multiple installations of python
+# make sure that it points to the right one
+CPPPATH = /opt/conda/include/python3.7m /opt/conda/lib/python3.7/site-packages/numpy/core/include /opt/conda/include /usr/include
+
+# The location of the fftw3.h (most likely something like /usr/include or
+# /usr/local/include /opt/local/include
+FORTRANPATH =  /usr/include /opt/conda/include
+
+# The location of your Fortran compiler. If not specified it will use the system one
+FORTRAN = /bin/gfortran
+
+# The location of your C compiler. If not specified it will use the system one
+CC = /bin/gcc
+
+# The location of your C++ compiler. If not specified it will use the system one
+CXX = /bin/g++
+
+#libraries needed for mdx display utility
+MOTIFLIBPATH = /usr/lib64       # path to libXm.dylib
+X11LIBPATH = /usr/lib64         # path to libXt.dylib
+MOTIFINCPATH = /usr/include     # path to location of the Xm
+                                # directory with various include files (.h)
+X11INCPATH = /usr/include       # path to location of the X11 directory
+                                # with various include files
+
+# list of paths to search for shared libraries when running programs
+RPATH = /opt/conda/lib /usr/lib64 /usr/lib
+
+#Explicitly enable cuda if needed
+ENABLE_CUDA = True
+#CUDA_TOOLKIT_PATH = $YOUR_CUDA_INSTALLATION  #/usr/local/cuda

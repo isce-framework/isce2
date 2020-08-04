@@ -21,7 +21,7 @@ if ($dirname == "SMALL_BASELINES") then
     # copying the extra files from SM processing
     cp $INSARDIR/lambda.1.in $INSARDIR/SMALL_BASELINES/.
     cp $INSARDIR/heading.1.in $INSARDIR/SMALL_BASELINES/.
-    cp $INSARDIR/master_day.1.in $INSARDIR/SMALL_BASELINES/.
+    cp $INSARDIR/reference_day.1.in $INSARDIR/SMALL_BASELINES/.
     cp $INSARDIR/day.1.in $INSARDIR/SMALL_BASELINES/.
     cp $INSARDIR/bperp.1.in $INSARDIR/SMALL_BASELINES/. 
     cp $INSARDIR/slc_osfactor.1.in $INSARDIR/SMALL_BASELINES/.
@@ -39,10 +39,10 @@ echo $SLC_OSF > $INSARDIR/slc_osfactor.1.in                 # put oversampling f
 echo isce > processor.txt
 
 # Create date, and bperp information 
-# note that day.1.in and bperp.1.in only has the slave information
+# note that day.1.in and bperp.1.in only has the secondary information
 grep ' ' $INSARDIR/[0-9]*/baseline | gawk '{print $2}' > bperp.1.in
 grep ' ' $INSARDIR/[0-9]*/baseline | gawk 'BEGIN {FS = ":"}{print substr($(NF),1,8) }' > day.1.in
-grep ' ' $INSARDIR/master/baseline | gawk '{print $1}' > master_day.1.in
+grep ' ' $INSARDIR/reference/baseline | gawk '{print $1}' > reference_day.1.in
 
 if ($dirname == "SMALL_BASELINES") then
     ls $WORKDIR/*/isce_minrefdem.int | gawk 'BEGIN {FS = "/"}{print substr($(NF-1),1,8) " " substr($(NF-1),10,8)}' > ifgday.1.in

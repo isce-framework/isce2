@@ -139,12 +139,8 @@ class DemStitcher(DS):
         else:
             self._downloadDir = downloadDir
 
-        if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+        if downloadDir is not None:
+            os.makedirs(downloadDir, exist_ok=True)
         for fileNow in listFile:
             url = self.getFullHttp(source)
             opener = urllib.request.URLopener()

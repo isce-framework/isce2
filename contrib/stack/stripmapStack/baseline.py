@@ -16,10 +16,10 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', type=str, dest='master', required=True,
-            help='Directory with the master image')
-    parser.add_argument('-s', type=str, dest='slave', required=True,
-            help='Directory with the slave image')
+    parser.add_argument('-m', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
+    parser.add_argument('-s', type=str, dest='secondary', required=True,
+            help='Directory with the secondary image')
 
     return parser.parse_args()
 
@@ -32,16 +32,16 @@ if __name__ == '__main__':
     inps = cmdLineParse()
 
     try:
-        mdb = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
     except:
-        mdb = shelve.open( os.path.join(inps.master, 'raw'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'raw'), flag='r')
 
     mFrame = mdb['frame']
 
     try:
-        sdb = shelve.open( os.path.join(inps.slave, 'data'), flag='r')
+        sdb = shelve.open( os.path.join(inps.secondary, 'data'), flag='r')
     except:
-        sdb = shelve.open( os.path.join(inps.slave, 'raw'), flag='r')
+        sdb = shelve.open( os.path.join(inps.secondary, 'raw'), flag='r')
 
 
     sFrame = sdb['frame']
@@ -49,8 +49,8 @@ if __name__ == '__main__':
 
     bObj = Baseline()
     bObj.configure()
-    bObj.wireInputPort(name='masterFrame', object=mFrame)
-    bObj.wireInputPort(name='slaveFrame', object=sFrame)
+    bObj.wireInputPort(name='referenceFrame', object=mFrame)
+    bObj.wireInputPort(name='secondaryFrame', object=sFrame)
 
     bObj.baseline()
 

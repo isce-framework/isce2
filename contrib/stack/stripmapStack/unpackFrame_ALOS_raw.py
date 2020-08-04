@@ -38,8 +38,7 @@ def unpack(hdf5, slcname, multiple=False):
     '''
     Unpack HDF5 to binary SLC file.
     '''
-    if not os.path.isdir(slcname):
-        os.makedirs(slcname)
+    os.makedirs(slcname, exist_ok=True)
 
     date = os.path.basename(slcname)
     obj = createSensor('ALOS')

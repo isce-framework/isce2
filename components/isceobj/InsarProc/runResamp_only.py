@@ -69,7 +69,7 @@ def runResamp_only(self):
     
     numRangeBin = objInt.getWidth() 
     lines = objInt.getLength() 
-    instrument = self._insar.getMasterFrame().getInstrument()
+    instrument = self._insar.getReferenceFrame().getInstrument()
     
     offsetField = self._insar.getRefinedOffsetField()                
     

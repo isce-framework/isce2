@@ -52,6 +52,12 @@ URL = Component.Parameter('_url',
     mandatory = False,
     doc = "Url for the high resolution water body mask")
 
+NODATA = Component.Parameter('_nodata',
+    public_name = 'nodata',default = 0,
+    type = int,
+    mandatory = False,
+    doc = "Nodata value for missing tiles")
+
 KEEP_WBDS = Component.Parameter('_keepWbds',
     public_name='keepWbds',
     default = False,
@@ -131,11 +137,7 @@ class SWBDStitcher(DemStitcher):
 
         delta = 1/3600.0
 
-        try:
-            os.makedirs(self._downloadDir)
-        except:
-            #dir already exists
-            pass
+        os.makedirs(self._downloadDir, exist_ok=True)
 
         width = self.getDemWidth(lon,1)
         image.initImage(outname,'read',width,'BYTE')
@@ -168,12 +170,8 @@ class SWBDStitcher(DemStitcher):
         else:
             self._downloadDir = downloadDir
 
-        if not (downloadDir) is  None:
-            try:
-                os.makedirs(downloadDir)
-            except:
-                #dir already exists
-                pass
+        if downloadDir is not None:
+            os.makedirs(downloadDir, exist_ok=True)
         for fileNow in listFile:
             url = self.getFullHttp(source)
             opener = urllib.request.URLopener()
@@ -228,7 +226,7 @@ class SWBDStitcher(DemStitcher):
             syntTileCreated = False
             #check and send a warning if the full region is not available
             if not self._succeded in self._downloadReport.values():
-                self.logger.warning('The full region of interested is not available. Missing region is assumed to be land')
+                self.logger.warning('The full region of interested is not available. Missing region is assumed to be  %s'%(str(self._nodata)))
             for k,v in self._downloadReport.items():
                 if v == self._failed:#symlink each missing file to the reference one created in createFillingFile
                     if not syntTileCreated:#create the synthetic Tile the first time around
@@ -239,7 +237,7 @@ class SWBDStitcher(DemStitcher):
 
         if unzip:
             mmap = np.memmap(outname,np.int8,'w+',shape=(nLat*tileSize,nLon*tileSize))
-            mmap[:,:] = 0
+            mmap[:,:] = self._nodata
             decompressedList = []
             pos = 0
             for i in range(nLat):
@@ -298,7 +296,8 @@ class SWBDStitcher(DemStitcher):
 
     parameter_list = (
                       URL,
-                      KEEP_WBDS
+                      KEEP_WBDS,
+                      NODATA,
                      )
 
     family = 'swbdstitcher'

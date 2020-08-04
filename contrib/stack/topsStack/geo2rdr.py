@@ -11,13 +11,13 @@ import s1a_isce_utils as ut
 
 def createParser():
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', '--master', type=str, dest='master', required=True,
-            help='Directory with the master image')
-    parser.add_argument('-s', '--slave', type=str, dest='slave', required=True,
-            help='Directory with the slave image')
-    parser.add_argument('-g', '--geom_masterDir', type=str, dest='geom_masterDir', default='geom_master',
-            help='Directory for geometry files of the master')
-    parser.add_argument('-c', '--coregSLCdir', type=str, dest='coregdir', default='coreg_slaves',
+    parser.add_argument('-m', '--reference', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
+    parser.add_argument('-s', '--secondary', type=str, dest='secondary', required=True,
+            help='Directory with the secondary image')
+    parser.add_argument('-g', '--geom_referenceDir', type=str, dest='geom_referenceDir', default='geom_reference',
+            help='Directory for geometry files of the reference')
+    parser.add_argument('-c', '--coregSLCdir', type=str, dest='coregdir', default='coreg_secondarys',
             help='Directory with coregistered SLC data')
     parser.add_argument('-a', '--azimuth_misreg', type=str, dest='misreg_az', default='',
             help='A text file that contains zimuth misregistration in subpixels')
@@ -216,15 +216,15 @@ def main(iargs=None):
         runGeo2rdr = runGeo2rdrCPU
     
 
-    masterSwathList = ut.getSwathList(inps.master)
-    slaveSwathList = ut.getSwathList(inps.slave)
+    referenceSwathList = ut.getSwathList(inps.reference)
+    secondarySwathList = ut.getSwathList(inps.secondary)
 
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     for swath in swathList:
-        ##Load slave metadata
-        slave = ut.loadProduct(os.path.join(inps.slave, 'IW{0}.xml'.format(swath)))
-        master = ut.loadProduct(os.path.join(inps.master, 'IW{0}.xml'.format(swath)))
+        ##Load secondary metadata
+        secondary = ut.loadProduct(os.path.join(inps.secondary, 'IW{0}.xml'.format(swath)))
+        reference = ut.loadProduct(os.path.join(inps.reference, 'IW{0}.xml'.format(swath)))
     
         ### output directory
         if inps.overlap:
@@ -232,8 +232,7 @@ def main(iargs=None):
         else:
             outdir = os.path.join(inps.coregdir, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outdir):
-           os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
         if os.path.exists(str(inps.misreg_az)):
             with open(inps.misreg_az, 'r') as f:
@@ -247,28 +246,28 @@ def main(iargs=None):
         else:
              misreg_rg = 0.0
 
-        burstoffset, minBurst, maxBurst = master.getCommonBurstLimits(slave)
+        burstoffset, minBurst, maxBurst = reference.getCommonBurstLimits(secondary)
 
-        ###Burst indices w.r.t master
+        ###Burst indices w.r.t reference
         if inps.overlap:
             maxBurst = maxBurst - 1
-            geomDir = os.path.join(inps.geom_masterDir, inps.overlapDir, 'IW{0}'.format(swath))   
+            geomDir = os.path.join(inps.geom_referenceDir, inps.overlapDir, 'IW{0}'.format(swath))   
        
         else:
-            geomDir = os.path.join(inps.geom_masterDir, 'IW{0}'.format(swath))
+            geomDir = os.path.join(inps.geom_referenceDir, 'IW{0}'.format(swath))
       
     
-        slaveBurstStart = minBurst + burstoffset
+        secondaryBurstStart = minBurst + burstoffset
     
         for mBurst in range(minBurst, maxBurst):
         
-            ###Corresponding slave burst
-            sBurst = slaveBurstStart + (mBurst - minBurst)
-            burstTop = slave.bursts[sBurst]
+            ###Corresponding secondary burst
+            sBurst = secondaryBurstStart + (mBurst - minBurst)
+            burstTop = secondary.bursts[sBurst]
             if inps.overlap:
-                burstBot = slave.bursts[sBurst+1]
+                burstBot = secondary.bursts[sBurst+1]
         
-            print('Overlap pair {0}: Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst, sBurst))
+            print('Overlap pair {0}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst))
             if inps.overlap:
                 ####Generate offsets for top burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
@@ -279,7 +278,7 @@ def main(iargs=None):
         
                 runGeo2rdr(burstTop, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
         
-                print('Overlap pair {0}: Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst+1, sBurst+1))
+                print('Overlap pair {0}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst+1, sBurst+1))
                 ####Generate offsets for bottom burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
                      'lon': os.path.join(geomDir, 'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
@@ -290,7 +289,7 @@ def main(iargs=None):
                 runGeo2rdr(burstBot, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
 
             else:
-                print('Burst {1} of master matched with Burst {2} of slave'.format(mBurst-minBurst, mBurst, sBurst))
+                print('Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst))
                 ####Generate offsets for top burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d.rdr'%(mBurst+1)),
                      'lon': os.path.join(geomDir,'lon_%02d.rdr'%(mBurst+1)),

@@ -38,8 +38,8 @@ logger = logging.getLogger('isce.insar.runResamp')
 def runResamp(self):
     logger.info("Resampling interferogram")
 
-    imageSlc1 =  self.insar.masterSlcImage
-    imageSlc2 =  self.insar.slaveSlcImage
+    imageSlc1 =  self.insar.referenceSlcImage
+    imageSlc2 =  self.insar.secondarySlcImage
     
 
     resampName = self.insar.resampImageName
@@ -86,21 +86,21 @@ def runResamp(self):
     self.insar.resampAmpImage = imageAmp
 
     
-    instrument = self.insar.masterFrame.getInstrument()
+    instrument = self.insar.referenceFrame.getInstrument()
     
     offsetField = self.insar.refinedOffsetField                
     
     lines = self.insar.numberResampLines
    
-    ####Modified to deal with slave PRF correctly
+    ####Modified to deal with secondary PRF correctly
     dopplerCoeff = self.insar.dopplerCentroid.getDopplerCoefficients(inHz=True)
     for num in range(len(dopplerCoeff)):
-        dopplerCoeff[num] /= self.insar.slaveFrame.getInstrument().getPulseRepetitionFrequency()
+        dopplerCoeff[num] /= self.insar.secondaryFrame.getInstrument().getPulseRepetitionFrequency()
 
     numFitCoeff = self.insar.numberFitCoefficients
     
 #    pixelSpacing = self.insar.slantRangePixelSpacing
-    fS = self._insar.getSlaveFrame().getInstrument().getRangeSamplingRate()
+    fS = self._insar.getSecondaryFrame().getInstrument().getRangeSamplingRate()
     pixelSpacing = CN.SPEED_OF_LIGHT/(2.*fS) 
 
     objResamp = stdproc.createResamp()

@@ -523,14 +523,11 @@ def main(iargs=None):
     print(inps.highBandconncomp)
 
     # generate the output directory if it does not exist yet, and back-up the shelve files
-    if not os.path.exists(inps.outDir):
-       os.makedirs(inps.outDir)
+    os.makedirs(inps.outDir, exist_ok=True)
     lowBandShelve = os.path.join(inps.outDir, 'lowBandShelve')
     highBandShelve = os.path.join(inps.outDir, 'highBandShelve')
-    if not os.path.exists(lowBandShelve):
-       os.makedirs(lowBandShelve)
-    if not os.path.exists(highBandShelve):
-       os.makedirs(highBandShelve)
+    os.makedirs(lowBandShelve, exist_ok=True)
+    os.makedirs(highBandShelve, exist_ok=True)
     cmdCp = 'cp ' + inps.lowBandShelve + '* ' + lowBandShelve
     os.system(cmdCp)
     cmdCp = 'cp ' + inps.highBandShelve + '* ' + highBandShelve
@@ -542,10 +539,7 @@ def main(iargs=None):
  
     '''
     outputDir = self.insar.ionosphereDirname
-    if os.path.isdir(outputDir):
-        logger.info('Ionosphere directory {0} already exists.'.format(outputDir))
-    else:
-        os.makedirs(outputDir)
+    os.makedirs(outputDir, exist_ok=True)
     '''
 
     outDispersive = os.path.join(inps.outDir, 'iono.bil')
@@ -559,7 +553,7 @@ def main(iargs=None):
 
     maskFile = os.path.join(inps.outDir, "mask.bil")
 
-    #masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
+    #referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
     wvl, wvlL, wvlH, B = getBandFrequencies(inps)
     
     f0 = SPEED_OF_LIGHT/wvl
@@ -567,7 +561,7 @@ def main(iargs=None):
     fH = SPEED_OF_LIGHT/wvlH
 
     ###Determine looks
-    #azLooks, rgLooks = self.insar.numberOfLooks( masterFrame, self.posting,
+    #azLooks, rgLooks = self.insar.numberOfLooks( referenceFrame, self.posting,
     #                                    self.numberAzimuthLooks, self.numberRangeLooks)
 
 

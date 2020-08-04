@@ -96,8 +96,8 @@ if ($dirname == "SMALL_BASELINES") then
     ls $WORKDIR/[0-9]*/*.slc > $WORKDIR/calamp.in
     set selfile = $WORKDIR/selsbc.in
 else
-    ls $INSARDIR/master/master.slc  > $WORKDIR/calamp.in
-    ls $INSARDIR/*/slave.slc >> $WORKDIR/calamp.in
+    ls $INSARDIR/reference/reference.slc  > $WORKDIR/calamp.in
+    ls $INSARDIR/*/secondary.slc >> $WORKDIR/calamp.in
     set selfile = $WORKDIR/selpsc.in
 endif
 calamp calamp.in $width $WORKDIR/calamp.out

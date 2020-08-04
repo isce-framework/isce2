@@ -46,7 +46,7 @@ logger = logging.getLogger('isce.Util.estimateoffsets')
 SensorSearchWindowSize = {'ALOS':20, 'COSMO_SKYMED':20, 'COSMO_SKYMED_SLC':40,
                           'ENVISAT':20, 'ERS':40, 'JERS':20, 'RADARSAT1':20,
                           'RADARSAT2':20, 'TERRASARX':20, 'TANDEMX':20,
-                          'UAVSAR_SLC':20, 'GENERIC':20}
+                          'UAVSAR_SLC':20, 'SAOCOM':20, 'GENERIC':20}
 DefaultSearchWindowSize = 20
 
 
@@ -221,13 +221,13 @@ class EstimateOffsets(Component):
         if image1 is not None:
             self.image1 = image1
         if (self.image1 == None):
-            raise ValueError("Error. master image not set.")
+            raise ValueError("Error. reference image not set.")
 
         if image2 is not None:
             self.image2 = image2
 
         if (self.image2 == None):
-            raise ValueError("Error. slave image not set.")
+            raise ValueError("Error. secondary image not set.")
 
         if band1 is not None:
             self.band1 = int(band1)
@@ -454,11 +454,11 @@ class EstimateOffsets(Component):
         self.debugFlag = str(var)
         return
 
-    def setMasterImage(self,im):
+    def setReferenceImage(self,im):
         self.image1 = im
         return
 
-    def setSlaveImage(self,im):
+    def setSecondaryImage(self,im):
         self.image2 = im
         return
 

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="reference">
+  <property name="safe">../data/S1A_IW_SLC__1SSV_20150119T135944_20150119T140004_004241_005286_4271.SAFE</property>
+  <property name="swath number">2</property>
+  <!-- Be careful. Metadata for unpacked product will be stored in "output directory".xml file. So don't use the same name for input catalog file and output directory. You will end up overwriting the input catalog. We use referencedir to ensure we dont overwrite reference.xml -->
+  <property name="output directory">referencedir</property>
+  <property name="orbit directory">/home/vagrant/orbit/S1A/precise</property>
+  <property name="auxiliary data directory">/home/vagrant/orbit/S1A/aux</property>
+</component>
+<!-- Shown above is the bare minimum input XML file for TOPS SENTINEL1 sensor. The reference and secondary catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative to the processing directory.
+
+    Note 1: SAFE/zip files
+    ======================
+    topsApp.py is capable of reading in imagery directly from the zip file. You can directly provide the zipfile as input. Note that the filename must end in zip (and not .SAFE) for ISCE to recognize the zip archive.
+
+
+    Note 2: Auxiliary data 
+    =======================
+
+    Interferograms generated from SLCs processed using different versions of IPF processors can exhibit sharp phase boundaries between swaths. Setting the auxiliary data directory is highly recommended as ISCE will read these files (depending on the IPF version) and automatically apply phase corrections to the SLCs if needed.
+
+    For more details on what these corrections are and where to get the aux files, see: https://sentinel.esa.int/documents/247904/1653440/Sentinel-1-IPF_EAP_Phase_correction
+
+    Aux data can be accessed here: 
+    https://qc.sentinel1.eo.esa.int/aux_cal/?instrument_configuration_id=3
+
+    
+    Note 3: Precise orbits
+    =======================
+
+    Use of precise / restituted orbits are highly recommend for precise processing of Sentinel-1A interferograms. You can dump all the orbits in a common folder and ISCE will automatically identify the right orbit file to use with your data.
+
+    Precise orbit data can be accessed here and are typically available 3 weeks after the SLCs are available:
+    https://qc.sentinel1.eo.esa.int/aux_poeorb/
+
+    Restituted orbits can be accessed here and are available at the same time as the SLCs:
+    https://qc.sentinel1.eo.esa.int/aux_resorb/
+
+
+    Note 3: Multiple slices
+    ========================
+
+    ISCE can automatically stitch multiple Sentinel-1A (or -1B) SLC slices. The "safe" entry should be provided as a lists as follows:
+
+  <property name="safe">['../data/S1A_IW_SLC__1SSV_20150119T135944_20150119T140004_004241_005286_4271.SAFE', '../data/S1A_IW_SLC__1SSV_20150119T140000_20150119T140020_004241_005286_4271.SAFE']</property>
+
+    Note 4 : Region of Interest
+    ===========================
+
+    Sentinel-1A or -1B slice typically covers 240km in azimuth. Each swath spans about 80km in ground range. Often, there is a need for high resolution processing over a smaller area of interest. To work with a small region of interest, you can specify the extent the lat,lon box as shown below:
+
+    <property name="region of interest">[35.55, 35.7, -119.6, -119.4]</property>
+
+    The region of interest and bounding boxes always use the same convention in ISCE - South, North, West, East (SNWE).
+
+-->

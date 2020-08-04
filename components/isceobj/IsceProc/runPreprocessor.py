@@ -59,9 +59,9 @@ def runPreprocessor(self):
             if not 'uavsar_rpi' in sensorname.lower():
                 sensor = getsensorobj(scene, pol, rawfile, sensorname, sceneid)
             else:
-                #uavsar_rpi requires that we name a 'master' and a 'slave'
+                #uavsar_rpi requires that we name a 'reference' and a 'secondary'
                 #this sensor is strictly pairwise processing
-                name = 'master' if sceneid == self._isce.refScene else 'slave'
+                name = 'reference' if sceneid == self._isce.refScene else 'secondary'
                 sensor = getsensorobj(scene, pol, rawfile, sensorname, name)
 
             catalog = isceobj.Catalog.createCatalog(self._isce.procDoc.name)
@@ -114,8 +114,8 @@ def getBaseline(frame1, frame2, catalog=None, sceneid='NO_ID'):
         baseObj = Baseline()
         baseObj.configure()
         baseObj.baselineLocation = option
-        baseObj.wireInputPort(name='masterFrame',object=frame1)
-        baseObj.wireInputPort(name='slaveFrame',object=frame2)
+        baseObj.wireInputPort(name='referenceFrame',object=frame1)
+        baseObj.wireInputPort(name='secondaryFrame',object=frame2)
         try:
             baseObj.baseline()
             success = True
@@ -172,7 +172,8 @@ def reformatscene(scenedict, pol, sensorname):
         'ERS_ENVI': 'imagefile', #KK 2013-11-26 (ers in envi format)
         'UAVSAR_RPI':'annotationfile',
         'UAVSAR_STACK':'annotationfile',
-        'SENTINEL1A':'tiff'
+        'SENTINEL1A':'tiff',
+        'SAOCOM':'tiff'
         }
     try:
         key = imageKey[sensorname.upper()]

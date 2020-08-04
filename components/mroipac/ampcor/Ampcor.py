@@ -1,28 +1,20 @@
 #!/usr/bin/env python3 
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Copyright 2012 California Institute of Technology. ALL RIGHTS RESERVED.
+# copyright: 2012 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+# any commercial use must be negotiated with the office of technology transfer
+# at the california institute of technology.
 # 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+# this software may be subject to u.s. export control laws. by accepting this
+# software, the user agrees to comply with all applicable u.s. export laws and
+# regulations. user has the responsibility to obtain export licenses,  or other
+# export authority as may be required before exporting such information to
+# foreign countries or providing access to foreign persons.
 # 
-# http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# 
-# United States Government Sponsorship acknowledged. This software is subject to
-# U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
-# (No [Export] License Required except when exporting to an embargoed country,
-# end user, or in support of a prohibited end use). By downloading this software,
-# the user agrees to comply with all applicable U.S. export laws and regulations.
-# The user has the responsibility to obtain export licenses, or other export
-# authority as may be required before exporting this software to any 'EAR99'
-# embargoed foreign country or citizen of those countries.
+# installation and use of this software is restricted by a license agreement
+# between the licensee and the california institute of technology. it is the
+# user's responsibility to abide by the terms of the license agreement.
 #
 # Author: Giangi Sacco
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,7 +33,7 @@ from iscesys.Compatibility import Compatibility
 Compatibility.checkPythonVersion()
 from mroipac.ampcor import ampcor
 from isceobj.Util.mathModule import is_power2
-from isceobj.Util.decorators import use_api
+#from isceobj.Util.decorators import use_api
 
 WINDOW_SIZE_WIDTH = Component.Parameter('windowSizeWidth',
         public_name='WINDOW_SIZE_WIDTH',
@@ -297,17 +289,17 @@ class Ampcor(Component):
                       DEBUG_FLAG,
                       DISPLAY_FLAG)
 
-    @use_api
+#    @use_api
     def ampcor(self,slcImage1 = None,slcImage2 = None, band1=None, band2=None):
         if not (slcImage1 == None):
             self.slcImage1 = slcImage1
         if (self.slcImage1 == None):
-            print("Error. master slc image not set.")
+            print("Error. reference slc image not set.")
             raise Exception
         if not (slcImage2 == None):
             self.slcImage2 = slcImage2
         if (self.slcImage2 == None):
-            print("Error. slave slc image not set.")
+            print("Error. secondary slc image not set.")
             raise Exception
 
         if band1 is not None:
@@ -396,8 +388,8 @@ class Ampcor(Component):
         #if self.searchWindowSizeHeight >= 2*self.windowSizeHeight :
         #    raise ValueError('Search Window Size Height should be < 2 * Window Size Height')
 
-        if self.zoomWindowSize >= min(self.searchWindowSizeWidth, self.searchWindowSizeHeight):
-            raise ValueError('Zoom window size should be <= Search window size')
+        #if self.zoomWindowSize >= min(self.searchWindowSizeWidth, self.searchWindowSizeHeight):
+        #    raise ValueError('Zoom window size should be <= Search window size')
 
 
     def checkSkip(self):
@@ -463,7 +455,7 @@ class Ampcor(Component):
        
         xMargin = 2*self.searchWindowSizeWidth + self.windowSizeWidth
         yMargin = 2*self.searchWindowSizeHeight + self.windowSizeHeight
-        ######Checks related to the master image only 
+        ######Checks related to the reference image only 
         #if( self.firstSampleAcross < xMargin):
         #    raise ValueError('First sample is not far enough from the left edge in reference image.')
 
@@ -518,6 +510,12 @@ class Ampcor(Component):
         ampcor.setScaleFactorY_Py(self.scaleFactorY)
         ampcor.setAcrossLooks_Py(self.acrossLooks)
         ampcor.setDownLooks_Py(self.downLooks)
+
+        #reference values
+        #self.winsizeFilt = 8
+        #self.oversamplingFactorFilt = 64
+        ampcor.setWinsizeFilt_Py(self.winsizeFilt)
+        ampcor.setOversamplingFactorFilt_Py(self.oversamplingFactorFilt)
 
         return
 
@@ -607,11 +605,11 @@ class Ampcor(Component):
         self.displayFlag = bool(var)
         return
     
-    def setMasterSlcImage(self,im):
+    def setReferenceSlcImage(self,im):
         self.slcImage1 = im
         return
     
-    def setSlaveSlcImage(self,im):
+    def setSecondarySlcImage(self,im):
         self.slcImage2 = im
         return
 
@@ -640,6 +638,14 @@ class Ampcor(Component):
         if not is_power2(temp):
             raise ValueError('Oversampling factor needs to be a power of 2.')
         self.oversamplingFactor = temp
+
+    def setWinsizeFilt(self, var):
+        temp = int(var)
+        self.winsizeFilt = temp
+
+    def setOversamplingFactorFilt(self, var):
+        temp = int(var)
+        self.oversamplingFactorFilt = temp
 
     def setSearchWindowSizeWidth(self, var):
         self.searchWindowSizeWidth = int(var)
@@ -822,6 +828,8 @@ class Ampcor(Component):
         self.scaleFactorX = None
         self.scaleFactorY = None
         self.numRows = None
+        self.winsizeFilt = 1
+        self.oversamplingFactorFilt = 64
         self.dictionaryOfVariables = { \
                                       'IMAGETYPE1' : ['imageDataType1', 'str', 'optional'], \
                                       'IMAGETYPE2' : ['imageDataType2', 'str', 'optional'], \

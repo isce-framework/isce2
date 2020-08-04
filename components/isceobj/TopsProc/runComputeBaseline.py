@@ -17,8 +17,8 @@ def runComputeBaseline(self):
 
 
     swathList = self._insar.getInputSwathList(self.swaths)
-    commonBurstStartMasterIndex = [-1] * self._insar.numberOfSwaths
-    commonBurstStartSlaveIndex = [-1] * self._insar.numberOfSwaths
+    commonBurstStartReferenceIndex = [-1] * self._insar.numberOfSwaths
+    commonBurstStartSecondaryIndex = [-1] * self._insar.numberOfSwaths
     numberOfCommonBursts = [0] * self._insar.numberOfSwaths
 
 
@@ -26,15 +26,15 @@ def runComputeBaseline(self):
 
     for swath in swathList:
 
-        masterxml = os.path.join( self._insar.masterSlcProduct,'IW{0}.xml'.format(swath))
-        slavexml = os.path.join( self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath))
+        referencexml = os.path.join( self._insar.referenceSlcProduct,'IW{0}.xml'.format(swath))
+        secondaryxml = os.path.join( self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath))
 
-        if os.path.exists(masterxml) and os.path.exists(slavexml):
-            master = self._insar.loadProduct(masterxml)
-            slave = self._insar.loadProduct(slavexml)
+        if os.path.exists(referencexml) and os.path.exists(secondaryxml):
+            reference = self._insar.loadProduct(referencexml)
+            secondary = self._insar.loadProduct(secondaryxml)
 
-            burstOffset, minBurst, maxBurst = master.getCommonBurstLimits(slave)
-            commonSlaveIndex = minBurst + burstOffset
+            burstOffset, minBurst, maxBurst = reference.getCommonBurstLimits(secondary)
+            commonSecondaryIndex = minBurst + burstOffset
             numberCommon = maxBurst - minBurst
 
             if numberCommon == 0:
@@ -42,17 +42,17 @@ def runComputeBaseline(self):
 
             else:
                 ###Bookkeeping
-                commonBurstStartMasterIndex[swath-1] = minBurst
-                commonBurstStartSlaveIndex[swath-1]  = commonSlaveIndex
+                commonBurstStartReferenceIndex[swath-1] = minBurst
+                commonBurstStartSecondaryIndex[swath-1]  = commonSecondaryIndex
                 numberOfCommonBursts[swath-1] = numberCommon
 
 
-                catalog.addItem('IW-{0} Number of bursts in master'.format(swath), master.numberOfBursts, 'baseline')
-                catalog.addItem('IW-{0} First common burst in master'.format(swath), minBurst, 'baseline')
-                catalog.addItem('IW-{0} Last common burst in master'.format(swath), maxBurst, 'baseline')
-                catalog.addItem('IW-{0} Number of bursts in slave'.format(swath), slave.numberOfBursts, 'baseline')
-                catalog.addItem('IW-{0} First common burst in slave'.format(swath), minBurst + burstOffset, 'baseline')
-                catalog.addItem('IW-{0} Last common burst in slave'.format(swath), maxBurst + burstOffset, 'baseline')
+                catalog.addItem('IW-{0} Number of bursts in reference'.format(swath), reference.numberOfBursts, 'baseline')
+                catalog.addItem('IW-{0} First common burst in reference'.format(swath), minBurst, 'baseline')
+                catalog.addItem('IW-{0} Last common burst in reference'.format(swath), maxBurst, 'baseline')
+                catalog.addItem('IW-{0} Number of bursts in secondary'.format(swath), secondary.numberOfBursts, 'baseline')
+                catalog.addItem('IW-{0} First common burst in secondary'.format(swath), minBurst + burstOffset, 'baseline')
+                catalog.addItem('IW-{0} Last common burst in secondary'.format(swath), maxBurst + burstOffset, 'baseline')
                 catalog.addItem('IW-{0} Number of common bursts'.format(swath), numberCommon, 'baseline')
 
                 refElp = Planet(pname='Earth').ellipsoid
@@ -61,22 +61,24 @@ def runComputeBaseline(self):
 
                 for boff in [0, numberCommon-1]:
                     ###Baselines at top of common bursts
-                    mBurst = master.bursts[minBurst + boff]
-                    sBurst = slave.bursts[commonSlaveIndex + boff]
+                    mBurst = reference.bursts[minBurst + boff]
+                    sBurst = secondary.bursts[commonSecondaryIndex + boff]
 
                     ###Target at mid range 
                     tmid = mBurst.sensingMid
                     rng = mBurst.midRange
-                    masterSV = mBurst.orbit.interpolate(tmid, method='hermite')
+                    referenceSV = mBurst.orbit.interpolate(tmid, method='hermite')
                     target = mBurst.orbit.rdr2geo(tmid, rng)
 
                     slvTime, slvrng = sBurst.orbit.geo2rdr(target)
-                    slaveSV = sBurst.orbit.interpolateOrbit(slvTime, method='hermite')
+                    secondarySV = sBurst.orbit.interpolateOrbit(slvTime, method='hermite')
 
                     targxyz = np.array(refElp.LLH(target[0], target[1], target[2]).ecef().tolist())
-                    mxyz = np.array(masterSV.getPosition())
-                    mvel = np.array(masterSV.getVelocity())
-                    sxyz = np.array(slaveSV.getPosition())
+                    mxyz = np.array(referenceSV.getPosition())
+                    mvel = np.array(referenceSV.getVelocity())
+                    sxyz = np.array(secondarySV.getPosition())
+                    mvelunit = mvel / np.linalg.norm(mvel)
+                    sxyz = sxyz - np.dot ( sxyz-mxyz, mvelunit) * mvelunit
 
                     aa = np.linalg.norm(sxyz-mxyz)
                     costheta = (rng*rng + aa*aa - slvrng*slvrng)/(2.*rng*aa)
@@ -98,8 +100,8 @@ def runComputeBaseline(self):
             print('Skipping processing for swath number IW-{0}'.format(swath))
 
 
-    self._insar.commonBurstStartMasterIndex = commonBurstStartMasterIndex 
-    self._insar.commonBurstStartSlaveIndex = commonBurstStartSlaveIndex   
+    self._insar.commonBurstStartReferenceIndex = commonBurstStartReferenceIndex 
+    self._insar.commonBurstStartSecondaryIndex = commonBurstStartSecondaryIndex   
     self._insar.numberOfCommonBursts = numberOfCommonBursts
 
 

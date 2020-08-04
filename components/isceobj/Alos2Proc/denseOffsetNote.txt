@@ -1,0 +1,31 @@
+on the following paramters might be changed in the denseoffset steps:
+=======================================================================
+        if self.frameOffsetMatching == False:
+            self._insar.frameRangeOffsetMatchingReference = offsetReference[2]
+            self._insar.frameAzimuthOffsetMatchingReference = offsetReference[3]
+        self._insar.frameRangeOffsetMatchingSecondary = offsetSecondary[2]
+        self._insar.frameAzimuthOffsetMatchingSecondary = offsetSecondary[3]
+
+
+Therefore these denseoffset steps could be moved to after 'frame_mosaic' step
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

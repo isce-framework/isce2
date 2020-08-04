@@ -49,7 +49,7 @@ SENSOR = Application.Facility('sensor',
                               factory='createSensor',
                               args=(SENSOR_NAME, ),
                               mandatory=True,
-                              doc="Master raw data component"
+                              doc="Reference raw data component"
                               )
 DOPPLER = Application.Facility('doppler',
                                public_name='doppler',
@@ -57,7 +57,7 @@ DOPPLER = Application.Facility('doppler',
                                factory='createDoppler',
                                args=(DOPPLER_METHOD, ),
                                mandatory=False,
-                               doc="Master Doppler calculation method"
+                               doc="Reference Doppler calculation method"
                                  )
 
 class makeRawApp(Application):

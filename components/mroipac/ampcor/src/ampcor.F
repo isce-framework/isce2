@@ -1,3 +1,14 @@
+!c This program has been upgraded for matching ScanSAR full-aperture images.
+!c 1. setting the following two parameters to use:
+!c      winsize_filt = 8
+!c      i_covs_filt = 64
+!c 2. use same original parameter values as you use in the original program for
+!c    ScanSAR full-aperture image matching.
+!c 3. Original matching method is still available by setting winsize_filt to 1.
+!c    In this case, i_covs_filt has no effects.
+
+!c Cunren Liang, 25-DEC-2019, Caltech
+
 !c****************************************************************
 
       subroutine ampcor(imgAccessor1, imgAccessor2, band1, band2)
@@ -126,6 +137,24 @@
       external seconds
       integer count
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c    for ScanSAR full-aperture mode matching
+      real*4 r_shfty_filt,r_shftx_filt
+      integer i_shiftx_filt,i_shifty_filt
+      !integer winsize_filt
+      integer i_wsyi_filt
+      integer i_wsyj_filt
+      integer iii, num_pixel
+      !integer i_covs_filt, i_cw_filt
+      integer i_cw_filt
+      real, dimension(:,:), allocatable :: r_imgi_filt, r_imgj_filt, r_imgc_filt
+      complex, dimension(:), allocatable :: c_corr_filt, c_corrt_filt
+      real tmp_corr
+      integer continue_fine_matching
+
+!c    added to avoid accessing indexes out of bounds (segmentation fault) 02-FEB-2020
+      integer x_index
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       write(6,*) 'Input Bands: ', band1, band2
 
@@ -204,6 +233,48 @@
       i_n2wsxj = 2**(nextpower(i_wsxjp))
       i_n2wsyj = 2**(nextpower(i_wsyjp))
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c    for ScanSAR full-aperture mode matching
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !input parameter reference values:
+      !winsize_filt should be power of 2 to faciliate subsequent processing
+      !winsize_filt = 8
+      !i_covs_filt = i_covs
+      !i_covs_filt = 64
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      !better be power of 2 for fft
+      i_cw_filt = (i_wsyj - i_wsyi) / winsize_filt
+      i_wsyi_filt = i_wsyi / winsize_filt
+      i_wsyj_filt = i_wsyj / winsize_filt
+
+      if(winsize_filt .ne. 1)then
+        write(6,*) ''
+        write(6,*) '   *** using ScanSAR full-aperture mode for gross offset estimation ***'
+        write(6,*) 'azimuth multi-looking window size: ', winsize_filt
+        write(6,*) 'number of azimuth samples before and after multi-looking (reference): ', i_wsyi, i_wsyi_filt
+        write(6,*) 'number of azimuth samples before and after multi-looking (secondary): ', i_wsyj, i_wsyj_filt
+        write(6,*) 'azimuth covariance surface oversampling factor: ', i_covs_filt
+        write(6,*) 'total number of azimuth samples to be oversampled', i_cw_filt
+        write(6,*) ''
+      endif
+
+      if(i_cw_filt .lt. 4)then
+        write(6,*) 'ERROR - number of samples availabe for estating gross offset is too small:', i_cw_filt
+        write(6,*) '        the value is computed as 2*i_srchy/winsize_filt'
+        write(6,*) '        current i_srchy (azimuth search window size):', i_srchy
+        write(6,*) '        current winsize_filt (azimuth filtering window size):', winsize_filt
+        return
+      endif
+
+      if(i_cw_filt .ne. 2**nextpower(i_cw_filt))then
+        write(6,*) 'WARNING - number of samples availabe for estating gross offset is NOT power of 2:', i_cw_filt
+        write(6,*) '          the value is computed as 2*i_srchy/winsize_filt'
+        write(6,*) '          better to make it power of 2 for FFT'
+        write(6,*) '          current i_srchy (azimuth search window size):', i_srchy
+        write(6,*) '          current winsize_filt (azimuth filtering window size):', winsize_filt
+      endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       !c Set max width to largest of the width
       i_maxsamp = max(i_samples(1), i_samples(2))
@@ -229,6 +300,15 @@
        allocate( c_chipsch(i_n2wsxj*i_n2wsyj) )
        allocate( c_ossch(i_ovs*i_n2wsxj*i_ovs*i_n2wsyj) )
        allocate( c_osref(i_ovs*i_n2wsxi*i_ovs*i_n2wsyi) )
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c    for ScanSAR full-aperture mode matching
+      allocate( r_imgi_filt(i_wsxi,i_wsyi_filt))
+      allocate( r_imgj_filt(i_wsxj,i_wsyj_filt))
+      allocate( r_imgc_filt(i_wsxj,i_wsyj_filt))
+      allocate( c_corr_filt(i_covs_filt*i_cw_filt*i_covs_filt*i_cw_filt) )
+      allocate( c_corrt_filt(i_cw_filt*i_cw_filt) )
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !c-------------------------------
 !c        begin ruggedize ... a bunch of input checking
@@ -485,13 +565,27 @@
 
             do i_yy = 1,i_wsyi
                do i_xx = 1,i_wsxi
-                  r_imgi(i_xx,i_yy) = cabs(c_refimg(i_x+i_xx-1,i_yy))
+
+                  x_index = i_x+i_xx-1
+                  if ((x_index .lt. 1).or.(x_index .gt. i_maxsamp)) then
+                     r_imgi(i_xx,i_yy) = 0.0
+                  else
+                     r_imgi(i_xx,i_yy) = cabs(c_refimg(x_index,i_yy))
+                  endif
+
                end do
             end do
 
             do i_yy = 1, i_wsyj
                do i_xx = 1 , i_wsxj
-                  r_imgj(i_xx,i_yy) = cabs(c_srchimg(i_xlu+i_xx-1-i_srchx+i_grossx,i_yy))
+
+                  x_index = i_xlu+i_xx-1-i_srchx+i_grossx
+                  if ((x_index .lt. 1).or.(x_index .gt. i_maxsamp)) then
+                     r_imgj(i_xx,i_yy) = 0.0
+                  else
+                     r_imgj(i_xx,i_yy) = cabs(c_srchimg(x_index,i_yy))
+                  endif
+
                end do
             end do
 
@@ -504,8 +598,201 @@
                call dump_chip_r4(a_debugfile,r_imgj,1,i_wsxj,1,i_wsyj,i_wsxj,i_wsyj)
             endif
 
-!c     correlate the subimages
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c    for ScanSAR full-aperture mode matching
 
+!c          correlate azimuth-multiple-looked images
+            if (winsize_filt .ne. 1) then
+!c          get azimuth-multiple-looked images
+              do i_yy = 1,i_wsyi_filt
+                 do i_xx = 1,i_wsxi
+                    r_imgi_filt(i_xx,i_yy) = 0.
+                    num_pixel = 0
+                    do iii = 1,winsize_filt
+                      if(r_imgi(i_xx,(i_yy-1)*winsize_filt+iii) .ne. 0) then
+                        num_pixel = num_pixel + 1
+                        r_imgi_filt(i_xx,i_yy) = r_imgi_filt(i_xx,i_yy) + r_imgi(i_xx,(i_yy-1)*winsize_filt+iii)**2
+                      endif
+                    end do
+                    if(num_pixel .ne. 0) then
+                      r_imgi_filt(i_xx,i_yy) = sqrt(r_imgi_filt(i_xx,i_yy)/num_pixel)
+                    endif
+                 end do
+              end do
+
+
+              do i_yy = 1, i_wsyj_filt
+                 do i_xx = 1 , i_wsxj
+                    r_imgj_filt(i_xx,i_yy) = 0.
+                    num_pixel = 0
+                    do iii = 1,winsize_filt
+                      if(r_imgj(i_xx,(i_yy-1)*winsize_filt+iii) .ne. 0) then
+                        num_pixel = num_pixel + 1
+                        r_imgj_filt(i_xx,i_yy) = r_imgj_filt(i_xx,i_yy) + r_imgj(i_xx,(i_yy-1)*winsize_filt+iii)**2
+                      endif
+                    end do
+                    if(num_pixel .ne. 0) then
+                      r_imgj_filt(i_xx,i_yy) = sqrt(r_imgj_filt(i_xx,i_yy)/num_pixel)
+                    endif
+                 end do
+              end do
+
+!c            correlate images
+!c            i_avgx = i_avgy = 1 
+              call correlate(r_imgi_filt,r_imgj_filt,i_wsxi,i_wsyi_filt,i_wsxj,
+     &           i_wsyj_filt,1,1,1,r_meani,r_stdvi,r_meanj,
+     &           r_stdvj,r_peak,r_noise,r_cov,r_eval1,
+     &           r_eval2,r_evec1,r_evec2,r_imgc_filt,i_shiftx_filt,i_shifty_filt,i_edge,
+     &           i_flag,l_debug)
+
+              r_shftx_filt=float(i_shiftx_filt) - i_srchx + i_grossx
+              r_shfty_filt=float(i_shifty_filt) - float(i_srchy)/winsize_filt + float(i_grossy)/winsize_filt
+              r_shfty_filt=r_shfty_filt*winsize_filt
+
+              if(i_flag .eq. 0 .and. i_edge(1) .eq. 0 .and.
+     &           i_edge(2) .eq. 0)then !found a potentially good data point
+
+                r_outside = 0.0
+                i_cnta = 0
+                do l=max(i_shifty_filt-9,1),min(i_shifty_filt+11,i_wsyj_filt-i_wsyi_filt)
+                  do k=max(i_shiftx_filt-9,1),min(i_shiftx_filt+11,i_wsxj-i_wsxi)
+                    i_cnta = i_cnta + 1
+                    r_outside = r_outside + r_imgc_filt(k,l)**2
+                  enddo
+                enddo
+                r_outside = r_outside - r_peak**2
+                r_outside = r_outside/(i_cnta-1)
+
+                r_snr = r_peak**2/max(r_outside,1.e-10)
+
+                if(r_snr .gt. r_snrth .and. r_cov(1) .lt. r_covth .and. r_cov(2) .lt. r_covth)then
+                  continue_fine_matching = 1
+                else
+                  continue_fine_matching = 0
+                endif
+
+              else
+                continue_fine_matching = 0
+              endif
+
+!c            compute finer offset by oversampling covariance surface
+              if(continue_fine_matching .ne. 0)then
+                r_max = 0.0
+                r_mean_cor = 0.0
+                i_cnta = 0
+                i_px = i_shiftx_filt+1
+                i_py = i_shifty_filt+1
+
+                do i_yy=-i_cw_filt/2,i_cw_filt/2-1
+
+                    do i_xx=-i_cw_filt/2,i_cw_filt/2-1
+
+                      i_index = (i_yy+i_cw_filt/2)*i_cw_filt + i_xx + i_cw_filt/2 + 1
+
+                      if (i_xx+i_px .ge. 1 .and. i_xx+i_px .le. (2*i_srchx+1)*1 .and.
+     &                         i_yy+i_py .ge. 1 .and. i_yy+i_py .le. (2*i_srchy+1)*1 )then
+                        c_corrt_filt(i_index) = cmplx(abs(r_imgc_filt(i_xx+i_px,i_yy+i_py)/r_peak),0.)
+                        r_mean_cor = r_mean_cor + cabs(c_corrt_filt(i_index))
+                        i_cnta = i_cnta + 1
+                      else
+                        c_corrt_filt(i_index) = cmplx(0.0, 0.0)
+                      endif
+
+                      if(cabs(c_corrt_filt(i_index)) .gt. r_max)then
+                        r_max = cabs(c_corrt_filt(i_index))
+                        i_p1 = i_xx
+                        i_p2 = i_yy
+                      endif
+
+                  enddo
+
+                enddo
+
+!c              substract off the mean
+!c              looks like it does not do anything, so can comment out these
+!c                r_mean_cor = r_mean_cor/max(i_cnta,1)
+!c                r_mean_cor = 0.0
+!c                do i_yy=-i_cw_filt/2,i_cw_filt/2-1
+!c                  do i_xx=-i_cw_filt/2,i_cw_filt/2-1
+!c                    i_index = (i_yy+i_cw_filt/2)*i_cw_filt + i_xx + i_cw_filt/2 + 1
+!c                    c_corrt_filt(i_index) = c_corrt_filt(i_index) - cmplx(r_mean_cor,0.0)
+!c                  enddo
+!c                enddo
+
+!c              oversample via Fourier transforms
+!c              forward fft the data
+                i_nn(1) = i_cw_filt
+                i_nn(2) = i_cw_filt
+                i_dir = 1
+                call fourn2d(c_corrt_filt,i_nn,i_dir)
+
+!c              spread the spectral data out for inverse transforms
+                i_nn(1) = i_cw_filt*i_covs_filt
+                i_nn(2) = i_cw_filt*i_covs_filt
+                i_dir = -1
+
+                do k=1,i_nn(2)
+                   do l=1,i_nn(1)
+                      i_index = (k-1)*i_nn(1) + l
+                      c_corr_filt(i_index) = 0.0
+                   enddo
+                enddo
+
+                do l=1,i_cw_filt/2
+                   do k=1,i_cw_filt/2
+                      i_index = (k-1)*i_nn(1) + l
+                      i_indexi = (k-1)*i_cw_filt + l
+                      c_corr_filt(i_index) = c_corrt_filt(i_indexi)
+                      i_index = l + (i_nn(2)-i_cw_filt/2+k-1)*i_nn(1)
+                      i_indexi = l + (k+i_cw_filt/2-1)*i_cw_filt
+                      c_corr_filt(i_index) = c_corrt_filt(i_indexi)
+                      i_index = i_nn(1)-i_cw_filt/2+l + (k-1)*i_nn(2)
+                      i_indexi = l+i_cw_filt/2 + (k-1)*i_cw_filt
+                      c_corr_filt(i_index) = c_corrt_filt(i_indexi)
+                      i_index = i_nn(1)-i_cw_filt/2+l + (i_nn(2)-i_cw_filt/2+k-1)*i_nn(1)
+                      i_indexi = l+i_cw_filt/2 + (k+i_cw_filt/2-1)*i_cw_filt
+                      c_corr_filt(i_index) = c_corrt_filt(i_indexi)
+                   enddo
+                enddo
+
+!c              inverse transform
+                call fourn2d(c_corr_filt,i_nn,i_dir)
+
+
+!c              detect the peak
+                 r_max=0.
+                 do i_yy=1,i_cw_filt*i_covs_filt
+                    do i_xx=1,i_cw_filt*i_covs_filt
+                       i_index = (i_yy-1)*i_cw_filt*i_covs_filt + i_xx
+                       tmp_corr = cabs(c_corr_filt(i_index))/((i_cw_filt**2)*(i_cw_filt*i_covs_filt)**2)
+                       if (abs(i_xx-i_cw_filt*i_covs_filt/2) .le. i_covs_filt .and.
+     &                          abs(i_yy-i_cw_filt*i_covs_filt/2) .le. i_covs_filt) then
+                          if (tmp_corr .ge. r_max) then
+                             r_max = tmp_corr
+                             i_cpeak(1) = i_xx - i_cw_filt/2*i_covs_filt
+                             i_cpeak(2) = i_yy - i_cw_filt/2*i_covs_filt
+                          endif
+                       endif
+                    enddo
+                 enddo
+
+                 r_oscoroff(1) = float(i_cpeak(1)-1)/float(i_covs_filt)
+                 r_oscoroff(2) = float(i_cpeak(2)-1)/float(i_covs_filt)
+                 r_oscoroff(2) = r_oscoroff(2) * winsize_filt
+
+                 r_shftx = r_oscoroff(1)/1 + r_shftx_filt + i_xlu - i_x
+                 r_shfty = r_oscoroff(2)/1 + r_shfty_filt + i_ylu - i_y
+
+                 !get integer values for subsequent use. note that all four variables
+                 !are used, so they need to be consistent
+                 r_shftx = nint(r_shftx)
+                 r_shfty = nint(r_shfty)
+                 i_shiftx = nint(r_shftx) + i_srchx - i_grossx
+                 i_shifty = nint(r_shfty) + i_srchy - i_grossy
+              endif
+            else
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c          correlate original images
             call correlate(r_imgi,r_imgj,i_wsxi,i_wsyi,i_wsxj,
      &           i_wsyj,i_avgx,i_avgy,1,r_meani,r_stdvi,r_meanj,
      &           r_stdvj,r_peak,r_noise,r_cov,r_eval1,
@@ -546,9 +833,21 @@
 
                r_snr = r_peak**2/max(r_outside,1.e-10)
 !ccccc               write(6,'(a,1x,2(f20.10,1x))') 'Peak/SNR = ',r_peak,r_snr
-
                if(r_snr .gt. r_snrth .and. r_cov(1) .lt. r_covth .and. r_cov(2) .lt. r_covth)then
+                continue_fine_matching = 1
+               else
+                continue_fine_matching = 0
+               endif
+            else
+              continue_fine_matching = 0
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            endif
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+!c          this is just used to keep the original indentation level
+            if(1 .eq. 1)then
+               if(continue_fine_matching .ne. 0)then
 !c     oversample the region around the peak 2 to 1 to estimate the fractional offset
 
 !c     write the reference image and search image around the peak into arrays
@@ -1138,6 +1437,16 @@
          deallocate( c_chipsch)
          deallocate( c_ossch)
          deallocate( c_osref)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!c    for ScanSAR full-aperture mode matching
+         deallocate( r_imgi_filt)
+         deallocate( r_imgj_filt)
+         deallocate( r_imgc_filt)
+         deallocate( c_corr_filt)
+         deallocate( c_corrt_filt)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
       close(13)
       close(14)
 !c     close(15)

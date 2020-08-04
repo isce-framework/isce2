@@ -470,7 +470,7 @@ def mmapFromISCE(fname, logger=None):
             isceFile=False
             dataName = fname
         except:
-            raise Exception('Input file: {0} should either be an ISCE image / GDAL image. Appears to be neither')
+            raise Exception('Input file: {0} should either be an ISCE image / GDAL image. Appears to be neither'.format(fname))
 
     if logger is not None:
         logger.debug('Creating readonly ISCE mmap with \n' +

@@ -1,0 +1,363 @@
+######################################################################################
+# Tutorial for InSAR Applications alos2App.py and alos2burstApp.py
+# Cunren Liang, JPL/Caltech, March 2020
+######################################################################################
+
+The alos2App.py is designed to process all possible InSAR combinations of ALOS-2 multi-mode
+data. ALOS-2 can acquire data in spotlight, stripmap and ScanSAR modes. In each mode, the 
+data may have different sample size, coverage, look side (right/left), range band, azimuth band, 
+wavelength, and so on. In addition, the two images used for interferometry can be acquired in 
+different acquistion modes such as ScanSAR-stripmap interferometry. As long as the reference and 
+secondary images meet the following requirements:
+
+1. acquired on the same track
+2. have enough spatial coverage
+3. have enough range overlap band
+4. have enough azimuth overlap band
+
+an interferogram can be created by alos2App.py. These basically include spotlight-spotlight 
+interferometry, stripmap-stripmap interferometry, ScanSAR-stripmap interferometry and ScanSAR-ScanSAR 
+interometry. Note that even in same-mode interferometry, reference and secondary may be acquired in 
+different sub-modes. Support for spotlight mode will soon be added.
+
+As a summary for alos2App.py, ONE COMMAND TO PROCESS THEM ALL.
+
+For ScanSAR-ScanSAR interferomery, alos2App.py implements the full-aperture workflow, while 
+alos2burstApp.py, which only supports ScanSAR-ScanSAR interferometry, implements the standard 
+burst-by-burst workflow. Both alos2App.py and alos2burstApp.py use full-aperture products from 
+JAXA, since the current JAXA burst products are not usable for InSAR. Note that you are still
+recommended to use alos2App.py for ScanSAR-ScanSAR interferometry. When using alos2burstApp.py, 
+you can also get along-track deformation, but usually contaminated by azimuth ionoshperic shifts.
+On the other hand, this provides a way of looking at large-scale azimuth shifts caused by ionosphere.
+
+
+###########################################
+#            0. SOFTWARE FEATURES
+###########################################
+
+Basically the software supports
+* Regular InSAR processing (All possible acquisition mode combinations)
+* Burst Spectral Diversity (SD) or Multiple Aperture InSAR (MAI) (ScanSAR)
+* Pixel offset (spotlight/stripmap)
+* Ionospheric correction (all possible acquistion mode combinations)
+
+
+SOFTWARE CAPABILITIES
+* One app to process them all
+* Support all ALOS-2 acquisition modes
+* Support making interferograms across all three wavelengths
+* Both full-aperture and burst-by-burst ScanSAR InSAR workflows implemented
+* ScanSAR system parameters estimated from azimuth spectrum
+* Automatic estimation of the start times of raw burst from azimuth spectrum
+* High precision burst synchronization calculation
+* MBF filter for removing non-overlap spectra caused by burst misalignment and Doppler centroid 
+  frequency difference
+* High precision estimation of offsets between subswaths and frames
+* High precision mosaic of subswaths and frames
+* Automatic ionospheric correction
+
+* Burst extraction from full-aperture ScanSAR data
+* Burst-by-burst ScanSAR InSAR processing
+* Azimuth or along-track offset from ScanSAR burst Spectral Diversity (SD) or Multiple Aperture 
+  InSAR (MAI)
+* Ionospheric correction for burst-by-burst ScanSAR interferometry
+
+
+SOFTWARE EFFICIENCY
+* Optimized workflow to reduce processing time
+* Using virtual files to reduce the huge amount of input/output
+* Using OpenMP to speed up for loops
+* Using CUDA GPU to speed up some of the programs
+
+While processing time depends on computer configurations, we can expect a ScanSAR-ScanSAR pair to be 
+processed in 2~3 hours, including ionospheric correction.
+
+
+SOFTWARE ROBUSTNESS
+* Enhanced robustness for an automatic processing system
+* Upgraded programs considering the properties of multi-mode InSAR images to enable robust processing
+
+
+USER FRIENDLY
+one same command and one same input file to process all acquistion modes
+
+
+###########################################
+#            1. PREPARE DATA
+###########################################
+
+1. ALOS-2 data
+For each acquistion date, unpack data of all frames to a directory. There are usually multiple polarizations 
+in the data. Normally we only process HH polarization, so you can only extract HH polarizations from the 
+zip files to save space. If you want to process other polarizations, extract those polarization instead.
+
+2. DEM and water body
+
+You MUST FIRST have an account to download DEM and water body, no matter you download them manually or let 
+the program download them automatically. See
+https://github.com/isce-framework/isce2#notes-on-digital-elevation-models
+or
+https://github.com/isce-framework/isce2
+for more details.
+
+If you only process one InSAR pair, there is no need to download DEM and water body manually. The program will
+do it for you. However, if you want to process a stack of interferograms, we recommend downloading DEM
+and water body by yourself and set the parameters in the input file; otherwise, the program will download
+DEM and water body each time it processes a pair. See input file on how to download DEM and water
+body.
+
+
+###########################################
+#            2. SET PARAMETERS
+###########################################
+
+1. Input files alos2App.xml (input of alos2App.py) and alos2burstApp.xml (input of alos2burstApp.py) 
+can be found in "examples/input_files/alos2" in the package. Normally you only need alos2App.py to 
+process all kinds of InSAR combinations.
+
+2. Set the following parameters in the input file:
+    <property name="reference directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150405</property>
+    <property name="secondary directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
+
+    <!--optional, see input file on how to set these-->
+    <property name="reference frames">[3055]</property>
+    <property name="secondary frames">[3055]</property>
+
+    <!--optional, see input file on how to set these-->
+    <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
+    <property name="water body">/net/kraken/nobak/cunrenl/z_common_data/insarzd_test_dataset/gorkha/wbd/swbdLat_N22_N33_Lon_E078_E092.wbd</property>
+
+
+3. For processing a stack of interferograms, 
+
+  1. set "dem for coregistration", "dem for geocoding" and "water body" so that the program won't download 
+  them multiple times.
+
+  2. geocode the products to the same area for time series analysis by setting the following parameter:
+
+    <!--=========================================================================================
+    This is a four-element list [s, n, w, e], e.g. [26.24, 30.04, 33.45, 37.79].
+    ==========================================================================================-->
+    <property name="geocode bounding box">None</property>
+
+If you want to do more customized processing, explore all other available parameters in the input file.
+
+
+4. If it still does not work, check the example input files in folder "examples/input_files/alos2/example_input_files", 
+which includes all possible InSAR combinations.
+
+To find the acquisition mode code, check the unpacked ALOS-2 product. For example, in the following
+file name
+
+IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                             ^^^
+FBD (indicated by ^) is the acquisition mode code. Here is the list of acquistion modes:
+
+ Operation Mode   |   Mode (AUIG2)  |    Mode (in file name)
+--------------------------------------------------------------
+   spotlight      |       SPT       |    SBS
+--------------------------------------------------------------
+   stripmap       |       SM1       |    UBS, UBD
+                  |       SM2       |    HBS, HBD, HBQ
+                  |       SM3       |    FBS, FBD, FBQ
+--------------------------------------------------------------
+   ScanSAR        |       WD1       |    WBS, WBD, WWS, WWD
+                  |       WD2       |    VBS, VBD
+
+Note that, in ScanSAR-stripmap interferometry, ScanSAR must be reference!
+
+
+###########################################
+#            3. PROCESS DATA
+###########################################
+
+1. Run alos2App.py or alos2burstApp.py as other apps in ISCE after setting up input file. For example,
+alos2App.py --steps
+
+2. If you want to run an individual step, you can run a command like
+alos2App.py --dostep=form_int
+
+3. You can also specifiy the starting and ending steps, for example,
+alos2App.py --start=form_int --end=diff_int
+
+
+###########################################
+#            4. CHECK RESULTS
+###########################################
+
+*.track.xml: parameters common to a track. 
+
+f*_*/*.frame.xml: parameters specific to a frame.
+
+alos2Proc.xml: processing parameters, such as baselines, ScanSAR burst synchronization, number of offsets
+used to do matching etc.
+
+f*_*/mosaic/swath_offset_*.txt: a comparison of the swath offsets computed from parameter and estimated
+from overlap areas. Only for multi-swath data such as ScanSAR.
+
+insar/frame_offset_*.txt: a comparision of the frame offsets computed from parameter and estimated from
+overlap areas. Only for multi-frame data.
+
+
+PICKLE: You can find explanations about each data file in the xml files.
+
+f*_*: folders containing the frame processing results.
+
+insar: users should be mostly interested in this folder. For the explanations of the files, please refer
+to the xml files in folder "explanations". You can find the differential interferograms without and with
+ionospheric correction if you have chosen to do ionospheric correction. For example,
+diff_150405-150503_5rlks_28alks.int: interferoram without ionospheric correction
+diff_150405-150503_5rlks_28alks_ori.int: interferogram with ionospheric correction
+
+ion: folder for computing ionospheric phase. subband interferograms are created in folders "lower" and 
+"upper", and final computations are done in "ion_cal".
+
+dense_offset: dense offset processing results. In this folder:
+*_coreg.slc: coregistered secondary image. Offsets used to do resampling include geomtrical offsets + residual
+offsets from cross-correlation.
+
+
+###########################################
+#            5. FINAL RESULTS
+###########################################
+
+File names shown here are from particular pairs, you need to find your corresponding ones. For all sign 
+conventions, we assume reference is the earlier acquistion. If your reference is the later acquistion, the sign 
+will be opposite!
+
+
+1. Regular InSAR LOS Deformation
+
+without mask from phase unwrapping:
+insar/filt_150405-150503_5rlks_28alks.unw.geo
+with mask from phase unwrapping:
+insar/filt_150405-150503_5rlks_28alks_msk.unw.geo
+
+These are InSAR phase [first date (150405) - second date (150503)] in radians. you can convert these to
+deformation by multiplying them by wavelength/(4*PI), where you can find wavelength in track parameter 
+file 150405.track.xml. Note that ALOS-2 has three wavelengths, you should use the wavelength from this 
+file instead of other sources.
+
++ sign: moving away from satellite. This is theoretically and experimentally verified.
+(e.g. hawaii/alos2/a089/180508-180522/filt_diff_180508-180522_8rlks_16alks_msk.unw.geo)
+
+
+2. ScanSAR Spectral Diversity (SD) or Multiple Aperture InSAR (MAI)
+
+SD/MAI mainly contains along-track deformation and along-track offset caused by ionosphere.
+
+without mask from phase unwrapping:
+sd/azd_1_150405-150503_14rlks_4alks.unw.geo
+sd/azd_2_150405-150503_14rlks_4alks.unw.geo
+sd/azd_3_150405-150503_14rlks_4alks.unw.geo
+sd/azd_150405-150503_14rlks_4alks.unw.geo
+
+with mask from phase unwrapping:
+sd/azd_1_150405-150503_14rlks_4alks_msk.unw.geo
+sd/azd_2_150405-150503_14rlks_4alks_msk.unw.geo
+sd/azd_3_150405-150503_14rlks_4alks_msk.unw.geo
+sd/azd_150405-150503_14rlks_4alks_msk.unw.geo
+
+The unit of these files is meter. Here the numbers 1, 2 and 3 mean the number of burst cycles 
+in-between the foward and backward looks in MAI. The larger the number is, the more sensitive the measure 
+is to the along-track deformation. Therefore, we expect number 3 has highest signal to noise ratio (SNR). 
+The final one without this number is the weight average of all the three. While number 3 has the highest 
+SNR, it also has the highest probability of phase unwrapping errors, especially near the ruptures in an 
+earthquake. Users should carefully check if there are phase unwrapping errors, as in regular InSAR 
+processing.
+
++ sign: moving toward radar flying direction. This is experimentally verified.
+(e.g. 1. hawaii/alos2/d185/sd/azd_180120-180512_28rlks_8alks_msk.unw.geo, 2. iran_2017/d71/171004-171115_burst)
+
+
+3. Stripmap Pixel Offset
+
+pixel offset file, 1st band: range offset, 2nd band: azimuth offset
+dense_offset/141114-160415_denseoffset.off.geo
+SNR file
+dense_offset/141114-160415_denseoffset.snr.geo
+
+The unit of the pixel offsets is number of range/azimuth pixels. You can convert them to range or azimuth 
+deformation using range/azimuth pixel sizes, which you can find in the track parameter file: 
+141114.track.xml.
+
++ sign (Range offset):   moving away from satellite
++ sign (azimuth offset): moving toward radar flying direction
+
+
+###########################################
+#            6. KNOWN ISSUES
+###########################################
+
+1. Issues with Ionospheric Correction
+According to our experience, ionospheric correction works for most of the interferograms. Because it 
+relies on coherence and phase unwrapping, it does not work in some cases. These include:
+
+(1) data have low coherence
+(2) the majority of the imaged area is low coherence area like lake, ocean...
+(3) the imaged area is completely divided into several isolated areas by low coherence areas, such as
+    islands.
+
+In addition to the above issues, there are also data-mode-related issues.
+(1) ScanSAR-ScanSAR interferometry. While you can process one single subswath, it's better to process 
+more than one subswath if the addistional subswath has good coherence. This is good for ionospheric 
+correction.
+
+(2) ScanSAR-stripmap interferometry and interferometry with data of different range bands. Because of 
+the small effective number of looks and the possible small overlap of the two range bands, ionospheric 
+correciton is likely not working well.
+
+(3) Range distortions in JAXA product. This mostly happens in stripmap-stripmap interferometry using 
+data not covering Japan. If you see very dense fringes in the corrected inteferogram, probably it is 
+caused by this problem. This has been reported to JAXA and JAXA is working on debugging the focusing 
+program.
+
+UPDATE: On November 20, 2018 (JST), JAXA updated the software for PALSAR-2 standard products. Therefore, 
+if your product is ordered after this time, you don't have this problem.
+
+
+2. How do I improve ionospheric correction?
+Sometimes you may find that the ionospheric phase automatically calculated using default parameters 
+are not good enough. In this case, you may want to adjust the parameters by yourself in the input file. 
+In particular, if your scene covers an area with two or more isolated areas and you are interested in 
+one of the areas, you can mask out the other areas by setting 
+"areas masked out in ionospheric phase estimation".
+
+After updating the input file, you can re-do ionospheric correction by running:
+alos2App.py --dostep=ion_filt
+or
+alos2burstApp.py --dostep=ion_filt
+
+
+3. Reference and secondary have different wavelengths
+If reference and secondary are acquired in different acquistion modes, it's likely that they have different 
+wavelengths, If reference and secondary have different wavelengths, the resulting interferogram might have a 
+residual range ramp. This is probably caused by the relative wavelength errors of the two wavelengths.
+
+
+4. ScanSAR burst synchronization
+For ScanSAR data acquired before February 8, 2015, chances of having enough burst synchronization for 
+interferometry is very low. If the reference image, secondary image or both are acquired before this date, the 
+interferogram will be probably full of noise and not useful.
+
+
+###########################################
+#            7. REFRENCES
+###########################################
+The methods and algorithms implemented can be found in the following papers.
+
+1. ScanSAR or multi-mode InSAR processing
+C. Liang and E. J. Fielding, "Interferometry with ALOS-2 full-aperture ScanSAR data," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2739-2750, May 2017.
+
+2. Ionospheric correction, burst-by-burst ScanSAR processing, and burst-mode spectral diversity (SD) or 
+multi-aperture InSAR (MAI) processing
+C. Liang and E. J. Fielding, "Measuring azimuth deformation with L-band ALOS-2 ScanSAR interferometry," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2725-2738, May 2017.
+
+3. Ionospheric correction
+C. Liang, Z. Liu, E. J. Fielding, and R. Bürgmann, "InSAR time series analysis of L-band wide-swath SAR 
+data acquired by ALOS-2," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-4506, Aug. 2018.
+

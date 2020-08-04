@@ -27,7 +27,7 @@ if __name__ == '__main__':
     #####Copy the original state vectors
     #####These are the 10-15 vectors provided
     #####with the sensor data in WGS84 coords
-    origOrbit = copy.copy(iObj.masterFrame.getOrbit())
+    origOrbit = copy.copy(iObj.referenceFrame.getOrbit())
     print('From Original Metadata - WGS84')
     print('Number of state vectors: %d'%len(origOrbit._stateVectors))
     print('Time interval: %s %s'%(str(origOrbit._minTime),
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     #####Line-by-line WGS84 interpolated orbit
     #####This was done using Hermite polynomials
-    xyzOrbit =  copy.copy(iObj.masterOrbit)
+    xyzOrbit =  copy.copy(iObj.referenceOrbit)
     print('Line-by-Line XYZ interpolated')
     print('Number of state vectors: %d'%len(xyzOrbit._stateVectors))
     print('Time interval: %s %s'%(str(xyzOrbit._minTime),
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     planet = copy.copy(iObj.planet)
     
     ###Copy the orbits
-    schOrbit = copy.copy(iObj.masterOrbit)
+    schOrbit = copy.copy(iObj.referenceOrbit)
     del iObj
     print('Line-by-Line SCH interpolated')
     print('Number of state vectors: %d'%len(schOrbit._stateVectors))

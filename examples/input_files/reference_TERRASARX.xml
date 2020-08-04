@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+  <property name="XML">
+        path/TSX1_SAR__SSC______SM_S_SRA_20091205T042212_20091205T042220.xml
+  </property>
+  <property name="OUTPUT">20091205</property>
+</component>
+<!--
+Shown above is the bare minimum input XML file for TERRASARX sensor.
+The reference and secondary catalog xml files have the same structure.
+
+All file paths in the input files should either be absolute paths or relative
+to the processing directory.
+
+    Note: Doppler Centroid
+    =========================
+
+    The doppler method must be set as follows in the insarApp.xml file
+
+    <property name="doppler method">useDEFAULT</property>
+
+
+The paths involved in specifying the location of the TerraSARX input xml file
+consist of very long strings.  This is a case where use of the constant tag
+(see the top level README.txt file) can help in constructing the paths.  At
+the time of this release the constant tag does not work with catalog files.
+This will be fixed in a future release.  In the meantime, you could go with
+the above example reference.xml catalog file or else you can try the all-in-one
+insarApp.xml style and use constants as in the following example:
+
+========================================================================
+Use the all-in-one style of insarApp.xml file.  In this examples the
+paths to the reference and secondary input files are constructed from three
+constants each.  It is assumed that you might have all of your downloaded
+TerraSARX data in one place, which we reference with the constant named,
+"tsx".  From there we use constants "d1" and "d2" to get to the directory
+containing a directory that contains the xml file.  Then relative to those
+directories we use b1 and b2 to name both the directory containing the
+xml file and the xml file itself, since that is the convention used when
+TerraSARX data are delivered.
+
+insarApp.xml
+------------
+<?xml version="1.0" encoding="UTF-8"?>
+
+<insarApp>
+
+<constant name="tsx">path/to/your/downloaded/TerrasARX/data</constant>
+
+<constant name="d1">
+    dims_op_oc_dfd2_204281662_1/TSX-1.SAR.L1B
+</constant>
+<constant name="b1">
+    TSX1_SAR__SSC______SM_S_SRA_20091205T042212_20091205T042220
+</constant>
+
+<constant name="d2">
+    dims_op_oc_dfd2_204281679_1/TSX-1.SAR.L1B
+</constant>
+<constant name="b2">
+    TSX1_SAR__SSC______SM_S_SRA_20091216T042211_20091216T042219
+</constant>
+
+<component name="insar">
+    <property name="Sensor Name">TerraSARX</property>
+    <property name="doppler method ">useDOPTSX</property>
+    <component name="Reference">
+        <property name="XML">$tsx$/$d1$/$b1$/$b1$.xml</property>
+        <property name="OUTPUT">reference.raw</property>
+    </component>
+    <component name="Secondary">
+        <property name="XML">$tsx$/$d2$/$b2$/$b2$.xml</property>
+        <property name="OUTPUT">secondary.raw</property>
+    </component>
+</component>
+
+</insarApp>
+
+
+-->

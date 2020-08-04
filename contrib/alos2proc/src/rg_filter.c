@@ -8,8 +8,9 @@
 #include <fftw3.h>
 #include <omp.h>
 
+#define SWAP4(a) (*(unsigned int *)&(a) = (((*(unsigned int *)&(a) & 0x000000ff) << 24) | ((*(unsigned int *)&(a) & 0x0000ff00) << 8) | ((*(unsigned int *)&(a) >> 8) & 0x0000ff00) | ((*(unsigned int *)&(a) >> 24) & 0x000000ff)))
 
-int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, float *bc, int nfilter, int nfft, float beta, int zero_cf, float offset){
+int rg_filter(char *inputfile, int nrg, int naz, int nout, char **outputfile, float *bw, float *bc, int nfilter, int nfft, float beta, int zero_cf, float offset, int byteorder, long imageoffset, long lineoffset){
   /*
   inputfile:  input file
   nrg         file width
@@ -23,6 +24,10 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
   beta:       kaiser window beta. Reference Value: 1.0
   zero_cf:    if bc != 0.0, move center frequency to zero? 0: Yes (Reference Value). 1: No.
   offset:     offset (in samples) of linear phase for moving center frequency. Reference Value: 0.0
+
+  byteorder:      (0) LSB, little endian; (1) MSB, big endian of intput file
+  imageoffset:    offset from start of the image of input file
+  lineoffset:     length of each line of input file
   */
 
 ///////////////////////////////
@@ -46,8 +51,8 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
 ///////////////////////////////
 
 
-  FILE *infp;   //slave image to be resampled
-  FILE **outfp;  //resampled slave image
+  FILE *infp;   //secondary image to be resampled
+  FILE **outfp;  //resampled secondary image
 
   fcomplex **filter;
   fcomplex *in;
@@ -64,7 +69,7 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
 
   //int nout; //number of output files
   //int nrg; //file width
-  int naz; //file length
+  //int naz; //file length
 
   //int nfft; //fft length
   //int nfilter; //filter length
@@ -107,7 +112,10 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
 /*****************************************************************************/
 
   infp  = openfile(inputfile, "rb");
-  naz  = file_length(infp, nrg, sizeof(fcomplex));
+  //naz  = file_length(infp, nrg, sizeof(fcomplex));
+  //fseeko(infp,0L,SEEK_END);
+  //naz = (ftello(infp) - imageoffset) / (lineoffset + nrg*sizeof(fcomplex));
+  //rewind(infp);
   printf("file width: %d, file length: %d\n\n", nrg, naz);
   if(nout < 1){
     fprintf(stderr, "there should be at least one output file!\n");
@@ -125,6 +133,23 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
   }
   if(nfilter % 2 != 1){
     fprintf(stderr, "filter length must be odd!\n");
+    exit(1);
+  }
+
+  if(byteorder == 0){
+    printf("inputfile byte order: little endian\n");
+  }
+  else{
+    printf("inputfile byte order: big endian\n");
+  }
+  printf("input file image offset [byte]: %ld\n", imageoffset);
+  printf("input file line offset [byte]: %ld\n", lineoffset);
+  if(imageoffset < 0){
+    fprintf(stderr, "image offset must be >= 0\n");
+    exit(1);
+  }
+  if(lineoffset < 0){
+    fprintf(stderr, "lineoffset offset must be >= 0\n");
     exit(1);
   }
 
@@ -211,6 +236,11 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
   }
   fftwf_destroy_plan(p_forward_filter);  
 
+
+  //skip image header
+  if(imageoffset != 0)
+    fseek(infp, imageoffset, SEEK_SET);
+
   //process data
   for(i = 0; i < naz; i++){
     //progress report
@@ -220,7 +250,17 @@ int rg_filter(char *inputfile, int nrg, int nout, char **outputfile, float *bw, 
       fprintf(stderr,"\n\n");
   
     //read data
+    if(i != 0)
+      fseek(infp, lineoffset-(size_t)nrg * sizeof(fcomplex), SEEK_CUR);
     readdata((fcomplex *)in, (size_t)nrg * sizeof(fcomplex), infp);
+    //swap bytes
+    if(byteorder!=0){
+      for(j = 0; j < nrg; j++){
+        SWAP4(in[j].re);
+        SWAP4(in[j].im);
+      }
+    }
+
     #pragma omp parallel for private(j) shared(nrg,in, zeroflag, sc)
     for(j = 0; j < nrg; j++){
       if(in[j].re != 0.0 || in[j].im != 0.0){

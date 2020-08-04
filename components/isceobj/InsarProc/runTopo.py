@@ -61,16 +61,16 @@ def runTopo(self):
 
 
 
-    planet = self.insar.masterFrame.getInstrument().getPlatform().getPlanet()
-    prf1 = self.insar.masterFrame.getInstrument().getPulseRepetitionFrequency()
+    planet = self.insar.referenceFrame.getInstrument().getPlatform().getPlanet()
+    prf1 = self.insar.referenceFrame.getInstrument().getPulseRepetitionFrequency()
     
     objTopo = stdproc.createTopo()
     objTopo.wireInputPort(name='peg', object=self.insar.peg)
-    objTopo.wireInputPort(name='frame', object=self.insar.masterFrame)
+    objTopo.wireInputPort(name='frame', object=self.insar.referenceFrame)
     objTopo.wireInputPort(name='planet', object=planet)
     objTopo.wireInputPort(name='dem', object=objDem)
     objTopo.wireInputPort(name='interferogram', object=intImage)
-    objTopo.wireInputPort(name='masterslc', object = self.insar.formSLC1) #Piyush
+    objTopo.wireInputPort(name='referenceslc', object = self.insar.formSLC1) #Piyush
     
     centroid = self.insar.dopplerCentroid.getDopplerCoefficients(inHz=False)[0]
     objTopo.setDopplerCentroidConstantTerm(centroid)

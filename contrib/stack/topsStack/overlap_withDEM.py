@@ -17,10 +17,10 @@ def createParser():
 
     parser.add_argument('-i', '--interferogram', type=str, dest='interferogram',required=True,
             help='Directory with the overlap interferogram')
-    parser.add_argument('-m', '--master_dir', type=str, dest='master', required=True,
-            help='Directory with the slave image')
-    parser.add_argument('-s', '--slave_dir', type=str, dest='slave', required=True,
-            help='Directory with the slave image')
+    parser.add_argument('-m', '--reference_dir', type=str, dest='reference', required=True,
+            help='Directory with the secondary image')
+    parser.add_argument('-s', '--secondary_dir', type=str, dest='secondary', required=True,
+            help='Directory with the secondary image')
     parser.add_argument('-d', '--overlap_dir', type=str, dest='overlap', required=True,
             help='Directory with overlap products')
 
@@ -54,31 +54,31 @@ def multilook(intName, alks=5, rlks=15):
 
 
 
-def overlapSpectralSeparation(topBurstIfg, botBurstIfg, masterTop, masterBot, slaveTop, slaveBot, azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot , misreg=0.0):
+def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceBot, secondaryTop, secondaryBot, azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot , misreg=0.0):
     # Added by Heresh Fattahi
     '''
     Estimate separation in frequency due to unit pixel misregistration.
     '''
     ''' 
     dt = topBurstIfg.azimuthTimeInterval
-    topStart = int(np.round((topBurstIfg.sensingStart - masterTop.sensingStart).total_seconds() / dt))
+    topStart = int(np.round((topBurstIfg.sensingStart - referenceTop.sensingStart).total_seconds() / dt))
     overlapLen = topBurstIfg.numberOfLines
-    botStart = int(np.round((botBurstIfg.sensingStart - masterBot.sensingStart).total_seconds() / dt))
+    botStart = int(np.round((botBurstIfg.sensingStart - referenceBot.sensingStart).total_seconds() / dt))
 
-    print(topBurstIfg.sensingStart, masterTop.sensingStart)
-    print(botBurstIfg.sensingStart, masterBot.sensingStart)
+    print(topBurstIfg.sensingStart, referenceTop.sensingStart)
+    print(botBurstIfg.sensingStart, referenceBot.sensingStart)
     print(topStart, botStart, overlapLen)
     '''
     print ('++++++++++++++++++++++')
     dt = topBurstIfg.azimuthTimeInterval
-    topStart = int ( np.round( (masterBot.sensingStart - masterTop.sensingStart).total_seconds()/dt))+ masterBot.firstValidLine
+    topStart = int ( np.round( (referenceBot.sensingStart - referenceTop.sensingStart).total_seconds()/dt))+ referenceBot.firstValidLine
     overlapLen = topBurstIfg.numberOfLines
-    botStart = masterBot.firstValidLine
+    botStart = referenceBot.firstValidLine
     print(topStart, botStart, overlapLen)
     #print(Debug)
     
     ##############
-    # master top : m1
+    # reference top : m1
 
 
 
@@ -98,18 +98,18 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, masterTop, masterBot, sl
     azi = y + yy
     rng = x + xx
 
-    Vs = np.linalg.norm(masterTop.orbit.interpolateOrbit(masterTop.sensingMid, method='hermite').getVelocity())
-    Ks =   2 * Vs * masterTop.azimuthSteeringRate / masterTop.radarWavelength
-    rng = masterTop.startingRange + masterTop.rangePixelSize * rng
-    Ka = masterTop.azimuthFMRate(rng)
+    Vs = np.linalg.norm(referenceTop.orbit.interpolateOrbit(referenceTop.sensingMid, method='hermite').getVelocity())
+    Ks =   2 * Vs * referenceTop.azimuthSteeringRate / referenceTop.radarWavelength
+    rng = referenceTop.startingRange + referenceTop.rangePixelSize * rng
+    Ka = referenceTop.azimuthFMRate(rng)
 
     Ktm1 = Ks / (1.0 - Ks / Ka)
-    tm1 = (azi - (masterTop.numberOfLines//2)) * masterTop.azimuthTimeInterval
+    tm1 = (azi - (referenceTop.numberOfLines//2)) * referenceTop.azimuthTimeInterval
 
-    fm1 = masterTop.doppler(rng)
+    fm1 = referenceTop.doppler(rng)
 
     ##############
-    # master bottom : m2
+    # reference bottom : m2
     y = np.arange(botStart, botStart + overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, botBurstIfg.numberOfSamples)) * np.arange(botBurstIfg.numberOfSamples)[None,:]
 
@@ -125,18 +125,18 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, masterTop, masterBot, sl
     azi = y + yy
     rng = x + xx
 
-    Vs = np.linalg.norm(masterBot.orbit.interpolateOrbit(masterBot.sensingMid, method='hermite').getVelocity())
-    Ks =   2 * Vs * masterBot.azimuthSteeringRate / masterBot.radarWavelength
-    rng = masterBot.startingRange + masterBot.rangePixelSize * rng
-    Ka = masterBot.azimuthFMRate(rng)
+    Vs = np.linalg.norm(referenceBot.orbit.interpolateOrbit(referenceBot.sensingMid, method='hermite').getVelocity())
+    Ks =   2 * Vs * referenceBot.azimuthSteeringRate / referenceBot.radarWavelength
+    rng = referenceBot.startingRange + referenceBot.rangePixelSize * rng
+    Ka = referenceBot.azimuthFMRate(rng)
 
     Ktm2 = Ks / (1.0 - Ks / Ka)
-    tm2 = (azi - (masterBot.numberOfLines//2)) * masterBot.azimuthTimeInterval
-    fm2 = masterBot.doppler(rng)
+    tm2 = (azi - (referenceBot.numberOfLines//2)) * referenceBot.azimuthTimeInterval
+    fm2 = referenceBot.doppler(rng)
 
 
     ##############
-    # slave top : s1
+    # secondary top : s1
     y = np.arange(topStart, topStart+overlapLen)[:,None] * np.ones((overlapLen, topBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, topBurstIfg.numberOfSamples)) * np.arange(topBurstIfg.numberOfSamples)[None,:]
 
@@ -158,23 +158,23 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, masterTop, masterBot, sl
 #    print('Rng top: ', rng[0,0], azi[-1,-1])
 #    print('XX  top: ', xx[0,0], xx[-1,-1])
 
-    Vs = np.linalg.norm(slaveTop.orbit.interpolateOrbit(slaveTop.sensingMid, method='hermite').getVelocity())
-    Ks =   2 * Vs * slaveTop.azimuthSteeringRate / slaveTop.radarWavelength
-    rng = slaveTop.startingRange + slaveTop.rangePixelSize * rng
-    Ka = slaveTop.azimuthFMRate(rng)
+    Vs = np.linalg.norm(secondaryTop.orbit.interpolateOrbit(secondaryTop.sensingMid, method='hermite').getVelocity())
+    Ks =   2 * Vs * secondaryTop.azimuthSteeringRate / secondaryTop.radarWavelength
+    rng = secondaryTop.startingRange + secondaryTop.rangePixelSize * rng
+    Ka = secondaryTop.azimuthFMRate(rng)
 
     Kts1 = Ks / (1.0 - Ks / Ka)
-    ts1 = (azi - (slaveTop.numberOfLines//2)) * slaveTop.azimuthTimeInterval
-    fs1 = slaveTop.doppler(rng)
+    ts1 = (azi - (secondaryTop.numberOfLines//2)) * secondaryTop.azimuthTimeInterval
+    fs1 = secondaryTop.doppler(rng)
 
 
 
     ##############
-    # slave bot : s2
+    # secondary bot : s2
     y = np.arange(botStart, botStart + overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, botBurstIfg.numberOfSamples)) * np.arange(botBurstIfg.numberOfSamples)[None,:]
 
-    ####Bottom slave
+    ####Bottom secondary
     if os.path.exists(azSlvBot) and os.path.exists(rgSlvBot):
           yy = np.memmap( azSlvBot, dtype=np.float32, mode='r',
                 shape=(botBurstIfg.numberOfLines, botBurstIfg.numberOfSamples))
@@ -192,14 +192,14 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, masterTop, masterBot, sl
 #    print('Rng bot: ', rng[0,0], azi[-1,-1])
 #    print('XX  bot: ', xx[0,0], xx[-1,-1])
 
-    Vs = np.linalg.norm(slaveBot.orbit.interpolateOrbit(slaveBot.sensingMid, method='hermite').getVelocity())
-    Ks =   2 * Vs * slaveBot.azimuthSteeringRate / slaveBot.radarWavelength
-    rng = slaveBot.startingRange + slaveBot.rangePixelSize * rng
-    Ka = slaveBot.azimuthFMRate(rng)
+    Vs = np.linalg.norm(secondaryBot.orbit.interpolateOrbit(secondaryBot.sensingMid, method='hermite').getVelocity())
+    Ks =   2 * Vs * secondaryBot.azimuthSteeringRate / secondaryBot.radarWavelength
+    rng = secondaryBot.startingRange + secondaryBot.rangePixelSize * rng
+    Ka = secondaryBot.azimuthFMRate(rng)
     Kts2 = Ks / (1.0 - Ks / Ka)
 
-    ts2 = (azi - (slaveBot.numberOfLines//2)) * slaveBot.azimuthTimeInterval
-    fs2 = slaveBot.doppler(rng)
+    ts2 = (azi - (secondaryBot.numberOfLines//2)) * secondaryBot.azimuthTimeInterval
+    fs2 = secondaryBot.doppler(rng)
 
     ##############
     frequencySeparation =  -Ktm2*tm2 + Ktm1*tm1  + Kts1*ts1 - Kts2*ts2 +  fm2 - fm1 + fs1 -fs2
@@ -255,21 +255,21 @@ def main(iargs=None):
 
     inps = cmdLineParse(iargs)
     inps.interferogram = os.path.join(inps.interferogram,'overlap')
-    inps.master = os.path.join(inps.master,'overlap')
-    inps.slave = os.path.join(inps.slave,'overlap')
+    inps.reference = os.path.join(inps.reference,'overlap')
+    inps.secondary = os.path.join(inps.secondary,'overlap')
 
-    masterSwathList = ut.getSwathList(inps.master)
-    slaveSwathList = ut.getSwathList(inps.slave)
+    referenceSwathList = ut.getSwathList(inps.reference)
+    secondarySwathList = ut.getSwathList(inps.secondary)
 
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     for swath in swathList:
         IWstr = 'IW{0}'.format(swath)
-        masterTop = ut.loadProduct(os.path.join(inps.master, IWstr + '_top.xml'))
-        masterBot = ut.loadProduct(os.path.join(inps.master , IWstr + '_bottom.xml'))
+        referenceTop = ut.loadProduct(os.path.join(inps.reference, IWstr + '_top.xml'))
+        referenceBot = ut.loadProduct(os.path.join(inps.reference , IWstr + '_bottom.xml'))
     
-        slaveTop = ut.loadProduct(os.path.join(inps.slave, IWstr + '_top.xml'))
-        slaveBot = ut.loadProduct(os.path.join(inps.slave, IWstr + '_bottom.xml'))    
+        secondaryTop = ut.loadProduct(os.path.join(inps.secondary, IWstr + '_top.xml'))
+        secondaryBot = ut.loadProduct(os.path.join(inps.secondary, IWstr + '_bottom.xml'))    
 
 
         ####Load metadata for burst IFGs
@@ -278,24 +278,23 @@ def main(iargs=None):
 
         ####Create ESD output directory
         esddir = os.path.join(inps.overlap, IWstr)
-        if not os.path.isdir(esddir):
-            os.makedirs(esddir)
+        os.makedirs(esddir, exist_ok=True)
 
         ####Overlap offsets directory
-        masterOffdir = os.path.join(inps.master, IWstr)
-        slaveOffdir = os.path.join(inps.slave,IWstr)
+        referenceOffdir = os.path.join(inps.reference, IWstr)
+        secondaryOffdir = os.path.join(inps.secondary,IWstr)
 
         #########
-        minMaster = masterTop.bursts[0].burstNumber
-        maxMaster = masterTop.bursts[-1].burstNumber
+        minReference = referenceTop.bursts[0].burstNumber
+        maxReference = referenceTop.bursts[-1].burstNumber
 
-        minSlave = slaveTop.bursts[0].burstNumber
-        maxSlave = slaveTop.bursts[-1].burstNumber
+        minSecondary = secondaryTop.bursts[0].burstNumber
+        maxSecondary = secondaryTop.bursts[-1].burstNumber
 
         minBurst = ifgTop.bursts[0].burstNumber
         maxBurst = ifgTop.bursts[-1].burstNumber
-        print ('minSlave,maxSlave',minSlave, maxSlave)
-        print ('minMaster,maxMaster',minMaster, maxMaster)
+        print ('minSecondary,maxSecondary',minSecondary, maxSecondary)
+        print ('minReference,maxReference',minReference, maxReference)
         print ('minBurst, maxBurst: ', minBurst, maxBurst)
 
     #########
@@ -308,20 +307,20 @@ def main(iargs=None):
 
         for ii in range(minBurst, maxBurst + 1):
             ind = ii - minBurst            ###Index into overlaps
-            mind = ii - minMaster  ### Index into master
-            sind = ii - minSlave   ###Index into slave
+            mind = ii - minReference  ### Index into reference
+            sind = ii - minSecondary   ###Index into secondary
 
             topBurstIfg = ifgTop.bursts[ind]
             botBurstIfg = ifgBottom.bursts[ind]
 
             ###############
-            '''stackMasterTop = ifgTop.source.bursts[mind]
-            stackMasterBot = ifgBottom.source.bursts[mind]
+            '''stackReferenceTop = ifgTop.source.bursts[mind]
+            stackReferenceBot = ifgBottom.source.bursts[mind]
 
-            dt = stackMasterTop.azimuthTimeInterval
-            topStart = int(np.round((stackMasterBot.sensingStart - stackMasterTop.sensingStart).total_seconds() / dt))
+            dt = stackReferenceTop.azimuthTimeInterval
+            topStart = int(np.round((stackReferenceBot.sensingStart - stackReferenceTop.sensingStart).total_seconds() / dt))
             #overlapLen = .numberOfLines
-            botStart = stackMasterBot.firstValidLine #int(np.round((.sensingStart - masterBot.sensingStart).total_seconds() / dt))
+            botStart = stackReferenceBot.firstValidLine #int(np.round((.sensingStart - referenceBot.sensingStart).total_seconds() / dt))
             print('+++++++++++++++++++')
             print(topStart, botStart)
             print('+++++++++++++++++++') '''
@@ -361,20 +360,20 @@ def main(iargs=None):
             cohlist.append(multCor)
 
             ####Estimate the frequency difference 
-            azMasTop = os.path.join(masterOffdir, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))
-            rgMasTop = os.path.join(masterOffdir, 'range_top_%02d_%02d.off'%(ii,ii+1))
-            azMasBot = os.path.join(masterOffdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))
-            rgMasBot = os.path.join(masterOffdir, 'range_bot_%02d_%02d.off'%(ii,ii+1))
+            azMasTop = os.path.join(referenceOffdir, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))
+            rgMasTop = os.path.join(referenceOffdir, 'range_top_%02d_%02d.off'%(ii,ii+1))
+            azMasBot = os.path.join(referenceOffdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))
+            rgMasBot = os.path.join(referenceOffdir, 'range_bot_%02d_%02d.off'%(ii,ii+1))
 
-            azSlvTop = os.path.join(slaveOffdir, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))
-            rgSlvTop = os.path.join(slaveOffdir, 'range_top_%02d_%02d.off'%(ii,ii+1))
-            azSlvBot = os.path.join(slaveOffdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))
-            rgSlvBot = os.path.join(slaveOffdir, 'range_bot_%02d_%02d.off'%(ii,ii+1))
+            azSlvTop = os.path.join(secondaryOffdir, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))
+            rgSlvTop = os.path.join(secondaryOffdir, 'range_top_%02d_%02d.off'%(ii,ii+1))
+            azSlvBot = os.path.join(secondaryOffdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))
+            rgSlvBot = os.path.join(secondaryOffdir, 'range_bot_%02d_%02d.off'%(ii,ii+1))
 
-            mFullTop = masterTop.source.bursts[mind]
-            mFullBot = masterBot.source.bursts[mind+1]
-            sFullTop = slaveTop.source.bursts[sind]
-            sFullBot = slaveBot.source.bursts[sind+1]
+            mFullTop = referenceTop.source.bursts[mind]
+            mFullBot = referenceBot.source.bursts[mind+1]
+            sFullTop = secondaryTop.source.bursts[sind]
+            sFullBot = secondaryBot.source.bursts[sind+1]
 
             freqdiff = overlapSpectralSeparation(topBurstIfg, botBurstIfg, mFullTop, mFullBot, sFullTop, sFullBot, 
               azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot)

@@ -46,160 +46,166 @@ def saveProduct( obj, xmlname):
 
         return None
 
-def getRelativeShifts(mFrame, sFrame, minBurst, maxBurst, slaveBurstStart):
+def getRelativeShifts(mFrame, sFrame, minBurst, maxBurst, secondaryBurstStart):
     '''
     Estimate the relative shifts between the start of the bursts.
     '''
     import numpy as np    
-    azMasterOff = {}
-    azSlaveOff = {}
+    azReferenceOff = {}
+    azSecondaryOff = {}
     azRelOff = {}
     tm = mFrame.bursts[minBurst].sensingStart
     dt = mFrame.bursts[minBurst].azimuthTimeInterval
-    ts = sFrame.bursts[slaveBurstStart].sensingStart
+    ts = sFrame.bursts[secondaryBurstStart].sensingStart
     
     for index in range(minBurst, maxBurst):
         burst = mFrame.bursts[index]
-        azMasterOff[index] = int(np.round((burst.sensingStart - tm).total_seconds() / dt))
+        azReferenceOff[index] = int(np.round((burst.sensingStart - tm).total_seconds() / dt))
         
-        burst = sFrame.bursts[slaveBurstStart + index - minBurst]
-        azSlaveOff[slaveBurstStart + index - minBurst] =  int(np.round((burst.sensingStart - ts).total_seconds() / dt))
+        burst = sFrame.bursts[secondaryBurstStart + index - minBurst]
+        azSecondaryOff[secondaryBurstStart + index - minBurst] =  int(np.round((burst.sensingStart - ts).total_seconds() / dt))
         
-        azRelOff[slaveBurstStart + index - minBurst] = azSlaveOff[slaveBurstStart + index - minBurst] - azMasterOff[index]
+        azRelOff[secondaryBurstStart + index - minBurst] = azSecondaryOff[secondaryBurstStart + index - minBurst] - azReferenceOff[index]
 
     
     return azRelOff
 
 
-def adjustValidSampleLine(master,  minAz=0, maxAz=0, minRng=0, maxRng=0):
+def adjustValidSampleLine(reference,  minAz=0, maxAz=0, minRng=0, maxRng=0):
     import numpy as np
     import isce
     import isceobj
     # Valid region in the resampled slc based on offsets
     ####Adjust valid samples and first valid sample here
     print ("Adjust valid samples")
-    print('Before: ', master.firstValidSample, master.numValidSamples)
+    print('Before: ', reference.firstValidSample, reference.numValidSamples)
     print('Offsets : ', minRng, maxRng)
     if (minRng > 0) and (maxRng > 0):
-            master.numValidSamples -= (int(np.ceil(maxRng)) + 8)
-            master.firstValidSample += 4
+            reference.numValidSamples -= (int(np.ceil(maxRng)) + 8)
+            reference.firstValidSample += 4
     elif (minRng < 0) and  (maxRng < 0):
-            master.firstValidSample -= int(np.floor(minRng) - 4)
-            master.numValidSamples += int(np.floor(minRng) - 8)
+            reference.firstValidSample -= int(np.floor(minRng) - 4)
+            reference.numValidSamples += int(np.floor(minRng) - 8)
     elif (minRng < 0) and (maxRng > 0):
-            master.firstValidSample -= int(np.floor(minRng) - 4)
-            master.numValidSamples += int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
+            reference.firstValidSample -= int(np.floor(minRng) - 4)
+            reference.numValidSamples += int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
 
-    print('After: ', master.firstValidSample, master.numValidSamples)
+    print('After: ', reference.firstValidSample, reference.numValidSamples)
 
     ###Adjust valid lines and first valid line here
     print ("Adjust valid lines")
-    print('Before: ', master.firstValidLine, master.numValidLines)
+    print('Before: ', reference.firstValidLine, reference.numValidLines)
     print('Offsets : ', minAz, maxAz)
     if (minAz > 0) and (maxAz > 0):
-            master.numValidLines -= (int(np.ceil(maxAz)) + 8)
-            master.firstValidLine += 4
+            reference.numValidLines -= (int(np.ceil(maxAz)) + 8)
+            reference.firstValidLine += 4
     elif (minAz < 0) and  (maxAz < 0):
-            master.firstValidLine -= int(np.floor(minAz) - 4)
-            master.numValidLines += int(np.floor(minAz) - 8)
+            reference.firstValidLine -= int(np.floor(minAz) - 4)
+            reference.numValidLines += int(np.floor(minAz) - 8)
     elif (minAz < 0) and (maxAz > 0):
-            master.firstValidLine -= int(np.floor(minAz) - 4)
-            master.numValidLines += int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
-    print('After:', master.firstValidLine, master.numValidLines)
+            reference.firstValidLine -= int(np.floor(minAz) - 4)
+            reference.numValidLines += int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+    print('After:', reference.firstValidLine, reference.numValidLines)
 
 
-def adjustValidSampleLine_V2(master, slave, minAz=0, maxAz=0, minRng=0, maxRng=0): 
+def adjustValidSampleLine_V2(reference, secondary, minAz=0, maxAz=0, minRng=0, maxRng=0): 
     import numpy as np
     import isce
     import isceobj
     ####Adjust valid samples and first valid sample here
     print ("Adjust valid samples")
-    print('Before: ', master.firstValidSample, master.numValidSamples)
+    print('Before: ', reference.firstValidSample, reference.numValidSamples)
     print('Offsets : ', minRng, maxRng)
 
     if (minRng > 0) and (maxRng > 0):
-        master.firstValidSample = slave.firstValidSample - int(np.floor(maxRng)-4)
-        lastValidSample = master.firstValidSample - 8 + slave.numValidSamples
+        reference.firstValidSample = secondary.firstValidSample - int(np.floor(maxRng)-4)
+        lastValidSample = reference.firstValidSample - 8 + secondary.numValidSamples
 
-        if lastValidSample < master.numberOfSamples:
-            master.numValidSamples = slave.numValidSamples - 8
+        if lastValidSample < reference.numberOfSamples:
+            reference.numValidSamples = secondary.numValidSamples - 8
         else:
-            master.numValidSamples = master.numberOfSamples - master.firstValidSample
+            reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
 
     elif (minRng < 0) and (maxRng < 0):
-        master.firstValidSample = slave.firstValidSample - int(np.floor(minRng) - 4)
-        lastValidSample = master.firstValidSample + slave.numValidSamples  - 8
-        if lastValidSample < master.numberOfSamples:
-            master.numValidSamples = slave.numValidSamples - 8
+        reference.firstValidSample = secondary.firstValidSample - int(np.floor(minRng) - 4)
+        lastValidSample = reference.firstValidSample + secondary.numValidSamples  - 8
+        if lastValidSample < reference.numberOfSamples:
+            reference.numValidSamples = secondary.numValidSamples - 8
         else:
-            master.numValidSamples = master.numberOfSamples - master.firstValidSample
+            reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
     elif (minRng < 0) and (maxRng > 0):
-        master.firstValidSample = slave.firstValidSample - int(np.floor(minRng) - 4)
-        lastValidSample = master.firstValidSample + slave.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
-        if lastValidSample < master.numberOfSamples:
-            master.numValidSamples = slave.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
+        reference.firstValidSample = secondary.firstValidSample - int(np.floor(minRng) - 4)
+        lastValidSample = reference.firstValidSample + secondary.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
+        if lastValidSample < reference.numberOfSamples:
+            reference.numValidSamples = secondary.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
         else:
-            master.numValidSamples = master.numberOfSamples - master.firstValidSample
+            reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
 
-    master.firstValidSample = np.max([0, master.firstValidSample])
+    reference.firstValidSample = np.max([0, reference.firstValidSample])
  
-    print('After: ', master.firstValidSample, master.numValidSamples)
+    print('After: ', reference.firstValidSample, reference.numValidSamples)
 
     ###Adjust valid lines and first valid line here
     print ("Adjust valid lines")
-    print('Before: ', master.firstValidLine, master.numValidLines)
+    print('Before: ', reference.firstValidLine, reference.numValidLines)
     print('Offsets : ', minAz, maxAz)
 
     if (minAz > 0) and (maxAz > 0):
 
-            master.firstValidLine = slave.firstValidLine - int(np.floor(maxAz) - 4)
-            lastValidLine = master.firstValidLine - 8  + slave.numValidLines
-            if lastValidLine < master.numberOfLines:
-               master.numValidLines = slave.numValidLines - 8
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(maxAz) - 4)
+            lastValidLine = reference.firstValidLine - 8  + secondary.numValidLines
+            if lastValidLine < reference.numberOfLines:
+               reference.numValidLines = secondary.numValidLines - 8
             else:
-               master.numValidLines = master.numberOfLines - master.firstValidLine
+               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     elif (minAz < 0) and  (maxAz < 0):
-            master.firstValidLine = slave.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = master.firstValidLine + slave.numValidLines + int(np.floor(minAz) - 8)
-            lastValidLine = master.firstValidLine + slave.numValidLines  - 8
-            if lastValidLine < master.numberOfLines:
-               master.numValidLines = slave.numValidLines - 8
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+            lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8)
+            lastValidLine = reference.firstValidLine + secondary.numValidLines  - 8
+            if lastValidLine < reference.numberOfLines:
+               reference.numValidLines = secondary.numValidLines - 8
             else:
-               master.numValidLines = master.numberOfLines - master.firstValidLine
+               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     elif (minAz < 0) and (maxAz > 0):
-            master.firstValidLine = slave.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = master.firstValidLine + slave.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
-            if lastValidLine < master.numberOfLines:
-               master.numValidLines = slave.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+            lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+            if lastValidLine < reference.numberOfLines:
+               reference.numValidLines = secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
             else:
-               master.numValidLines = master.numberOfLines - master.firstValidLine
+               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
-    return master
+    return reference
 
-def adjustCommonValidRegion(master,slave):
-    # valid lines between master and slave
-
-
-    master_lastValidLine = master.firstValidLine + master.numValidLines - 1
-    master_lastValidSample = master.firstValidSample + master.numValidSamples - 1
-    slave_lastValidLine = slave.firstValidLine + slave.numValidLines - 1
-    slave_lastValidSample = slave.firstValidSample + slave.numValidSamples - 1
-
-    igram_lastValidLine = min(master_lastValidLine, slave_lastValidLine)
-    igram_lastValidSample = min(master_lastValidSample, slave_lastValidSample)
-
-    master.firstValidLine = max(master.firstValidLine, slave.firstValidLine)
-    master.firstValidSample = max(master.firstValidSample, slave.firstValidSample)
-
-    master.numValidLines = igram_lastValidLine - master.firstValidLine + 1
-    master.numValidSamples = igram_lastValidSample - master.firstValidSample + 1
+def adjustCommonValidRegion(reference,secondary):
+    # valid lines between reference and secondary
 
 
-def getValidLines(slave, rdict, inname, misreg_az=0.0, misreg_rng=0.0):
+    reference_lastValidLine = reference.firstValidLine + reference.numValidLines - 1
+    reference_lastValidSample = reference.firstValidSample + reference.numValidSamples - 1
+    secondary_lastValidLine = secondary.firstValidLine + secondary.numValidLines - 1
+    secondary_lastValidSample = secondary.firstValidSample + secondary.numValidSamples - 1
+
+    igram_lastValidLine = min(reference_lastValidLine, secondary_lastValidLine)
+    igram_lastValidSample = min(reference_lastValidSample, secondary_lastValidSample)
+
+    reference.firstValidLine = max(reference.firstValidLine, secondary.firstValidLine)
+    reference.firstValidSample = max(reference.firstValidSample, secondary.firstValidSample)
+
+    #set to 0 to avoid negative values
+    if reference.firstValidLine<0:
+        reference.firstValidLine=0
+    if reference.firstValidSample<0:
+        reference.firstValidSample=0
+
+    reference.numValidLines = igram_lastValidLine - reference.firstValidLine + 1
+    reference.numValidSamples = igram_lastValidSample - reference.firstValidSample + 1
+
+
+def getValidLines(secondary, rdict, inname, misreg_az=0.0, misreg_rng=0.0):
     '''
-    Looks at the master, slave and azimuth offsets and gets the Interferogram valid lines 
+    Looks at the reference, secondary and azimuth offsets and gets the Interferogram valid lines 
     '''
     import numpy as np
     import isce

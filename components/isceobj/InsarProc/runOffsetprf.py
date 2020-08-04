@@ -41,15 +41,15 @@ def runOffsetprf(self):
 
     logger.info("Calculate offset between slcs")
 
-    masterFrame = self._insar.getMasterFrame()
-    slaveFrame = self._insar.getSlaveFrame()
-    masterOrbit = self._insar.getMasterOrbit()
-    slaveOrbit = self._insar.getSlaveOrbit()
-    prf1 = masterFrame.getInstrument().getPulseRepetitionFrequency()
-    prf2 = slaveFrame.getInstrument().getPulseRepetitionFrequency()
+    referenceFrame = self._insar.getReferenceFrame()
+    secondaryFrame = self._insar.getSecondaryFrame()
+    referenceOrbit = self._insar.getReferenceOrbit()
+    secondaryOrbit = self._insar.getSecondaryOrbit()
+    prf1 = referenceFrame.getInstrument().getPulseRepetitionFrequency()
+    prf2 = secondaryFrame.getInstrument().getPulseRepetitionFrequency()
     nearRange1 = self.insar.formSLC1.startingRange
     nearRange2 = self.insar.formSLC2.startingRange
-    fs1 = masterFrame.getInstrument().getRangeSamplingRate()
+    fs1 = referenceFrame.getInstrument().getRangeSamplingRate()
 
     ###There seems to be no other way of determining image length - Piyush
     patchSize = self._insar.getPatchSize()
@@ -59,10 +59,10 @@ def runOffsetprf(self):
     firstDown =  self._insar.getFirstSampleDownPrf()
     numLocationAcross =  self._insar.getNumberLocationAcrossPrf()
     numLocationDown =  self._insar.getNumberLocationDownPrf()
-    objSlc =  self._insar.getMasterSlcImage()
-#    widthSlc = max(self._insar.getMasterSlcImage().getWidth(),
-#                   self._insar.getSlaveSlcImage().getWidth())
-    widthSlc = self._insar.getMasterSlcImage().getWidth()
+    objSlc =  self._insar.getReferenceSlcImage()
+#    widthSlc = max(self._insar.getReferenceSlcImage().getWidth(),
+#                   self._insar.getSecondarySlcImage().getWidth())
+    widthSlc = self._insar.getReferenceSlcImage().getWidth()
 
     coarseRange = (nearRange1 - nearRange2) / (CN.SPEED_OF_LIGHT / (2 * fs1))
     coarseAcross = int(coarseRange + 0.5)
@@ -76,8 +76,8 @@ def runOffsetprf(self):
         coarseAcross = self.grossRg
         pass
 
-    time1, schPosition1, schVelocity1, offset1 = masterOrbit._unpackOrbit()
-    time2, schPosition2, schVelocity2, offset2 = slaveOrbit._unpackOrbit()
+    time1, schPosition1, schVelocity1, offset1 = referenceOrbit._unpackOrbit()
+    time2, schPosition2, schVelocity2, offset2 = secondaryOrbit._unpackOrbit()
     s1 = schPosition1[0][0]
     s1_2 = schPosition1[1][0]
     s2 = schPosition2[0][0]
@@ -101,7 +101,7 @@ def runOffsetprf(self):
     coarseAcross = 0 + coarseAcross
     coarseDown = 0 + coarseDown
 
-    mSlcImage = self._insar.getMasterSlcImage()
+    mSlcImage = self._insar.getReferenceSlcImage()
     mSlc = isceobj.createSlcImage()
     IU.copyAttributes(mSlcImage, mSlc)
 #    scheme = 'BIL'
@@ -110,7 +110,7 @@ def runOffsetprf(self):
     mSlc.setAccessMode(accessMode)
     mSlc.createImage()
 
-    sSlcImage = self._insar.getSlaveSlcImage()
+    sSlcImage = self._insar.getSecondarySlcImage()
     sSlc = isceobj.createSlcImage()
     IU.copyAttributes(sSlcImage, sSlc)
 #    scheme = 'BIL'

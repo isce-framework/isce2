@@ -47,25 +47,25 @@ def runRgoffset(self):
     firstDn = self._insar.getFirstSampleDown()
 
     ampImage = self._insar.getResampAmpImage()
-    slaveWidth = ampImage.getWidth()
-    slaveLength = ampImage.getLength()
+    secondaryWidth = ampImage.getWidth()
+    secondaryLength = ampImage.getLength()
     objAmp = isceobj.createSlcImage()
     objAmp.dataType = 'CFLOAT'
     objAmp.bands = 1
     objAmp.setFilename(ampImage.getFilename())
     objAmp.setAccessMode('read')
-    objAmp.setWidth(slaveWidth)
+    objAmp.setWidth(secondaryWidth)
     objAmp.createImage()
 
     simImage = self._insar.getSimAmpImage()
-    masterWidth = simImage.getWidth()
+    referenceWidth = simImage.getWidth()
     objSim = isceobj.createImage()
     objSim.setFilename(simImage.getFilename())
     objSim.dataType = 'FLOAT'
-    objSim.setWidth(masterWidth)
+    objSim.setWidth(referenceWidth)
     objSim.setAccessMode('read')
     objSim.createImage()
-    masterLength = simImage.getLength()
+    referenceLength = simImage.getLength()
 
 
     nStageObj = NStage(name='insarapp_intsim_nstage')

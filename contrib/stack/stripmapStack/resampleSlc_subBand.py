@@ -17,10 +17,10 @@ from isceobj.Util.decorators import use_api
 def createParser():
     parser = argparse.ArgumentParser( description='Use polynomial offsets and create burst by burst interferograms')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, default=None,
-            help = 'Directory with master acquisition for reference')
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, default=None,
+            help = 'Directory with reference acquisition for reference')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition')
 
     parser.add_argument('-p', '--poly',dest='poly', type=str, default=None,
             help='Pickle file with the resampling polynomials')
@@ -42,11 +42,11 @@ def createParser():
 
     #inps = parser.parse_args()
 
-    #if inps.slave.endswith('/'):
-    #    inps.slave = inps.slave[:-1]
+    #if inps.secondary.endswith('/'):
+    #    inps.secondary = inps.secondary[:-1]
 
     #if inps.coreg is None:
-    #    inps.coreg = os.path.join('coreg', os.path.basename(inps.slave))
+    #    inps.coreg = os.path.join('coreg', os.path.basename(inps.secondary))
 
     #return inps
 
@@ -60,17 +60,17 @@ def cmdLineParse(iargs = None):
     
     #inps = parser.parse_args()
     
-    if inps.slave.endswith('/'):
-        inps.slave = inps.slave[:-1]
+    if inps.secondary.endswith('/'):
+        inps.secondary = inps.secondary[:-1]
     
     if inps.coreg is None:
-        inps.coreg = os.path.join('coreg', os.path.basename(inps.slave))
+        inps.coreg = os.path.join('coreg', os.path.basename(inps.secondary))
     
     return inps
 
 @use_api
-def resampSlave(burst, offdir, outname, doppler, azpoly, rgpoly, 
-        master=None, flatten=False, zero=False, dims=None):
+def resampSecondary(burst, offdir, outname, doppler, azpoly, rgpoly, 
+        reference=None, flatten=False, zero=False, dims=None):
     '''
     Resample burst by burst.
     '''
@@ -138,8 +138,7 @@ def resampSlave(burst, offdir, outname, doppler, azpoly, rgpoly,
     imgOut.setWidth(width)
 
     outdir = os.path.dirname(outname)
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    os.makedirs(outdir, exist_ok=True)
 
     if zero:
         imgOut.filename = os.path.join(outname)
@@ -153,12 +152,12 @@ def resampSlave(burst, offdir, outname, doppler, azpoly, rgpoly,
     rObj.residualRangeImage = rngImg
     rObj.residualAzimuthImage = aziImg
 
-    if master is not None:
+    if reference is not None:
         rObj.startingRange = burst.startingRange
-        rObj.referenceStartingRange = master.startingRange
-        rObj.referenceSlantRangePixelSpacing = master.getInstrument().getRangePixelSize()
-      #  rObj.referenceWavelength = master.getInstrument().getRadarWavelength()
-        rObj.referenceWavelength = master.subBandRadarWavelength
+        rObj.referenceStartingRange = reference.startingRange
+        rObj.referenceSlantRangePixelSpacing = reference.getInstrument().getRangePixelSize()
+      #  rObj.referenceWavelength = reference.getInstrument().getRadarWavelength()
+        rObj.referenceWavelength = reference.subBandRadarWavelength
 
     rObj.resamp_slc(imageOut=imgOut)
 
@@ -174,33 +173,31 @@ def main(iargs=None):
 
     outfile = os.path.join(inps.coreg,os.path.basename(os.path.dirname(inps.coreg))+'.slc')
     outDir = inps.coreg
-    if not os.path.exists(outDir):
-       os.makedirs(outDir)
+    os.makedirs(outDir, exist_ok=True)
 
-    masterShelveDir = os.path.join(outDir, 'masterShelve')
-    slaveShelveDir = os.path.join(outDir, 'slaveShelve')
+    referenceShelveDir = os.path.join(outDir, 'referenceShelve')
+    secondaryShelveDir = os.path.join(outDir, 'secondaryShelve')
 
-    if (not os.path.exists(masterShelveDir)) and (inps.master is not None ):
-       os.makedirs(masterShelveDir)
+    if inps.reference is not None:
+       os.makedirs(referenceShelveDir, exist_ok=True)
 
-    if not os.path.exists(slaveShelveDir):
-       os.makedirs(slaveShelveDir)
+    os.makedirs(secondaryShelveDir, exist_ok=True)
 
-    cmd = 'cp '+ inps.slave + '/data* ' + slaveShelveDir
+    cmd = 'cp '+ inps.secondary + '/data* ' + secondaryShelveDir
     print (cmd)
     os.system(cmd)
 
-    if inps.master is not None:
-       cmd = 'cp '+ inps.master + '/data* ' + masterShelveDir
+    if inps.reference is not None:
+       cmd = 'cp '+ inps.reference + '/data* ' + referenceShelveDir
        os.system(cmd)
 
-   # with shelve.open(os.path.join(inps.slave, 'data'), flag='r') as sdb:
-    with shelve.open(os.path.join(slaveShelveDir, 'data'), flag='r') as sdb:
-        slave = sdb['frame']
+   # with shelve.open(os.path.join(inps.secondary, 'data'), flag='r') as sdb:
+    with shelve.open(os.path.join(secondaryShelveDir, 'data'), flag='r') as sdb:
+        secondary = sdb['frame']
         try:
             doppler = sdb['doppler']
         except:
-            doppler = slave._dopplerVsPixel
+            doppler = secondary._dopplerVsPixel
 
     if inps.poly is not None:
         with shelve.open(inps.poly, flag='r') as db:
@@ -213,20 +210,20 @@ def main(iargs=None):
         rgpoly = None
 
 
-    if inps.master is not None:
-       # with shelve.open(os.path.join(inps.master, 'data'), flag='r') as mdb:
-        with shelve.open(os.path.join(masterShelveDir, 'data'), flag='r') as mdb:
-            master = mdb['frame']
+    if inps.reference is not None:
+       # with shelve.open(os.path.join(inps.reference, 'data'), flag='r') as mdb:
+        with shelve.open(os.path.join(referenceShelveDir, 'data'), flag='r') as mdb:
+            reference = mdb['frame']
     else:
-        master = None
+        reference = None
 
-    resampSlave(slave, inps.offsets, outfile,
+    resampSecondary(secondary, inps.offsets, outfile,
             doppler, azpoly,rgpoly, 
             flatten=(not inps.noflat), zero=inps.zero,
             dims = inps.dims,
-            master = master)
+            reference = reference)
 
-#    flattenSLC(slave, inps.coreg, rgpoly)
+#    flattenSLC(secondary, inps.coreg, rgpoly)
 
 if __name__ == '__main__':
     '''

@@ -96,27 +96,17 @@ def runSubsetOverlaps(self):
             print('Skipping subset overlap for swath IW{0}'.format(swath))
             continue
 
-        ####Load master metadata
-        mFrame = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
+        ####Load reference metadata
+        mFrame = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
 
 
         ####Output directory for overlap geometry images
         geomdir = os.path.join(self._insar.geometryDirname, 'IW{0}'.format(swath))
         outdir = os.path.join(self._insar.geometryDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
-        submasterdir = os.path.join(self._insar.masterSlcProduct, self._insar.overlapsSubDirname, 'IW{0}'.format(swath)) 
+        subreferencedir = os.path.join(self._insar.referenceSlcProduct, self._insar.overlapsSubDirname, 'IW{0}'.format(swath)) 
 
-
-        if os.path.isdir(outdir):
-            logger.info('Overlap directory {0} already exists'.format(outdir))
-        else:
-            os.makedirs(outdir)
-
-
-        if os.path.isdir(submasterdir):
-            logger.info('Submaster Overlap directory {0} already exists'.format(submasterdir))
-        else:
-            os.makedirs(submasterdir)
-
+        os.makedirs(outdir, exist_ok=True)
+        os.makedirs(subreferencedir, exist_ok=True)
 
         ###Azimuth time interval
         dt = mFrame.bursts[0].azimuthTimeInterval        
@@ -128,7 +118,7 @@ def runSubsetOverlaps(self):
 
 
         numCommon = self._insar.numberOfCommonBursts[swath-1]
-        startIndex = self._insar.commonBurstStartMasterIndex[swath-1]
+        startIndex = self._insar.commonBurstStartReferenceIndex[swath-1]
 
 
         ###For each overlap
@@ -173,13 +163,13 @@ def runSubsetOverlaps(self):
             masname2 = botBurst.image.filename
 
        
-            master_outname1 = os.path.join(submasterdir , 'burst_top_%02d_%02d.slc'%(ind+1,ind+2))
-            master_outname2 = os.path.join(submasterdir , 'burst_bot_%02d_%02d.slc'%(ind+1,ind+2))
+            reference_outname1 = os.path.join(subreferencedir , 'burst_top_%02d_%02d.slc'%(ind+1,ind+2))
+            reference_outname2 = os.path.join(subreferencedir , 'burst_bot_%02d_%02d.slc'%(ind+1,ind+2))
 
 
 
-            subset(masname1, master_outname1, topslicey, topslicex,  virtual=virtual)
-            subset(masname2, master_outname2, botslicey, botslicex, virtual=virtual)
+            subset(masname1, reference_outname1, topslicey, topslicex,  virtual=virtual)
+            subset(masname2, reference_outname2, botslicey, botslicex, virtual=virtual)
 
 
             ####TOP frame
@@ -192,7 +182,7 @@ def runSubsetOverlaps(self):
             burst.sensingStop = topBurst.sensingStart + datetime.timedelta(0,(topStart+overlapLen-1)*dt) # (topStart+overlapLen-1)*dt
 
             ###Replace file name in image
-            burst.image.filename = master_outname1
+            burst.image.filename = reference_outname1
             burst.image._accessor = None
             burst.image.setLength(overlapLen)
             burst.image.setWidth(width)
@@ -212,7 +202,7 @@ def runSubsetOverlaps(self):
             burst.sensingStop = botBurst.sensingStart + datetime.timedelta(seconds=(botBurst.firstValidLine+overlapLen-1)*dt)
 
             ###Replace file name in image
-            burst.image.filename = master_outname2
+            burst.image.filename = reference_outname2
             burst.image.setLength(overlapLen)
             burst.image.setWidth(width)
 
@@ -227,8 +217,8 @@ def runSubsetOverlaps(self):
         topFrame.numberOfBursts = len(topFrame.bursts)
         bottomFrame.numberOfBursts = len(bottomFrame.bursts)
 
-        self._insar.saveProduct(topFrame, os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        self._insar.saveProduct(bottomFrame, os.path.join(self._insar.masterSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        self._insar.saveProduct(topFrame, os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        self._insar.saveProduct(bottomFrame, os.path.join(self._insar.referenceSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
 
     catalog.printToLog(logger, "runSubsetOverlaps")
     self._insar.procDoc.addAllFromCatalog(catalog)

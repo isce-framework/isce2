@@ -506,14 +506,14 @@ def mergeBursts(frame, fileList, outfile,
     scheme = img.scheme
     npType = IML.NUMPY_type(img.dataType)
 
-    azMasterOff = []
+    azReferenceOff = []
     for index in range(frame.numberOfBursts):
         burst = frame.bursts[index]
         soff = burst.sensingStart + datetime.timedelta(seconds = (burst.firstValidLine*dt)) 
         start = int(np.round((soff - tstart).total_seconds() / dt))
         end = start + burst.numValidLines
 
-        azMasterOff.append([start,end])
+        azReferenceOff.append([start,end])
 
         print('Burst: ', index, [start,end])
 
@@ -525,14 +525,14 @@ def mergeBursts(frame, fileList, outfile,
 
     for index in range(frame.numberOfBursts):
         curBurst = frame.bursts[index]
-        curLimit = azMasterOff[index]
+        curLimit = azReferenceOff[index]
 
         curMap = IML.mmapFromISCE(fileList[index], logging)
 
         #####If middle burst
         if index > 0:
             topBurst = frame.bursts[index-1]
-            topLimit = azMasterOff[index-1]
+            topLimit = azReferenceOff[index-1]
             topMap = IML.mmapFromISCE(fileList[index-1], logging)
 
             olap = topLimit[1] - curLimit[0]
@@ -568,7 +568,7 @@ def mergeBursts(frame, fileList, outfile,
             
         if index != (frame.numberOfBursts-1):
             botBurst = frame.bursts[index+1]
-            botLimit = azMasterOff[index+1]
+            botLimit = azReferenceOff[index+1]
             
             olap = curLimit[1] - botLimit[0]
 
@@ -686,7 +686,7 @@ def runMergeBursts(self, adjust=1):
     burstIndex = []
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         if minBurst==maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
             continue
@@ -719,8 +719,7 @@ def runMergeBursts(self, adjust=1):
     # STEP 2. MERGE BURSTS
     #########################################
     mergedir = self._insar.mergedDirname
-    if not os.path.isdir(mergedir):
-        os.makedirs(mergedir)
+    os.makedirs(mergedir, exist_ok=True)
     if (self.numberRangeLooks == 1) and (self.numberAzimuthLooks==1):
         suffix = ''
     else:
@@ -731,9 +730,9 @@ def runMergeBursts(self, adjust=1):
     mergeBursts2(frames, os.path.join(self._insar.geometryDirname, 'IW%d', 'lat_%02d.rdr'), burstIndex, box, os.path.join(mergedir, 'lat.rdr'+suffix), virtual=virtual, validOnly=validOnly)
     mergeBursts2(frames, os.path.join(self._insar.geometryDirname, 'IW%d', 'lon_%02d.rdr'), burstIndex, box, os.path.join(mergedir, 'lon.rdr'+suffix), virtual=virtual, validOnly=validOnly)
     mergeBursts2(frames, os.path.join(self._insar.geometryDirname, 'IW%d', 'hgt_%02d.rdr'), burstIndex, box, os.path.join(mergedir, 'z.rdr'+suffix), virtual=virtual, validOnly=validOnly)
-    #merge master and coregistered slave slcs
-    mergeBursts2(frames, os.path.join(self._insar.masterSlcProduct, 'IW%d', 'burst_%02d.slc'), burstIndex, box, os.path.join(mergedir, 'master.slc'+suffix), virtual=virtual, validOnly=True)
-    mergeBursts2(frames, os.path.join(self._insar.fineCoregDirname, 'IW%d', 'burst_%02d.slc'), burstIndex, box, os.path.join(mergedir, 'slave.slc'+suffix), virtual=virtual, validOnly=True)
+    #merge reference and coregistered secondary slcs
+    mergeBursts2(frames, os.path.join(self._insar.referenceSlcProduct, 'IW%d', 'burst_%02d.slc'), burstIndex, box, os.path.join(mergedir, 'reference.slc'+suffix), virtual=virtual, validOnly=True)
+    mergeBursts2(frames, os.path.join(self._insar.fineCoregDirname, 'IW%d', 'burst_%02d.slc'), burstIndex, box, os.path.join(mergedir, 'secondary.slc'+suffix), virtual=virtual, validOnly=True)
     #merge insar products
     if self.doInSAR:
         mergeBursts2(frames, os.path.join(self._insar.fineIfgDirname, 'IW%d',  'burst_%02d.int'), burstIndex, box, os.path.join(mergedir, self._insar.mergedIfgname+suffix), virtual=virtual, validOnly=True)
@@ -762,20 +761,20 @@ def runMergeBursts(self, adjust=1):
                   alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
             else:
                 #compute coherence
-                cmd = "gdal_translate -of ENVI {} {}".format(os.path.join(mergedir, 'master.slc'+suffix+'.vrt'), os.path.join(mergedir, 'master.slc'+suffix))
+                cmd = "gdal_translate -of ENVI {} {}".format(os.path.join(mergedir, 'reference.slc'+suffix+'.vrt'), os.path.join(mergedir, 'reference.slc'+suffix))
                 runCmd(cmd)
-                cmd = "gdal_translate -of ENVI {} {}".format(os.path.join(mergedir, 'slave.slc'+suffix+'.vrt'), os.path.join(mergedir, 'slave.slc'+suffix))
+                cmd = "gdal_translate -of ENVI {} {}".format(os.path.join(mergedir, 'secondary.slc'+suffix+'.vrt'), os.path.join(mergedir, 'secondary.slc'+suffix))
                 runCmd(cmd)
                 pwrfile = 'pwr.bil'
-                cmd = "imageMath.py -e='real(a)*real(a)+imag(a)*imag(a);real(b)*real(b)+imag(b)*imag(b)' --a={} --b={} -o {} -t float -s BIL".format(os.path.join(mergedir, 'master.slc'+suffix), os.path.join(mergedir, 'slave.slc'+suffix), os.path.join(mergedir, pwrfile+suffix))
+                cmd = "imageMath.py -e='real(a)*real(a)+imag(a)*imag(a);real(b)*real(b)+imag(b)*imag(b)' --a={} --b={} -o {} -t float -s BIL".format(os.path.join(mergedir, 'reference.slc'+suffix), os.path.join(mergedir, 'secondary.slc'+suffix), os.path.join(mergedir, pwrfile+suffix))
                 runCmd(cmd)
                 cmd = "looks.py -i {} -o {} -r {} -a {}".format(os.path.join(mergedir, pwrfile+suffix), os.path.join(mergedir, pwrfile), self.numberRangeLooks, self.numberAzimuthLooks)
                 runCmd(cmd)
                 cmd = "imageMath.py -e='((abs(a))!=0)*((b_0*b_1)!=0)*sqrt(b_0*b_1);((abs(a))!=0)*((b_0*b_1)!=0)*abs(a)/(sqrt(b_0*b_1)+((b_0*b_1)==0))' --a={} --b={} -o {} -t float -s BIL".format(os.path.join(mergedir, self._insar.mergedIfgname), os.path.join(mergedir, pwrfile), os.path.join(mergedir, self._insar.correlationFilename))
                 runCmd(cmd)
                 #remove intermediate files
-                os.remove(os.path.join(mergedir, 'master.slc'+suffix))
-                os.remove(os.path.join(mergedir, 'slave.slc'+suffix))
+                os.remove(os.path.join(mergedir, 'reference.slc'+suffix))
+                os.remove(os.path.join(mergedir, 'secondary.slc'+suffix))
                 os.remove(os.path.join(mergedir, pwrfile+suffix))
                 os.remove(os.path.join(mergedir, pwrfile+suffix+'.xml'))
                 os.remove(os.path.join(mergedir, pwrfile+suffix+'.vrt'))

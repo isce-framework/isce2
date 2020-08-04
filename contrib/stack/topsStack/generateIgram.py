@@ -19,11 +19,11 @@ import gdal
 def createParser():
     parser = argparse.ArgumentParser( description='Use polynomial offsets and create burst by burst interferograms')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition')
 
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition')
 
     parser.add_argument('-f', '--flatten', dest='flatten', action='store_true', default=False,
             help='Flatten the interferograms with offsets if needed')
@@ -43,7 +43,7 @@ def cmdLineParse(iargs = None):
     return parser.parse_args(args=iargs)
 
 
-def multiply(masname, slvname, outname, rngname1, rngname2, fact, masterFrame,
+def multiply(masname, slvname, outname, rngname1, rngname2, fact, referenceFrame,
         flatten=False):
 
     print('multiply')
@@ -54,14 +54,14 @@ def multiply(masname, slvname, outname, rngname1, rngname2, fact, masterFrame,
     length = masImg.getLength()
 
     ds = gdal.Open(masname + '.vrt', gdal.GA_ReadOnly)
-    master = ds.GetRasterBand(1).ReadAsArray()
+    reference = ds.GetRasterBand(1).ReadAsArray()
     ds = None
     ds = gdal.Open(slvname + '.vrt', gdal.GA_ReadOnly)
-    slave = ds.GetRasterBand(1).ReadAsArray()
+    secondary = ds.GetRasterBand(1).ReadAsArray()
     ds = None
     print('read') 
-    #master = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
-    #slave = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
+    #reference = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
+    #secondary = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
 
     if os.path.exists(rngname1):
         rng1 = np.memmap(rngname1, dtype=np.float32, mode='r', shape=(length,width))
@@ -81,20 +81,20 @@ def multiply(masname, slvname, outname, rngname1, rngname2, fact, masterFrame,
 
     #Zero out anytging outside the valid region:
     ifg = np.memmap(outname, dtype=np.complex64, mode='w+', shape=(length,width))
-    firstS = masterFrame.firstValidSample
-    lastS = masterFrame.firstValidSample + masterFrame.numValidSamples -1
-    firstL = masterFrame.firstValidLine
-    lastL = masterFrame.firstValidLine + masterFrame.numValidLines - 1
+    firstS = referenceFrame.firstValidSample
+    lastS = referenceFrame.firstValidSample + referenceFrame.numValidSamples -1
+    firstL = referenceFrame.firstValidLine
+    lastL = referenceFrame.firstValidLine + referenceFrame.numValidLines - 1
     for kk in range(firstL,lastL + 1):
-        ifg[kk,firstS:lastS + 1] = master[kk,firstS:lastS + 1] * np.conj(slave[kk,firstS:lastS + 1])
+        ifg[kk,firstS:lastS + 1] = reference[kk,firstS:lastS + 1] * np.conj(secondary[kk,firstS:lastS + 1])
         if flatten:
             phs = np.exp(cJ*fact*rng12[kk,firstS:lastS + 1])
             ifg[kk,firstS:lastS + 1] *= phs
 
 
     ####
-    master=None
-    slave=None
+    reference=None
+    secondary=None
     ifg = None
 
     objInt = isceobj.createIntImage()
@@ -115,38 +115,37 @@ def main(iargs=None):
     inps=cmdLineParse(iargs)
 
     if inps.overlap:
-        masterSwathList = ut.getSwathList(os.path.join(inps.master, 'overlap'))
-        slaveSwathList = ut.getSwathList(os.path.join(inps.slave, 'overlap'))
+        referenceSwathList = ut.getSwathList(os.path.join(inps.reference, 'overlap'))
+        secondarySwathList = ut.getSwathList(os.path.join(inps.secondary, 'overlap'))
     else:
-        masterSwathList = ut.getSwathList(inps.master)
-        slaveSwathList = ut.getSwathList(inps.slave)
-    swathList = list(sorted(set(masterSwathList+slaveSwathList)))
+        referenceSwathList = ut.getSwathList(inps.reference)
+        secondarySwathList = ut.getSwathList(inps.secondary)
+    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
 
     for swath in swathList:
         IWstr = 'IW{0}'.format(swath)
         if inps.overlap:
-            ifgdir = os.path.join(inps.interferogram, 'overlap', 'IW{0}'.format(swath))
+            ifgdir = os.path.join(inps.interferogram, 'overlap', IWstr)
         else:
-            ifgdir = os.path.join(inps.interferogram, 'IW{0}'.format(swath))
-            
-        if not os.path.exists(ifgdir):
-                os.makedirs(ifgdir)
+            ifgdir = os.path.join(inps.interferogram, IWstr)
+
+        os.makedirs(ifgdir, exist_ok=True)
 
     ####Load relevant products
         if inps.overlap:
-            topMaster = ut.loadProduct(os.path.join(inps.master , 'overlap','IW{0}_top.xml'.format(swath)))
-            botMaster = ut.loadProduct(os.path.join(inps.master ,'overlap', 'IW{0}_bottom.xml'.format(swath)))
-            topCoreg = ut.loadProduct(os.path.join(inps.slave, 'overlap', 'IW{0}_top.xml'.format(swath)))
-            botCoreg = ut.loadProduct(os.path.join(inps.slave, 'overlap', 'IW{0}_bottom.xml'.format(swath)))
+            topReference = ut.loadProduct(os.path.join(inps.reference , 'overlap','IW{0}_top.xml'.format(swath)))
+            botReference = ut.loadProduct(os.path.join(inps.reference ,'overlap', 'IW{0}_bottom.xml'.format(swath)))
+            topCoreg = ut.loadProduct(os.path.join(inps.secondary, 'overlap', 'IW{0}_top.xml'.format(swath)))
+            botCoreg = ut.loadProduct(os.path.join(inps.secondary, 'overlap', 'IW{0}_bottom.xml'.format(swath)))
 
         else:
-            topMaster = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
-            topCoreg = ut.loadProduct(os.path.join(inps.slave , 'IW{0}.xml'.format(swath)))
+            topReference = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
+            topCoreg = ut.loadProduct(os.path.join(inps.secondary , 'IW{0}.xml'.format(swath)))
 
         if inps.overlap:
-            coregdir = os.path.join(inps.slave, 'overlap', 'IW{0}'.format(swath))
+            coregdir = os.path.join(inps.secondary, 'overlap', 'IW{0}'.format(swath))
         else:
-            coregdir = os.path.join(inps.slave,'IW{0}'.format(swath))
+            coregdir = os.path.join(inps.secondary,'IW{0}'.format(swath))
     
         topIfg = ut.coregSwathSLCProduct()
         topIfg.configure()
@@ -155,51 +154,51 @@ def main(iargs=None):
             botIfg = ut.coregSwathSLCProduct()
             botIfg.configure()
 
-        minMaster = topMaster.bursts[0].burstNumber
-        maxMaster = topMaster.bursts[-1].burstNumber
+        minReference = topReference.bursts[0].burstNumber
+        maxReference = topReference.bursts[-1].burstNumber
 
-        minSlave = topCoreg.bursts[0].burstNumber
-        maxSlave = topCoreg.bursts[-1].burstNumber
+        minSecondary = topCoreg.bursts[0].burstNumber
+        maxSecondary = topCoreg.bursts[-1].burstNumber
 
-        minBurst = max(minSlave, minMaster)
-        maxBurst = min(maxSlave, maxMaster)
-        print ('minSlave,maxSlave',minSlave, maxSlave)
-        print ('minMaster,maxMaster',minMaster, maxMaster)
+        minBurst = max(minSecondary, minReference)
+        maxBurst = min(maxSecondary, maxReference)
+        print ('minSecondary,maxSecondary',minSecondary, maxSecondary)
+        print ('minReference,maxReference',minReference, maxReference)
         print ('minBurst, maxBurst: ', minBurst, maxBurst)
 
         for ii in range(minBurst, maxBurst + 1):
 
             ####Process the top bursts
-            master = topMaster.bursts[ii-minMaster]
-            slave  = topCoreg.bursts[ii-minSlave]
+            reference = topReference.bursts[ii-minReference]
+            secondary  = topCoreg.bursts[ii-minSecondary]
 
-            print('matching burst numbers: ',master.burstNumber, slave.burstNumber)
+            print('matching burst numbers: ',reference.burstNumber, secondary.burstNumber)
 
-            mastername = master.image.filename
-            slavename = slave.image.filename
+            referencename = reference.image.filename
+            secondaryname = secondary.image.filename
 
             if inps.overlap:
-                rdict = { 'rangeOff1' : os.path.join(inps.master, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
-                     'rangeOff2' : os.path.join(inps.slave, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
-                     'azimuthOff': os.path.join(inps.slave, 'overlap', IWstr, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))}
+                rdict = { 'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
+                     'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
+                     'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))}
 
                 intname = os.path.join(ifgdir, '%s_top_%02d_%02d.int'%(inps.intprefix,ii,ii+1))
         
             else:
 
-                rdict = {'rangeOff1' : os.path.join(inps.master, IWstr, 'range_%02d.off'%(ii)),
-                     'rangeOff2' : os.path.join(inps.slave, IWstr, 'range_%02d.off'%(ii)),
-                     'azimuthOff1': os.path.join(inps.slave, IWstr, 'azimuth_%02d.off'%(ii))}
+                rdict = {'rangeOff1' : os.path.join(inps.reference, IWstr, 'range_%02d.off'%(ii)),
+                     'rangeOff2' : os.path.join(inps.secondary, IWstr, 'range_%02d.off'%(ii)),
+                     'azimuthOff1': os.path.join(inps.secondary, IWstr, 'azimuth_%02d.off'%(ii))}
             
                 intname = os.path.join(ifgdir, '%s_%02d.int'%(inps.intprefix,ii))
 
 
-            ut.adjustCommonValidRegion(master,slave)
-            fact = 4 * np.pi * slave.rangePixelSize / slave.radarWavelength
-            intimage = multiply(mastername, slavename, intname,
-                        rdict['rangeOff1'], rdict['rangeOff2'], fact, master, flatten=inps.flatten)
+            ut.adjustCommonValidRegion(reference,secondary)
+            fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
+            intimage = multiply(referencename, secondaryname, intname,
+                        rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
 
-            burst = copy.deepcopy(master)
+            burst = copy.deepcopy(reference)
             burst.image = intimage
             burst.burstNumber = ii
             topIfg.bursts.append(burst)
@@ -207,33 +206,33 @@ def main(iargs=None):
 
             if inps.overlap:
                 ####Process the bottom bursts
-                master = botMaster.bursts[ii-minMaster]
-                slave = botCoreg.bursts[ii-minSlave]
+                reference = botReference.bursts[ii-minReference]
+                secondary = botCoreg.bursts[ii-minSecondary]
 
 
-                mastername =  master.image.filename
-                slavename = slave.image.filename
+                referencename =  reference.image.filename
+                secondaryname = secondary.image.filename
 #            rdict = {'rangeOff' : os.path.join(coregdir, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
 #                   'azimuthOff': os.path.join(coregdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
 
-                rdict = { 'rangeOff1' : os.path.join(inps.master, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
-                     'rangeOff2' : os.path.join(inps.slave, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
-                    'azimuthOff': os.path.join(inps.slave, 'overlap', IWstr, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
+                rdict = { 'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
+                     'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
+                    'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
 
 
                 print ('rdict: ', rdict)
 
-                ut.adjustCommonValidRegion(master,slave)
+                ut.adjustCommonValidRegion(reference,secondary)
                 intname = os.path.join(ifgdir, '%s_bot_%02d_%02d.int'%(inps.intprefix,ii,ii+1))
-                fact = 4 * np.pi * slave.rangePixelSize / slave.radarWavelength
+                fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
 
-            #intimage = multiply(mastername, slavename, intname,
-            #        rdict['rangeOff'], fact, master, flatten=True)
+            #intimage = multiply(referencename, secondaryname, intname,
+            #        rdict['rangeOff'], fact, reference, flatten=True)
 
-                intimage = multiply(mastername, slavename, intname,
-                        rdict['rangeOff1'], rdict['rangeOff2'], fact, master, flatten=inps.flatten)
+                intimage = multiply(referencename, secondaryname, intname,
+                        rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
 
-                burst = copy.deepcopy(master)
+                burst = copy.deepcopy(reference)
                 burst.burstNumber = ii
                 burst.image = intimage
                 botIfg.bursts.append(burst)
@@ -243,7 +242,7 @@ def main(iargs=None):
         if hasattr(topCoreg, 'reference'):
             topIfg.reference = topCoreg.reference
         else:
-            topIfg.reference = topMaster.reference
+            topIfg.reference = topReference.reference
 
         print('Type: ',type(topIfg.reference))
 

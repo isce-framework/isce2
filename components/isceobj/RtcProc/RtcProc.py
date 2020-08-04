@@ -13,7 +13,7 @@ from iscesys.Compatibility import Compatibility
 
 OUTPUT_FOLDER = Component.Parameter('outputFolder',
                                 public_name='output folder with imagery',
-                                default='master',
+                                default='reference',
                                 type=str,
                                 mandatory=False,
                                 doc = 'Directory name of the unpacked GRD product')
@@ -207,14 +207,14 @@ class RtcProc(Component):
         return validlist
 
 
-    def getMasterPolarizations(self, masterPol, inlist):
+    def getReferencePolarizations(self, referencePol, inlist):
         '''
-        Check available list to pick co-pol master if none is provided.
+        Check available list to pick co-pol reference if none is provided.
         '''
 
         validlist = self.getValidPolarizationList(self, inlist)
 
-        if masterPol is None:
+        if referencePol is None:
 
             if 'HH' in validlist:
                 return 'HH'
@@ -226,10 +226,10 @@ class RtcProc(Component):
                 return validlist[0]
 
         else:
-            if masterPol not in validlist:
-                raise Exception('Requested master polarization {0} not in available polarizations'.format(masterPol))
+            if referencePol not in validlist:
+                raise Exception('Requested reference polarization {0} not in available polarizations'.format(referencePol))
             else:
-                return masterPol
+                return referencePol
 
 
     def getLooks(self,posting, delaz, delrg, azl, rgl):

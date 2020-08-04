@@ -46,7 +46,7 @@ def loadVirtualArray(fname):
     ds = None
     return data
 
-def multiply(masname, slvname, outname, rngname, fact, masterFrame,
+def multiply(masname, slvname, outname, rngname, fact, referenceFrame,
         flatten=True, alks=3, rlks=7, virtual=True):
 
 
@@ -58,11 +58,11 @@ def multiply(masname, slvname, outname, rngname, fact, masterFrame,
 
 
     if not virtual:
-        master = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
-        slave = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
+        reference = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
+        secondary = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
     else:
-        master = loadVirtualArray(masname + '.vrt')
-        slave = loadVirtualArray(slvname + '.vrt')
+        reference = loadVirtualArray(masname + '.vrt')
+        secondary = loadVirtualArray(slvname + '.vrt')
    
     if os.path.exists(rngname):
         rng2 = np.memmap(rngname, dtype=np.float32, mode='r', shape=(length,width))
@@ -74,19 +74,19 @@ def multiply(masname, slvname, outname, rngname, fact, masterFrame,
     
     #Zero out anytging outside the valid region:
     ifg = np.memmap(outname, dtype=np.complex64, mode='w+', shape=(length,width))
-    firstS = masterFrame.firstValidSample
-    lastS = masterFrame.firstValidSample + masterFrame.numValidSamples -1
-    firstL = masterFrame.firstValidLine
-    lastL = masterFrame.firstValidLine + masterFrame.numValidLines - 1
+    firstS = referenceFrame.firstValidSample
+    lastS = referenceFrame.firstValidSample + referenceFrame.numValidSamples -1
+    firstL = referenceFrame.firstValidLine
+    lastL = referenceFrame.firstValidLine + referenceFrame.numValidLines - 1
     for kk in range(firstL,lastL + 1):
-        ifg[kk,firstS:lastS + 1] = master[kk,firstS:lastS + 1] * np.conj(slave[kk,firstS:lastS + 1])
+        ifg[kk,firstS:lastS + 1] = reference[kk,firstS:lastS + 1] * np.conj(secondary[kk,firstS:lastS + 1])
         if flatten:
             phs = np.exp(cJ*fact*rng2[kk,firstS:lastS + 1])
             ifg[kk,firstS:lastS + 1] *= phs
 
     ####
-    master=None
-    slave=None
+    reference=None
+    secondary=None
     ifg = None
 
     objInt = isceobj.createIntImage()
@@ -122,22 +122,21 @@ def runOverlapIfg(self):
             print('Skipping overlap ifg for swath IW{0}'.format(swath))
             continue
 
-        minBurst = self._insar.commonBurstStartMasterIndex[swath-1]
+        minBurst = self._insar.commonBurstStartReferenceIndex[swath-1]
         maxBurst = minBurst + self._insar.numberOfCommonBursts[swath-1]
 
         nBurst = maxBurst - minBurst
 
         ifgdir = os.path.join( self._insar.coarseIfgDirname, self._insar.overlapsSubDirname, 'IW{0}'.format(swath))
-        if not os.path.exists(ifgdir):
-            os.makedirs(ifgdir)
+        os.makedirs(ifgdir, exist_ok=True)
 
-        ####All indexing is w.r.t stack master for overlaps
+        ####All indexing is w.r.t stack reference for overlaps
         maxBurst = maxBurst - 1
    
 
         ####Load relevant products
-        topMaster = self._insar.loadProduct(os.path.join(self._insar.masterSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
-        botMaster = self._insar.loadProduct(os.path.join(self._insar.masterSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
+        topReference = self._insar.loadProduct(os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
+        botReference = self._insar.loadProduct(os.path.join(self._insar.referenceSlcOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
 
         topCoreg = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct,'top_IW{0}.xml'.format(swath)))
         botCoreg = self._insar.loadProduct( os.path.join(self._insar.coregOverlapProduct, 'bottom_IW{0}.xml'.format(swath)))
@@ -155,48 +154,48 @@ def runOverlapIfg(self):
             jj = ii - minBurst
 
             ####Process the top bursts
-            master = topMaster.bursts[jj] 
-            slave  = topCoreg.bursts[jj]
+            reference = topReference.bursts[jj] 
+            secondary  = topCoreg.bursts[jj]
 
-            mastername = master.image.filename
-            slavename = slave.image.filename
+            referencename = reference.image.filename
+            secondaryname = secondary.image.filename
             rdict = {'rangeOff' : os.path.join(coregdir, 'range_top_%02d_%02d.off'%(ii+1,ii+2)),
                      'azimuthOff': os.path.join(coregdir, 'azimuth_top_%02d_%02d.off'%(ii+1,ii+2))}
             
             
-            adjustValidLineSample(master,slave)
+            adjustValidLineSample(reference,secondary)
         
             intname = os.path.join(ifgdir, '%s_top_%02d_%02d.int'%('burst',ii+1,ii+2))
-            fact = 4 * np.pi * slave.rangePixelSize / slave.radarWavelength
-            intimage = multiply(mastername, slavename, intname,
-                        rdict['rangeOff'], fact, master, flatten=True,
+            fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
+            intimage = multiply(referencename, secondaryname, intname,
+                        rdict['rangeOff'], fact, reference, flatten=True,
                         alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
 
-            burst = master.clone()
+            burst = reference.clone()
             burst.image = intimage
             topIfg.bursts.append(burst)
 
 
 
             ####Process the bottom bursts
-            master = botMaster.bursts[jj]
-            slave = botCoreg.bursts[jj]
+            reference = botReference.bursts[jj]
+            secondary = botCoreg.bursts[jj]
 
 
-            mastername =  master.image.filename
-            slavename = slave.image.filename
+            referencename =  reference.image.filename
+            secondaryname = secondary.image.filename
             rdict = {'rangeOff' : os.path.join(coregdir, 'range_bot_%02d_%02d.off'%(ii+1,ii+2)),
                     'azimuthOff': os.path.join(coregdir, 'azimuth_bot_%02d_%02d.off'%(ii+1,ii+2))}
 
-            adjustValidLineSample(master,slave)
+            adjustValidLineSample(reference,secondary)
             intname = os.path.join(ifgdir, '%s_bot_%02d_%02d.int'%('burst',ii+1,ii+2))
-            fact = 4 * np.pi * slave.rangePixelSize / slave.radarWavelength
-            intimage = multiply(mastername, slavename, intname,
-                        rdict['rangeOff'], fact, master, flatten=True,
+            fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
+            intimage = multiply(referencename, secondaryname, intname,
+                        rdict['rangeOff'], fact, reference, flatten=True,
                         alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks,
                         virtual=virtual)
 
-            burst = master.clone()
+            burst = reference.clone()
             burst.image = intimage
             botIfg.bursts.append(burst)
 

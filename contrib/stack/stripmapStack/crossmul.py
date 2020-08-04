@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-import isce
+
+
 import os
-import logging
-from components.stdproc.stdproc import crossmul
-import isceobj
-from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
-import isceobj
 import argparse
+import logging
+
+import isce
+import isceobj
+from components.stdproc.stdproc import crossmul
+from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
+
 
 def createParser():
 
@@ -14,10 +17,10 @@ def createParser():
     Command Line Parser.
     '''
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', '--master', type=str, dest='master', required=True,
-            help='Master image')
-    parser.add_argument('-s', '--slave', type=str, dest='slave', required=True,
-            help='Slave image')
+    parser.add_argument('-m', '--reference', type=str, dest='reference', required=True,
+            help='Reference image')
+    parser.add_argument('-s', '--secondary', type=str, dest='secondary', required=True,
+            help='Secondary image')
     parser.add_argument('-o', '--outdir', type=str, dest='prefix', default='crossmul',
             help='Prefix of output int and amp files')
     parser.add_argument('-a', '--alks', type=int, dest='azlooks', default=1,
@@ -86,13 +89,12 @@ def main(iargs=None):
     inps = cmdLineParse(iargs)
 
     img1 = isceobj.createImage()
-    img1.load(inps.master + '.xml')
+    img1.load(inps.reference + '.xml')
 
     img2 = isceobj.createImage()
-    img2.load(inps.slave + '.xml')
+    img2.load(inps.secondary + '.xml')
 
-    if not os.path.exists(os.path.dirname(inps.prefix)):
-       os.makedirs(os.path.dirname(inps.prefix))
+    os.makedirs(os.path.dirname(inps.prefix), exist_ok=True)
 
     run(img1, img2, inps.prefix, inps.azlooks, inps.rglooks)
 

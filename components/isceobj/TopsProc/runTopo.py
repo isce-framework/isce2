@@ -37,30 +37,24 @@ def runTopoCPU(self):
 
     boxes = []
     for swath in swathList:
-        #####Load the master product
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct,  'IW{0}.xml'.format(swath)))
+        #####Load the reference product
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct,  'IW{0}.xml'.format(swath)))
 
 
         numCommon  = self._insar.numberOfCommonBursts[swath-1]
-        startIndex = self._insar.commonBurstStartMasterIndex[swath-1]
+        startIndex = self._insar.commonBurstStartReferenceIndex[swath-1]
 
         if numCommon > 0:
             catalog.addItem('Number of common bursts IW-{0}'.format(swath), self._insar.numberOfCommonBursts[swath-1], 'topo')
 
-    
             ###Check if geometry directory already exists.
             dirname = os.path.join(self._insar.geometryDirname, 'IW{0}'.format(swath))
-
-            if os.path.isdir(dirname):
-                logger.info('Geometry directory {0} already exists.'.format(dirname))
-            else:
-                os.makedirs(dirname)
-
+            os.makedirs(dirname, exist_ok=True)
 
             ###For each burst
             for index in range(numCommon):
                 ind = index + startIndex
-                burst = master.bursts[ind]
+                burst = reference.bursts[ind]
 
                 latname = os.path.join(dirname, 'lat_%02d.rdr'%(ind+1))
                 lonname = os.path.join(dirname, 'lon_%02d.rdr'%(ind+1))
@@ -142,20 +136,20 @@ def runTopoGPU(self):
     swathStarts = []
 
     for swath in swathList:
-        #####Load the master product
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct,  'IW{0}.xml'.format(swath)))
+        #####Load the reference product
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct,  'IW{0}.xml'.format(swath)))
 
         numCommon  = self._insar.numberOfCommonBursts[swath-1]
-        startIndex = self._insar.commonBurstStartMasterIndex[swath-1]
+        startIndex = self._insar.commonBurstStartReferenceIndex[swath-1]
 
         if numCommon > 0:
             catalog.addItem('Number of common bursts IW-{0}'.format(swath), self._insar.numberOfCommonBursts[swath-1], 'topo')
 
 
-            master.bursts = master.bursts[startIndex:startIndex+numCommon]
-            master.numberOfBursts = numCommon
+            reference.bursts = reference.bursts[startIndex:startIndex+numCommon]
+            reference.numberOfBursts = numCommon
 
-            frames.append(master)
+            frames.append(reference)
             swaths.append(swath)
             swathStarts.append(startIndex)
 
@@ -201,11 +195,8 @@ def runTopoGPU(self):
     slantRangeImage.createPoly2D()
 
 
-
-
     dirname = self._insar.geometryDirname
-    if not os.path.isdir(dirname):
-        os.makedirs(dirname)
+    os.makedirs(dirname, exist_ok=True)
 
 
     latImage = isceobj.createImage()
@@ -321,9 +312,7 @@ def runTopoGPU(self):
     for swath, frame, istart in zip(swaths, frames, swathStarts):
         outname = os.path.join(dirname, 'IW{0}'.format(swath))
 
-        if not os.path.isdir(outname):
-            os.makedirs(outname)
-
+        os.makedirs(outname, exist_ok=True)
 
         for ind, burst in enumerate(frame.bursts):
             top = int(np.rint((burst.sensingStart - t0).total_seconds()/dt))

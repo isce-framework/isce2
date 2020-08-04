@@ -50,7 +50,7 @@ def runUnwrap(self,costMode = None,initMethod = None, defomax = None, initOnly =
     wrapName = self.insar.topophaseFlatFilename
     unwrapName = self.insar.unwrappedIntFilename
 
-    wavelength = self.insar.masterFrame.getInstrument().getRadarWavelength()
+    wavelength = self.insar.referenceFrame.getInstrument().getRadarWavelength()
     width      = self.insar.resampIntImage.width 
     earthRadius = self.insar.peg.radiusOfCurvature 
     altitude   = self.insar.averageHeight
@@ -58,10 +58,10 @@ def runUnwrap(self,costMode = None,initMethod = None, defomax = None, initOnly =
     rangeLooks = self.insar.topo.numberRangeLooks
     azimuthLooks = self.insar.topo.numberAzimuthLooks
 
-    azres = self.insar.masterFrame.platform.antennaLength/2.0
+    azres = self.insar.referenceFrame.platform.antennaLength/2.0
     azfact = self.insar.topo.numberAzimuthLooks *azres / self.insar.topo.azimuthSpacing
 
-    rBW = self.insar.masterFrame.instrument.pulseLength * self.insar.masterFrame.instrument.chirpSlope
+    rBW = self.insar.referenceFrame.instrument.pulseLength * self.insar.referenceFrame.instrument.chirpSlope
     rgres = abs(SPEED_OF_LIGHT / (2.0 * rBW))
     rngfact = rgres/self.insar.topo.slantRangePixelSpacing
 

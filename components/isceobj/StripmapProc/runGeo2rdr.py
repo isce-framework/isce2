@@ -49,13 +49,10 @@ def runGeo2rdr(self):
 
     logger.info("Running geo2rdr")
 
-    info = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
+    info = self._insar.loadProduct( self._insar.secondarySlcCropProduct)
 
     offsetsDir = self.insar.offsetsDirname 
-    if os.path.isdir(offsetsDir):
-        logger.info('Geometry directory {0} already exists.'.format(offsetsDir))
-    else:
-        os.makedirs(offsetsDir)
+    os.makedirs(offsetsDir, exist_ok=True)
 
     grdr = createGeo2rdr()
     grdr.configure()
@@ -77,7 +74,7 @@ def runGeo2rdr(self):
     grdr.numberAzimuthLooks = 1
 
 
-    if self.insar.slaveGeometrySystem.lower().startswith('native'):
+    if self.insar.secondaryGeometrySystem.lower().startswith('native'):
         p = [x/info.PRF for x in info._dopplerVsPixel]
     else:
         p = [0.]

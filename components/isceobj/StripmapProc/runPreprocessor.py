@@ -43,162 +43,158 @@ def runPreprocessor(self):
 
     from .Factories import isRawSensor, isZeroDopplerSLC, getDopplerMethod    
 
-    ###Unpack master
-    sensor = copy.deepcopy(self.master)
+    ###Unpack reference
+    sensor = copy.deepcopy(self.reference)
 
     dirname = sensor.output
 
-    if self.masterSensorName is None:
-        self.masterSensorName = self.sensorName
+    if self.referenceSensorName is None:
+        self.referenceSensorName = self.sensorName
 
-    israwdata = isRawSensor(self.masterSensorName)
+    israwdata = isRawSensor(self.referenceSensorName)
 
 
-    if self.masterDopplerMethod is None:
-        mdop = getDopplerMethod(self.masterSensorName)
+    if self.referenceDopplerMethod is None:
+        mdop = getDopplerMethod(self.referenceSensorName)
     else:
-        mdop = self.masterDopplerMethod
+        mdop = self.referenceDopplerMethod
     
-    masterdop = isceobj.Doppler.createDoppler(mdop)
+    referencedop = isceobj.Doppler.createDoppler(mdop)
 
     if israwdata:
-        print('Master data is in RAW format. Adding _raw to output name.')
+        print('Reference data is in RAW format. Adding _raw to output name.')
         sensor.output = os.path.join(dirname + '_raw', os.path.basename(dirname)+'.raw')
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
         #sensor._resampleFlag = 'single2dual'
-        master = make_raw(sensor, masterdop)
+        reference = make_raw(sensor, referencedop)
 
         ###Weird handling here because of way make_raw is structured
         ###DOPIQ uses weird dict to store coeffs
         if mdop == 'useDOPIQ':
-            #master._dopplerVsPixel = [masterdop.quadratic[x]*master.PRF for x in ['a','b','c']]
-            master.frame._dopplerVsPixel = [masterdop.quadratic[x]*master.PRF for x in ['a','b','c']]
+            #reference._dopplerVsPixel = [referencedop.quadratic[x]*reference.PRF for x in ['a','b','c']]
+            reference.frame._dopplerVsPixel = [referencedop.quadratic[x]*reference.PRF for x in ['a','b','c']]
 
-        if self._insar.masterRawProduct is None:
-            self._insar.masterRawProduct = dirname + '_raw.xml'
+        if self._insar.referenceRawProduct is None:
+            self._insar.referenceRawProduct = dirname + '_raw.xml'
 
-        self._insar.saveProduct(master.frame, self._insar.masterRawProduct)
+        self._insar.saveProduct(reference.frame, self._insar.referenceRawProduct)
 
     else:
-        print('Master data is in SLC format. Adding _slc to output name.')
-        iszerodop = isZeroDopplerSLC(self.masterSensorName) 
+        print('Reference data is in SLC format. Adding _slc to output name.')
+        iszerodop = isZeroDopplerSLC(self.referenceSensorName) 
         sensor.output =  os.path.join(dirname + '_slc', os.path.basename(dirname)+'.slc')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
+
+        reference = make_raw(sensor, referencedop)
         
-        master = make_raw(sensor, masterdop)
-        
-        if self._insar.masterSlcProduct is None:
-            self._insar.masterSlcProduct = dirname + '_slc.xml'
+        if self._insar.referenceSlcProduct is None:
+            self._insar.referenceSlcProduct = dirname + '_slc.xml'
 
         if iszerodop:
-            self._insar.masterGeometrySystem = 'Zero Doppler'
+            self._insar.referenceGeometrySystem = 'Zero Doppler'
         else:
-            self._insar.masterGeometrySystem = 'Native Doppler'
+            self._insar.referenceGeometrySystem = 'Native Doppler'
 
-        self._insar.saveProduct(master.frame, self._insar.masterSlcProduct)
+        self._insar.saveProduct(reference.frame, self._insar.referenceSlcProduct)
 
 
-    ###Unpack slave
-    sensor = copy.deepcopy(self.slave)
+    ###Unpack secondary
+    sensor = copy.deepcopy(self.secondary)
     dirname = sensor.output
 
-    if self.slaveSensorName is None:
-        self.slaveSensorName = self.sensorName
+    if self.secondarySensorName is None:
+        self.secondarySensorName = self.sensorName
 
-    israwdata = isRawSensor(self.slaveSensorName)
+    israwdata = isRawSensor(self.secondarySensorName)
 
-    if self.slaveDopplerMethod is None:
-        sdop = getDopplerMethod( self.slaveSensorName)
+    if self.secondaryDopplerMethod is None:
+        sdop = getDopplerMethod( self.secondarySensorName)
     else:
-        sdop = self.slaveDopplerMethod
+        sdop = self.secondaryDopplerMethod
 
-    slavedop = isceobj.Doppler.createDoppler(sdop)
+    secondarydop = isceobj.Doppler.createDoppler(sdop)
 
     if israwdata:
-        print('Slave data is in RAW format. Adding _raw to output name.')
+        print('Secondary data is in RAW format. Adding _raw to output name.')
         sensor.output = os.path.join(dirname + '_raw', os.path.basename(dirname)+'.raw')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs(os.path.dirname(sensor.output), exist_ok=True)
 
-        slave = make_raw(sensor, slavedop)
+        secondary = make_raw(sensor, secondarydop)
 
         ###Weird handling here because of make_raw structure
         ###DOPIQ uses weird dict to store coefficients
         if sdop == 'useDOPIQ':
-            #slave._dopplerVsPixel = [slavedop.quadratic[x]*slave.PRF for x in ['a','b','c']]
-            slave.frame._dopplerVsPixel = [slavedop.quadratic[x]*slave.PRF for x in ['a','b','c']]
+            #secondary._dopplerVsPixel = [secondarydop.quadratic[x]*secondary.PRF for x in ['a','b','c']]
+            secondary.frame._dopplerVsPixel = [secondarydop.quadratic[x]*secondary.PRF for x in ['a','b','c']]
 
-        if self._insar.slaveRawProduct is None:
-            self._insar.slaveRawProduct = dirname + '_raw.xml'
+        if self._insar.secondaryRawProduct is None:
+            self._insar.secondaryRawProduct = dirname + '_raw.xml'
 
-        self._insar.saveProduct(slave.frame, self._insar.slaveRawProduct)
+        self._insar.saveProduct(secondary.frame, self._insar.secondaryRawProduct)
 
     else:
-        print('Slave data is in SLC format. Adding _slc to output name.')
-        iszerodop = isZeroDopplerSLC(self.slaveSensorName)
+        print('Secondary data is in SLC format. Adding _slc to output name.')
+        iszerodop = isZeroDopplerSLC(self.secondarySensorName)
         sensor.output =  os.path.join(dirname + '_slc', os.path.basename(dirname)+'.slc')
 
-        if not os.path.isdir( os.path.dirname(sensor.output)):
-            os.makedirs( os.path.dirname(sensor.output))
+        os.makedirs( os.path.dirname(sensor.output), exist_ok=True)
 
-        slave = make_raw(sensor, slavedop)
+        secondary = make_raw(sensor, secondarydop)
         
-        if self._insar.slaveSlcProduct is None:
-            self._insar.slaveSlcProduct = dirname + '_slc.xml'
+        if self._insar.secondarySlcProduct is None:
+            self._insar.secondarySlcProduct = dirname + '_slc.xml'
 
         
         if iszerodop:
-            self._insar.slaveGeometrySystem = 'Zero Doppler'
+            self._insar.secondaryGeometrySystem = 'Zero Doppler'
         else:
-            self._insar.slaveGeometrySystem = 'Native Doppler'
+            self._insar.secondaryGeometrySystem = 'Native Doppler'
 
-        self._insar.saveProduct(slave.frame, self._insar.slaveSlcProduct)
+        self._insar.saveProduct(secondary.frame, self._insar.secondarySlcProduct)
     
 
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
-    frame = master.frame
+    frame = reference.frame
     instrument = frame.getInstrument()
     platform = instrument.getPlatform()
 
-    catalog.addInputsFrom(master.sensor, 'master.sensor')
-    catalog.addItem('width', frame.numberOfSamples, 'master')
-    catalog.addItem('iBias', instrument.getInPhaseValue(), 'master')
-    catalog.addItem('qBias', instrument.getQuadratureValue(), 'master')
-    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'master')
-    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'master')
-    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'master')
-    catalog.addItem('pulse_length', instrument.getPulseLength(), 'master')
-    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'master')
-    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'master')
-    catalog.addItem('lookSide', platform.pointingDirection, 'master')
-    catalog.addInputsFrom(frame, 'master.frame')
-    catalog.addInputsFrom(instrument, 'master.instrument')
-    catalog.addInputsFrom(platform, 'master.platform')
-    catalog.addInputsFrom(frame.orbit, 'master.orbit')
+    catalog.addInputsFrom(reference.sensor, 'reference.sensor')
+    catalog.addItem('width', frame.numberOfSamples, 'reference')
+    catalog.addItem('iBias', instrument.getInPhaseValue(), 'reference')
+    catalog.addItem('qBias', instrument.getQuadratureValue(), 'reference')
+    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'reference')
+    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'reference')
+    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'reference')
+    catalog.addItem('pulse_length', instrument.getPulseLength(), 'reference')
+    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'reference')
+    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'reference')
+    catalog.addItem('lookSide', platform.pointingDirection, 'reference')
+    catalog.addInputsFrom(frame, 'reference.frame')
+    catalog.addInputsFrom(instrument, 'reference.instrument')
+    catalog.addInputsFrom(platform, 'reference.platform')
+    catalog.addInputsFrom(frame.orbit, 'reference.orbit')
 
-    frame = slave.frame
+    frame = secondary.frame
     instrument = frame.getInstrument()
     platform = instrument.getPlatform()
 
-    catalog.addInputsFrom(slave.sensor, 'slave.sensor')
-    catalog.addItem('width', frame.numberOfSamples, 'slave')
-    catalog.addItem('iBias', instrument.getInPhaseValue(), 'slave')
-    catalog.addItem('qBias', instrument.getQuadratureValue(), 'slave')
-    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'slave')
-    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'slave')
-    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'slave')
-    catalog.addItem('pulse_length', instrument.getPulseLength(), 'slave')
-    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'slave')
-    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'slave')
-    catalog.addItem('lookSide', platform.pointingDirection, 'slave')
-    catalog.addInputsFrom(frame, 'slave.frame')
-    catalog.addInputsFrom(instrument, 'slave.instrument')
-    catalog.addInputsFrom(platform, 'slave.platform')
-    catalog.addInputsFrom(frame.orbit, 'slave.orbit')
+    catalog.addInputsFrom(secondary.sensor, 'secondary.sensor')
+    catalog.addItem('width', frame.numberOfSamples, 'secondary')
+    catalog.addItem('iBias', instrument.getInPhaseValue(), 'secondary')
+    catalog.addItem('qBias', instrument.getQuadratureValue(), 'secondary')
+    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'secondary')
+    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'secondary')
+    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'secondary')
+    catalog.addItem('pulse_length', instrument.getPulseLength(), 'secondary')
+    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'secondary')
+    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'secondary')
+    catalog.addItem('lookSide', platform.pointingDirection, 'secondary')
+    catalog.addInputsFrom(frame, 'secondary.frame')
+    catalog.addInputsFrom(instrument, 'secondary.instrument')
+    catalog.addInputsFrom(platform, 'secondary.platform')
+    catalog.addInputsFrom(frame.orbit, 'secondary.orbit')
 
     catalog.printToLog(logger, "runPreprocessor")
     self._insar.procDoc.addAllFromCatalog(catalog)

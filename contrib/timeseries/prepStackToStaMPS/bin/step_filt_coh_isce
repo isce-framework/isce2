@@ -81,10 +81,10 @@ if ( "$multi_look_flag" == "y") then
     set file_coh_out = {$filename_out}_filt_{$r_looks}l.coh
 endif
 
-# retrieve the current slave data folder being processed
+# retrieve the current secondary data folder being processed
 set date = `basename $CURDIR`
 
-# I included to be in the slave data folder, such one can reprocess easily without the need to manually specify the inputs
+# I included to be in the secondary data folder, such one can reprocess easily without the need to manually specify the inputs
 # move dir above
 cd ..
 

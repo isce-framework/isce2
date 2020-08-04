@@ -13,7 +13,7 @@ import os
 import copy
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct
 
-def resampSlave(mas, slv, rdict, outname ):
+def resampSecondary(mas, slv, rdict, outname ):
     '''
     Resample burst by burst.
     '''
@@ -71,98 +71,98 @@ def resampSlave(mas, slv, rdict, outname ):
     return imgOut
 
 
-def getRelativeShifts(mFrame, sFrame, minBurst, maxBurst, slaveBurstStart):
+def getRelativeShifts(mFrame, sFrame, minBurst, maxBurst, secondaryBurstStart):
     '''
     Estimate the relative shifts between the start of the bursts.
     '''
     
-    azMasterOff = {}
-    azSlaveOff = {}
+    azReferenceOff = {}
+    azSecondaryOff = {}
     azRelOff = {}
     tm = mFrame.bursts[minBurst].sensingStart
     dt = mFrame.bursts[minBurst].azimuthTimeInterval
-    ts = sFrame.bursts[slaveBurstStart].sensingStart
+    ts = sFrame.bursts[secondaryBurstStart].sensingStart
     
     for index in range(minBurst, maxBurst):
         burst = mFrame.bursts[index]
-        azMasterOff[index] = int(np.round((burst.sensingStart - tm).total_seconds() / dt))
+        azReferenceOff[index] = int(np.round((burst.sensingStart - tm).total_seconds() / dt))
 
-        burst = sFrame.bursts[slaveBurstStart + index - minBurst]
-        azSlaveOff[slaveBurstStart + index - minBurst] =  int(np.round((burst.sensingStart - ts).total_seconds() / dt))
+        burst = sFrame.bursts[secondaryBurstStart + index - minBurst]
+        azSecondaryOff[secondaryBurstStart + index - minBurst] =  int(np.round((burst.sensingStart - ts).total_seconds() / dt))
 
-        azRelOff[slaveBurstStart + index - minBurst] = azSlaveOff[slaveBurstStart + index - minBurst] - azMasterOff[index]
+        azRelOff[secondaryBurstStart + index - minBurst] = azSecondaryOff[secondaryBurstStart + index - minBurst] - azReferenceOff[index]
 
 
     return azRelOff
 
 
 
-def adjustValidSampleLine(master, slave, minAz=0, maxAz=0, minRng=0, maxRng=0):
+def adjustValidSampleLine(reference, secondary, minAz=0, maxAz=0, minRng=0, maxRng=0):
     ####Adjust valid samples and first valid sample here
     print ("Adjust valid samples")
-    print('Before: ', master.firstValidSample, master.numValidSamples)
+    print('Before: ', reference.firstValidSample, reference.numValidSamples)
     print('Offsets : ', minRng, maxRng)
 
     if (minRng > 0) and (maxRng > 0):
-        master.firstValidSample = slave.firstValidSample - int(np.floor(maxRng)-4)
-        lastValidSample = master.firstValidSample - 8 + slave.numValidSamples
+        reference.firstValidSample = secondary.firstValidSample - int(np.floor(maxRng)-4)
+        lastValidSample = reference.firstValidSample - 8 + secondary.numValidSamples
 
-        if lastValidSample < master.numberOfSamples:
-            master.numValidSamples = slave.numValidSamples - 8
+        if lastValidSample < reference.numberOfSamples:
+            reference.numValidSamples = secondary.numValidSamples - 8
         else:
-            master.numValidSamples = master.numberOfSamples - master.firstValidSample
+            reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
 
     elif (minRng < 0) and (maxRng < 0):
-            master.firstValidSample = slave.firstValidSample - int(np.floor(minRng) - 4)
-            lastValidSample = master.firstValidSample + slave.numValidSamples  - 8
-            if lastValidSample < master.numberOfSamples:
-               master.numValidSamples = slave.numValidSamples - 8
+            reference.firstValidSample = secondary.firstValidSample - int(np.floor(minRng) - 4)
+            lastValidSample = reference.firstValidSample + secondary.numValidSamples  - 8
+            if lastValidSample < reference.numberOfSamples:
+               reference.numValidSamples = secondary.numValidSamples - 8
             else:
-               master.numValidSamples = master.numberOfSamples - master.firstValidSample
+               reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
     elif (minRng < 0) and (maxRng > 0):
-            master.firstValidSample = slave.firstValidSample - int(np.floor(minRng) - 4)
-            lastValidSample = master.firstValidSample + slave.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
-            if lastValidSample < master.numberOfSamples:
-               master.numValidSamples = slave.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
+            reference.firstValidSample = secondary.firstValidSample - int(np.floor(minRng) - 4)
+            lastValidSample = reference.firstValidSample + secondary.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
+            if lastValidSample < reference.numberOfSamples:
+               reference.numValidSamples = secondary.numValidSamples + int(np.floor(minRng) - 8) - int(np.ceil(maxRng))
             else:
-               master.numValidSamples = master.numberOfSamples - master.firstValidSample
+               reference.numValidSamples = reference.numberOfSamples - reference.firstValidSample
 
-    master.firstValidSample = np.max([0, master.firstValidSample])
+    reference.firstValidSample = np.max([0, reference.firstValidSample])
     ###Adjust valid lines and first valid line here
     print ("Adjust valid lines")
-    print('Before: ', master.firstValidLine, master.numValidLines)
+    print('Before: ', reference.firstValidLine, reference.numValidLines)
     print('Offsets : ', minAz, maxAz)
     if (minAz > 0) and (maxAz > 0):
 
-            master.firstValidLine = slave.firstValidLine - int(np.floor(maxAz) - 4)
-            lastValidLine = master.firstValidLine - 8 + slave.numValidLines
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(maxAz) - 4)
+            lastValidLine = reference.firstValidLine - 8 + secondary.numValidLines
 
-            if lastValidLine < master.numberOfLines:
-                master.numValidLines = slave.numValidLines - 8
+            if lastValidLine < reference.numberOfLines:
+                reference.numValidLines = secondary.numValidLines - 8
             else:
-                master.numValidLines = master.numberOfLines - master.firstValidLine
+                reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     elif (minAz < 0) and  (maxAz < 0):
-            master.firstValidLine = slave.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = master.firstValidLine + slave.numValidLines  - 8
-            if lastValidLine < master.numberOfLines:
-               master.numValidLines = slave.numValidLines - 8
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+            lastValidLine = reference.firstValidLine + secondary.numValidLines  - 8
+            if lastValidLine < reference.numberOfLines:
+               reference.numValidLines = secondary.numValidLines - 8
             else:
-               master.numValidLines = master.numberOfLines - master.firstValidLine
+               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
     
     elif (minAz < 0) and (maxAz > 0):
-            master.firstValidLine = slave.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = master.firstValidLine + slave.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
-            if lastValidLine < master.numberOfLines:
-               master.numValidLines = slave.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+            lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+            if lastValidLine < reference.numberOfLines:
+               reference.numValidLines = secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
             else:
-               master.numValidLines = master.numberOfLines - master.firstValidLine
+               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
 
 
-def getValidLines(slave, rdict, inname, misreg_az=0.0, misreg_rng=0.0):
+def getValidLines(secondary, rdict, inname, misreg_az=0.0, misreg_rng=0.0):
     '''
-    Looks at the master, slave and azimuth offsets and gets the Interferogram valid lines 
+    Looks at the reference, secondary and azimuth offsets and gets the Interferogram valid lines 
     '''
     dimg = isceobj.createSlcImage()
     dimg.load(inname + '.xml')
@@ -189,7 +189,7 @@ def getValidLines(slave, rdict, inname, misreg_az=0.0, misreg_rng=0.0):
 
 def runFineResamp(self):
     '''
-    Create coregistered overlap slaves.
+    Create coregistered overlap secondarys.
     '''
 
 
@@ -197,32 +197,31 @@ def runFineResamp(self):
 
 
     for swath in swathList:
-        ####Load slave metadata
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
+        ####Load secondary metadata
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
 
-        dt = slave.bursts[0].azimuthTimeInterval
-        dr = slave.bursts[0].rangePixelSize
+        dt = secondary.bursts[0].azimuthTimeInterval
+        dr = secondary.bursts[0].rangePixelSize
 
 
         ###Output directory for coregistered SLCs
         outdir = os.path.join(self._insar.fineCoregDirname, 'IW{0}'.format(swath))
-        if not os.path.isdir(outdir):
-            os.makedirs(outdir)
+        os.makedirs(outdir, exist_ok=True)
 
     
         ###Directory with offsets
         offdir = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath))
 
-        ####Indices w.r.t master
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
-        slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits(swath-1)
+        ####Indices w.r.t reference
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits(swath-1)
 
         if minBurst == maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
             continue
 
-        relShifts = getRelativeShifts(master, slave, minBurst, maxBurst, slaveBurstStart)
+        relShifts = getRelativeShifts(reference, secondary, minBurst, maxBurst, secondaryBurstStart)
         print('Shifts IW-{0}: '.format(swath), relShifts) 
    
         ####Can corporate known misregistration here
@@ -233,23 +232,23 @@ def runFineResamp(self):
         rpoly.initPoly(rangeOrder=0,azimuthOrder=0,coeffs=[[0.]])
 
 
-        misreg_az = self._insar.slaveTimingCorrection / dt
-        misreg_rg = self._insar.slaveRangeCorrection / dr
+        misreg_az = self._insar.secondaryTimingCorrection / dt
+        misreg_rg = self._insar.secondaryRangeCorrection / dr
 
 
         coreg = createTOPSSwathSLCProduct()
         coreg.configure()
 
         for ii in range(minBurst, maxBurst):
-            jj = slaveBurstStart + ii - minBurst 
+            jj = secondaryBurstStart + ii - minBurst 
     
-            masBurst = master.bursts[ii]
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii]
+            slvBurst = secondary.bursts[jj]
 
             try:
                 offset = relShifts[jj]
             except:
-                raise Exception('Trying to access shift for slave burst index {0}, which may not overlap with master for swath {1}'.format(jj, swath))
+                raise Exception('Trying to access shift for secondary burst index {0}, which may not overlap with reference for swath {1}'.format(jj, swath))
 
             outname = os.path.join(outdir, 'burst_%02d.slc'%(ii+1))
         
@@ -263,12 +262,12 @@ def runFineResamp(self):
 
 
             ###For future - should account for azimuth and range misreg here .. ignoring for now.
-            azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+            azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
 
             rdict['carrPoly'] = azCarrPoly
             rdict['doppPoly'] = dpoly
 
-            outimg = resampSlave(masBurst, slvBurst, rdict, outname)
+            outimg = resampSecondary(masBurst, slvBurst, rdict, outname)
             minAz, maxAz, minRg, maxRg = getValidLines(slvBurst, rdict, outname,
                     misreg_az = misreg_az - offset, misreg_rng = misreg_rg)
 

@@ -35,35 +35,35 @@ from isceobj.Util.decorators import use_api
 logger = logging.getLogger('isce.insar.runPreprocessor')
 @use_api
 def runPreprocessor(self):
-    master = make_raw(self.master, self.masterdop)
-    self.insar.rawMasterIQImage = master.iqImage
-    slave = make_raw(self.slave, self.slavedop)
-    self.insar.rawSlaveIQImage = slave.iqImage
-    self._insar.numberRangeBins = master.frame.numberRangeBins
+    reference = make_raw(self.reference, self.referencedop)
+    self.insar.rawReferenceIQImage = reference.iqImage
+    secondary = make_raw(self.secondary, self.secondarydop)
+    self.insar.rawSecondaryIQImage = secondary.iqImage
+    self._insar.numberRangeBins = reference.frame.numberRangeBins
     #add raw images to main object
-    masterRaw = initRawImage(master)
-    self._insar.setMasterRawImage(masterRaw)
-    slaveRaw = initRawImage(slave)
-    self._insar.setSlaveRawImage(slaveRaw)
+    referenceRaw = initRawImage(reference)
+    self._insar.setReferenceRawImage(referenceRaw)
+    secondaryRaw = initRawImage(secondary)
+    self._insar.setSecondaryRawImage(secondaryRaw)
 
     #add frames to main  object
-    self._insar.setMasterFrame(master.frame)
-    self._insar.setSlaveFrame(slave.frame)
+    self._insar.setReferenceFrame(reference.frame)
+    self._insar.setSecondaryFrame(secondary.frame)
 
     #add doppler to main object
-    self._insar.setMasterDoppler(master.getDopplerValues())
-    self._insar.setSlaveDoppler(slave.getDopplerValues())
+    self._insar.setReferenceDoppler(reference.getDopplerValues())
+    self._insar.setSecondaryDoppler(secondary.getDopplerValues())
 
     #add squints to main object
-    self._insar.setMasterSquint(master.getSquint())
-    self._insar.setSlaveSquint(slave.getSquint())
+    self._insar.setReferenceSquint(reference.getSquint())
+    self._insar.setSecondarySquint(secondary.getSquint())
 
     #add look direction
-    self._insar.setLookSide(master.frame.getInstrument().getPlatform().pointingDirection)
+    self._insar.setLookSide(reference.frame.getInstrument().getPlatform().pointingDirection)
 
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
-    frame = self._insar.getMasterFrame()
+    frame = self._insar.getReferenceFrame()
     instrument = frame.getInstrument()
     platform = instrument.getPlatform()
 
@@ -71,43 +71,43 @@ def runPreprocessor(self):
     catalog.addInputsFrom(planet, 'planet')
     catalog.addInputsFrom(planet.get_elp(), 'planet.ellipsoid')
 
-    catalog.addInputsFrom(master.sensor, 'master.sensor')
-    catalog.addItem('width', masterRaw.getWidth(), 'master')
-    catalog.addItem('xmin', masterRaw.getXmin(), 'master')
-    catalog.addItem('iBias', instrument.getInPhaseValue(), 'master')
-    catalog.addItem('qBias', instrument.getQuadratureValue(), 'master')
-    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'master')
-    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'master')
-    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'master')
-    catalog.addItem('pulse_length', instrument.getPulseLength(), 'master')
-    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'master')
-    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'master')
-    catalog.addItem('lookSide', platform.pointingDirection, 'master')
-    catalog.addInputsFrom(frame, 'master.frame')
-    catalog.addInputsFrom(instrument, 'master.instrument')
-    catalog.addInputsFrom(platform, 'master.platform')
-    catalog.addInputsFrom(frame.orbit, 'master.orbit')
+    catalog.addInputsFrom(reference.sensor, 'reference.sensor')
+    catalog.addItem('width', referenceRaw.getWidth(), 'reference')
+    catalog.addItem('xmin', referenceRaw.getXmin(), 'reference')
+    catalog.addItem('iBias', instrument.getInPhaseValue(), 'reference')
+    catalog.addItem('qBias', instrument.getQuadratureValue(), 'reference')
+    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'reference')
+    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'reference')
+    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'reference')
+    catalog.addItem('pulse_length', instrument.getPulseLength(), 'reference')
+    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'reference')
+    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'reference')
+    catalog.addItem('lookSide', platform.pointingDirection, 'reference')
+    catalog.addInputsFrom(frame, 'reference.frame')
+    catalog.addInputsFrom(instrument, 'reference.instrument')
+    catalog.addInputsFrom(platform, 'reference.platform')
+    catalog.addInputsFrom(frame.orbit, 'reference.orbit')
 
-    frame = self._insar.getSlaveFrame()
+    frame = self._insar.getSecondaryFrame()
     instrument = frame.getInstrument()
     platform = instrument.getPlatform()
 
-    catalog.addInputsFrom(slave.sensor, 'slave.sensor')
-    catalog.addItem('width', slaveRaw.getWidth(), 'slave')
-    catalog.addItem('xmin', slaveRaw.getXmin(), 'slave')
-    catalog.addItem('iBias', instrument.getInPhaseValue(), 'slave')
-    catalog.addItem('qBias', instrument.getQuadratureValue(), 'slave')
-    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'slave')
-    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'slave')
-    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'slave')
-    catalog.addItem('pulse_length', instrument.getPulseLength(), 'slave')
-    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'slave')
-    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'slave')
-    catalog.addItem('lookSide', platform.pointingDirection, 'slave')
-    catalog.addInputsFrom(frame, 'slave.frame')
-    catalog.addInputsFrom(instrument, 'slave.instrument')
-    catalog.addInputsFrom(platform, 'slave.platform')
-    catalog.addInputsFrom(frame.orbit, 'slave.orbit')
+    catalog.addInputsFrom(secondary.sensor, 'secondary.sensor')
+    catalog.addItem('width', secondaryRaw.getWidth(), 'secondary')
+    catalog.addItem('xmin', secondaryRaw.getXmin(), 'secondary')
+    catalog.addItem('iBias', instrument.getInPhaseValue(), 'secondary')
+    catalog.addItem('qBias', instrument.getQuadratureValue(), 'secondary')
+    catalog.addItem('range_sampling_rate', instrument.getRangeSamplingRate(), 'secondary')
+    catalog.addItem('prf', instrument.getPulseRepetitionFrequency(), 'secondary')
+    catalog.addItem('pri', 1.0/instrument.getPulseRepetitionFrequency(), 'secondary')
+    catalog.addItem('pulse_length', instrument.getPulseLength(), 'secondary')
+    catalog.addItem('chirp_slope', instrument.getChirpSlope(), 'secondary')
+    catalog.addItem('wavelength', instrument.getRadarWavelength(), 'secondary')
+    catalog.addItem('lookSide', platform.pointingDirection, 'secondary')
+    catalog.addInputsFrom(frame, 'secondary.frame')
+    catalog.addInputsFrom(instrument, 'secondary.instrument')
+    catalog.addInputsFrom(platform, 'secondary.platform')
+    catalog.addInputsFrom(frame.orbit, 'secondary.orbit')
 
 
     optlist = ['all', 'top', 'middle', 'bottom']
@@ -118,8 +118,8 @@ def runPreprocessor(self):
         baseObj = Baseline()
         baseObj.configure()
         baseObj.baselineLocation = option
-        baseObj.wireInputPort(name='masterFrame',object=self._insar.getMasterFrame())
-        baseObj.wireInputPort(name='slaveFrame',object=self._insar.getSlaveFrame())
+        baseObj.wireInputPort(name='referenceFrame',object=self._insar.getReferenceFrame())
+        baseObj.wireInputPort(name='secondaryFrame',object=self._insar.getSecondaryFrame())
         try:
             baseObj.baseline()
             success=True

@@ -10,14 +10,14 @@ import numpy as np
 
 def cmdLineParser():
     parser = argparse.ArgumentParser(description='Simple ampcor driver')
-    parser.add_argument('-m', dest='master', type=str,
-            help='Master image with ISCE XML file', required=True)
+    parser.add_argument('-m', dest='reference', type=str,
+            help='Reference image with ISCE XML file', required=True)
     parser.add_argument('-b1', dest='band1', type=int,
-            help='Band number of master image', default=0)
-    parser.add_argument('-s', dest='slave', type=str,
-            help='Slave image with ISCE XML file', required=True)
+            help='Band number of reference image', default=0)
+    parser.add_argument('-s', dest='secondary', type=str,
+            help='Secondary image with ISCE XML file', required=True)
     parser.add_argument('-b2', dest='band2', type=int,
-            help='Band number of slave image', default=0)
+            help='Band number of secondary image', default=0)
     parser.add_argument('-o', dest='outfile', default= 'offsets.txt',
             type=str, help='Output ASCII file')
     return parser.parse_args()
@@ -31,17 +31,17 @@ if __name__ == '__main__':
     #Parse command line
     inps = cmdLineParser()
 
-    ####Create master image object
-    masterImg = isceobj.createImage()   #Empty image
-    masterImg.load(inps.master +'.xml') #Load from XML file
-    masterImg.setAccessMode('read')     #Set it up for reading 
-    masterImg.createImage()             #Create File
+    ####Create reference image object
+    referenceImg = isceobj.createImage()   #Empty image
+    referenceImg.load(inps.reference +'.xml') #Load from XML file
+    referenceImg.setAccessMode('read')     #Set it up for reading 
+    referenceImg.createImage()             #Create File
 
-    #####Create slave image object
-    slaveImg = isceobj.createImage()    #Empty image
-    slaveImg.load(inps.slave +'.xml')   #Load it from XML file
-    slaveImg.setAccessMode('read')      #Set it up for reading
-    slaveImg.createImage()              #Create File
+    #####Create secondary image object
+    secondaryImg = isceobj.createImage()    #Empty image
+    secondaryImg.load(inps.secondary +'.xml')   #Load it from XML file
+    secondaryImg.setAccessMode('read')      #Set it up for reading
+    secondaryImg.createImage()              #Create File
 
 
 
@@ -54,12 +54,12 @@ if __name__ == '__main__':
     coarseDown = 0
 
     ####Get file types
-    if masterImg.getDataType().upper().startswith('C'):
+    if referenceImg.getDataType().upper().startswith('C'):
         objAmpcor.setImageDataType1('complex')
     else:
         objAmpcor.setImageDataType1('real')
 
-    if slaveImg.getDataType().upper().startswith('C'):
+    if secondaryImg.getDataType().upper().startswith('C'):
         objAmpcor.setImageDataType2('complex')
     else:
         objAmpcor.setImageDataType2('real')
@@ -79,11 +79,11 @@ if __name__ == '__main__':
     logging.info('Down Gross Offset = %d'%(objAmpcor.downGrossOffset))
 
     ####Stage 4: Call the main method
-    objAmpcor.ampcor(masterImg,slaveImg)
+    objAmpcor.ampcor(referenceImg,secondaryImg)
 
     ###Close ununsed images
-    masterImg.finalizeImage()
-    slaveImg.finalizeImage()
+    referenceImg.finalizeImage()
+    secondaryImg.finalizeImage()
     
   
     ######Stage 5: Get required data out of the processing run

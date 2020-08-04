@@ -1,4 +1,4 @@
-FROM hysds/pge-base:latest
+FROM hysds/dev:latest
 
 # Set an encoding to make things work smoothly.
 ENV LANG en_US.UTF-8
@@ -15,6 +15,7 @@ RUN set -ex \
  && yum groupinstall -y "development tools" \
  && yum install -y \
       make ruby-devel rpm-build rubygems \
+ && gem install ffi -v 1.12.2 \
  && gem install --no-ri --no-rdoc fpm
 
 # install isce requirements
@@ -30,19 +31,19 @@ RUN set -ex \
       numpy \
       fftw \
       scipy \
-      basemap \
       scons \
-      opencv \
       hdf4 \
       hdf5 \
       netcdf4 \
       libgcc \
       libstdcxx-ng \
       cmake \
+      opencv \
  && yum install -y uuid-devel x11-devel motif-devel jq \
- && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3
+ && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3 \
+ && mkdir -p /opt/isce2/src
 
-# link system libuuid
+# override system libuuid into conda env to link in libXm and libXt
 RUN set -ex \
  && cd /opt/conda/lib \
  && unlink libuuid.so \
@@ -57,26 +58,26 @@ RUN set -ex \
  && ( test -f libgfortran.so || ln -sv libgfortran.so.*.* libgfortran.so )
 
 # copy repo
-COPY . /root/isce2
+COPY . /opt/isce2/src/isce2
 
 # build ISCE
 RUN set -ex \
  && . /opt/conda/bin/activate root \
- && cd /root \
- && source isce2/docker/build_env.sh \
+ && cd /opt/isce2/src/isce2 \
+ && source docker/build_env.sh \
  && mkdir -p $BUILD_DIR \
- && cp isce2/docker/SConfigISCE isce2/configuration/ \
- && cd isce2 \
+ && cp docker/SConfigISCE configuration/SConfigISCE \
  && scons install \
  && cp docker/isce_env.sh $ISCE_INSTALL_ROOT \
- && mkdir -p rpm-build/opt \
- && mv $ISCE_INSTALL_ROOT rpm-build/opt \
- && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/master \
-    > rpm-build/opt/isce2/version.json \
- && hash=$(cat rpm-build/opt/isce2/version.json | jq -r .object.sha) \
+ && cd /tmp \
+ && mkdir -p /tmp/rpm-build/opt \
+ && mv $ISCE_INSTALL_ROOT /tmp/rpm-build/opt \
+ && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/main \
+    > /tmp/rpm-build/opt/isce2/version.json \
+ && hash=$(cat /tmp/rpm-build/opt/isce2/version.json | jq -r .object.sha) \
  && short_hash=$(echo $hash | cut -c1-5) \
- && fpm -s dir -t rpm -C rpm-build --name isce \
-      --prefix=/ --version=2.0 --provides=isce \
+ && fpm -s dir -t rpm -C /tmp/rpm-build --name isce \
+      --prefix=/ --version=2.3 --provides=isce \
       --maintainer=piyush.agram@jpl.nasa.gov \
       --description="InSAR Scientific Computing Environment v2 (${hash})"
 
@@ -86,7 +87,7 @@ FROM hysds/pge-base:latest
 ENV LANG en_US.UTF-8
 
 # install ISCE from RPM
-COPY --from=0 /root/isce2/isce-2.0-1.x86_64.rpm /tmp/isce-2.0-1.x86_64.rpm
+COPY --from=0 /tmp/isce-2.3-1.x86_64.rpm /tmp/isce-2.3-1.x86_64.rpm
 
 # install isce and its minimal requirements
 RUN set -ex \
@@ -98,8 +99,6 @@ RUN set -ex \
       numpy \
       fftw \
       scipy \
-      basemap \
-      opencv \
       hdf4 \
       hdf5 \
       netcdf4 \
@@ -112,7 +111,7 @@ RUN set -ex \
  && sudo ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1 \
  && cd /lib64 \
  && ( test -f libgfortran.so || sudo ln -sv libgfortran.so.*.* libgfortran.so ) \
- && sudo yum install -y /tmp/isce-2.0-1.x86_64.rpm \
+ && sudo yum install -y /tmp/isce-2.3-1.x86_64.rpm \
  && sudo yum clean all \
  && sudo rm -rf /var/cache/yum \
- && sudo rm /tmp/isce-2.0-1.x86_64.rpm
+ && sudo rm /tmp/isce-2.3-1.x86_64.rpm

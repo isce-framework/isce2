@@ -15,8 +15,8 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser.add_argument('-m', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
 
     parser.add_argument('-a', '--az', type=float, dest='azshift', default=0.0,
             help='Azimuth shift to add in lines')
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     inps = cmdLineParse()
 
-    mdb = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+    mdb = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
     mFrame = mdb['frame']
     mdb.close()
 
@@ -53,11 +53,11 @@ if __name__ == '__main__':
     deltar = inps.rgshift * mFrame.instrument.rangePixelSize
     mFrame.startingRange += deltar
 
-    mdb =  shelve.open( os.path.join(inps.master, 'data'), writeback=True)
+    mdb =  shelve.open( os.path.join(inps.reference, 'data'), writeback=True)
     mdb['frame'] = mFrame
     mdb.close()
 
-    mdb = shelve.open(os.path.join(inps.master, 'data'), flag='r')
+    mdb = shelve.open(os.path.join(inps.reference, 'data'), flag='r')
     mFrame = mdb['frame']
     mdb.close()
 
