@@ -108,7 +108,12 @@ confinst = Configure(env)
 if confinst.CheckCHeader("numpy/arrayobject.h"):
     print("Numpy header found.")
 else:
-    print("Numpy not found. Attempting to autodetect...")
+    print("Numpy not found.")
+
+    if sys.version_info.major == 2:
+        raise RuntimeError("Cannot autodetect numpy from python2")
+
+    print("Attempting to autodetect...")
     try:
         import numpy
         confinst.env["CPPPATH"].append(numpy.get_include())
