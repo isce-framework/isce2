@@ -65,6 +65,7 @@ InstallSameDir(
     decorators.py
     mathModule.py
     offoutliers/Offoutliers.py
+    py2to3.py
     StringUtils.py
     Library/python/Poly1D.py
     Library/python/Poly2D.py
