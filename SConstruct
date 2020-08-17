@@ -110,7 +110,7 @@ if confinst.CheckCHeader("numpy/arrayobject.h"):
 else:
     print("Numpy not found.")
 
-    if sys.version_info.major == 2:
+    if sys.version_info[0] == 2:
         raise RuntimeError("Cannot autodetect numpy from python2")
 
     print("Attempting to autodetect...")
