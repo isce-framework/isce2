@@ -23,8 +23,8 @@ jobs:
             pwd
             mkdir config build install
             . /opt/conda/bin/activate root
-            conda install -y cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy
-            yum install -y x11-devel motif-devel jq gcc-gfortran
+            conda install -y cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 libgcc libstdcxx-ng cmake astropy
+            yum install -y x11-devel motif-devel jq gcc-gfortran opencv opencv-devel opencv-python
 
       - run:
           name: Build and Install ISCE
@@ -77,8 +77,8 @@ jobs:
             pwd
             mkdir config build install
             . /opt/conda/bin/activate root
-            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 netcdf4 libgcc libstdcxx-ng cmake astropy opencv
-            yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran
+            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 libgcc libstdcxx-ng cmake astropy
+            yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran opencv opencv-devel opencv-python
             ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
             cd /opt/conda/lib
             unlink libuuid.so
