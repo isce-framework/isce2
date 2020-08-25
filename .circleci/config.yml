@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   test-cmake:
     docker:
-        - image: hysds/dev:latest
+        - image: hysds/pge-base:latest
           user: root
     steps:
       - checkout:
@@ -56,7 +56,7 @@ jobs:
 
   test:
     docker:
-        - image: hysds/dev:latest
+        - image: hysds/pge-base:latest
           user: root
     steps:
       - checkout:
@@ -97,7 +97,7 @@ jobs:
               echo "PRJ_SCONS_BUILD = /root/project/build" > SConfigISCE
               echo "PRJ_SCONS_INSTALL = /root/project/install/isce" >> SConfigISCE
               echo "LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib" >> SConfigISCE
-              echo "CPPPATH = /opt/conda/include/python3.7m /opt/conda/lib/python3.7/site-packages/numpy/core/include /opt/conda/include /usr/include" >> SConfigISCE
+              echo "CPPPATH = /opt/conda/include/python3.8 /opt/conda/lib/python3.8/site-packages/numpy/core/include /opt/conda/include /usr/include" >> SConfigISCE
               echo "FORTRANPATH =  /usr/include /opt/conda/include" >> SConfigISCE
               echo "FORTRAN = /bin/gfortran" >> SConfigISCE
               echo "CC = /bin/gcc" >> SConfigISCE
