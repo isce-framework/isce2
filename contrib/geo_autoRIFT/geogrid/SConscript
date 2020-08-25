@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# Authors: Piyush Agram, Yang Lei
+# Copyright 2019, by the California Institute of Technology. ALL RIGHTS RESERVED. United States Government Sponsorship acknowledged.
+# Any commercial use must be negotiated with the Office of Technology Transfer at the California Institute of Technology.
+#
+# This software may be subject to U.S. export control laws. By accepting this software, the user agrees to comply with all applicable U.S.
+# export laws and regulations. User has the responsibility to obtain export licenses, or other export authority as may be required before 
+# exporting such information to foreign countries or providing access to foreign persons.
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+import os
+
+Import('envgeoAutorift')
+envgeogrid = envgeoAutorift.Clone()
+package = envgeogrid['PACKAGE']
+project = 'geogrid'
+envgeogrid['PROJECT'] = project
+install = envgeogrid['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
+initFile = '__init__.py'
+if not os.path.exists(initFile):
+	fout = open(initFile,"w")
+	fout.write("#!/usr/bin/env python3")
+	fout.close()
+
+listFiles = ['Geogrid.py','GeogridOptical.py',initFile]
+envgeogrid.Install(install,listFiles)
+envgeogrid.Alias('install',install)
+Export('envgeogrid')
+bindingsScons = 'bindings/SConscript'
+SConscript(bindingsScons,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/bindings')
+includeScons = 'include/SConscript'
+SConscript(includeScons)
+srcScons = 'src/SConscript'
+SConscript(srcScons,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/src')

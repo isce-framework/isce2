@@ -23,7 +23,7 @@ its InSAR aspect ISCE supports data from many space-borne satellites and one
 air-borne platform.  We continue to increase the number of sensors supported.
 At this time the sensors that are supported are the following: ALOS, ALOS2,
 COSMO_SKYMED, ENVISAT, ERS, KOMPSAT5, RADARSAT1, RADARSAT2, RISAT1, Sentinel1,
-TERRASARX, and UAVSAR.
+TERRASARX, UAVSAR and SAOCOM1A.
 
 ## Contents
 
