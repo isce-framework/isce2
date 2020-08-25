@@ -28,7 +28,7 @@ listFiles = ['ALOS.py','CEOS.py','COSMO_SkyMed.py','COSMO_SkyMed_SLC.py',
              'UAVSAR_Polsar.py', 'ERS_EnviSAT.py', 'ICEYE_SLC.py',
 	     'ALOS2.py', 'ERS_SLC.py', 'ALOS_SLC.py', 'EnviSAT_SLC.py',
              'ERS_EnviSAT_SLC.py', 'SICD_RGZERO.py','UAVSAR_HDF5_SLC.py',
-             '__init__.py']
+             'SAOCOM_SLC.py','__init__.py']
 
 helpList,installHelp = envSensor['HELP_BUILDER'](envSensor,'__init__.py',install)
 envSensor.Install(installHelp,helpList)
