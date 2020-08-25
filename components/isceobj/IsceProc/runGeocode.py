@@ -152,7 +152,7 @@ def run(tobeGeocoded, frame1, formSLC1, velocity, height, snwe, infos, catalog=N
             IU.copyAttributes(infos['demImage'], demImage)
             objGeo(peg=infos['peg'], frame=frame1,
                            planet=planet, dem=demImage, tobegeocoded=inImage,
-                           geoPosting=None, masterslc=formSLC1)
+                           geoPosting=None, referenceslc=formSLC1)
 
             if catalog is not None:
                 isceobj.Catalog.recordInputsAndOutputs(catalog, objGeo,

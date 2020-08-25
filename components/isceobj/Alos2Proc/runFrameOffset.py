@@ -16,14 +16,14 @@ def runFrameOffset(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     mosaicDir = 'insar'
     os.makedirs(mosaicDir, exist_ok=True)
     os.chdir(mosaicDir)
 
-    if len(masterTrack.frames) > 1:
+    if len(referenceTrack.frames) > 1:
         if (self._insar.modeCombination == 21) or \
            (self._insar.modeCombination == 22) or \
            (self._insar.modeCombination == 31) or \
@@ -33,21 +33,21 @@ def runFrameOffset(self):
             matchingMode=1
 
         #compute swath offset
-        offsetMaster = frameOffset(masterTrack, self._insar.masterSlc, self._insar.masterFrameOffset, 
+        offsetReference = frameOffset(referenceTrack, self._insar.referenceSlc, self._insar.referenceFrameOffset, 
                                    crossCorrelation=self.frameOffsetMatching, matchingMode=matchingMode)
-        #only use geometrical offset for slave
-        offsetSlave = frameOffset(slaveTrack, self._insar.slaveSlc, self._insar.slaveFrameOffset, 
+        #only use geometrical offset for secondary
+        offsetSecondary = frameOffset(secondaryTrack, self._insar.secondarySlc, self._insar.secondaryFrameOffset, 
                                   crossCorrelation=False, matchingMode=matchingMode)
 
-        self._insar.frameRangeOffsetGeometricalMaster = offsetMaster[0]
-        self._insar.frameAzimuthOffsetGeometricalMaster = offsetMaster[1]
-        self._insar.frameRangeOffsetGeometricalSlave = offsetSlave[0]
-        self._insar.frameAzimuthOffsetGeometricalSlave = offsetSlave[1]
+        self._insar.frameRangeOffsetGeometricalReference = offsetReference[0]
+        self._insar.frameAzimuthOffsetGeometricalReference = offsetReference[1]
+        self._insar.frameRangeOffsetGeometricalSecondary = offsetSecondary[0]
+        self._insar.frameAzimuthOffsetGeometricalSecondary = offsetSecondary[1]
         if self.frameOffsetMatching:
-            self._insar.frameRangeOffsetMatchingMaster = offsetMaster[2]
-            self._insar.frameAzimuthOffsetMatchingMaster = offsetMaster[3]
-            #self._insar.frameRangeOffsetMatchingSlave = offsetSlave[2]
-            #self._insar.frameAzimuthOffsetMatchingSlave = offsetSlave[3]
+            self._insar.frameRangeOffsetMatchingReference = offsetReference[2]
+            self._insar.frameAzimuthOffsetMatchingReference = offsetReference[3]
+            #self._insar.frameRangeOffsetMatchingSecondary = offsetSecondary[2]
+            #self._insar.frameAzimuthOffsetMatchingSecondary = offsetSecondary[3]
 
 
     os.chdir('../')
@@ -188,8 +188,8 @@ def estimateFrameOffset(swath1, swath2, image1, image2, matchingMode=0):
     else:
         raise Exception('file type not supported yet.')
 
-    ampcor.setMasterSlcImage(mSLC)
-    ampcor.setSlaveSlcImage(sSLC)
+    ampcor.setReferenceSlcImage(mSLC)
+    ampcor.setSecondarySlcImage(sSLC)
 
     #MATCH REGION
     #compute an offset at image center to use

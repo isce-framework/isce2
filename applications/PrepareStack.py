@@ -78,7 +78,7 @@ class orbit_info:
         self.slook = np.sqrt(1-self.clook**2)
 #        print('Estimated Look Angle: %3.2f degrees'%(np.arccos(self.clook)*180.0/np.pi))
 
-    def getBaseline(self, slave):
+    def getBaseline(self, secondary):
         '''Compute baseline between current object and another orbit object.'''
 
         ind = np.int(self.nvec/2)
@@ -93,17 +93,17 @@ class orbit_info:
         vvec = np.cross(crp, rvec)
         mvel = np.linalg.norm(mvel)
 
-        ind = np.int(slave.nvec/2)            #First guess
-        spos = np.array(slave.pos[ind])
-        svel = np.array(slave.vel[ind])
+        ind = np.int(secondary.nvec/2)            #First guess
+        spos = np.array(secondary.pos[ind])
+        svel = np.array(secondary.vel[ind])
         svel = np.linalg.norm(svel)
 
         dx = spos - mpos;
-        z_offset = slave.prf*np.dot(dx, vvec)/mvel
+        z_offset = secondary.prf*np.dot(dx, vvec)/mvel
 
         ind = np.int(ind - z_offset)    #Refined estimate
-        spos = slave.pos[ind]
-        svel = slave.vel[ind]
+        spos = secondary.pos[ind]
+        svel = secondary.vel[ind]
         svel = np.linalg.norm(svel)
 
         dx = spos-mpos
@@ -169,16 +169,16 @@ if __name__ == '__main__':
     Days     = np.zeros(nSar)
 
     #######Setting the first scene as temporary reference.
-    master = Orbits[0]
+    reference = Orbits[0]
 
 
-    Dopplers[0] = master.fd
-    Days[0] = master.dt.toordinal()
+    Dopplers[0] = reference.fd
+    Days[0] = reference.dt.toordinal()
     for k in xrange(1,nSar):
-        slave = Orbits[k]
-        Bperp[k] = master.getBaseline(slave)
-        Dopplers[k] = slave.fd
-        Days[k]  = slave.dt.toordinal()
+        secondary = Orbits[k]
+        Bperp[k] = reference.getBaseline(secondary)
+        Dopplers[k] = secondary.fd
+        Days[k]  = secondary.dt.toordinal()
 
 
     print("************************************")
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
     geomRho = (1-np.clip(np.abs(Bperp[:,None]-Bperp[None,:])/inps.Bcrit, 0., 1.))
     tempRho = np.exp(-1.0*np.abs(Days[:,None]-Days[None,:])/inps.Tau)
-    dopRho  = (np.abs(Dopplers[:,None] - Dopplers[None,:])/ master.prf) < inps.dop
+    dopRho  = (np.abs(Dopplers[:,None] - Dopplers[None,:])/ reference.prf) < inps.dop
 
     Rho = geomRho * tempRho * dopRho
     for kk in xrange(nSar):
@@ -205,17 +205,17 @@ if __name__ == '__main__':
 
     ####Currently sorting on average coherence.
 
-    masterChoice = np.argsort(avgRho)
-    masterOrbit = Orbits[masterChoice[0]]
-    masterBperp = Bperp[masterChoice[0]]
+    referenceChoice = np.argsort(avgRho)
+    referenceOrbit = Orbits[referenceChoice[0]]
+    referenceBperp = Bperp[referenceChoice[0]]
 
 
     print('*************************************')
-    print('Ranking for Master Scene Selection: ')
+    print('Ranking for Reference Scene Selection: ')
     print('**************************************')
     print('Rank  Index      Date    nViable   Avg. Coh.' )
     for kk in xrange(nSar):
-        ind = masterChoice[kk]
+        ind = referenceChoice[kk]
         print('{0:>3}   {1:>3}   {2:>10}  {3:>4}        {4:>2.3f}'.format(kk+1, ind+1, Orbits[ind].dt.strftime('%Y-%m-%d'), numViable[ind], avgRho[ind]))
 
     print('***************************************')
@@ -234,31 +234,31 @@ if __name__ == '__main__':
 
     [ii,jj] = np.where(Rho > inps.cThresh)
 
-    print('Master     Slave      Bperp      Deltat')
+    print('Reference     Secondary      Bperp      Deltat')
     for mind, sind in itertools.izip(ii,jj):
-        master = Orbits[mind]
-        slave = Orbits[sind]
-        if master.dt > slave.dt:
-            print('{0:>10} {1:>10}  {2:>4.2f}   {3:>4.2f}'.format(master.dt.strftime('%Y-%m-%d'), slave.dt.strftime('%Y-%m-%d'), Bperp[mind]-Bperp[sind], Days[mind] - Days[sind]))
-            xmlname = '%s/insar_%s_%s.xml'%(inps.dirname, master.dt.strftime('%Y%m%d'), slave.dt.strftime('%Y%m%d'))
+        reference = Orbits[mind]
+        secondary = Orbits[sind]
+        if reference.dt > secondary.dt:
+            print('{0:>10} {1:>10}  {2:>4.2f}   {3:>4.2f}'.format(reference.dt.strftime('%Y-%m-%d'), secondary.dt.strftime('%Y-%m-%d'), Bperp[mind]-Bperp[sind], Days[mind] - Days[sind]))
+            xmlname = '%s/insar_%s_%s.xml'%(inps.dirname, reference.dt.strftime('%Y%m%d'), secondary.dt.strftime('%Y%m%d'))
 
-#           sarxml.sartoinsarXML(master.filename, slave.filename, base=inps.base, out=xmlname)
+#           sarxml.sartoinsarXML(reference.filename, secondary.filename, base=inps.base, out=xmlname)
 
 
     print('***************************************')
 
-    #######Currently picks master peg point.
+    #######Currently picks reference peg point.
     print('***************************************')
-    commonPeg = masterOrbit.peg
+    commonPeg = referenceOrbit.peg
     print('Common peg point:                      ')
     print(commonPeg)
-    print('Bperp Range:  [%f , %f] '%(Bperp.min()-masterBperp, Bperp.max()-masterBperp))
+    print('Bperp Range:  [%f , %f] '%(Bperp.min()-referenceBperp, Bperp.max()-referenceBperp))
 
     ######Choose median doppler
     commonDop = np.median(Dopplers)
     maxDop   = np.max(Dopplers)
     minDop = np.min(Dopplers)
-    varDop = np.max(np.abs(Dopplers-commonDop))/masterOrbit.prf
+    varDop = np.max(np.abs(Dopplers-commonDop))/referenceOrbit.prf
 
     print('Common Doppler: ', commonDop)
     print('Doppler Range:  [%f, %f]'%(minDop, maxDop))

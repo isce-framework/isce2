@@ -25,7 +25,7 @@ class insarPair:
     """
     def __init__(self, name='insarPair', dates=None, observation={}, quality={}, geometry={}, metadata=None):
 
-        self.masterDate, self.slaveDate = dates
+        self.referenceDate, self.secondaryDate = dates
         #######################################
         
         self.observationsDict = observation

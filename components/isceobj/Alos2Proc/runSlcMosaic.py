@@ -26,8 +26,8 @@ def runSlcMosaic(self):
 
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     denseOffsetDir = 'dense_offset'
     os.makedirs(denseOffsetDir, exist_ok=True)
@@ -35,127 +35,127 @@ def runSlcMosaic(self):
 
 
     ##################################################
-    # estimate master and slave frame offsets
+    # estimate reference and secondary frame offsets
     ##################################################
-    if len(masterTrack.frames) > 1:
+    if len(referenceTrack.frames) > 1:
         matchingMode=1
 
-        #if master offsets from matching are not already computed
+        #if reference offsets from matching are not already computed
         if self.frameOffsetMatching == False:
-            offsetMaster = frameOffset(masterTrack, self._insar.masterSlc, self._insar.masterFrameOffset, 
+            offsetReference = frameOffset(referenceTrack, self._insar.referenceSlc, self._insar.referenceFrameOffset, 
                                        crossCorrelation=True, matchingMode=matchingMode)
-        offsetSlave = frameOffset(slaveTrack, self._insar.slaveSlc, self._insar.slaveFrameOffset, 
+        offsetSecondary = frameOffset(secondaryTrack, self._insar.secondarySlc, self._insar.secondaryFrameOffset, 
                                   crossCorrelation=True, matchingMode=matchingMode)
         if self.frameOffsetMatching == False:
-            self._insar.frameRangeOffsetMatchingMaster = offsetMaster[2]
-            self._insar.frameAzimuthOffsetMatchingMaster = offsetMaster[3]
-        self._insar.frameRangeOffsetMatchingSlave = offsetSlave[2]
-        self._insar.frameAzimuthOffsetMatchingSlave = offsetSlave[3]
+            self._insar.frameRangeOffsetMatchingReference = offsetReference[2]
+            self._insar.frameAzimuthOffsetMatchingReference = offsetReference[3]
+        self._insar.frameRangeOffsetMatchingSecondary = offsetSecondary[2]
+        self._insar.frameAzimuthOffsetMatchingSecondary = offsetSecondary[3]
 
 
     ##################################################
     # mosaic slc
     ##################################################
-    numberOfFrames = len(masterTrack.frames)
+    numberOfFrames = len(referenceTrack.frames)
     if numberOfFrames == 1:
         import shutil
-        #frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.masterFrames[0]))
-        frameDir = os.path.join('f1_{}/s{}'.format(self._insar.masterFrames[0], self._insar.startingSwath))
-        if not os.path.isfile(self._insar.masterSlc):
-            if os.path.isfile(os.path.join('../', frameDir, self._insar.masterSlc)):
-                os.symlink(os.path.join('../', frameDir, self._insar.masterSlc), self._insar.masterSlc)
+        #frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.referenceFrames[0]))
+        frameDir = os.path.join('f1_{}/s{}'.format(self._insar.referenceFrames[0], self._insar.startingSwath))
+        if not os.path.isfile(self._insar.referenceSlc):
+            if os.path.isfile(os.path.join('../', frameDir, self._insar.referenceSlc)):
+                os.symlink(os.path.join('../', frameDir, self._insar.referenceSlc), self._insar.referenceSlc)
         #shutil.copy2() can overwrite
-        shutil.copy2(os.path.join('../', frameDir, self._insar.masterSlc+'.vrt'), self._insar.masterSlc+'.vrt')
-        shutil.copy2(os.path.join('../', frameDir, self._insar.masterSlc+'.xml'), self._insar.masterSlc+'.xml')
-        if not os.path.isfile(self._insar.slaveSlc):
-            if os.path.isfile(os.path.join('../', frameDir, self._insar.slaveSlc)):
-                os.symlink(os.path.join('../', frameDir, self._insar.slaveSlc), self._insar.slaveSlc)
-        shutil.copy2(os.path.join('../', frameDir, self._insar.slaveSlc+'.vrt'), self._insar.slaveSlc+'.vrt')
-        shutil.copy2(os.path.join('../', frameDir, self._insar.slaveSlc+'.xml'), self._insar.slaveSlc+'.xml')
+        shutil.copy2(os.path.join('../', frameDir, self._insar.referenceSlc+'.vrt'), self._insar.referenceSlc+'.vrt')
+        shutil.copy2(os.path.join('../', frameDir, self._insar.referenceSlc+'.xml'), self._insar.referenceSlc+'.xml')
+        if not os.path.isfile(self._insar.secondarySlc):
+            if os.path.isfile(os.path.join('../', frameDir, self._insar.secondarySlc)):
+                os.symlink(os.path.join('../', frameDir, self._insar.secondarySlc), self._insar.secondarySlc)
+        shutil.copy2(os.path.join('../', frameDir, self._insar.secondarySlc+'.vrt'), self._insar.secondarySlc+'.vrt')
+        shutil.copy2(os.path.join('../', frameDir, self._insar.secondarySlc+'.xml'), self._insar.secondarySlc+'.xml')
 
         #update track parameters
         #########################################################
         #mosaic size
-        masterTrack.numberOfSamples = masterTrack.frames[0].swaths[0].numberOfSamples
-        masterTrack.numberOfLines = masterTrack.frames[0].swaths[0].numberOfLines
+        referenceTrack.numberOfSamples = referenceTrack.frames[0].swaths[0].numberOfSamples
+        referenceTrack.numberOfLines = referenceTrack.frames[0].swaths[0].numberOfLines
         #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
         #range parameters
-        masterTrack.startingRange = masterTrack.frames[0].swaths[0].startingRange
-        masterTrack.rangeSamplingRate = masterTrack.frames[0].swaths[0].rangeSamplingRate
-        masterTrack.rangePixelSize = masterTrack.frames[0].swaths[0].rangePixelSize
+        referenceTrack.startingRange = referenceTrack.frames[0].swaths[0].startingRange
+        referenceTrack.rangeSamplingRate = referenceTrack.frames[0].swaths[0].rangeSamplingRate
+        referenceTrack.rangePixelSize = referenceTrack.frames[0].swaths[0].rangePixelSize
         #azimuth parameters
-        masterTrack.sensingStart = masterTrack.frames[0].swaths[0].sensingStart
-        masterTrack.prf = masterTrack.frames[0].swaths[0].prf
-        masterTrack.azimuthPixelSize = masterTrack.frames[0].swaths[0].azimuthPixelSize
-        masterTrack.azimuthLineInterval = masterTrack.frames[0].swaths[0].azimuthLineInterval
+        referenceTrack.sensingStart = referenceTrack.frames[0].swaths[0].sensingStart
+        referenceTrack.prf = referenceTrack.frames[0].swaths[0].prf
+        referenceTrack.azimuthPixelSize = referenceTrack.frames[0].swaths[0].azimuthPixelSize
+        referenceTrack.azimuthLineInterval = referenceTrack.frames[0].swaths[0].azimuthLineInterval
 
-        masterTrack.dopplerVsPixel = masterTrack.frames[0].swaths[0].dopplerVsPixel
+        referenceTrack.dopplerVsPixel = referenceTrack.frames[0].swaths[0].dopplerVsPixel
 
-        #update track parameters, slave
+        #update track parameters, secondary
         #########################################################
         #mosaic size
-        slaveTrack.numberOfSamples = slaveTrack.frames[0].swaths[0].numberOfSamples
-        slaveTrack.numberOfLines = slaveTrack.frames[0].swaths[0].numberOfLines
+        secondaryTrack.numberOfSamples = secondaryTrack.frames[0].swaths[0].numberOfSamples
+        secondaryTrack.numberOfLines = secondaryTrack.frames[0].swaths[0].numberOfLines
         #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
         #range parameters
-        slaveTrack.startingRange = slaveTrack.frames[0].swaths[0].startingRange
-        slaveTrack.rangeSamplingRate = slaveTrack.frames[0].swaths[0].rangeSamplingRate
-        slaveTrack.rangePixelSize = slaveTrack.frames[0].swaths[0].rangePixelSize
+        secondaryTrack.startingRange = secondaryTrack.frames[0].swaths[0].startingRange
+        secondaryTrack.rangeSamplingRate = secondaryTrack.frames[0].swaths[0].rangeSamplingRate
+        secondaryTrack.rangePixelSize = secondaryTrack.frames[0].swaths[0].rangePixelSize
         #azimuth parameters
-        slaveTrack.sensingStart = slaveTrack.frames[0].swaths[0].sensingStart
-        slaveTrack.prf = slaveTrack.frames[0].swaths[0].prf
-        slaveTrack.azimuthPixelSize = slaveTrack.frames[0].swaths[0].azimuthPixelSize
-        slaveTrack.azimuthLineInterval = slaveTrack.frames[0].swaths[0].azimuthLineInterval
+        secondaryTrack.sensingStart = secondaryTrack.frames[0].swaths[0].sensingStart
+        secondaryTrack.prf = secondaryTrack.frames[0].swaths[0].prf
+        secondaryTrack.azimuthPixelSize = secondaryTrack.frames[0].swaths[0].azimuthPixelSize
+        secondaryTrack.azimuthLineInterval = secondaryTrack.frames[0].swaths[0].azimuthLineInterval
 
-        slaveTrack.dopplerVsPixel = slaveTrack.frames[0].swaths[0].dopplerVsPixel
+        secondaryTrack.dopplerVsPixel = secondaryTrack.frames[0].swaths[0].dopplerVsPixel
 
     else:
-        #mosaic master slc
+        #mosaic reference slc
         #########################################################
         #choose offsets
-        rangeOffsets = self._insar.frameRangeOffsetMatchingMaster
-        azimuthOffsets = self._insar.frameAzimuthOffsetMatchingMaster
+        rangeOffsets = self._insar.frameRangeOffsetMatchingReference
+        azimuthOffsets = self._insar.frameAzimuthOffsetMatchingReference
 
         #list of input files
         slcs = []
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             swathDir = 's{}'.format(self._insar.startingSwath)
-            slcs.append(os.path.join('../', frameDir, swathDir, self._insar.masterSlc))
+            slcs.append(os.path.join('../', frameDir, swathDir, self._insar.referenceSlc))
 
         #note that track parameters are updated after mosaicking
         #parameters update is checked, it is OK.
-        frameMosaic(masterTrack, slcs, self._insar.masterSlc, 
+        frameMosaic(referenceTrack, slcs, self._insar.referenceSlc, 
             rangeOffsets, azimuthOffsets, 1, 1, 
             updateTrack=True, phaseCompensation=True, resamplingMethod=2)
-        create_xml(self._insar.masterSlc, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'slc')
-        masterTrack.dopplerVsPixel = computeTrackDoppler(masterTrack)
+        create_xml(self._insar.referenceSlc, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'slc')
+        referenceTrack.dopplerVsPixel = computeTrackDoppler(referenceTrack)
 
-        #mosaic slave slc
+        #mosaic secondary slc
         #########################################################
         #choose offsets
-        rangeOffsets = self._insar.frameRangeOffsetMatchingSlave
-        azimuthOffsets = self._insar.frameAzimuthOffsetMatchingSlave
+        rangeOffsets = self._insar.frameRangeOffsetMatchingSecondary
+        azimuthOffsets = self._insar.frameAzimuthOffsetMatchingSecondary
 
         #list of input files
         slcs = []
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             swathDir = 's{}'.format(self._insar.startingSwath)
-            slcs.append(os.path.join('../', frameDir, swathDir, self._insar.slaveSlc))
+            slcs.append(os.path.join('../', frameDir, swathDir, self._insar.secondarySlc))
 
         #note that track parameters are updated after mosaicking
         #parameters update is checked, it is OK.
-        frameMosaic(slaveTrack, slcs, self._insar.slaveSlc, 
+        frameMosaic(secondaryTrack, slcs, self._insar.secondarySlc, 
             rangeOffsets, azimuthOffsets, 1, 1, 
             updateTrack=True, phaseCompensation=True, resamplingMethod=2)
-        create_xml(self._insar.slaveSlc, slaveTrack.numberOfSamples, slaveTrack.numberOfLines, 'slc')
-        slaveTrack.dopplerVsPixel = computeTrackDoppler(slaveTrack)
+        create_xml(self._insar.secondarySlc, secondaryTrack.numberOfSamples, secondaryTrack.numberOfLines, 'slc')
+        secondaryTrack.dopplerVsPixel = computeTrackDoppler(secondaryTrack)
 
 
     #save parameter file inside denseoffset directory
-    self._insar.saveProduct(masterTrack, self._insar.masterTrackParameter)
-    self._insar.saveProduct(slaveTrack, self._insar.slaveTrackParameter)
+    self._insar.saveProduct(referenceTrack, self._insar.referenceTrackParameter)
+    self._insar.saveProduct(secondaryTrack, self._insar.secondaryTrackParameter)
 
 
     os.chdir('../')

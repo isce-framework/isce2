@@ -20,15 +20,15 @@ def runCoregSd(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     #demFile = os.path.abspath(self._insar.dem)
     #wbdFile = os.path.abspath(self._insar.wbd)
 ###############################################################################
-    #self._insar.rangeResidualOffsetSd = [[] for i in range(len(masterTrack.frames))]
-    self._insar.azimuthResidualOffsetSd = [[] for i in range(len(masterTrack.frames))]
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    #self._insar.rangeResidualOffsetSd = [[] for i in range(len(referenceTrack.frames))]
+    self._insar.azimuthResidualOffsetSd = [[] for i in range(len(referenceTrack.frames))]
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -37,8 +37,8 @@ def runCoregSd(self):
 
             print('processing frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
             ##################################################
             # spectral diversity or mai
@@ -48,8 +48,8 @@ def runCoregSd(self):
             os.chdir(sdDir)
 
             interferogramDir = 'burst_interf_2_coreg_cc'
-            interferogramPrefix = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix
-            offsetSd = spectralDiversity(masterSwath, os.path.join('../', interferogramDir), interferogramPrefix, self._insar.interferogramSd,
+            interferogramPrefix = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix
+            offsetSd = spectralDiversity(referenceSwath, os.path.join('../', interferogramDir), interferogramPrefix, self._insar.interferogramSd,
                 numberLooksScanSAR=4, numberRangeLooks=28, numberAzimuthLooks=8, coherenceThreshold=0.85, 
                 keep=True, filt=True, filtWinSizeRange=5, filtWinSizeAzimuth=5)
             #here use the number of looks for sd as filtWinSizeRange and filtWinSizeAzimuth to get the best filtering result?
@@ -60,31 +60,31 @@ def runCoregSd(self):
             catalog.addItem('azimuth residual offset at frame {}, swath {}'.format(frameNumber, swathNumber), '{}'.format(offsetSd), 'runCoregSd')
             
 
-            #this small residual azimuth offset has small impact, it's not worth the time to resample slave bursts again.
+            #this small residual azimuth offset has small impact, it's not worth the time to resample secondary bursts again.
             formInterferogram=False
             if formInterferogram:
                 ##################################################
                 # resample bursts
                 ##################################################
-                slaveBurstResampledDir = self._insar.slaveBurstPrefix + '_3_coreg_sd'
-                #interferogramDir = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix + '_coreg_geom'
+                secondaryBurstResampledDir = self._insar.secondaryBurstPrefix + '_3_coreg_sd'
+                #interferogramDir = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix + '_coreg_geom'
                 interferogramDir = 'burst_interf_3_coreg_sd'
-                interferogramPrefix = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix
-                resampleBursts(masterSwath, slaveSwath, 
-                    self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, slaveBurstResampledDir, interferogramDir,
-                    self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, self._insar.slaveBurstPrefix, interferogramPrefix, 
+                interferogramPrefix = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix
+                resampleBursts(referenceSwath, secondarySwath, 
+                    self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, secondaryBurstResampledDir, interferogramDir,
+                    self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, self._insar.secondaryBurstPrefix, interferogramPrefix, 
                     self._insar.rangeOffset, self._insar.azimuthOffset, rangeOffsetResidual=self._insar.rangeResidualOffsetCc[i][j], azimuthOffsetResidual=self._insar.azimuthResidualOffsetCc[i][j]+offsetSd)
 
 
                 ##################################################
                 # mosaic burst amplitudes and interferograms
                 ##################################################
-                os.chdir(slaveBurstResampledDir)
-                mosaicBurstAmplitude(masterSwath, self._insar.slaveBurstPrefix, self._insar.slaveMagnitude, numberOfLooksThreshold=4)
+                os.chdir(secondaryBurstResampledDir)
+                mosaicBurstAmplitude(referenceSwath, self._insar.secondaryBurstPrefix, self._insar.secondaryMagnitude, numberOfLooksThreshold=4)
                 os.chdir('../')
 
                 os.chdir(interferogramDir)
-                mosaicBurstInterferogram(masterSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
+                mosaicBurstInterferogram(referenceSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
                 os.chdir('../')
 
 
@@ -96,7 +96,7 @@ def runCoregSd(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def spectralDiversity(masterSwath, interferogramDir, interferogramPrefix, outputList, numberLooksScanSAR=None, numberRangeLooks=20, numberAzimuthLooks=10, coherenceThreshold=0.85, keep=False, filt=False, filtWinSizeRange=5, filtWinSizeAzimuth=5):
+def spectralDiversity(referenceSwath, interferogramDir, interferogramPrefix, outputList, numberLooksScanSAR=None, numberRangeLooks=20, numberAzimuthLooks=10, coherenceThreshold=0.85, keep=False, filt=False, filtWinSizeRange=5, filtWinSizeAzimuth=5):
     '''
     numberLooksScanSAR: number of looks of the ScanSAR system
     numberRangeLooks:   number of range looks to take
@@ -110,21 +110,21 @@ def spectralDiversity(masterSwath, interferogramDir, interferogramPrefix, output
     from isceobj.Alos2Proc.Alos2ProcPublic import multilook
     from isceobj.Alos2Proc.Alos2ProcPublic import cal_coherence_1
 
-    width  = masterSwath.numberOfSamples
-    length = masterSwath.numberOfLines
-    lengthBurst = masterSwath.burstSlcNumberOfLines
-    nBurst = masterSwath.numberOfBursts
-    azsi = masterSwath.azimuthLineInterval
-    tc = masterSwath.burstCycleLength / masterSwath.prf
+    width  = referenceSwath.numberOfSamples
+    length = referenceSwath.numberOfLines
+    lengthBurst = referenceSwath.burstSlcNumberOfLines
+    nBurst = referenceSwath.numberOfBursts
+    azsi = referenceSwath.azimuthLineInterval
+    tc = referenceSwath.burstCycleLength / referenceSwath.prf
 
-    bursts = [os.path.join(interferogramDir, interferogramPrefix+'_%02d.int'%(i+1)) for i in range(masterSwath.numberOfBursts)]
+    bursts = [os.path.join(interferogramDir, interferogramPrefix+'_%02d.int'%(i+1)) for i in range(referenceSwath.numberOfBursts)]
 
     ####################################################
     #input parameters
     rgl = numberRangeLooks
     azl = numberAzimuthLooks
     cor_th = coherenceThreshold
-    nls0 = lengthBurst / (masterSwath.burstSlcFirstLineOffsets[nBurst-1] / (nBurst-1.0))
+    nls0 = lengthBurst / (referenceSwath.burstSlcFirstLineOffsets[nBurst-1] / (nBurst-1.0))
     print('number of looks of the ScanSAR system: {}'.format(nls0))
     if numberLooksScanSAR != None:
         nls = numberLooksScanSAR
@@ -143,8 +143,8 @@ def spectralDiversity(masterSwath, interferogramDir, interferogramPrefix, output
         burst = np.fromfile(bursts[i], dtype=np.complex64).reshape(lengthBurst, width)
 
         #subset for the burst
-        cntBurst = cnt[0+masterSwath.burstSlcFirstLineOffsets[i]:lengthBurst+masterSwath.burstSlcFirstLineOffsets[i], :]
-        infBurst = inf[0+masterSwath.burstSlcFirstLineOffsets[i]:lengthBurst+masterSwath.burstSlcFirstLineOffsets[i], :, :]
+        cntBurst = cnt[0+referenceSwath.burstSlcFirstLineOffsets[i]:lengthBurst+referenceSwath.burstSlcFirstLineOffsets[i], :]
+        infBurst = inf[0+referenceSwath.burstSlcFirstLineOffsets[i]:lengthBurst+referenceSwath.burstSlcFirstLineOffsets[i], :, :]
         
         #set number of non-zero pixels
         cntBurst[np.nonzero(burst)] += 1
@@ -178,7 +178,7 @@ def spectralDiversity(masterSwath, interferogramDir, interferogramPrefix, output
     widthm = int(width/rgl)
     lengthm = int(length/azl)
     #use the convention that ka > 0
-    ka = -np.polyval(masterSwath.azimuthFmrateVsPixel[::-1], create_multi_index(width, rgl))
+    ka = -np.polyval(referenceSwath.azimuthFmrateVsPixel[::-1], create_multi_index(width, rgl))
 
     #get spectral diversity inteferogram
     offset_sd=[]

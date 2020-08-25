@@ -142,9 +142,9 @@ sfmt.format(*(sorted(SENSORS.keys())))+
 A convenience method, createXXX, where XXX is one of the above 'sensor names'
 can be use to create an instance of one of the Sensors as follows, using ALOS:
 
-x = Sensor.createALOS('master')
+x = Sensor.createALOS('reference')
 
-where 'master' is the instance name in this case that can be used in
+where 'reference' is the instance name in this case that can be used in
 configuring this instance.
 """
 )

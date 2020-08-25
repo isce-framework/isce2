@@ -327,7 +327,7 @@ void Ampcor::ampcor() {
                     for (int yy=0; yy<refChipHeight; yy++) { // Iterate over number of image lines to read
                         imgAccObj1->getLineBand((char*)cx_read_line, (firstImgLine + yy - 2), imgBands[0]); // Read in a line
                         for (int block=0; block<blocksInRow; block++) { // Iterate over number of blocks to read
-                            int blockArrIdx = (globalBlock + block) % nBlocksToRead; // Index of block in GPU master array
+                            int blockArrIdx = (globalBlock + block) % nBlocksToRead; // Index of block in GPU reference array
                             int startCol = colOffset + (block * colSkip) - 1; // Get leftmost pixel of each block ### CHECK -1 FACTOR LATER, NOT SURE IF RIGHT
                             for (int xx=0; xx<refChipWidth; xx++) { // Iterate over block width
                                 if (isMag[0] == 0) refChips[blockArrIdx][(xx*refChipHeight)+yy] = cx_read_line[startCol+xx];

@@ -63,22 +63,22 @@ def runSetmocomppath(self, peg=None):
     """
 
     planet = (
-        self._insar.getMasterFrame().getInstrument().getPlatform().getPlanet())
-    masterOrbit = self._insar.getMasterOrbit()
-    slaveOrbit = self._insar.getSlaveOrbit()
+        self._insar.getReferenceFrame().getInstrument().getPlatform().getPlanet())
+    referenceOrbit = self._insar.getReferenceOrbit()
+    secondaryOrbit = self._insar.getSecondaryOrbit()
 
     if peg:
         #If the input peg is set, then use it
         self._insar.setPeg(peg)
         logger.info("Using the given peg = %r", peg)
         self._insar.setFirstAverageHeight(
-            averageHeightAboveElp(planet, peg, masterOrbit))
+            averageHeightAboveElp(planet, peg, referenceOrbit))
         self._insar.setSecondAverageHeight(
-            averageHeightAboveElp(planet, peg, slaveOrbit))
+            averageHeightAboveElp(planet, peg, secondaryOrbit))
         self._insar.setFirstProcVelocity(
-            sVelocityAtMidOrbit(planet, peg, masterOrbit))
+            sVelocityAtMidOrbit(planet, peg, referenceOrbit))
         self._insar.setSecondProcVelocity(
-            sVelocityAtMidOrbit(planet, peg, slaveOrbit))
+            sVelocityAtMidOrbit(planet, peg, secondaryOrbit))
 #        recordInputsAndOutputs(self._insar.procDoc, peg, "peg",
 #            logger, "runSetmocomppath")
         return
@@ -86,17 +86,17 @@ def runSetmocomppath(self, peg=None):
     logger.info("Selecting peg points from frames")
 
     pegpts = []
-    pegpts.append(self._insar.getMasterFrame().peg)
-    pegpts.append(self._insar.getMasterFrame().peg)
+    pegpts.append(self._insar.getReferenceFrame().peg)
+    pegpts.append(self._insar.getReferenceFrame().peg)
     peg = averagePeg(pegpts, planet)
     self._insar.setPeg(peg)
 
     self._insar.setFirstAverageHeight(
-        self._insar.getMasterFrame().platformHeight)
+        self._insar.getReferenceFrame().platformHeight)
     self._insar.setSecondAverageHeight(
-        self._insar.getSlaveFrame().platformHeight)
+        self._insar.getSecondaryFrame().platformHeight)
     self._insar.setFirstProcVelocity(
-        self._insar.getMasterFrame().procVelocity)
+        self._insar.getReferenceFrame().procVelocity)
     self._insar.setSecondProcVelocity(
-        self._insar.getSlaveFrame().procVelocity)
+        self._insar.getSecondaryFrame().procVelocity)
 

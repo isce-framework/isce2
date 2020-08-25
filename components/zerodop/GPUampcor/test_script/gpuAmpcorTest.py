@@ -20,26 +20,26 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', type=str, dest='master', required=True, help='Master image')
-    parser.add_argument('-s', type=str, dest='slave', required=True, help='Slave image')
+    parser.add_argument('-m', type=str, dest='reference', required=True, help='Reference image')
+    parser.add_argument('-s', type=str, dest='secondary', required=True, help='Secondary image')
     parser.add_argument('-o', type=str, dest='outfile', required=True, help='Misregistration in subpixels')
 
     inps = parser.parse_args()
     return inps
 
 
-def estimateOffsetField(master, slave, azoffset=0, rgoffset=0):
+def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     '''
     Estimate offset field between burst and simamp.
     '''
     print('Creating images')
     sim = isceobj.createSlcImage()
-    sim.load(slave+'.xml')
+    sim.load(secondary+'.xml')
     sim.setAccessMode('READ')
     sim.createImage()
 
     sar = isceobj.createSlcImage()
-    sar.load(master+'.xml')
+    sar.load(reference+'.xml')
     sar.setAccessMode('READ')
     sar.createImage()
 
@@ -147,7 +147,7 @@ def estimateOffsetField(master, slave, azoffset=0, rgoffset=0):
         cov2Ret[i] = objOffset.getCov2At(i)
         cov3Ret[i] = objOffset.getCov3At(i)
 
-    ### Back to refineSlaveTiming.py from Ampcor.py
+    ### Back to refineSecondaryTiming.py from Ampcor.py
     sar.finalizeImage()
     sim.finalizeImage()
     
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     inps = cmdLineParse()
     
     print('Estimating offset field')
-    field = estimateOffsetField(inps.master, inps.slave)
+    field = estimateOffsetField(inps.reference, inps.secondary)
 
     if os.path.exists(inps.outfile):
         os.remove(inps.outfile)
@@ -222,7 +222,7 @@ if __name__ == '__main__':
     rgratio = 1.0
     azratio = 1.0
 
-    # section that gets [rg/az]ratio from metamaster/metaslave?
+    # section that gets [rg/az]ratio from metareference/metasecondary?
     odb = shelve.open(inps.outfile)
     odb['raw_field'] = field
     '''

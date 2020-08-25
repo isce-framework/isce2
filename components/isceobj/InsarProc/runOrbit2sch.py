@@ -47,17 +47,17 @@ def runOrbit2sch(self):
     pegHavg = self.insar.averageHeight
     planet = self.insar.planet
 
-#    if self.pegSelect.upper() == 'MASTER':
+#    if self.pegSelect.upper() == 'REFERENCE':
 #        pegHavg = self.insar.getFirstAverageHeight()
-#    elif self.pegSelect.upper() == 'SLAVE':
+#    elif self.pegSelect.upper() == 'SECONDARY':
 #        pegHavg = self.insar.getSecondAverageHeight()
 #    elif self.pegSelect.upper() == 'AVERAGE':
 #        pegHavg = self.insar.averageHeight
 #    else:
 #        raise Exception('Unknown peg selection method: ', self.pegSelect)
 
-    masterOrbit = self.insar.masterOrbit
-    slaveOrbit = self.insar.slaveOrbit
+    referenceOrbit = self.insar.referenceOrbit
+    secondaryOrbit = self.insar.secondaryOrbit
 
     objOrbit2sch1 = stdproc.createOrbit2sch(averageHeight=pegHavg)
     objOrbit2sch1.stdWriter = self.stdWriter.set_file_tags("orbit2sch",
@@ -67,10 +67,10 @@ def runOrbit2sch(self):
     objOrbit2sch2 = stdproc.createOrbit2sch(averageHeight=pegHavg)
     objOrbit2sch2.stdWriter = self.stdWriter
 
-    ## loop over master/slave orbits
+    ## loop over reference/secondary orbits
     for obj, orb, tag, order in zip((objOrbit2sch1, objOrbit2sch2),
-                                    (self.insar.masterOrbit, self.insar.slaveOrbit),
-                                    ('master', 'slave'),
+                                    (self.insar.referenceOrbit, self.insar.secondaryOrbit),
+                                    ('reference', 'secondary'),
                                     ('First', 'Second')):
         obj(planet=planet, orbit=orb, peg=peg)
         recordInputsAndOutputs(self.insar.procDoc, obj,
@@ -78,7 +78,7 @@ def runOrbit2sch(self):
                                logger,
                                "runOrbit2sch." + tag)
 
-        #equivalent to self.insar.masterOrbit =
+        #equivalent to self.insar.referenceOrbit =
         setattr(self.insar,'%sOrbit'%(tag), obj.orbit)
 
         #Piyush

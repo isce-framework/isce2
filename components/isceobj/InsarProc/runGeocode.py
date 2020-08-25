@@ -60,7 +60,7 @@ def runGeocode(self, prodlist, unwrapflag, bbox):
     stdWriter = create_writer("log", "", True, filename="geo.log")
 
     v,h = insar.vh()
-    planet = insar.masterFrame._instrument._platform._planet
+    planet = insar.referenceFrame._instrument._platform._planet
 
 
     if bbox is None:
@@ -125,9 +125,9 @@ def runGeocode(self, prodlist, unwrapflag, bbox):
             #demImage = isceobj.createDemImage()
             #IU.copyAttributes(insar.demImage, demImage)
             demImage = insar.demImage.clone()
-            objGeo(peg=insar.peg, frame=insar.masterFrame,
+            objGeo(peg=insar.peg, frame=insar.referenceFrame,
                            planet=planet, dem=demImage, tobegeocoded=inImage,
-                           geoPosting=None, masterslc=insar.formSLC1)
+                           geoPosting=None, referenceslc=insar.formSLC1)
 
 
             recordInputsAndOutputs(self._insar.procDoc, objGeo, "runGeocode",

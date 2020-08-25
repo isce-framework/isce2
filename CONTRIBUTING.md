@@ -45,20 +45,20 @@ cd isce2
 git remote add my_user_name https://github.com/my_user_name/isce2.git
 ```
 
-### Updating your local master against upstream master
+### Updating your local main branch against upstream
 
 ```
-git checkout master
+git checkout main
 git fetch origin
-# Be careful: this will loose all local changes you might have done now
-git reset --hard origin/master
+# Be careful: this will lose all local changes you might have done now
+git reset --hard origin/main
 ```
 
 ### Working with a feature branch
 
 ```
-git checkout master
-(potentially update your local master against upstream, as described above)
+git checkout main
+(potentially update your local reference against upstream, as described above)
 git checkout -b my_new_feature_branch
 
 # do work. For example:
@@ -67,22 +67,22 @@ git add my_modifid_message
 git rm old_file
 git commit -a 
 
-# you may need to resynchronize against master if you need some bugfix
-# or new capability that has been added to master since you created your
+# you may need to resynchronize against main if you need some bugfix
+# or new capability that has been added to main since you created your
 # branch
 git fetch origin
-git rebase origin/master
+git rebase origin/main
 
 # At end of your work, make sure history is reasonable by folding non
 # significant commits into a consistent set
-git rebase -i master (use 'fixup' for example to merge several commits together,
+git rebase -i main (use 'fixup' for example to merge several commits together,
 and 'reword' to modify commit messages)
 
 # or alternatively, in case there is a big number of commits and marking
 # all them as 'fixup' is tedious
 git fetch origin
-git rebase origin/master
-git reset --soft origin/master
+git rebase origin/main
+git reset --soft origin/main
 git commit -a -m "Put here the synthetic commit message"
 
 # push your branch
@@ -93,7 +93,7 @@ From GitHub UI, issue a pull request
 If the pull request discussion results in changes,
 commit locally and push. To get a reasonable history, you may need to
 ```
-git rebase -i master
+git rebase -i main
 ```
 , in which case you will have to force-push your branch with 
 ```

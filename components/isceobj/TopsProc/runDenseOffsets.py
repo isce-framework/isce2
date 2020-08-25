@@ -32,7 +32,7 @@ def runDenseOffsets(self):
 @use_api
 def runDenseOffsetsCPU(self):
     '''
-    Estimate dense offset field between merged master bursts and slave bursts.
+    Estimate dense offset field between merged reference bursts and secondary bursts.
     '''
     from mroipac.ampcor.DenseAmpcor import DenseAmpcor
 
@@ -42,17 +42,17 @@ def runDenseOffsetsCPU(self):
     print('Configuring DenseAmpcor object for processing...\n')
 
     ### Determine appropriate filenames
-    mf = 'master.slc'
-    sf = 'slave.slc'
+    mf = 'reference.slc'
+    sf = 'secondary.slc'
 
     if not ((self.numberRangeLooks == 1) and (self.numberAzimuthLooks==1)):
         mf += '.full'
         sf += '.full'
-    master = os.path.join(self._insar.mergedDirname, mf)
-    slave = os.path.join(self._insar.mergedDirname, sf)
+    reference = os.path.join(self._insar.mergedDirname, mf)
+    secondary = os.path.join(self._insar.mergedDirname, sf)
 
     ####For this module currently, we need to create an actual file on disk
-    for infile in [master,slave]:
+    for infile in [reference,secondary]:
         if os.path.isfile(infile):
             continue
         cmd = 'gdal_translate -of ENVI {0}.vrt {0}'.format(infile)
@@ -62,15 +62,15 @@ def runDenseOffsetsCPU(self):
 
 
 
-    ### Load the master object
+    ### Load the reference object
     m = isceobj.createSlcImage()
-    m.load(master + '.xml')
+    m.load(reference + '.xml')
     m.setAccessMode('READ')
 #    m.createImage()
 
-    ### Load the slave object
+    ### Load the secondary object
     s = isceobj.createSlcImage()
-    s.load(slave + '.xml')
+    s.load(secondary + '.xml')
     s.setAccessMode('READ')
 #    s.createImage()
 
@@ -82,8 +82,8 @@ def runDenseOffsetsCPU(self):
 
 #    objOffset.numberThreads = 1
     ### Configure dense Ampcor object
-    print('\nMaster frame: %s' % (mf))
-    print('Slave frame: %s' % (sf))
+    print('\nReference frame: %s' % (mf))
+    print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
     print('Main window size height: %d' % (self.winhgt))
     print('Search window size width: %d' % (self.srcwidth))
@@ -138,7 +138,7 @@ def runDenseOffsetsCPU(self):
 
 def runDenseOffsetsGPU(self):
     '''
-    Estimate dense offset field between merged master bursts and slave bursts.
+    Estimate dense offset field between merged reference bursts and secondary bursts.
     '''
 
     from contrib.PyCuAmpcor import PyCuAmpcor
@@ -147,17 +147,17 @@ def runDenseOffsetsGPU(self):
     print('Configuring PyCuAmpcor object for processing...\n')
 
     ### Determine appropriate filenames
-    mf = 'master.slc'
-    sf = 'slave.slc'
+    mf = 'reference.slc'
+    sf = 'secondary.slc'
     if not ((self.numberRangeLooks == 1) and (self.numberAzimuthLooks==1)):
         mf += '.full'
         sf += '.full'
-    master = os.path.join(self._insar.mergedDirname, mf)
-    slave = os.path.join(self._insar.mergedDirname, sf)
+    reference = os.path.join(self._insar.mergedDirname, mf)
+    secondary = os.path.join(self._insar.mergedDirname, sf)
 
     ####For this module currently, we need to create an actual file on disk
 
-    for infile in [master,slave]:
+    for infile in [reference,secondary]:
         if os.path.isfile(infile):
             continue
 
@@ -166,15 +166,15 @@ def runDenseOffsetsGPU(self):
         if status:
             raise Exception('{0} could not be executed'.format(status))
 
-    ### Load the master object
+    ### Load the reference object
     m = isceobj.createSlcImage()
-    m.load(master + '.xml')
+    m.load(reference + '.xml')
     m.setAccessMode('READ')
 #    m.createImage()
 
-    ### Load the slave object
+    ### Load the secondary object
     s = isceobj.createSlcImage()
-    s.load(slave + '.xml')
+    s.load(secondary + '.xml')
     s.setAccessMode('READ')
 #    s.createImage()
 
@@ -186,12 +186,12 @@ def runDenseOffsetsGPU(self):
     objOffset.deviceID = -1
     objOffset.nStreams = 2
     objOffset.derampMethod = 0
-    objOffset.masterImageName = master + '.vrt'
-    objOffset.masterImageHeight = length
-    objOffset.masterImageWidth = width
-    objOffset.slaveImageName = slave + '.vrt'
-    objOffset.slaveImageHeight = length
-    objOffset.slaveImageWidth = width
+    objOffset.referenceImageName = reference + '.vrt'
+    objOffset.referenceImageHeight = length
+    objOffset.referenceImageWidth = width
+    objOffset.secondaryImageName = secondary + '.vrt'
+    objOffset.secondaryImageHeight = length
+    objOffset.secondaryImageWidth = width
 
     objOffset.numberWindowDown = (length-100-self.winhgt)//self.skiphgt
     objOffset.numberWindowAcross = (width-100-self.winwidth)//self.skipwidth
@@ -202,8 +202,8 @@ def runDenseOffsetsGPU(self):
     objOffset.halfSearchRangeDown = self.srchgt
     objOffset.halfSearchRangeAcross = self.srcwidth
 
-    objOffset.masterStartPixelDownStatic = 50
-    objOffset.masterStartPixelAcrossStatic = 50
+    objOffset.referenceStartPixelDownStatic = 50
+    objOffset.referenceStartPixelAcrossStatic = 50
 
     objOffset.skipSampleDown = self.skiphgt
     objOffset.skipSampleAcross = self.skipwidth
@@ -223,8 +223,8 @@ def runDenseOffsetsGPU(self):
 
 #    objOffset.numberThreads = 1
     ### Configure dense Ampcor object
-    print('\nMaster frame: %s' % (mf))
-    print('Slave frame: %s' % (sf))
+    print('\nReference frame: %s' % (mf))
+    print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
     print('Main window size height: %d' % (self.winhgt))
     print('Search window size width: %d' % (self.srcwidth))
@@ -286,7 +286,7 @@ def runDenseOffsetsGPU(self):
 
 if __name__ == '__main__' :
     '''
-    Default routine to plug master.slc.full/slave.slc.full into
+    Default routine to plug reference.slc.full/secondary.slc.full into
     Dense Offsets Ampcor module.
     '''
 

@@ -23,7 +23,7 @@ def createParser():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-i', '--master', type=str, dest='master', required=True, help='Path to folder')
+    parser.add_argument('-i', '--reference', type=str, dest='reference', required=True, help='Path to folder')
     parser.add_argument('-k', '--kml', type=str, dest='shapefile', default=None, help='Path to kml')
     parser.add_argument('-f', '--figure', type=str, dest='figure', default=None, help='Path to output PDF')
 
@@ -56,7 +56,7 @@ def main(iargs=None):
     import matplotlib.patches as patches
 
 
-    swathList = ut.getSwathList(inps.master)
+    swathList = ut.getSwathList(inps.reference)
 
     swathColors = ['r', 'g', 'b']
     shapeColors = ['FF0000','00FF00','0000FF']
@@ -86,7 +86,7 @@ def main(iargs=None):
 
 
     for swath in swathList:
-        ifg = ut.loadProduct(os.path.join(inps.master , 'IW{0}.xml'.format(swath)))
+        ifg = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
         minBurst = ifg.bursts[0].burstNumber
         maxBurst = ifg.bursts[-1].burstNumber
 

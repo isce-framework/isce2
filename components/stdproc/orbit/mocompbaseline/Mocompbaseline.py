@@ -347,13 +347,13 @@ class Mocompbaseline(Component):
 
     def createPorts(self):
 
-        masterOrbitPort = Port(name='masterOrbit', method=self.addMasterOrbit)
-        slaveOrbitPort = Port(name='slaveOrbit', method=self.addSlaveOrbit)
+        referenceOrbitPort = Port(name='referenceOrbit', method=self.addReferenceOrbit)
+        secondaryOrbitPort = Port(name='secondaryOrbit', method=self.addSecondaryOrbit)
         pegPort = Port(name='peg', method=self.addPeg)
         ellipsoidPort = Port(name='ellipsoid', method=self.addEllipsoid)
 
-        self._inputPorts.add(masterOrbitPort)
-        self._inputPorts.add(slaveOrbitPort)
+        self._inputPorts.add(referenceOrbitPort)
+        self._inputPorts.add(secondaryOrbitPort)
         self._inputPorts.add(pegPort)
         self._inputPorts.add(ellipsoidPort)
         return None
@@ -707,8 +707,8 @@ class Mocompbaseline(Component):
             except AttributeError:
                 self.logger.error("Object %s requires get_e2() and get_a() methods" % (ellipsoid.__class__))
 
-    def addMasterOrbit(self):
-        orbit = self._inputPorts.getPort(name='masterOrbit').getObject()
+    def addReferenceOrbit(self):
+        orbit = self._inputPorts.getPort(name='referenceOrbit').getObject()
         if (orbit):
             try:
                 (time,position,velocity,offset) = orbit._unpackOrbit()
@@ -718,8 +718,8 @@ class Mocompbaseline(Component):
                 self.logger.error("Object %s requires an _unpackOrbit() method" % (orbit.__class__))
                 raise AttributeError
 
-    def addSlaveOrbit(self):
-        orbit = self._inputPorts.getPort(name='slaveOrbit').getObject()
+    def addSecondaryOrbit(self):
+        orbit = self._inputPorts.getPort(name='secondaryOrbit').getObject()
         if (orbit):
             try:
                 (time,position,velocity,offset) = orbit._unpackOrbit()

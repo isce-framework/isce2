@@ -111,8 +111,8 @@ def createParser():
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
             help='Directory with the DEM')
 
-    parser.add_argument('-m', '--master_date', dest='master_date', type=str, default=None,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference_date', dest='reference_date', type=str, default=None,
+            help='Directory with reference acquisition')
 
     parser.add_argument('-c','--num_connections', dest='num_connections', type=str, default = '1',
             help='number of interferograms between each date and subsequent dates. -- Default : 1')
@@ -395,26 +395,26 @@ def get_dates(inps):
         print(dateListframeGAP)
         print("")
 
-    if inps.master_date is None:
+    if inps.reference_date is None:
         if len(dateList)<1:
             print('*************************************')
             print('Error:')
             print('No acquisition forfills the temporal range and bbox requirement.')
             sys.exit(1)
-        inps.master_date = dateList[0]
-        print ("The master date was not chosen. The first date is considered as master date.")
+        inps.reference_date = dateList[0]
+        print ("The reference date was not chosen. The first date is considered as reference date.")
 
     print ("")
-    print ("All SLCs will be coregistered to : " + inps.master_date)
+    print ("All SLCs will be coregistered to : " + inps.reference_date)
 
-    slaveList = [key for key in safe_dict.keys()]
-    slaveList.sort()
-    slaveList.remove(inps.master_date)
-    print ("slave dates :")
-    print (slaveList)
+    secondaryList = [key for key in safe_dict.keys()]
+    secondaryList.sort()
+    secondaryList.remove(inps.reference_date)
+    print ("secondary dates :")
+    print (secondaryList)
     print ("")
 
-    return dateList, inps.master_date, slaveList, safe_dict
+    return dateList, inps.reference_date, secondaryList, safe_dict
 
 def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should be changed to able to account for the existed aquisitions -- Minyan Zhong
 
@@ -436,27 +436,27 @@ def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should
 ########################################
 # Below are few workflow examples.
 
-def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack, mergeSLC=False):
+def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=False):
     #############################
     i=0
 
     if not updateStack:
         i += 1
         runObj = run()
-        runObj.configure(inps, 'run_{:02d}_unpack_topo_master'.format(i))
-        runObj.unpackStackMasterSLC(safe_dict)
+        runObj.configure(inps, 'run_{:02d}_unpack_topo_reference'.format(i))
+        runObj.unpackStackReferenceSLC(safe_dict)
         runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_{:02d}_unpack_slave_slc'.format(i))
-    runObj.unpackSlavesSLC(stackMasterDate, slaveDates, safe_dict)
+    runObj.configure(inps, 'run_{:02d}_unpack_secondary_slc'.format(i))
+    runObj.unpackSecondarysSLC(stackReferenceDate, secondaryDates, safe_dict)
     runObj.finalize()
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_average_baseline'.format(i))
-    runObj.averageBaseline(stackMasterDate, slaveDates)
+    runObj.averageBaseline(stackReferenceDate, secondaryDates)
     runObj.finalize()
 
     if inps.coregistration in ['NESD', 'nesd']:
@@ -470,20 +470,20 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
         i += 1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_overlap_geo2rdr'.format(i))
-        runObj.geo2rdr_offset(slaveDates)
+        runObj.geo2rdr_offset(secondaryDates)
         runObj.finalize()
 
         i += 1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_overlap_resample'.format(i))
-        runObj.resample_with_carrier(slaveDates)
+        runObj.resample_with_carrier(secondaryDates)
         runObj.finalize()
 
         i+=1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_pairs_misreg'.format(i))
         if updateStack:
-            runObj.pairs_misregistration(slaveDates, safe_dict)
+            runObj.pairs_misregistration(secondaryDates, safe_dict)
         else:
             runObj.pairs_misregistration(acquisitionDates, safe_dict)
         runObj.finalize()
@@ -497,13 +497,13 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
     i += 1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_fullBurst_geo2rdr'.format(i))
-    runObj.geo2rdr_offset(slaveDates, fullBurst='True')
+    runObj.geo2rdr_offset(secondaryDates, fullBurst='True')
     runObj.finalize()
 
     i += 1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_fullBurst_resample'.format(i))
-    runObj.resample_with_carrier(slaveDates, fullBurst='True')
+    runObj.resample_with_carrier(secondaryDates, fullBurst='True')
     runObj.finalize()
 
     i+=1
@@ -516,30 +516,30 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, upd
         i+=1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_merge'.format(i))
-        runObj.mergeMaster(stackMasterDate, virtual = 'False')
-        runObj.mergeSlaveSLC(slaveDates, virtual = 'False')
+        runObj.mergeReference(stackReferenceDate, virtual = 'False')
+        runObj.mergeSecondarySLC(secondaryDates, virtual = 'False')
         runObj.finalize()
 
         i+=1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_grid_baseline'.format(i))
-        runObj.gridBaseline(stackMasterDate, slaveDates)
+        runObj.gridBaseline(stackReferenceDate, secondaryDates)
         runObj.finalize()
 
 
     return i
 
-def correlationStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack):
+def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
     #############################
-    i = slcStack(inps, acquisitionDates,stackMasterDate, slaveDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates,stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_{:02d}_merge_master_slave_slc'.format(i))
-    runObj.mergeMaster(stackMasterDate, virtual = 'True')
-    runObj.mergeSlaveSLC(slaveDates, virtual = 'True')
+    runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
+    runObj.mergeReference(stackReferenceDate, virtual = 'True')
+    runObj.mergeSecondarySLC(secondaryDates, virtual = 'True')
     runObj.finalize()
 
     i+=1
@@ -555,15 +555,15 @@ def correlationStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_d
     runObj.finalize()
 
 
-def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack):
+def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
-    i = slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_{:02d}_merge_master_slave_slc'.format(i))
-    runObj.mergeMaster(stackMasterDate, virtual = 'True')
-    runObj.mergeSlaveSLC(slaveDates, virtual = 'True')
+    runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
+    runObj.mergeReference(stackReferenceDate, virtual = 'True')
+    runObj.mergeSecondarySLC(secondaryDates, virtual = 'True')
     runObj.finalize()
 
     i+=1
@@ -591,15 +591,15 @@ def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe
     runObj.finalize()
 
 
-def offsetStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack):
+def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
-    i = slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_{:02d}_merge_master_slave_slc'.format(i))
-    runObj.mergeMaster(stackMasterDate, virtual = 'False')
-    runObj.mergeSlaveSLC(slaveDates, virtual = 'False')
+    runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
+    runObj.mergeReference(stackReferenceDate, virtual = 'False')
+    runObj.mergeSecondarySLC(secondaryDates, virtual = 'False')
     runObj.finalize()
 
     i+=1
@@ -610,12 +610,12 @@ def offsetStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, 
 
 
 def checkCurrentStatus(inps):
-    acquisitionDates, stackMasterDate, slaveDates, safe_dict = get_dates(inps)
-    coregSLCDir = os.path.join(inps.work_dir, 'coreg_slaves')
+    acquisitionDates, stackReferenceDate, secondaryDates, safe_dict = get_dates(inps)
+    coregSLCDir = os.path.join(inps.work_dir, 'coreg_secondarys')
     stackUpdate = False
     if os.path.exists(coregSLCDir):
-        coregSlaves = glob.glob(os.path.join(coregSLCDir, '[0-9]???[0-9]?[0-9]?'))
-        coregSLC = [os.path.basename(slv) for slv in coregSlaves]
+        coregSecondarys = glob.glob(os.path.join(coregSLCDir, '[0-9]???[0-9]?[0-9]?'))
+        coregSLC = [os.path.basename(slv) for slv in coregSecondarys]
         coregSLC.sort()
         if len(coregSLC)>0:
             print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
@@ -628,7 +628,7 @@ def checkCurrentStatus(inps):
         else:
             pass
 
-        newAcquisitions = list(set(slaveDates).difference(set(coregSLC)))
+        newAcquisitions = list(set(secondaryDates).difference(set(coregSLC)))
         newAcquisitions.sort()
         if len(newAcquisitions)>0:
             print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
@@ -654,32 +654,32 @@ def checkCurrentStatus(inps):
         if inps.coregistration in ['NESD','nesd']:
 
             numSLCReprocess = 2*int(inps.num_overlap_connections)
-            if numSLCReprocess > len(slaveDates):
-                numSLCReprocess = len(slaveDates)
+            if numSLCReprocess > len(secondaryDates):
+                numSLCReprocess = len(secondaryDates)
 
             latestCoregSLCs =  coregSLC[-1*numSLCReprocess:]
-            latestCoregSLCs_original = list(set(slaveDates).intersection(set(latestCoregSLCs)))
+            latestCoregSLCs_original = list(set(secondaryDates).intersection(set(latestCoregSLCs)))
             if len(latestCoregSLCs_original) < numSLCReprocess:
                 raise Exception('The original SAFE files for latest {0} coregistered SLCs is needed'.format(numSLCReprocess))
 
         else:  # add by Minyan Zhong, should be changed later as numSLCReprocess should be 0
 
             numSLCReprocess = int(inps.num_connections)
-            if numSLCReprocess > len(slaveDates):
-                numSLCReprocess = len(slaveDates)
+            if numSLCReprocess > len(secondaryDates):
+                numSLCReprocess = len(secondaryDates)
 
             latestCoregSLCs =  coregSLC[-1*numSLCReprocess:]
-            latestCoregSLCs_original = list(set(slaveDates).intersection(set(latestCoregSLCs)))
+            latestCoregSLCs_original = list(set(secondaryDates).intersection(set(latestCoregSLCs)))
             if len(latestCoregSLCs_original) < numSLCReprocess:
                 raise Exception('The original SAFE files for latest {0} coregistered SLCs is needed'.format(numSLCReprocess))
 
         print ('Last {0} coregistred SLCs to be updated: '.format(numSLCReprocess), latestCoregSLCs)
 
-        slaveDates = latestCoregSLCs + newAcquisitions
-        slaveDates.sort()
+        secondaryDates = latestCoregSLCs + newAcquisitions
+        secondaryDates.sort()
 
-        acquisitionDates = slaveDates.copy()
-        acquisitionDates.append(stackMasterDate)
+        acquisitionDates = secondaryDates.copy()
+        acquisitionDates.append(stackReferenceDate)
         acquisitionDates.sort()
         print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         print('')
@@ -689,15 +689,15 @@ def checkCurrentStatus(inps):
         print('')
         print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         print('')
-        print('stack master:')
+        print('stack reference:')
         print('')
-        print(stackMasterDate)
+        print(stackReferenceDate)
         print('')
         print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         print('')
-        print('slave acquisitions to be processed: ')
+        print('secondary acquisitions to be processed: ')
         print('')
-        print(slaveDates)
+        print(secondaryDates)
         print('')
         print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         safe_dict_new={}
@@ -708,7 +708,7 @@ def checkCurrentStatus(inps):
     else:
         print('No existing stack was identified. A new stack will be generated.')
 
-    return acquisitionDates, stackMasterDate, slaveDates, safe_dict, stackUpdate
+    return acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, stackUpdate
 
 def main(iargs=None):
 
@@ -734,7 +734,7 @@ def main(iargs=None):
         print('')
         sys.exit(1)
 
-    acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack = checkCurrentStatus(inps)
+    acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack = checkCurrentStatus(inps)
 
 
 
@@ -742,7 +742,7 @@ def main(iargs=None):
         print('')
         print('Updating an existing stack ...')
         print('')
-        pairs = selectNeighborPairs(slaveDates, inps.num_connections,updateStack)   # will be change later
+        pairs = selectNeighborPairs(secondaryDates, inps.num_connections,updateStack)   # will be change later
     else:
         pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack)
 
@@ -753,19 +753,19 @@ def main(iargs=None):
     print ('*****************************************')
     if inps.workflow == 'interferogram':
 
-        interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack)
+        interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'offset':
 
-        offsetStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack)
+        offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'correlation':
 
-        correlationStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, pairs, updateStack)
+        correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'slc':
 
-        slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, safe_dict, updateStack, mergeSLC=True)
+        slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=True)
 
 if __name__ == "__main__":
 

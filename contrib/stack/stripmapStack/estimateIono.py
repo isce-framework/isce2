@@ -553,7 +553,7 @@ def main(iargs=None):
 
     maskFile = os.path.join(inps.outDir, "mask.bil")
 
-    #masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
+    #referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
     wvl, wvlL, wvlH, B = getBandFrequencies(inps)
     
     f0 = SPEED_OF_LIGHT/wvl
@@ -561,7 +561,7 @@ def main(iargs=None):
     fH = SPEED_OF_LIGHT/wvlH
 
     ###Determine looks
-    #azLooks, rgLooks = self.insar.numberOfLooks( masterFrame, self.posting,
+    #azLooks, rgLooks = self.insar.numberOfLooks( referenceFrame, self.posting,
     #                                    self.numberAzimuthLooks, self.numberRangeLooks)
 
 

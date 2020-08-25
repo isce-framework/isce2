@@ -23,8 +23,8 @@ def runPrepareSlc(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
 
     ####################################################
@@ -33,7 +33,7 @@ def runPrepareSlc(self):
     #for ScanSAR-stripmap interferometry, we always crop slcs
     #for other cases, up to users
     if ((self._insar.modeCombination == 31) or (self._insar.modeCombination == 32)) or (self.cropSlc):
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             os.chdir(frameDir)
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -42,14 +42,14 @@ def runPrepareSlc(self):
 
                 print('cropping frame {}, swath {}'.format(frameNumber, swathNumber))
 
-                masterSwath = masterTrack.frames[i].swaths[j]
-                slaveSwath = slaveTrack.frames[i].swaths[j]
+                referenceSwath = referenceTrack.frames[i].swaths[j]
+                secondarySwath = secondaryTrack.frames[i].swaths[j]
                 
-                #crop master
-                cropSlc(masterTrack.orbit, masterSwath, self._insar.masterSlc, slaveTrack.orbit, slaveSwath, edge=0, useVirtualFile=self.useVirtualFile)
-                #crop slave, since slave may go through resampling, we set edge=9
-                #cropSlc(slaveTrack.orbit, slaveSwath, self._insar.slaveSlc, masterTrack.orbit, masterSwath, edge=9, useVirtualFile=self.useVirtualFile)
-                cropSlc(slaveTrack.orbit, slaveSwath, self._insar.slaveSlc, masterTrack.orbit, masterSwath, edge=0, useVirtualFile=self.useVirtualFile)
+                #crop reference
+                cropSlc(referenceTrack.orbit, referenceSwath, self._insar.referenceSlc, secondaryTrack.orbit, secondarySwath, edge=0, useVirtualFile=self.useVirtualFile)
+                #crop secondary, since secondary may go through resampling, we set edge=9
+                #cropSlc(secondaryTrack.orbit, secondarySwath, self._insar.secondarySlc, referenceTrack.orbit, referenceSwath, edge=9, useVirtualFile=self.useVirtualFile)
+                cropSlc(secondaryTrack.orbit, secondarySwath, self._insar.secondarySlc, referenceTrack.orbit, referenceSwath, edge=0, useVirtualFile=self.useVirtualFile)
 
                 os.chdir('../')
             os.chdir('../')
@@ -59,10 +59,10 @@ def runPrepareSlc(self):
     #2. range-filter slc
     ####################################################
     #compute filtering parameters, radarwavelength and range bandwidth should be the same across all swaths and frames
-    centerfreq1 = SPEED_OF_LIGHT / masterTrack.radarWavelength
-    bandwidth1 = masterTrack.frames[0].swaths[0].rangeBandwidth
-    centerfreq2 = SPEED_OF_LIGHT / slaveTrack.radarWavelength
-    bandwidth2 = slaveTrack.frames[0].swaths[0].rangeBandwidth
+    centerfreq1 = SPEED_OF_LIGHT / referenceTrack.radarWavelength
+    bandwidth1 = referenceTrack.frames[0].swaths[0].rangeBandwidth
+    centerfreq2 = SPEED_OF_LIGHT / secondaryTrack.radarWavelength
+    bandwidth2 = secondaryTrack.frames[0].swaths[0].rangeBandwidth
     overlapfreq = overlapFrequency(centerfreq1, bandwidth1, centerfreq2, bandwidth2)
 
     if overlapfreq == None:
@@ -73,7 +73,7 @@ def runPrepareSlc(self):
         raise Exception('there is not enough overlap bandwidth in range')
     centerfreq = (overlapfreq[1] + overlapfreq[0]) / 2.0
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -82,14 +82,14 @@ def runPrepareSlc(self):
 
             print('range filtering frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
             # #compute filtering parameters
-            # centerfreq1 = SPEED_OF_LIGHT / masterTrack.radarWavelength
-            # bandwidth1 = masterSwath.rangeBandwidth
-            # centerfreq2 = SPEED_OF_LIGHT / slaveTrack.radarWavelength
-            # bandwidth2 = slaveSwath.rangeBandwidth
+            # centerfreq1 = SPEED_OF_LIGHT / referenceTrack.radarWavelength
+            # bandwidth1 = referenceSwath.rangeBandwidth
+            # centerfreq2 = SPEED_OF_LIGHT / secondaryTrack.radarWavelength
+            # bandwidth2 = secondarySwath.rangeBandwidth
             # overlapfreq = overlapFrequency(centerfreq1, bandwidth1, centerfreq2, bandwidth2)
 
             # if overlapfreq == None:
@@ -100,65 +100,65 @@ def runPrepareSlc(self):
             #     raise Exception('there is not enough overlap bandwidth in range')
             # centerfreq = (overlapfreq[1] + overlapfreq[0]) / 2.0
 
-            #filter master
+            #filter reference
             if abs(centerfreq1 - centerfreq) < 1.0 and (bandwidth1 - 1.0) < overlapbandwidth:
-                print('no need to range filter {}'.format(self._insar.masterSlc))
+                print('no need to range filter {}'.format(self._insar.referenceSlc))
             else:
-                print('range filter {}'.format(self._insar.masterSlc))
+                print('range filter {}'.format(self._insar.referenceSlc))
                 tmpSlc = 'tmp.slc'
-                rg_filter(self._insar.masterSlc, 1, [tmpSlc], [overlapbandwidth / masterSwath.rangeSamplingRate], 
-                    [(centerfreq - centerfreq1) / masterSwath.rangeSamplingRate], 
+                rg_filter(self._insar.referenceSlc, 1, [tmpSlc], [overlapbandwidth / referenceSwath.rangeSamplingRate], 
+                    [(centerfreq - centerfreq1) / referenceSwath.rangeSamplingRate], 
                     257, 2048, 0.1, 0, 0.0)
 
-                if os.path.isfile(self._insar.masterSlc):
-                    os.remove(self._insar.masterSlc)
-                os.remove(self._insar.masterSlc+'.vrt')
-                os.remove(self._insar.masterSlc+'.xml')
+                if os.path.isfile(self._insar.referenceSlc):
+                    os.remove(self._insar.referenceSlc)
+                os.remove(self._insar.referenceSlc+'.vrt')
+                os.remove(self._insar.referenceSlc+'.xml')
 
                 img = isceobj.createSlcImage()
                 img.load(tmpSlc + '.xml')
                 #remove original
                 os.remove(tmpSlc + '.vrt')
                 os.remove(tmpSlc + '.xml')
-                os.rename(tmpSlc, self._insar.masterSlc)
+                os.rename(tmpSlc, self._insar.referenceSlc)
                 #creat new
-                img.setFilename(self._insar.masterSlc)
-                img.extraFilename = self._insar.masterSlc + '.vrt'
+                img.setFilename(self._insar.referenceSlc)
+                img.extraFilename = self._insar.referenceSlc + '.vrt'
                 img.setAccessMode('READ')
                 img.renderHdr()
 
-                masterTrack.radarWavelength = SPEED_OF_LIGHT/centerfreq
-                masterSwath.rangeBandwidth = overlapbandwidth
+                referenceTrack.radarWavelength = SPEED_OF_LIGHT/centerfreq
+                referenceSwath.rangeBandwidth = overlapbandwidth
 
-            #filter slave
+            #filter secondary
             if abs(centerfreq2 - centerfreq) < 1.0 and (bandwidth2 - 1.0) < overlapbandwidth:
-                print('no need to range filter {}'.format(self._insar.slaveSlc))
+                print('no need to range filter {}'.format(self._insar.secondarySlc))
             else:
-                print('range filter {}'.format(self._insar.slaveSlc))
+                print('range filter {}'.format(self._insar.secondarySlc))
                 tmpSlc = 'tmp.slc'
-                rg_filter(self._insar.slaveSlc, 1, [tmpSlc], [overlapbandwidth / slaveSwath.rangeSamplingRate], 
-                    [(centerfreq - centerfreq2) / slaveSwath.rangeSamplingRate], 
+                rg_filter(self._insar.secondarySlc, 1, [tmpSlc], [overlapbandwidth / secondarySwath.rangeSamplingRate], 
+                    [(centerfreq - centerfreq2) / secondarySwath.rangeSamplingRate], 
                     257, 2048, 0.1, 0, 0.0)
 
-                if os.path.isfile(self._insar.slaveSlc):
-                    os.remove(self._insar.slaveSlc)
-                os.remove(self._insar.slaveSlc+'.vrt')
-                os.remove(self._insar.slaveSlc+'.xml')
+                if os.path.isfile(self._insar.secondarySlc):
+                    os.remove(self._insar.secondarySlc)
+                os.remove(self._insar.secondarySlc+'.vrt')
+                os.remove(self._insar.secondarySlc+'.xml')
 
                 img = isceobj.createSlcImage()
                 img.load(tmpSlc + '.xml')
                 #remove original
                 os.remove(tmpSlc + '.vrt')
                 os.remove(tmpSlc + '.xml')
-                os.rename(tmpSlc, self._insar.slaveSlc)
+                os.rename(tmpSlc, self._insar.secondarySlc)
                 #creat new
-                img.setFilename(self._insar.slaveSlc)
-                img.extraFilename = self._insar.slaveSlc + '.vrt'
+                img.setFilename(self._insar.secondarySlc)
+                img.extraFilename = self._insar.secondarySlc + '.vrt'
                 img.setAccessMode('READ')
                 img.renderHdr()
 
-                slaveTrack.radarWavelength = SPEED_OF_LIGHT/centerfreq
-                slaveSwath.rangeBandwidth = overlapbandwidth
+                secondaryTrack.radarWavelength = SPEED_OF_LIGHT/centerfreq
+                secondarySwath.rangeBandwidth = overlapbandwidth
 
             os.chdir('../')
         os.chdir('../')
@@ -167,7 +167,7 @@ def runPrepareSlc(self):
     ####################################################
     #3. equalize sample size
     ####################################################
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -176,59 +176,59 @@ def runPrepareSlc(self):
 
             print('equalize sample size frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
-            if abs(masterSwath.rangeSamplingRate - slaveSwath.rangeSamplingRate) < 1.0 and abs(masterSwath.prf - slaveSwath.prf) < 1.0:
-                print('no need to resample {}.'.format(self._insar.slaveSlc))
+            if abs(referenceSwath.rangeSamplingRate - secondarySwath.rangeSamplingRate) < 1.0 and abs(referenceSwath.prf - secondarySwath.prf) < 1.0:
+                print('no need to resample {}.'.format(self._insar.secondarySlc))
             else:
-                outWidth  = round(slaveSwath.numberOfSamples / slaveSwath.rangeSamplingRate * masterSwath.rangeSamplingRate)
-                outLength = round(slaveSwath.numberOfLines / slaveSwath.prf * masterSwath.prf)
+                outWidth  = round(secondarySwath.numberOfSamples / secondarySwath.rangeSamplingRate * referenceSwath.rangeSamplingRate)
+                outLength = round(secondarySwath.numberOfLines / secondarySwath.prf * referenceSwath.prf)
                 
                 tmpSlc = 'tmp.slc'
-                resamp(self._insar.slaveSlc, tmpSlc, 'fake', 'fake', outWidth, outLength, slaveSwath.prf, slaveSwath.dopplerVsPixel, 
-                    rgcoef=[0.0, (1.0/masterSwath.rangeSamplingRate) / (1.0/slaveSwath.rangeSamplingRate) - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
-                    azcoef=[0.0, 0.0, (1.0/masterSwath.prf) / (1.0/slaveSwath.prf) - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
+                resamp(self._insar.secondarySlc, tmpSlc, 'fake', 'fake', outWidth, outLength, secondarySwath.prf, secondarySwath.dopplerVsPixel, 
+                    rgcoef=[0.0, (1.0/referenceSwath.rangeSamplingRate) / (1.0/secondarySwath.rangeSamplingRate) - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
+                    azcoef=[0.0, 0.0, (1.0/referenceSwath.prf) / (1.0/secondarySwath.prf) - 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 
                     azpos_off=0.0)
 
-                if os.path.isfile(self._insar.slaveSlc):
-                    os.remove(self._insar.slaveSlc)
-                os.remove(self._insar.slaveSlc+'.vrt')
-                os.remove(self._insar.slaveSlc+'.xml')
+                if os.path.isfile(self._insar.secondarySlc):
+                    os.remove(self._insar.secondarySlc)
+                os.remove(self._insar.secondarySlc+'.vrt')
+                os.remove(self._insar.secondarySlc+'.xml')
 
                 img = isceobj.createSlcImage()
                 img.load(tmpSlc + '.xml')
                 #remove original
                 os.remove(tmpSlc + '.vrt')
                 os.remove(tmpSlc + '.xml')
-                os.rename(tmpSlc, self._insar.slaveSlc)
+                os.rename(tmpSlc, self._insar.secondarySlc)
                 #creat new
-                img.setFilename(self._insar.slaveSlc)
-                img.extraFilename = self._insar.slaveSlc + '.vrt'
+                img.setFilename(self._insar.secondarySlc)
+                img.extraFilename = self._insar.secondarySlc + '.vrt'
                 img.setAccessMode('READ')
                 img.renderHdr()
 
                 #update parameters
                 #update doppler and azfmrate first
                 index2  = np.arange(outWidth)
-                index = np.arange(outWidth) * (1.0/masterSwath.rangeSamplingRate) / (1.0/slaveSwath.rangeSamplingRate)
-                dop = np.polyval(slaveSwath.dopplerVsPixel[::-1], index)
+                index = np.arange(outWidth) * (1.0/referenceSwath.rangeSamplingRate) / (1.0/secondarySwath.rangeSamplingRate)
+                dop = np.polyval(secondarySwath.dopplerVsPixel[::-1], index)
                 p = np.polyfit(index2, dop, 3)
-                slaveSwath.dopplerVsPixel = [p[3], p[2], p[1], p[0]]
+                secondarySwath.dopplerVsPixel = [p[3], p[2], p[1], p[0]]
 
-                azfmrate = np.polyval(slaveSwath.azimuthFmrateVsPixel[::-1], index)
+                azfmrate = np.polyval(secondarySwath.azimuthFmrateVsPixel[::-1], index)
                 p = np.polyfit(index2, azfmrate, 3)
-                slaveSwath.azimuthFmrateVsPixel = [p[3], p[2], p[1], p[0]]
+                secondarySwath.azimuthFmrateVsPixel = [p[3], p[2], p[1], p[0]]
 
-                slaveSwath.numberOfSamples = outWidth
-                slaveSwath.numberOfLines = outLength
+                secondarySwath.numberOfSamples = outWidth
+                secondarySwath.numberOfLines = outLength
 
-                slaveSwath.prf = masterSwath.prf
-                slaveSwath.rangeSamplingRate = masterSwath.rangeSamplingRate
-                slaveSwath.rangePixelSize = masterSwath.rangePixelSize
-                slaveSwath.azimuthPixelSize = masterSwath.azimuthPixelSize
-                slaveSwath.azimuthLineInterval = masterSwath.azimuthLineInterval
-                slaveSwath.prfFraction = masterSwath.prfFraction
+                secondarySwath.prf = referenceSwath.prf
+                secondarySwath.rangeSamplingRate = referenceSwath.rangeSamplingRate
+                secondarySwath.rangePixelSize = referenceSwath.rangePixelSize
+                secondarySwath.azimuthPixelSize = referenceSwath.azimuthPixelSize
+                secondarySwath.azimuthLineInterval = referenceSwath.azimuthLineInterval
+                secondarySwath.prfFraction = referenceSwath.prfFraction
 
             os.chdir('../')
         os.chdir('../')
@@ -237,7 +237,7 @@ def runPrepareSlc(self):
     ####################################################
     #4. mbf
     ####################################################
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -246,85 +246,85 @@ def runPrepareSlc(self):
 
             print('azimuth filter frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
             #using Piyush's code for computing range and azimuth offsets
-            midRange = masterSwath.startingRange + masterSwath.rangePixelSize * masterSwath.numberOfSamples * 0.5
-            midSensingStart = masterSwath.sensingStart + datetime.timedelta(seconds = masterSwath.numberOfLines * 0.5 / masterSwath.prf)
-            llh = masterTrack.orbit.rdr2geo(midSensingStart, midRange)
-            slvaz, slvrng = slaveTrack.orbit.geo2rdr(llh)
+            midRange = referenceSwath.startingRange + referenceSwath.rangePixelSize * referenceSwath.numberOfSamples * 0.5
+            midSensingStart = referenceSwath.sensingStart + datetime.timedelta(seconds = referenceSwath.numberOfLines * 0.5 / referenceSwath.prf)
+            llh = referenceTrack.orbit.rdr2geo(midSensingStart, midRange)
+            slvaz, slvrng = secondaryTrack.orbit.geo2rdr(llh)
             ###Translate to offsets
-            #at this point, slave range pixel size and prf should be the same as those of master
-            rgoff = ((slvrng - slaveSwath.startingRange) / masterSwath.rangePixelSize) - masterSwath.numberOfSamples * 0.5
-            azoff = ((slvaz - slaveSwath.sensingStart).total_seconds() * masterSwath.prf) - masterSwath.numberOfLines * 0.5
+            #at this point, secondary range pixel size and prf should be the same as those of reference
+            rgoff = ((slvrng - secondarySwath.startingRange) / referenceSwath.rangePixelSize) - referenceSwath.numberOfSamples * 0.5
+            azoff = ((slvaz - secondarySwath.sensingStart).total_seconds() * referenceSwath.prf) - referenceSwath.numberOfLines * 0.5
 
-            #filter master
+            #filter reference
             if not ((self._insar.modeCombination == 21) and (self._insar.burstSynchronization <= self.burstSynchronizationThreshold)):
-                print('no need to azimuth filter {}.'.format(self._insar.masterSlc))
+                print('no need to azimuth filter {}.'.format(self._insar.referenceSlc))
             else:
-                index = np.arange(masterSwath.numberOfSamples) + rgoff
-                dop = np.polyval(slaveSwath.dopplerVsPixel[::-1], index)
+                index = np.arange(referenceSwath.numberOfSamples) + rgoff
+                dop = np.polyval(secondarySwath.dopplerVsPixel[::-1], index)
                 p = np.polyfit(index-rgoff, dop, 3)
-                dopplerVsPixelSlave = [p[3], p[2], p[1], p[0]]
+                dopplerVsPixelSecondary = [p[3], p[2], p[1], p[0]]
 
                 tmpSlc = 'tmp.slc'
-                mbf(self._insar.masterSlc, tmpSlc, masterSwath.prf, 1.0, 
-                    masterSwath.burstLength, masterSwath.burstCycleLength-masterSwath.burstLength, 
-                    self._insar.burstUnsynchronizedTime * masterSwath.prf, 
-                    (masterSwath.burstStartTime - masterSwath.sensingStart).total_seconds() * masterSwath.prf, 
-                    masterSwath.azimuthFmrateVsPixel, masterSwath.dopplerVsPixel, dopplerVsPixelSlave)
+                mbf(self._insar.referenceSlc, tmpSlc, referenceSwath.prf, 1.0, 
+                    referenceSwath.burstLength, referenceSwath.burstCycleLength-referenceSwath.burstLength, 
+                    self._insar.burstUnsynchronizedTime * referenceSwath.prf, 
+                    (referenceSwath.burstStartTime - referenceSwath.sensingStart).total_seconds() * referenceSwath.prf, 
+                    referenceSwath.azimuthFmrateVsPixel, referenceSwath.dopplerVsPixel, dopplerVsPixelSecondary)
 
-                if os.path.isfile(self._insar.masterSlc):
-                    os.remove(self._insar.masterSlc)
-                os.remove(self._insar.masterSlc+'.vrt')
-                os.remove(self._insar.masterSlc+'.xml')
+                if os.path.isfile(self._insar.referenceSlc):
+                    os.remove(self._insar.referenceSlc)
+                os.remove(self._insar.referenceSlc+'.vrt')
+                os.remove(self._insar.referenceSlc+'.xml')
 
                 img = isceobj.createSlcImage()
                 img.load(tmpSlc + '.xml')
                 #remove original
                 os.remove(tmpSlc + '.vrt')
                 os.remove(tmpSlc + '.xml')
-                os.rename(tmpSlc, self._insar.masterSlc)
+                os.rename(tmpSlc, self._insar.referenceSlc)
                 #creat new
-                img.setFilename(self._insar.masterSlc)
-                img.extraFilename = self._insar.masterSlc + '.vrt'
+                img.setFilename(self._insar.referenceSlc)
+                img.extraFilename = self._insar.referenceSlc + '.vrt'
                 img.setAccessMode('READ')
                 img.renderHdr()
 
-            #filter slave
+            #filter secondary
             if not(
                 ((self._insar.modeCombination == 21) and (self._insar.burstSynchronization <= self.burstSynchronizationThreshold)) or \
                 (self._insar.modeCombination == 31)
                 ):
-                print('no need to azimuth filter {}.'.format(self._insar.slaveSlc))
+                print('no need to azimuth filter {}.'.format(self._insar.secondarySlc))
             else:
-                index = np.arange(slaveSwath.numberOfSamples) - rgoff
-                dop = np.polyval(masterSwath.dopplerVsPixel[::-1], index)
+                index = np.arange(secondarySwath.numberOfSamples) - rgoff
+                dop = np.polyval(referenceSwath.dopplerVsPixel[::-1], index)
                 p = np.polyfit(index+rgoff, dop, 3)
-                dopplerVsPixelMaster = [p[3], p[2], p[1], p[0]]
+                dopplerVsPixelReference = [p[3], p[2], p[1], p[0]]
 
                 tmpSlc = 'tmp.slc'
-                mbf(self._insar.slaveSlc, tmpSlc, slaveSwath.prf, 1.0, 
-                    slaveSwath.burstLength, slaveSwath.burstCycleLength-slaveSwath.burstLength, 
-                    -self._insar.burstUnsynchronizedTime * slaveSwath.prf, 
-                    (slaveSwath.burstStartTime - slaveSwath.sensingStart).total_seconds() * slaveSwath.prf, 
-                    slaveSwath.azimuthFmrateVsPixel, slaveSwath.dopplerVsPixel, dopplerVsPixelMaster)
+                mbf(self._insar.secondarySlc, tmpSlc, secondarySwath.prf, 1.0, 
+                    secondarySwath.burstLength, secondarySwath.burstCycleLength-secondarySwath.burstLength, 
+                    -self._insar.burstUnsynchronizedTime * secondarySwath.prf, 
+                    (secondarySwath.burstStartTime - secondarySwath.sensingStart).total_seconds() * secondarySwath.prf, 
+                    secondarySwath.azimuthFmrateVsPixel, secondarySwath.dopplerVsPixel, dopplerVsPixelReference)
 
-                if os.path.isfile(self._insar.slaveSlc):
-                    os.remove(self._insar.slaveSlc)
-                os.remove(self._insar.slaveSlc+'.vrt')
-                os.remove(self._insar.slaveSlc+'.xml')
+                if os.path.isfile(self._insar.secondarySlc):
+                    os.remove(self._insar.secondarySlc)
+                os.remove(self._insar.secondarySlc+'.vrt')
+                os.remove(self._insar.secondarySlc+'.xml')
 
                 img = isceobj.createSlcImage()
                 img.load(tmpSlc + '.xml')
                 #remove original
                 os.remove(tmpSlc + '.vrt')
                 os.remove(tmpSlc + '.xml')
-                os.rename(tmpSlc, self._insar.slaveSlc)
+                os.rename(tmpSlc, self._insar.secondarySlc)
                 #creat new
-                img.setFilename(self._insar.slaveSlc)
-                img.extraFilename = self._insar.slaveSlc + '.vrt'
+                img.setFilename(self._insar.secondarySlc)
+                img.extraFilename = self._insar.secondarySlc + '.vrt'
                 img.setAccessMode('READ')
                 img.renderHdr()
 
@@ -332,8 +332,8 @@ def runPrepareSlc(self):
         os.chdir('../')
 
     #in case parameters changed
-    self._insar.saveTrack(masterTrack, master=True)
-    self._insar.saveTrack(slaveTrack, master=False)
+    self._insar.saveTrack(referenceTrack, reference=True)
+    self._insar.saveTrack(secondaryTrack, reference=False)
 
     catalog.printToLog(logger, "runPrepareSlc")
     self._insar.procDoc.addAllFromCatalog(catalog)

@@ -93,7 +93,7 @@ def run(frame1, objFormSLC1, objMocompbaseline, intImage, velocity, height, info
     objCorrect.wireInputPort(name='frame', object=frame1)
     objCorrect.wireInputPort(name='planet', object=planet)
     objCorrect.wireInputPort(name='interferogram', object=intImage)
-    objCorrect.wireInputPort(name='masterslc', object=objFormSLC1) #Piyush
+    objCorrect.wireInputPort(name='referenceslc', object=objFormSLC1) #Piyush
     #objCorrect.setDopplerCentroidConstantTerm(centroid)  #ML 2014-08-05
     # Average velocity and height measurements
     objCorrect.setBodyFixedVelocity(velocity)

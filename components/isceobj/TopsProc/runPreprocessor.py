@@ -20,23 +20,23 @@ def runPreprocessor(self):
 
 
     ###First set maximum number of swaths possible for a sensor.
-    self._insar.numberOfSwaths = self.master.maxSwaths 
+    self._insar.numberOfSwaths = self.reference.maxSwaths 
     swathList = self._insar.getInputSwathList(self.swaths)
     
     catalog.addItem('Input list of swaths to process: ', swathList, 'common')
 
-    self.master.configure()
-    self.slave.configure()
+    self.reference.configure()
+    self.secondary.configure()
 
     for swath in swathList:
-        ###Process master frame-by-frame
-        frame = copy.deepcopy(self.master)
+        ###Process reference frame-by-frame
+        frame = copy.deepcopy(self.reference)
         frame.swathNumber = swath
         frame.output = os.path.join(frame.output, 'IW{0}'.format(swath))
         frame.regionOfInterest = self.regionOfInterest
 
         try:
-            master = extract_slc(frame, virtual=virtual)
+            reference = extract_slc(frame, virtual=virtual)
             success=True
         except Exception as err:
             print('Could not extract swath {0} from {1}'.format(swath, frame.safe))
@@ -44,20 +44,20 @@ def runPreprocessor(self):
             success=False
 
         if success:
-            catalog.addInputsFrom(frame.product, 'master.sensor')
-            catalog.addItem('burstWidth_{0}'.format(swath), frame.product.bursts[0].numberOfSamples, 'master')
-            catalog.addItem('burstLength_{0}'.format(swath), frame.product.bursts[0].numberOfLines, 'master')
-            catalog.addItem('numberOfBursts_{0}'.format(swath), len(frame.product.bursts), 'master')
+            catalog.addInputsFrom(frame.product, 'reference.sensor')
+            catalog.addItem('burstWidth_{0}'.format(swath), frame.product.bursts[0].numberOfSamples, 'reference')
+            catalog.addItem('burstLength_{0}'.format(swath), frame.product.bursts[0].numberOfLines, 'reference')
+            catalog.addItem('numberOfBursts_{0}'.format(swath), len(frame.product.bursts), 'reference')
 
         
-        ###Process slave frame-by-frame
-        frame = copy.deepcopy(self.slave)
+        ###Process secondary frame-by-frame
+        frame = copy.deepcopy(self.secondary)
         frame.swathNumber = swath
         frame.output = os.path.join(frame.output, 'IW{0}'.format(swath))
         frame.regionOfInterest = self.regionOfInterest
 
         try:
-            slave = extract_slc(frame, virtual=virtual)
+            secondary = extract_slc(frame, virtual=virtual)
             success=True
         except Exception as err:
             print('Could not extract swath {0} from {1}'.format(swath, frame.safe))
@@ -65,14 +65,14 @@ def runPreprocessor(self):
             success = False
 
         if success:
-            catalog.addInputsFrom(frame.product, 'slave.sensor')
-            catalog.addItem('burstWidth_{0}'.format(swath), frame.product.bursts[0].numberOfSamples, 'slave')
-            catalog.addItem('burstLength_{0}'.format(swath), frame.product.bursts[0].numberOfLines, 'slave')
-            catalog.addItem('numberOfBursts_{0}'.format(swath), len(frame.product.bursts), 'slave')
+            catalog.addInputsFrom(frame.product, 'secondary.sensor')
+            catalog.addItem('burstWidth_{0}'.format(swath), frame.product.bursts[0].numberOfSamples, 'secondary')
+            catalog.addItem('burstLength_{0}'.format(swath), frame.product.bursts[0].numberOfLines, 'secondary')
+            catalog.addItem('numberOfBursts_{0}'.format(swath), len(frame.product.bursts), 'secondary')
 
 
-    self._insar.masterSlcProduct = self.master.output
-    self._insar.slaveSlcProduct = self.slave.output
+    self._insar.referenceSlcProduct = self.reference.output
+    self._insar.secondarySlcProduct = self.secondary.output
 
     catalog.printToLog(logger, "runPreprocessor")
     self._insar.procDoc.addAllFromCatalog(catalog)

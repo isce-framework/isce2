@@ -7,8 +7,8 @@ The alos2App.py is designed to process all possible InSAR combinations of ALOS-2
 data. ALOS-2 can acquire data in spotlight, stripmap and ScanSAR modes. In each mode, the 
 data may have different sample size, coverage, look side (right/left), range band, azimuth band, 
 wavelength, and so on. In addition, the two images used for interferometry can be acquired in 
-different acquistion modes such as ScanSAR-stripmap interferometry. As long as the master and 
-slave images meet the following requirements:
+different acquistion modes such as ScanSAR-stripmap interferometry. As long as the reference and 
+secondary images meet the following requirements:
 
 1. acquired on the same track
 2. have enough spatial coverage
@@ -17,7 +17,7 @@ slave images meet the following requirements:
 
 an interferogram can be created by alos2App.py. These basically include spotlight-spotlight 
 interferometry, stripmap-stripmap interferometry, ScanSAR-stripmap interferometry and ScanSAR-ScanSAR 
-interometry. Note that even in same-mode interferometry, master and slave may be acquired in 
+interometry. Note that even in same-mode interferometry, reference and secondary may be acquired in 
 different sub-modes. Support for spotlight mode will soon be added.
 
 As a summary for alos2App.py, ONE COMMAND TO PROCESS THEM ALL.
@@ -116,12 +116,12 @@ can be found in "examples/input_files/alos2" in the package. Normally you only n
 process all kinds of InSAR combinations.
 
 2. Set the following parameters in the input file:
-    <property name="master directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150405</property>
-    <property name="slave directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
+    <property name="reference directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150405</property>
+    <property name="secondary directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
 
     <!--optional, see input file on how to set these-->
-    <property name="master frames">[3055]</property>
-    <property name="slave frames">[3055]</property>
+    <property name="reference frames">[3055]</property>
+    <property name="secondary frames">[3055]</property>
 
     <!--optional, see input file on how to set these-->
     <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
@@ -165,7 +165,7 @@ FBD (indicated by ^) is the acquisition mode code. Here is the list of acquistio
    ScanSAR        |       WD1       |    WBS, WBD, WWS, WWD
                   |       WD2       |    VBS, VBD
 
-Note that, in ScanSAR-stripmap interferometry, ScanSAR must be master!
+Note that, in ScanSAR-stripmap interferometry, ScanSAR must be reference!
 
 
 ###########################################
@@ -214,7 +214,7 @@ ion: folder for computing ionospheric phase. subband interferograms are created 
 "upper", and final computations are done in "ion_cal".
 
 dense_offset: dense offset processing results. In this folder:
-*_coreg.slc: coregistered slave image. Offsets used to do resampling include geomtrical offsets + residual
+*_coreg.slc: coregistered secondary image. Offsets used to do resampling include geomtrical offsets + residual
 offsets from cross-correlation.
 
 
@@ -223,7 +223,7 @@ offsets from cross-correlation.
 ###########################################
 
 File names shown here are from particular pairs, you need to find your corresponding ones. For all sign 
-conventions, we assume master is the earlier acquistion. If your master is the later acquistion, the sign 
+conventions, we assume reference is the earlier acquistion. If your reference is the later acquistion, the sign 
 will be opposite!
 
 
@@ -330,15 +330,15 @@ or
 alos2burstApp.py --dostep=ion_filt
 
 
-3. Master and slave have different wavelengths
-If master and slave are acquired in different acquistion modes, it's likely that they have different 
-wavelengths, If master and slave have different wavelengths, the resulting interferogram might have a 
+3. Reference and secondary have different wavelengths
+If reference and secondary are acquired in different acquistion modes, it's likely that they have different 
+wavelengths, If reference and secondary have different wavelengths, the resulting interferogram might have a 
 residual range ramp. This is probably caused by the relative wavelength errors of the two wavelengths.
 
 
 4. ScanSAR burst synchronization
 For ScanSAR data acquired before February 8, 2015, chances of having enough burst synchronization for 
-interferometry is very low. If the master image, slave image or both are acquired before this date, the 
+interferometry is very low. If the reference image, secondary image or both are acquired before this date, the 
 interferogram will be probably full of noise and not useful.
 
 

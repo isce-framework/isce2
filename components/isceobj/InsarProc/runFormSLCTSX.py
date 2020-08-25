@@ -49,7 +49,7 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
 
     v = self.insar.procVelocity
     h = self.insar.averageHeight
-    imageSlc1 =  self.insar.masterRawImage
+    imageSlc1 =  self.insar.referenceRawImage
     imSlc1 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc1, imSlc1)
     imSlc1.setAccessMode('read')
@@ -61,11 +61,11 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc1.wireInputPort(name='doppler',
                            object = self.insar.dopplerCentroid)
     formSlc1.wireInputPort(name='peg', object=self.insar.peg)
-    formSlc1.wireInputPort(name='frame', object=self.insar.masterFrame)
-    formSlc1.wireInputPort(name='orbit', object=self.insar.masterOrbit)
+    formSlc1.wireInputPort(name='frame', object=self.insar.referenceFrame)
+    formSlc1.wireInputPort(name='orbit', object=self.insar.referenceOrbit)
     formSlc1.wireInputPort(name='slcInImage', object=imSlc1)
     formSlc1.wireInputPort(name='planet',
-        object=self.insar.masterFrame.instrument.platform.planet)
+        object=self.insar.referenceFrame.instrument.platform.planet)
     self._stdWriter.setFileTag("formslcTSX", "log")
     self._stdWriter.setFileTag("formslcTSX", "err")
     self._stdWriter.setFileTag("formslcTSX", "out")
@@ -73,10 +73,10 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc1.setLookSide(self.insar._lookSide)
 
 
-#    self.insar.setMasterSlcImage(formSlc1.formslc())
-    self.insar.masterSlcImage = formSlc1()
+#    self.insar.setReferenceSlcImage(formSlc1.formslc())
+    self.insar.referenceSlcImage = formSlc1()
 
-    imageSlc2 =  self.insar.slaveRawImage
+    imageSlc2 =  self.insar.secondaryRawImage
     imSlc2 = isceobj.createSlcImage()
     IU.copyAttributes(imageSlc2, imSlc2)
     imSlc2.setAccessMode('read')
@@ -88,19 +88,19 @@ def runFormSLC(self, patchSize=None, goodLines=None, numPatches=None):
     formSlc2.wireInputPort(name='doppler',
                            object=self.insar.dopplerCentroid)
     formSlc2.wireInputPort(name='peg', object=self.insar.peg)
-    formSlc2.wireInputPort(name='frame', object=self.insar.slaveFrame)
-    formSlc2.wireInputPort(name='orbit', object=self.insar.slaveOrbit)
+    formSlc2.wireInputPort(name='frame', object=self.insar.secondaryFrame)
+    formSlc2.wireInputPort(name='orbit', object=self.insar.secondaryOrbit)
     formSlc2.wireInputPort(name='slcInImage', object=imSlc2)
     formSlc2.wireInputPort(name='planet',
-        object=self.insar.slaveFrame.instrument.platform.planet)
+        object=self.insar.secondaryFrame.instrument.platform.planet)
 
     self._stdWriter.setFileTag("formslcTSX", "log")
     self._stdWriter.setFileTag("formslcTSX", "err")
     self._stdWriter.setFileTag("formslcTSX", "out")
     formSlc2.setStdWriter(self._stdWriter)
     formSlc2.setLookSide(self.insar._lookSide)
-#    self.insar.setSlaveSlcImage(formSlc2.formslc())
-    self.insar.slaveSlcImage = formSlc2()
+#    self.insar.setSecondarySlcImage(formSlc2.formslc())
+    self.insar.secondarySlcImage = formSlc2()
     self.insar.setNumberPatches(
         imSlc1.getLength()/float(self.insar.numberValidPulses)
         )

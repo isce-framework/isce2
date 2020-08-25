@@ -35,8 +35,8 @@ from isceobj.Util.decorators import use_api
 
 logger = logging.getLogger('isce.insar.runFormSLC')
 
-#Run FormSLC for master
-def master(self, deltaf=None):
+#Run FormSLC for reference
+def reference(self, deltaf=None):
     from isceobj.Catalog import recordInputsAndOutputs
     from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 
@@ -45,9 +45,9 @@ def master(self, deltaf=None):
 
     v,h = self.insar.vh()
    
-    objRaw = self.insar.rawMasterIQImage.clone()
+    objRaw = self.insar.rawReferenceIQImage.clone()
     objRaw.accessMode = 'read'
-    objFormSlc = stdproc.createFormSLC(name='insarapp_formslc_master')
+    objFormSlc = stdproc.createFormSLC(name='insarapp_formslc_reference')
     objFormSlc.setBodyFixedVelocity(v)
     objFormSlc.setSpacecraftHeight(h)
     objFormSlc.setAzimuthPatchSize(self.patchSize)
@@ -55,18 +55,18 @@ def master(self, deltaf=None):
     objFormSlc.setNumberPatches(self.numPatches)
     objFormSlc.setLookSide(self.insar._lookSide)
     objFormSlc.setNumberAzimuthLooks(self.insar.numberAzimuthLooks)
-    logger.info("Focusing Master image")
+    logger.info("Focusing Reference image")
     objFormSlc.stdWriter = self.stdWriter
 
     if (deltaf is not None) and (objFormSlc.azimuthResolution is None):
-        ins = self.insar.masterFrame.getInstrument()
+        ins = self.insar.referenceFrame.getInstrument()
         prf = ins.getPulseRepetitionFrequency()
         res = ins.getPlatform().getAntennaLength() / 2.0
         azbw = min(v/res, prf)
         res = v/azbw 
 
         factor = 1.0 - (abs(deltaf)/azbw)
-        logger.info('MASTER AZIMUTH BANDWIDTH FACTOR = %f'%(factor))
+        logger.info('REFERENCE AZIMUTH BANDWIDTH FACTOR = %f'%(factor))
         azres = res / factor
         #jng This is a temporary solution seems it looks that same banding problem
         #can be resolved by doubling the azres. The default azResFactor  is still one.
@@ -74,9 +74,9 @@ def master(self, deltaf=None):
    
     ####newInputs
     objSlc = objFormSlc(rawImage=objRaw,
-                orbit=self.insar.masterOrbit,
-                frame=self.insar.masterFrame,
-                planet=self.insar.masterFrame.instrument.platform.planet,
+                orbit=self.insar.referenceOrbit,
+                frame=self.insar.referenceFrame,
+                planet=self.insar.referenceFrame.instrument.platform.planet,
                 doppler=self.insar.dopplerCentroid,
                 peg=self.insar.peg)
 
@@ -86,23 +86,23 @@ def master(self, deltaf=None):
     objSlc.finalizeImage()
     objRaw.finalizeImage()
     recordInputsAndOutputs(self.insar.procDoc, objFormSlc,
-        "runFormSLC.master", logger, "runFormSLC.master")
+        "runFormSLC.reference", logger, "runFormSLC.reference")
 
     logger.info('New Width = %d'%(imageSlc.getWidth()))
-    self.insar.masterSlcImage = imageSlc
+    self.insar.referenceSlcImage = imageSlc
     self.insar.formSLC1 = objFormSlc
     return objFormSlc.numberPatches
 
-#Run FormSLC on slave
-def slave(self, deltaf=None):
+#Run FormSLC on secondary
+def secondary(self, deltaf=None):
     from isceobj.Catalog import recordInputsAndOutputs
     from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 
     v,h = self.insar.vh()
 
-    objRaw = self.insar.rawSlaveIQImage.clone()
+    objRaw = self.insar.rawSecondaryIQImage.clone()
     objRaw.accessMode = 'read'
-    objFormSlc = stdproc.createFormSLC(name='insarapp_formslc_slave')
+    objFormSlc = stdproc.createFormSLC(name='insarapp_formslc_secondary')
     objFormSlc.setBodyFixedVelocity(v)
     objFormSlc.setSpacecraftHeight(h)
     objFormSlc.setAzimuthPatchSize(self.patchSize)
@@ -110,24 +110,24 @@ def slave(self, deltaf=None):
     objFormSlc.setNumberPatches(self.numPatches)
     objFormSlc.setNumberAzimuthLooks(self.insar.numberAzimuthLooks)
     objFormSlc.setLookSide(self.insar._lookSide)
-    logger.info("Focusing Master image")
+    logger.info("Focusing Reference image")
     objFormSlc.stdWriter = self.stdWriter
 
     if (deltaf is not None) and (objFormSlc.azimuthResolution is None):
-        ins = self.insar.slaveFrame.getInstrument()
+        ins = self.insar.secondaryFrame.getInstrument()
         prf = ins.getPulseRepetitionFrequency()
         res = ins.getPlatform().getAntennaLength()/2.0
         azbw = min(v / res, prf)
         res = v / azbw
         factor = 1.0 - (abs(deltaf) / azbw)
-        logger.info('SLAVE AZIMUTH BANDWIDTH FACTOR = %f'%(factor))
+        logger.info('SECONDARY AZIMUTH BANDWIDTH FACTOR = %f'%(factor))
         azres = res/factor
         objFormSlc.setAzimuthResolution(azres)
 
     objSlc = objFormSlc(rawImage=objRaw,
-                orbit=self.insar.slaveOrbit,
-                frame=self.insar.slaveFrame,
-                planet=self.insar.slaveFrame.instrument.platform.planet,
+                orbit=self.insar.secondaryOrbit,
+                frame=self.insar.secondaryFrame,
+                planet=self.insar.secondaryFrame.instrument.platform.planet,
                 doppler=self.insar.dopplerCentroid,
                 peg=self.insar.peg)
 
@@ -137,22 +137,22 @@ def slave(self, deltaf=None):
     objSlc.finalizeImage()
     objRaw.finalizeImage()
     recordInputsAndOutputs(self.insar.procDoc, objFormSlc,
-        "runFormSLC.slave", logger, "runFormSLC.slave")
+        "runFormSLC.secondary", logger, "runFormSLC.secondary")
 
     logger.info('New Width = %d'%(imageSlc.getWidth()))
-    self.insar.slaveSlcImage = imageSlc
+    self.insar.secondarySlcImage = imageSlc
     self.insar.formSLC2 = objFormSlc
     return objFormSlc.numberPatches
 
 @use_api
 def runFormSLC(self):
 
-    mDoppler = self.insar.masterDoppler.getDopplerCoefficients(inHz=True)
-    sDoppler = self.insar.slaveDoppler.getDopplerCoefficients(inHz=True)
+    mDoppler = self.insar.referenceDoppler.getDopplerCoefficients(inHz=True)
+    sDoppler = self.insar.secondaryDoppler.getDopplerCoefficients(inHz=True)
     deltaf = abs(mDoppler[0] - sDoppler[0])
-    n_master = master(self, deltaf=deltaf)
-    n_slave = slave(self, deltaf=deltaf)
-    self.insar.setNumberPatches(min(n_master, n_slave))
+    n_reference = reference(self, deltaf=deltaf)
+    n_secondary = secondary(self, deltaf=deltaf)
+    self.insar.setNumberPatches(min(n_reference, n_secondary))
     self.is_mocomp = int(
         (self.insar.formSLC1.azimuthPatchSize -
          self.insar.formSLC1.numberValidPulses)/2

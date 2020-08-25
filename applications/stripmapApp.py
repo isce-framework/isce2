@@ -57,24 +57,24 @@ SENSOR_NAME = Application.Parameter(
         default = None,
         type = str,
         mandatory = False,
-        doc = 'Sensor name for both master and slave')
+        doc = 'Sensor name for both reference and secondary')
 
 
-MASTER_SENSOR_NAME = Application.Parameter(
-        'masterSensorName',
-        public_name='master sensor name',
+REFERENCE_SENSOR_NAME = Application.Parameter(
+        'referenceSensorName',
+        public_name='reference sensor name',
         default = None,
         type=str,
         mandatory = True,
-        doc = "Master sensor name if mixing sensors")
+        doc = "Reference sensor name if mixing sensors")
 
-SLAVE_SENSOR_NAME = Application.Parameter(
-        'slaveSensorName',
-        public_name='slave sensor name',
+SECONDARY_SENSOR_NAME = Application.Parameter(
+        'secondarySensorName',
+        public_name='secondary sensor name',
         default = None,
         type=str,
         mandatory = True,
-        doc = "Slave sensor name if mixing sensors")
+        doc = "Secondary sensor name if mixing sensors")
 
 
 CORRELATION_METHOD = Application.Parameter(
@@ -89,17 +89,17 @@ CORRELATION_METHOD = Application.Parameter(
       phase_gradient=phase gradient"""
         )
                                            )
-MASTER_DOPPLER_METHOD = Application.Parameter(
-    'masterDopplerMethod',
-    public_name='master doppler method',
+REFERENCE_DOPPLER_METHOD = Application.Parameter(
+    'referenceDopplerMethod',
+    public_name='reference doppler method',
     default=None,
     type=str, mandatory=False,
     doc= "Doppler calculation method.Choices: 'useDOPIQ', 'useDefault'."
 )
 
-SLAVE_DOPPLER_METHOD = Application.Parameter(
-    'slaveDopplerMethod',
-    public_name='slave doppler method',
+SECONDARY_DOPPLER_METHOD = Application.Parameter(
+    'secondaryDopplerMethod',
+    public_name='secondary doppler method',
     default=None,
     type=str, mandatory=False,
     doc="Doppler calculation method. Choices: 'useDOPIQ','useDefault'.")
@@ -448,24 +448,24 @@ DISPERSIVE_FILTER_COHERENCE_THRESHOLD = Application.Parameter('dispersive_filter
                                       doc='Coherence threshold to generate a mask file which gets used in the iterative filtering of the dispersive and non-disperive phase')
 #Facility declarations
 
-MASTER = Application.Facility(
-    'master',
-    public_name='Master',
+REFERENCE = Application.Facility(
+    'reference',
+    public_name='Reference',
     module='isceobj.StripmapProc.Sensor',
     factory='createSensor',
-    args=(SENSOR_NAME, MASTER_SENSOR_NAME, 'master'),
+    args=(SENSOR_NAME, REFERENCE_SENSOR_NAME, 'reference'),
     mandatory=False,
-    doc="Master raw data component"
+    doc="Reference raw data component"
                               )
 
-SLAVE = Application.Facility(
-    'slave',
-    public_name='Slave',
+SECONDARY = Application.Facility(
+    'secondary',
+    public_name='Secondary',
     module='isceobj.StripmapProc.Sensor',
     factory='createSensor',
-    args=(SENSOR_NAME, SLAVE_SENSOR_NAME,'slave'),
+    args=(SENSOR_NAME, SECONDARY_SENSOR_NAME,'secondary'),
     mandatory=False,
-    doc="Slave raw data component"
+    doc="Secondary raw data component"
                              )
 
 DEM_STITCHER = Application.Facility(
@@ -516,12 +516,12 @@ class _RoiBase(Application, FrameMixin):
     family = 'insar'
     ## Define Class parameters in this list
     parameter_list = (SENSOR_NAME,
-                      MASTER_SENSOR_NAME,
-                      SLAVE_SENSOR_NAME,
+                      REFERENCE_SENSOR_NAME,
+                      SECONDARY_SENSOR_NAME,
                       FILTER_STRENGTH,
                       CORRELATION_METHOD,
-                      MASTER_DOPPLER_METHOD,
-                      SLAVE_DOPPLER_METHOD,
+                      REFERENCE_DOPPLER_METHOD,
+                      SECONDARY_DOPPLER_METHOD,
                       UNWRAPPER_NAME,
                       DO_UNWRAP,
                       DO_UNWRAP_2STAGE,
@@ -564,8 +564,8 @@ class _RoiBase(Application, FrameMixin):
                       DISPERSIVE_FILTER_MASK_TYPE,
                       DISPERSIVE_FILTER_COHERENCE_THRESHOLD)
 
-    facility_list = (MASTER,
-                     SLAVE,
+    facility_list = (REFERENCE,
+                     SECONDARY,
                      DEM_STITCHER,
                      RUN_UNWRAPPER,
                      RUN_UNWRAP_2STAGE,
@@ -729,7 +729,7 @@ class _RoiBase(Application, FrameMixin):
         self.runTopo = StripmapProc.createTopo(self)
         self.runGeo2rdr = StripmapProc.createGeo2rdr(self)
         self.runResampleSlc = StripmapProc.createResampleSlc(self)
-        self.runRefineSlaveTiming = StripmapProc.createRefineSlaveTiming(self)
+        self.runRefineSecondaryTiming = StripmapProc.createRefineSecondaryTiming(self)
         self.runDenseOffsets = StripmapProc.createDenseOffsets(self)
         self.runRubbersheetRange = StripmapProc.createRubbersheetRange(self) #Modified by V. Brancato 10.07.2019
         self.runRubbersheetAzimuth =StripmapProc.createRubbersheetAzimuth(self) #Modified by V. Brancato 10.07.2019
@@ -752,7 +752,7 @@ class _RoiBase(Application, FrameMixin):
         self.step('preprocess',
                   func=self.runPreprocessor,
                   doc=(
-                """Preprocess the master and slave sensor data to raw images"""
+                """Preprocess the reference and secondary sensor data to raw images"""
                 )
                   )
 
@@ -776,7 +776,7 @@ class _RoiBase(Application, FrameMixin):
         self.step('coarse_resample', func=self.runResampleSlc,
                     args=('coarse',))
 
-        self.step('misregistration', func=self.runRefineSlaveTiming)
+        self.step('misregistration', func=self.runRefineSecondaryTiming)
 
         self.step('refined_resample', func=self.runResampleSlc,
                     args=('refined',))
@@ -856,7 +856,7 @@ class _RoiBase(Application, FrameMixin):
         self.runResampleSlc('coarse')
 
         # refine geometry offsets using offsets computed by cross correlation
-        self.runRefineSlaveTiming()
+        self.runRefineSecondaryTiming()
 
         # resampling using refined offsets
         self.runResampleSlc('refined')
@@ -966,7 +966,7 @@ class Insar(_RoiBase):
         self.runResampleSlc()
         #self.runResamp_only()
 
-        self.runRefineSlaveTiming()
+        self.runRefineSecondaryTiming()
 
         #self.insar.topoIntImage=self.insar.resampOnlyImage
         #self.runTopo()

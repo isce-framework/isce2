@@ -60,7 +60,7 @@ def main(iargs=None):
 if __name__ == '__main__' :
   ''' 
   invert a network of the pair's mis-registrations to
-  estimate the mis-registrations wrt the Master date.
+  estimate the mis-registrations wrt the Reference date.
   '''
 
   main()

@@ -41,7 +41,7 @@
         <value>True</value>
     </property>
 -->
-    <component name="Master">
+    <component name="Reference">
    <property name="IMAGEFILE">
      <value>../ALOS2/IMG-HH-ALPSRP028910640-H1.0__A</value>
    </property>
@@ -52,7 +52,7 @@
      <value>060810.raw</value>
    </property>
     </component>
-    <component name="Slave">
+    <component name="Secondary">
    <property name="IMAGEFILE">
      <value>../ALOS2/IMG-HH-ALPSRP042330640-H1.0__A</value>
    </property>

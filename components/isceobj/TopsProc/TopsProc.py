@@ -11,36 +11,36 @@ from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTU
 from iscesys.Compatibility import Compatibility
 
 
-MASTER_SLC_PRODUCT = Component.Parameter('masterSlcProduct',
-                                public_name='master slc product',
-                                default='master',
+REFERENCE_SLC_PRODUCT = Component.Parameter('referenceSlcProduct',
+                                public_name='reference slc product',
+                                default='reference',
                                 type=str,
                                 mandatory=False,
-                                doc='Directory name of the master SLC product')
+                                doc='Directory name of the reference SLC product')
 
 
-SLAVE_SLC_PRODUCT = Component.Parameter('slaveSlcProduct',
-                                public_name='slave slc product',
-                                default='slave',
+SECONDARY_SLC_PRODUCT = Component.Parameter('secondarySlcProduct',
+                                public_name='secondary slc product',
+                                default='secondary',
                                 type=str,
                                 mandatory=False,
-                                doc='Directory name of the slave SLC product')
+                                doc='Directory name of the secondary SLC product')
 
-COMMON_BURST_START_MASTER_INDEX  = Component.Parameter('commonBurstStartMasterIndex',
-                                public_name = 'common burst start master index',
+COMMON_BURST_START_REFERENCE_INDEX  = Component.Parameter('commonBurstStartReferenceIndex',
+                                public_name = 'common burst start reference index',
                                 default = None,
                                 type = int,
                                 container=list,
                                 mandatory = False,
-                                doc = 'Master burst start index for common bursts')
+                                doc = 'Reference burst start index for common bursts')
 
-COMMON_BURST_START_SLAVE_INDEX = Component.Parameter('commonBurstStartSlaveIndex',
-                                public_name = 'common burst start slave index',
+COMMON_BURST_START_SECONDARY_INDEX = Component.Parameter('commonBurstStartSecondaryIndex',
+                                public_name = 'common burst start secondary index',
                                 default = None,
                                 type = int,
                                 container=list,
                                 mandatory = False,
-                                doc = 'Slave burst start index for common bursts')
+                                doc = 'Secondary burst start index for common bursts')
 
 NUMBER_COMMON_BURSTS = Component.Parameter('numberOfCommonBursts',
                                 public_name = 'number of common bursts',
@@ -48,7 +48,7 @@ NUMBER_COMMON_BURSTS = Component.Parameter('numberOfCommonBursts',
                                 type = int,
                                 container=list,
                                 mandatory = False,
-                                doc = 'Number of common bursts between slave and master')
+                                doc = 'Number of common bursts between secondary and reference')
 
 
 DEM_FILENAME = Component.Parameter('demFilename',
@@ -60,7 +60,7 @@ DEM_FILENAME = Component.Parameter('demFilename',
 
 GEOMETRY_DIRNAME = Component.Parameter('geometryDirname',
                                 public_name='geometry directory name',
-                                default='geom_master',
+                                default='geom_reference',
                                 type=str,
                                 mandatory=False, 
                                 doc = 'Geometry directory')
@@ -130,19 +130,19 @@ OVERLAPS_SUBDIRECTORY = Component.Parameter('overlapsSubDirname',
                                 mandatory = False,
                                 doc = 'Overlap region processing directory')
 
-SLAVE_RANGE_CORRECTION = Component.Parameter('slaveRangeCorrection',
-                                public_name = 'slave range correction',
+SECONDARY_RANGE_CORRECTION = Component.Parameter('secondaryRangeCorrection',
+                                public_name = 'secondary range correction',
                                 default = 0.0,
                                 type = float,
                                 mandatory = False,
-                                doc = 'Range correction in m to apply to slave')
+                                doc = 'Range correction in m to apply to secondary')
 
-SLAVE_TIMING_CORRECTION = Component.Parameter('slaveTimingCorrection',
-                                public_name = 'slave timing correction',
+SECONDARY_TIMING_CORRECTION = Component.Parameter('secondaryTimingCorrection',
+                                public_name = 'secondary timing correction',
                                 default = 0.0,
                                 type = float,
                                 mandatory = False,
-                                doc = 'Timing correction in secs to apply to slave')
+                                doc = 'Timing correction in secs to apply to secondary')
 
 NUMBER_OF_SWATHS = Component.Parameter('numberOfSwaths',
                                 public_name = 'number of swaths',
@@ -356,10 +356,10 @@ class TopsProc(Component):
     to modify and return their values.
     """
 
-    parameter_list = (MASTER_SLC_PRODUCT,
-                      SLAVE_SLC_PRODUCT,
-                      COMMON_BURST_START_MASTER_INDEX,
-                      COMMON_BURST_START_SLAVE_INDEX,
+    parameter_list = (REFERENCE_SLC_PRODUCT,
+                      SECONDARY_SLC_PRODUCT,
+                      COMMON_BURST_START_REFERENCE_INDEX,
+                      COMMON_BURST_START_SECONDARY_INDEX,
                       NUMBER_COMMON_BURSTS,
                       DEM_FILENAME,
                       GEOMETRY_DIRNAME,
@@ -370,8 +370,8 @@ class TopsProc(Component):
                       FINE_COREG_DIRECTORY,
                       FINE_IFG_DIRECTORY,
                       OVERLAPS_SUBDIRECTORY,
-                      SLAVE_RANGE_CORRECTION,
-                      SLAVE_TIMING_CORRECTION,
+                      SECONDARY_RANGE_CORRECTION,
+                      SECONDARY_TIMING_CORRECTION,
                       NUMBER_OF_SWATHS,
                       ESD_DIRNAME,
                       APPLY_WATER_MASK,
@@ -467,8 +467,8 @@ class TopsProc(Component):
         return None
 
     @property
-    def masterSlcOverlapProduct(self):
-        return os.path.join(self.masterSlcProduct, self.overlapsSubDirname) 
+    def referenceSlcOverlapProduct(self):
+        return os.path.join(self.referenceSlcProduct, self.overlapsSubDirname) 
 
     @property
     def coregOverlapProduct(self):
@@ -478,11 +478,11 @@ class TopsProc(Component):
     def coarseIfgOverlapProduct(self):
         return os.path.join(self.coarseIfgDirname, self.overlapsSubDirname)
 
-    def commonMasterBurstLimits(self, ind):
-        return (self.commonBurstStartMasterIndex[ind], self.commonBurstStartMasterIndex[ind] + self.numberOfCommonBursts[ind])
+    def commonReferenceBurstLimits(self, ind):
+        return (self.commonBurstStartReferenceIndex[ind], self.commonBurstStartReferenceIndex[ind] + self.numberOfCommonBursts[ind])
 
-    def commonSlaveBurstLimits(self, ind):
-        return (self.commonBurstStartSlaveIndex[ind], self.commonBurstStartSlaveIndex[ind] + self.numberOfCommonBursts[ind])
+    def commonSecondaryBurstLimits(self, ind):
+        return (self.commonBurstStartSecondaryIndex[ind], self.commonBurstStartSecondaryIndex[ind] + self.numberOfCommonBursts[ind])
 
 
     def getMergedOrbit(self, product):

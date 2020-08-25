@@ -1,6 +1,6 @@
 #!/usr/bin/env python3                                                     
 
-# Script that computes the baselines for a given master based on a stack of baselines
+# Script that computes the baselines for a given reference based on a stack of baselines
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -44,9 +44,9 @@ def cmdLineParse():
     '''
     Command line parser.
     '''
-    parser = argparse.ArgumentParser(description='baseline re-estimation for a master date')
+    parser = argparse.ArgumentParser(description='baseline re-estimation for a reference date')
     parser.add_argument('-i','--input', dest='baseline_dir', type=str,required=True, help='Path to the baseline directory')
-    parser.add_argument('-m', '--master_date' ,dest='new_master', type=str, required=True , help='New master date for stack')
+    parser.add_argument('-m', '--reference_date' ,dest='new_reference', type=str, required=True , help='New reference date for stack')
     return parser.parse_args() 
   
 
@@ -60,7 +60,7 @@ def baselinegrid(inps):
 
     # parsing the command line inputs
     baseline_dir = inps.baseline_dir
-    new_master = int(inps.new_master)
+    new_reference = int(inps.new_reference)
 
     # check if the baseline grids are all in the same folder or if they are date YYYYMMDD_YYYYMMDD folders.
     baseline_files = glob(os.path.join(baseline_dir,"2*","2*[0-9].vrt"))
@@ -71,29 +71,29 @@ def baselinegrid(inps):
         # need to raize error as no baseline files where found
         raise ValueError('No Baseline files were found')
                           
-    # finding the master baseline grid file
-    master_file = False
+    # finding the reference baseline grid file
+    reference_file = False
     for baseline_file in baseline_files:
         date = os.path.basename(baseline_file)
         date = date.split('.vrt')
         date = int(date[0])
-        if date == new_master:
-            master_file = os.path.join(os.path.dirname(baseline_file),str(date))
-    if not master_file:
-        raise Exception('Could not find the master baseline grid')
+        if date == new_reference:
+            reference_file = os.path.join(os.path.dirname(baseline_file),str(date))
+    if not reference_file:
+        raise Exception('Could not find the reference baseline grid')
 
-    # generate new baseline grid for each slave and also store the average for overview
+    # generate new baseline grid for each secondary and also store the average for overview
     baselines_new = [float(0)]
-    dates_new = [new_master]
+    dates_new = [new_reference]
     for baseline_file in baseline_files:
         date = os.path.basename(baseline_file)
         date = date.split('.vrt')
         date = int(date[0])
-        # check if this is a slave date
-        if not date == new_master:
-            slave_file = os.path.join(os.path.dirname(baseline_file),str(date))
+        # check if this is a secondary date
+        if not date == new_reference:
+            secondary_file = os.path.join(os.path.dirname(baseline_file),str(date))
             local_baseline_file = "baselineGRID_" + str(date)
-            cmd = "imageMath.py -e='a-b' --a=" + slave_file + " --b=" + master_file + " -o " + local_baseline_file + " -t FLOAT -s BIP"
+            cmd = "imageMath.py -e='a-b' --a=" + secondary_file + " --b=" + reference_file + " -o " + local_baseline_file + " -t FLOAT -s BIP"
             os.system(cmd)
             # generating a vrt file as well
             cmd = "isce2gis.py vrt -i " + local_baseline_file
@@ -116,8 +116,8 @@ def baselinegrid(inps):
 
     # generate a baseline file for each acquisition
     for counter in range(temp.shape[0]):
-        if temp[counter,0] == new_master:
-            dir_name = 'master'
+        if temp[counter,0] == new_reference:
+            dir_name = 'reference'
         else:
             dir_name = str(int(temp[counter,0]))
         # generate the directory if it does not exist yet
@@ -134,7 +134,7 @@ def baselinefile(inps):
     """
     # parsing the command line inputs
     baseline_dir = inps.baseline_dir
-    new_master = int(inps.new_master)
+    new_reference = int(inps.new_reference)
 
     # check if the baseline files are all in the same folder or if they are date YYYYMMDD_YYYYMMDD folders. 
     baseline_files = glob(os.path.join(baseline_dir,"2*","2*.txt"))
@@ -147,14 +147,14 @@ def baselinefile(inps):
         raise ValueError('No Baseline files were found')
 
     # generate an array of dates
-    master = []
-    slave = []
+    reference = []
+    secondary = []
     baseline = []
     for baseline_file in baseline_files:
         dates = os.path.basename(baseline_file)
         dates = dates.split('.')[0]
-        master.append(int(dates.split('_')[0]))
-        slave.append(int(dates.split('_')[1]))
+        reference.append(int(dates.split('_')[0]))
+        secondary.append(int(dates.split('_')[1]))
 
         # read file and either catch a single value or read for specific -perp (average):- string
         file = open(baseline_file,'r')
@@ -179,55 +179,55 @@ def baselinefile(inps):
 
     # converting to an numpy array
     baseline = np.reshape(np.array(baseline),(-1,1))
-    master = np.reshape(np.array(master),(-1,1))
-    slave = np.reshape(np.array(slave),(-1,1))
+    reference = np.reshape(np.array(reference),(-1,1))
+    secondary = np.reshape(np.array(secondary),(-1,1))
 
     # count the number of nan in the baseline
     ix_count = np.count_nonzero(np.isnan(baseline))
     if ix_count>0:
         for ix in range(baseline.shape[0]):
             if np.isnan(baseline[ix])==1:
-                print(str(master[ix,0]) + "_" + str(slave[ix,0]))
+                print(str(reference[ix,0]) + "_" + str(secondary[ix,0]))
         # now raize error
         raise ValueError('NaN found for baseline...')
 
     # generating an array of acquisitions
-    dates= np.reshape(np.unique(np.concatenate((master,slave), axis=0)),(-1,1))
+    dates= np.reshape(np.unique(np.concatenate((reference,secondary), axis=0)),(-1,1))
     # getting number of baseline combinations and the number of acquisitions
     n_acquistions = dates.shape[0]
     n_combinations = baseline.shape[0]
 
 
-    #### mapping the baselines to a new master
+    #### mapping the baselines to a new reference
     # generate the design matrix that maps the baselines to dates
     A = np.zeros((n_combinations,n_acquistions))
     for counter in range(n_combinations):
-        pos_master, temp = np.where(dates == master[counter])
-        pos_slave, temp = np.where(dates == slave[counter])
-        A[counter,pos_master]=-1
-        A[counter,pos_slave]=1
-        del pos_slave
-        del pos_master
+        pos_reference, temp = np.where(dates == reference[counter])
+        pos_secondary, temp = np.where(dates == secondary[counter])
+        A[counter,pos_reference]=-1
+        A[counter,pos_secondary]=1
+        del pos_secondary
+        del pos_reference
 
-    # location of the requested master
-    pos_master, temp = np.where(dates == new_master)
+    # location of the requested reference
+    pos_reference, temp = np.where(dates == new_reference)
 
-    # remove the new master from the design matrix and acquisitions
-    A[:,pos_master[0]]=0
+    # remove the new reference from the design matrix and acquisitions
+    A[:,pos_reference[0]]=0
     # compute the new baselines
     baselines_new = np.linalg.lstsq(A, baseline)[0]
 
-#   # add the new master back in and write out the file
+#   # add the new reference back in and write out the file
 #   baselines_new = np.concatenate((baselines_new, np.zeros((1,1))))
- #  dates = np.concatenate((dates, [[new_master]]))
+ #  dates = np.concatenate((dates, [[new_reference]]))
     # concatenate together to write single matrix
     temp= np.concatenate((dates, baselines_new), axis=1)
     np.savetxt('baseline_overview', temp, fmt='%.f %.2f ', delimiter='\t', newline='\n')
 
     # generate a baseline file for each acquisition
     for counter in range(n_acquistions):
-        if temp[counter,0] == new_master:
-           dir_name = 'master'
+        if temp[counter,0] == new_reference:
+           dir_name = 'reference'
         else:
            dir_name = str(int(temp[counter,0]))
         # generate the directory if it does not exist yet

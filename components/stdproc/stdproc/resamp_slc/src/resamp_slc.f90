@@ -120,7 +120,7 @@
 
 
       print *, 'Reading in the image'
-!c  read in the master image
+!c  read in the reference image
       if (iscomplex.ne.0) then
         lineNum = 1
 

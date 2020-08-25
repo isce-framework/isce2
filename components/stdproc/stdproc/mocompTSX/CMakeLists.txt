@@ -12,7 +12,11 @@ target_link_libraries(mocompTSX
     formslcLib
     utilLib
     )
-
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(mocompTSX PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 InstallSameDir(
     mocompTSX
     __init__.py

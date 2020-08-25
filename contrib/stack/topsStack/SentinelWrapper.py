@@ -194,10 +194,10 @@ def main(start = None, end = None):
   config = 'sentinel.ini' if configFile is None else configFile
 
   common = ['outputDir', \
-            'masterDir', \
-            'slaveDir', \
-            'masterOrbit', \
-            'slaveOrbit', \
+            'referenceDir', \
+            'secondaryDir', \
+            'referenceOrbit', \
+            'secondaryOrbit', \
             'dem', \
             'swathnum']
 
@@ -205,7 +205,7 @@ def main(start = None, end = None):
              'topo',\
              'geo2rdr',\
              'estimateOffsets_withDEM',\
-             'derampSlave',\
+             'derampSecondary',\
              'resamp_withDEM',\
              'overlap_withDEM',\
              'estimateAzimuthMisreg',\

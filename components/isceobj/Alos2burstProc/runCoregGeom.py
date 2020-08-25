@@ -24,14 +24,14 @@ def runCoregGeom(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     demFile = os.path.abspath(self._insar.dem)
     wbdFile = os.path.abspath(self._insar.wbd)
 ###############################################################################
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -40,8 +40,8 @@ def runCoregGeom(self):
 
             print('processing frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
 
             ##################################################
@@ -49,41 +49,41 @@ def runCoregGeom(self):
             ##################################################
             #set up track parameters just for computing offsets
             #ALL track parameters are listed here
-            #master
-            #masterTrack.passDirection = 
-            #masterTrack.pointingDirection = 
-            #masterTrack.operationMode = 
-            #masterTrack.radarWavelength = 
-            masterTrack.numberOfSamples = masterSwath.numberOfSamples
-            masterTrack.numberOfLines = masterSwath.numberOfLines
-            masterTrack.startingRange = masterSwath.startingRange
-            #masterTrack.rangeSamplingRate = 
-            masterTrack.rangePixelSize = masterSwath.rangePixelSize
-            masterTrack.sensingStart = masterSwath.sensingStart
-            #masterTrack.prf = 
-            #masterTrack.azimuthPixelSize = 
-            masterTrack.azimuthLineInterval = masterSwath.azimuthLineInterval
-            #masterTrack.dopplerVsPixel = 
-            #masterTrack.frames = 
-            #masterTrack.orbit = 
+            #reference
+            #referenceTrack.passDirection = 
+            #referenceTrack.pointingDirection = 
+            #referenceTrack.operationMode = 
+            #referenceTrack.radarWavelength = 
+            referenceTrack.numberOfSamples = referenceSwath.numberOfSamples
+            referenceTrack.numberOfLines = referenceSwath.numberOfLines
+            referenceTrack.startingRange = referenceSwath.startingRange
+            #referenceTrack.rangeSamplingRate = 
+            referenceTrack.rangePixelSize = referenceSwath.rangePixelSize
+            referenceTrack.sensingStart = referenceSwath.sensingStart
+            #referenceTrack.prf = 
+            #referenceTrack.azimuthPixelSize = 
+            referenceTrack.azimuthLineInterval = referenceSwath.azimuthLineInterval
+            #referenceTrack.dopplerVsPixel = 
+            #referenceTrack.frames = 
+            #referenceTrack.orbit = 
 
-            #slave
-            slaveTrack.numberOfSamples = slaveSwath.numberOfSamples
-            slaveTrack.numberOfLines = slaveSwath.numberOfLines
-            slaveTrack.startingRange = slaveSwath.startingRange
-            slaveTrack.rangePixelSize = slaveSwath.rangePixelSize
-            slaveTrack.sensingStart = slaveSwath.sensingStart
-            slaveTrack.azimuthLineInterval = slaveSwath.azimuthLineInterval
+            #secondary
+            secondaryTrack.numberOfSamples = secondarySwath.numberOfSamples
+            secondaryTrack.numberOfLines = secondarySwath.numberOfLines
+            secondaryTrack.startingRange = secondarySwath.startingRange
+            secondaryTrack.rangePixelSize = secondarySwath.rangePixelSize
+            secondaryTrack.sensingStart = secondarySwath.sensingStart
+            secondaryTrack.azimuthLineInterval = secondarySwath.azimuthLineInterval
 
             if self.useGPU and self._insar.hasGPU():
-                topoGPU(masterTrack, 1, 1, demFile, 
+                topoGPU(referenceTrack, 1, 1, demFile, 
                                self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.los)
-                geo2RdrGPU(slaveTrack, 1, 1, 
+                geo2RdrGPU(secondaryTrack, 1, 1, 
                     self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.rangeOffset, self._insar.azimuthOffset)
             else:
-                topoCPU(masterTrack, 1, 1, demFile, 
+                topoCPU(referenceTrack, 1, 1, demFile, 
                                self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.los)
-                geo2RdrCPU(slaveTrack, 1, 1, 
+                geo2RdrCPU(secondaryTrack, 1, 1, 
                     self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.rangeOffset, self._insar.azimuthOffset)
 
             waterBodyRadar(self._insar.latitude, self._insar.longitude, wbdFile, self._insar.wbdOut)
@@ -106,28 +106,28 @@ def runCoregGeom(self):
             ##################################################
             # resample bursts
             ##################################################
-            slaveBurstResampledDir = self._insar.slaveBurstPrefix + '_1_coreg_geom'
-            #interferogramDir = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix + '_coreg_geom'
+            secondaryBurstResampledDir = self._insar.secondaryBurstPrefix + '_1_coreg_geom'
+            #interferogramDir = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix + '_coreg_geom'
             interferogramDir = 'burst_interf_1_coreg_geom'
-            interferogramPrefix = self._insar.masterBurstPrefix + '-' + self._insar.slaveBurstPrefix
-            resampleBursts(masterSwath, slaveSwath, 
-                self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, slaveBurstResampledDir, interferogramDir,
-                self._insar.masterBurstPrefix, self._insar.slaveBurstPrefix, self._insar.slaveBurstPrefix, interferogramPrefix, 
+            interferogramPrefix = self._insar.referenceBurstPrefix + '-' + self._insar.secondaryBurstPrefix
+            resampleBursts(referenceSwath, secondarySwath, 
+                self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, secondaryBurstResampledDir, interferogramDir,
+                self._insar.referenceBurstPrefix, self._insar.secondaryBurstPrefix, self._insar.secondaryBurstPrefix, interferogramPrefix, 
                 self._insar.rangeOffset, self._insar.azimuthOffset, rangeOffsetResidual=0, azimuthOffsetResidual=0)
 
 
             ##################################################
             # mosaic burst amplitudes and interferograms
             ##################################################
-            os.chdir(slaveBurstResampledDir)
-            mosaicBurstAmplitude(masterSwath, self._insar.slaveBurstPrefix, self._insar.slaveMagnitude, numberOfLooksThreshold=4)
+            os.chdir(secondaryBurstResampledDir)
+            mosaicBurstAmplitude(referenceSwath, self._insar.secondaryBurstPrefix, self._insar.secondaryMagnitude, numberOfLooksThreshold=4)
             os.chdir('../')
 
             #the interferogram is not good enough, do not mosaic
             mosaic=False
             if mosaic:
                 os.chdir(interferogramDir)
-                mosaicBurstInterferogram(masterSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
+                mosaicBurstInterferogram(referenceSwath, interferogramPrefix, self._insar.interferogram, numberOfLooksThreshold=4)
                 os.chdir('../')
 
 

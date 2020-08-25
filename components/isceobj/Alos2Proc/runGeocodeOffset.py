@@ -26,8 +26,8 @@ def runGeocodeOffset(self):
 
     #use original track object to determine bbox
     if self.bbox == None:
-        masterTrack = self._insar.loadTrack(master=True)
-        bbox = getBboxGeo(masterTrack)
+        referenceTrack = self._insar.loadTrack(reference=True)
+        bbox = getBboxGeo(referenceTrack)
     else:
         bbox = self.bbox
     catalog.addItem('geocode bounding box', bbox, 'runGeocodeOffset')
@@ -38,13 +38,13 @@ def runGeocodeOffset(self):
     os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
-    masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)
-    #slaveTrack = self._insar.loadProduct(self._insar.slaveTrackParameter)
+    referenceTrack = self._insar.loadProduct(self._insar.referenceTrackParameter)
+    #secondaryTrack = self._insar.loadProduct(self._insar.secondaryTrackParameter)
 
 #########################################################################################
     #compute bounding box for geocoding
     #if self.bbox == None:
-    #    bbox = getBboxGeo(masterTrack)
+    #    bbox = getBboxGeo(referenceTrack)
     #else:
     #    bbox = self.bbox
     #catalog.addItem('geocode bounding box', bbox, 'runGeocodeOffset')
@@ -55,7 +55,7 @@ def runGeocodeOffset(self):
 
     for inputFile in geocodeList:
         interpMethod = 'nearest'
-        geocode(masterTrack, demFile, inputFile, bbox, self.offsetSkipWidth, self.offsetSkipHeight, interpMethod, self._insar.offsetImageTopoffset, self._insar.offsetImageLeftoffset, addMultilookOffset=False)
+        geocode(referenceTrack, demFile, inputFile, bbox, self.offsetSkipWidth, self.offsetSkipHeight, interpMethod, self._insar.offsetImageTopoffset, self._insar.offsetImageLeftoffset, addMultilookOffset=False)
 #########################################################################################
 
     os.chdir('../')

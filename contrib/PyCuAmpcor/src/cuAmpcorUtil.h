@@ -72,7 +72,7 @@ void cuSubPixelOffset(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn, 
                       cudaStream_t stream);
 
 void cuDetermineInterpZone(cuArrays<int2> *maxloc, cuArrays<int2> *zoomInOffset, cuArrays<float> *corrOrig, cuArrays<float> *corrZoomIn, cudaStream_t stream);
-void cuDetermineSlaveExtractOffset(cuArrays<int2> *maxLoc, int xOldRange, int yOldRange, int xNewRange, int yNewRange, cudaStream_t stream);
+void cuDetermineSecondaryExtractOffset(cuArrays<int2> *maxLoc, int xOldRange, int yOldRange, int xNewRange, int yNewRange, cudaStream_t stream);
 
 //in cuCorrTimeDomain.cu: cross correlation in time domain
 void cuCorrTimeDomain(cuArrays<float> *templates, cuArrays<float> *images, cuArrays<float> *results, cudaStream_t stream);

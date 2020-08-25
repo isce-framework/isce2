@@ -535,24 +535,24 @@ ION_NUMBER_RANGE_LOOKS0 = Application.Parameter('ION_numberRangeLooks0',
 #####################################################################
 
 #Facility declarations
-MASTER = Application.Facility(
-    'master',
-    public_name='Master',
+REFERENCE = Application.Facility(
+    'reference',
+    public_name='Reference',
     module='isceobj.Sensor.TOPS',
     factory='createSensor',
-    args=(SENSOR_NAME, 'master'),
+    args=(SENSOR_NAME, 'reference'),
     mandatory=True,
-    doc="Master raw data component"
+    doc="Reference raw data component"
                               )
 
-SLAVE = Application.Facility(
-    'slave',
-    public_name='Slave',
+SECONDARY = Application.Facility(
+    'secondary',
+    public_name='Secondary',
     module='isceobj.Sensor.TOPS',
     factory='createSensor',
-    args=(SENSOR_NAME,'slave'),
+    args=(SENSOR_NAME,'secondary'),
     mandatory=True,
-    doc="Slave raw data component"
+    doc="Secondary raw data component"
                              )
 
 DEM_STITCHER = Application.Facility(
@@ -665,8 +665,8 @@ class TopsInSAR(Application):
                       ########################################################
                       )
 
-    facility_list = (MASTER,
-                     SLAVE,
+    facility_list = (REFERENCE,
+                     SECONDARY,
                      DEM_STITCHER,
                      RUN_UNWRAPPER,
                      RUN_UNWRAP_2STAGE,
@@ -858,7 +858,7 @@ class TopsInSAR(Application):
         self.step('preprocess',
                   func=self.runPreprocessor,
                   doc=(
-                """Preprocess the master and slave sensor data to raw images"""
+                """Preprocess the reference and secondary sensor data to raw images"""
                 )
                   )
 
@@ -901,7 +901,7 @@ class TopsInSAR(Application):
         ###Estimate fine offsets
         self.step('fineoffsets', func=self.runFineOffsets)
 
-        ###Resample slave bursts
+        ###Resample secondary bursts
         self.step('fineresamp', func=self.runFineResamp)
 
         ###calculate ionospheric phase
@@ -986,7 +986,7 @@ class TopsInSAR(Application):
         ###Estimate fine offsets
         self.runFineOffsets()
 
-        ###Resample slave bursts
+        ###Resample secondary bursts
         self.runFineResamp()
 
         ###calculate ionospheric phase

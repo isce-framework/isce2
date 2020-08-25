@@ -20,8 +20,8 @@ def runLook(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    #masterTrack = self._insar.loadTrack(master=True)
-    #slaveTrack = self._insar.loadTrack(master=False)
+    #referenceTrack = self._insar.loadTrack(reference=True)
+    #secondaryTrack = self._insar.loadTrack(reference=False)
     wbdFile = os.path.abspath(self._insar.wbd)
 
     insarDir = 'insar'

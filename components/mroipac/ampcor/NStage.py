@@ -299,12 +299,12 @@ class NStage(Component):
         if not (slcImage1 == None):
             self.slcImage1 = slcImage1
         if (self.slcImage1 == None):
-            logger.error("Error. master slc image not set.")
+            logger.error("Error. reference slc image not set.")
             raise Exception
         if not (slcImage2 == None):
             self.slcImage2 = slcImage2
         if (self.slcImage2 == None):
-            logger.error("Error. slave slc image not set.")
+            logger.error("Error. secondary slc image not set.")
             raise Exception
 
         self.fileLength1 = self.slcImage1.getLength()
@@ -579,11 +579,11 @@ class NStage(Component):
         self.rangeSpacing2 = float(var)
 
 
-    def setMasterSlcImage(self,im):
+    def setReferenceSlcImage(self,im):
         self.slcImage1 = im
         return
 
-    def setSlaveSlcImage(self,im):
+    def setSecondarySlcImage(self,im):
         self.slcImage2 = im
         return
 

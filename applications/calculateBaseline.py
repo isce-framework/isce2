@@ -39,16 +39,16 @@ from mroipac.baseline.Baseline import Baseline
 class calculateBaselineApp(FactoryInit):
 
     def main(self):
-        masterFrame = self.populateFrame(self.masterObj)
-        slaveFrame = self.populateFrame(self.slaveObj)
+        referenceFrame = self.populateFrame(self.referenceObj)
+        secondaryFrame = self.populateFrame(self.secondaryObj)
 
         # Calculate the baseline information
         baseline = Baseline()
-        baseline.wireInputPort(name='masterFrame',object=masterFrame)
-        baseline.wireInputPort(name='slaveFrame',object=slaveFrame)
-        baseline.wireInputPort(name='masterOrbit',object=masterFrame.getOrbit())
-        baseline.wireInputPort(name='slaveOrbit',object=slaveFrame.getOrbit())
-        baseline.wireInputPort(name='ellipsoid',object=masterFrame.getInstrument().getPlatform().getPlanet().get_elp())
+        baseline.wireInputPort(name='referenceFrame',object=referenceFrame)
+        baseline.wireInputPort(name='secondaryFrame',object=secondaryFrame)
+        baseline.wireInputPort(name='referenceOrbit',object=referenceFrame.getOrbit())
+        baseline.wireInputPort(name='secondaryOrbit',object=secondaryFrame.getOrbit())
+        baseline.wireInputPort(name='ellipsoid',object=referenceFrame.getInstrument().getPlatform().getPlanet().get_elp())
         baseline.baseline()
         print(baseline)
 
@@ -68,8 +68,8 @@ class calculateBaselineApp(FactoryInit):
     def __init__(self,arglist):
         FactoryInit.__init__(self)
         self.initFactory(arglist)
-        self.masterObj = self.getComponent('Master')
-        self.slaveObj = self.getComponent('Slave')
+        self.referenceObj = self.getComponent('Reference')
+        self.secondaryObj = self.getComponent('Secondary')
         self.logger = logging.getLogger('isce.calculateBaseline')
 
 if __name__ == "__main__":

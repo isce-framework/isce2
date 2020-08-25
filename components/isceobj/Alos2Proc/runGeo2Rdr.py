@@ -16,7 +16,7 @@ def runGeo2Rdr(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    slaveTrack = self._insar.loadTrack(master=False)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     insarDir = 'insar'
     os.makedirs(insarDir, exist_ok=True)
@@ -25,10 +25,10 @@ def runGeo2Rdr(self):
 
     hasGPU= self.useGPU and self._insar.hasGPU()
     if hasGPU:
-        geo2RdrGPU(slaveTrack, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
+        geo2RdrGPU(secondaryTrack, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.rangeOffset, self._insar.azimuthOffset)
     else:
-        geo2RdrCPU(slaveTrack, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
+        geo2RdrCPU(secondaryTrack, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             self._insar.latitude, self._insar.longitude, self._insar.height, self._insar.rangeOffset, self._insar.azimuthOffset)
 
     os.chdir('../')
@@ -37,7 +37,7 @@ def runGeo2Rdr(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def geo2RdrCPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFile, hgtFile, rangeOffsetFile, azimuthOffsetFile):
+def geo2RdrCPU(secondaryTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFile, hgtFile, rangeOffsetFile, azimuthOffsetFile):
     import datetime
     from zerodop.geo2rdr import createGeo2rdr
     from isceobj.Planet.Planet import Planet
@@ -61,20 +61,20 @@ def geo2RdrCPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFil
     topo = createGeo2rdr()
     topo.configure()
     #set parameters
-    topo.slantRangePixelSpacing = numberRangeLooks * slaveTrack.rangePixelSize
-    topo.prf = 1.0 / (numberAzimuthLooks*slaveTrack.azimuthLineInterval)
-    topo.radarWavelength = slaveTrack.radarWavelength
-    topo.orbit = slaveTrack.orbit
-    topo.width = slaveTrack.numberOfSamples
-    topo.length = slaveTrack.numberOfLines
+    topo.slantRangePixelSpacing = numberRangeLooks * secondaryTrack.rangePixelSize
+    topo.prf = 1.0 / (numberAzimuthLooks*secondaryTrack.azimuthLineInterval)
+    topo.radarWavelength = secondaryTrack.radarWavelength
+    topo.orbit = secondaryTrack.orbit
+    topo.width = secondaryTrack.numberOfSamples
+    topo.length = secondaryTrack.numberOfLines
     topo.demLength = demImage.length
     topo.demWidth = demImage.width
     topo.wireInputPort(name='planet', object=planet)
     topo.numberRangeLooks = 1 #
     topo.numberAzimuthLooks = 1 # must be set to be 1
-    topo.lookSide = pointingDirection[slaveTrack.pointingDirection]
-    topo.setSensingStart(slaveTrack.sensingStart + datetime.timedelta(seconds=(numberAzimuthLooks-1.0)/2.0*slaveTrack.azimuthLineInterval))
-    topo.rangeFirstSample = slaveTrack.startingRange + (numberRangeLooks-1.0)/2.0*slaveTrack.rangePixelSize
+    topo.lookSide = pointingDirection[secondaryTrack.pointingDirection]
+    topo.setSensingStart(secondaryTrack.sensingStart + datetime.timedelta(seconds=(numberAzimuthLooks-1.0)/2.0*secondaryTrack.azimuthLineInterval))
+    topo.rangeFirstSample = secondaryTrack.startingRange + (numberRangeLooks-1.0)/2.0*secondaryTrack.rangePixelSize
     topo.dopplerCentroidCoeffs = [0.] # we are using zero doppler geometry
     #set files
     topo.latImage = latImage
@@ -88,7 +88,7 @@ def geo2RdrCPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFil
     return
 
 
-def geo2RdrGPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFile, hgtFile, rangeOffsetFile, azimuthOffsetFile):
+def geo2RdrGPU(secondaryTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFile, hgtFile, rangeOffsetFile, azimuthOffsetFile):
     '''
     currently we cannot set left/right looking.
     works for right looking, but left looking probably not supported.
@@ -118,14 +118,14 @@ def geo2RdrGPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFil
     planet = Planet(pname='Earth')
     grdr = PyGeo2rdr()
 
-    grdr.setRangePixelSpacing(numberRangeLooks * slaveTrack.rangePixelSize)
-    grdr.setPRF(1.0 / (numberAzimuthLooks*slaveTrack.azimuthLineInterval))
-    grdr.setRadarWavelength(slaveTrack.radarWavelength)
+    grdr.setRangePixelSpacing(numberRangeLooks * secondaryTrack.rangePixelSize)
+    grdr.setPRF(1.0 / (numberAzimuthLooks*secondaryTrack.azimuthLineInterval))
+    grdr.setRadarWavelength(secondaryTrack.radarWavelength)
 
     #CHECK IF THIS WORKS!!!
-    grdr.createOrbit(0, len(slaveTrack.orbit.stateVectors.list))
+    grdr.createOrbit(0, len(secondaryTrack.orbit.stateVectors.list))
     count = 0
-    for sv in slaveTrack.orbit.stateVectors.list:
+    for sv in secondaryTrack.orbit.stateVectors.list:
         td = DTU.seconds_since_midnight(sv.getTime())
         pos = sv.getPosition()
         vel = sv.getVelocity()
@@ -134,10 +134,10 @@ def geo2RdrGPU(slaveTrack, numberRangeLooks, numberAzimuthLooks, latFile, lonFil
         count += 1
 
     grdr.setOrbitMethod(0)
-    grdr.setWidth(slaveTrack.numberOfSamples)
-    grdr.setLength(slaveTrack.numberOfLines)
-    grdr.setSensingStart(DTU.seconds_since_midnight(slaveTrack.sensingStart + datetime.timedelta(seconds=(numberAzimuthLooks-1.0)/2.0*slaveTrack.azimuthLineInterval)))
-    grdr.setRangeFirstSample(slaveTrack.startingRange + (numberRangeLooks-1.0)/2.0*slaveTrack.rangePixelSize)
+    grdr.setWidth(secondaryTrack.numberOfSamples)
+    grdr.setLength(secondaryTrack.numberOfLines)
+    grdr.setSensingStart(DTU.seconds_since_midnight(secondaryTrack.sensingStart + datetime.timedelta(seconds=(numberAzimuthLooks-1.0)/2.0*secondaryTrack.azimuthLineInterval)))
+    grdr.setRangeFirstSample(secondaryTrack.startingRange + (numberRangeLooks-1.0)/2.0*secondaryTrack.rangePixelSize)
     grdr.setNumberRangeLooks(1)
     grdr.setNumberAzimuthLooks(1)
     grdr.setEllipsoidMajorSemiAxis(planet.ellipsoid.a)

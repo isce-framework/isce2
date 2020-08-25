@@ -10,7 +10,11 @@ target_include_directories(resamp PUBLIC include)
 target_link_libraries(resamp PUBLIC
     utilLib
     )
-
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(resamp PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 InstallSameDir(
     resamp
     __init__.py

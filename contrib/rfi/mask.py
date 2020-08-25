@@ -185,10 +185,10 @@ def genFinalMask(mName,width):
 
 def runMain(insar,frame):
     tStart = time.time()
-    if frame == 'master':
-        rawFrame = insar.masterFrame
+    if frame == 'reference':
+        rawFrame = insar.referenceFrame
     else:
-        rawFrame = insar.slaveFrame
+        rawFrame = insar.secondaryFrame
     rawName = rawFrame.image.filename
     print('\nInput raw image:',rawName)
     # Processed raw image will simply be xxx.raw -> xxx.processed.raw for simplicity
@@ -272,10 +272,10 @@ def RFImask(self):
     #with open('PICKLE/preprocess','rb') as fid:
     #    insar = pickle.load(fid)
     
-    print('Processing',self.insar.masterFrame.image.filename,':')
-    mName = runMain(self.insar,'master')
-    print('\nProcessing',self.insar.slaveFrame.image.filename,':')
-    sName = runMain(self.insar,'slave')
+    print('Processing',self.insar.referenceFrame.image.filename,':')
+    mName = runMain(self.insar,'reference')
+    print('\nProcessing',self.insar.secondaryFrame.image.filename,':')
+    sName = runMain(self.insar,'secondary')
     if os.path.exists('isce.log'):
         os.remove('isce.log')
     return mName,sName

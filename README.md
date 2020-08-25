@@ -496,7 +496,7 @@ for example:
 >>> f = open("PICKLE/formslc")
 >>> import pickle
 >>> a = pickle.load(f)
->>> o = f.getMasterOrbit()
+>>> o = f.getReferenceOrbit()
 >>> t, x, p, off = o._unpackOrbit()
 >>> print(t)
 >>> print(x)
@@ -574,7 +574,7 @@ The basic (ALOS) input file looks like this (indentation is optional):
 <stripmapApp>
 <component name="stripmapApp">
     <property name="sensor name">ALOS</property>
-    <component name="Master">
+    <component name="Reference">
         <property name="IMAGEFILE">
             /a/b/c/20070215/IMG-HH-ALPSRP056480670-H1.0__A
         </property>
@@ -583,7 +583,7 @@ The basic (ALOS) input file looks like this (indentation is optional):
         </property>
         <property name="OUTPUT">20070215</property>
     </component>
-    <component name="Slave">
+    <component name="Secondary">
         <property name="IMAGEFILE">
             /a/b/c/20061231/IMG-HH-ALPSRP049770670-H1.0__A
         </property>
@@ -609,7 +609,7 @@ properties and other components that are configurable.  The property tags
 give the values of a single variable in the ISCE code.  One of the properties
 defined in stripmapApp.py is the "sensor name" property.  In the above example
 it is given the value ALOS.  In order to run stripmapApp.py two images need to
-be specified.  These are defined as components named 'Master' and 'Slave'.
+be specified.  These are defined as components named 'Reference' and 'Secondary'.
 These components have properties named 'IMAGEFILE', 'LEADERFILE', and 'OUTPUT'
 with the values given in the above example.
 
@@ -632,10 +632,10 @@ between three files as follows:
 <stripmapApp>
     <component name="insar">
         <property  name="Sensor name">ALOS</property>
-        <component name="master">
+        <component name="reference">
             <catalog>20070215.xml</catalog>
         </component>
-        <component name="slave">
+        <component name="secondary">
             <catalog>20061231.xml</catalog>
         </component>
     </component>
@@ -645,7 +645,7 @@ between three files as follows:
 #### 20070215.xml
 
 ```xml
-<component name="Master">
+<component name="Reference">
     <property name="IMAGEFILE">
         /a/b/c/20070215/IMG-HH-ALPSRP056480670-H1.0__A
     </property>
@@ -659,7 +659,7 @@ between three files as follows:
 #### 20061231.xml
 
 ```xml
-<component name="Slave">
+<component name="Secondary">
     <property name="IMAGEFILE">
         /a/b/c/20061231/IMG-HH-ALPSRP049770670-H1.0__A
     </property>
@@ -681,7 +681,7 @@ The inputs are Sentinel GRD zipfiles
         <property name="epsg id">32618</property>
         <property name="geocode spacing">100</property>
         <property name="geocode interpolation method">bilinear</property>
-        <component name="master">
+        <component name="reference">
         <property name="safe">$dir$/rtcApp/data/S1A_IW_GRDH_1SDV_20181221T225104_20181221T225129_025130_02C664_B46C.zip</property>
         <property name="orbit directory">$dir$/orbits</property>
         <property name="output directory">$dir$/rtcApp/output</property>
@@ -724,7 +724,7 @@ This line creates an instance of the class Insar (that is given the family name
 Other applications could be created that could make several different instances
 of the Insar.  Each instance would have the family name "insar" and would be
 given a unique instance name.  This is possible for every component.  In the
-above example xml files instances name "Master" and "Slave" of a family named
+above example xml files instances name "Reference" and "Secondary" of a family named
 "alos" are created.
 
 ### Component Configuration Files: Locations, Names, Priorities
@@ -755,23 +755,23 @@ the filename can be anything you choose.  Configuration parameters can also be
 entered directly on the command line as in the following example:
 
 ```bash
-> stripmapApp.py insar.master.output=master_c.raw
+> stripmapApp.py insar.reference.output=reference_c.raw
 ```
 
 This example indicates that the variable named 'output' of the Component
-named 'master' belonging to the Component (or Application) named 'insar'
-will be given the name "master\_c.raw".
+named 'reference' belonging to the Component (or Application) named 'insar'
+will be given the name "reference\_c.raw".
 
 The priority sequence on the command line goes from lowest priority on the left
 to highest priority on the right.  So, if we use the command line,
 
 ```bash
-> stripmapApp.py myInputFile.xml insar.master.output=master_c.raw
+> stripmapApp.py myInputFile.xml insar.reference.output=reference_c.raw
 ```
 
-where the myInputFile.xml file also gives a value for the insar master output
-file as master\_d.raw, then the one defined on the right will win, i.e.,
-master\_c.raw.
+where the myInputFile.xml file also gives a value for the insar reference output
+file as reference\_d.raw, then the one defined on the right will win, i.e.,
+reference\_c.raw.
 
 (2) The next priority location is the local directory in which stripmapApp.py is
 executed.  Any xml file placed in this directory named according to either the
@@ -844,16 +844,16 @@ will see that the call to \_\_init\_\_ passes  'family=self.class.family' and
 'name=name' to the Component constructor (super class of Ampcor).  The family
 name is given as "nstage" on line 265.  The instance name is passed as the
 value of the 'name=name' and was passed to it from whatever program created it.
-Nstage is created in  components/isceobj/StripmapProc/runRefineSlaveTiming.py where
-it is given the name 'master_offset1'  on line 35. If you are setting a parameter that
+Nstage is created in  components/isceobj/StripmapProc/runRefineSecondaryTiming.py where
+it is given the name 'reference_offset1'  on line 35. If you are setting a parameter that
 should be the same for all uses of Ampcor, then you can use the
 family name 'ampcor' for the name of the xml file as 'ampcor.xml'.  It is more
-likely that you will want to use the instance name 'master\_offset1.xml'
+likely that you will want to use the instance name 'reference\_offset1.xml'
 Use the family name 'ampcor' for the component tag 'name'.
 
 Example for SLC matching use of Ampcor:
 
-Filename: master\_offset1.xml:
+Filename: reference\_offset1.xml:
 
 ```xml
 <dummy>

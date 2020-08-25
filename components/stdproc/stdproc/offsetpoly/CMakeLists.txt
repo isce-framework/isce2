@@ -11,7 +11,11 @@ target_link_libraries(offsetpoly PUBLIC
     combinedLib
     utilLib
     )
-
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(offsetpoly PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 InstallSameDir(
     offsetpoly
     __init__.py

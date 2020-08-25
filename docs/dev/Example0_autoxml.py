@@ -13,19 +13,19 @@ if __name__ == '__main__':
     insar = xml.Component('insar')
 
     ####Python dictionaries become components
-    ####Master info
-    master = {}
-    master['hdf5'] = 'master.h5'
-    master['output'] = 'master.raw'
+    ####Reference info
+    reference = {}
+    reference['hdf5'] = 'reference.h5'
+    reference['output'] = 'reference.raw'
 
-    ####Slave info
-    slave = {}
-    slave['hdf5'] = 'slave.h5'
-    slave['output'] = 'slave.raw'
+    ####Secondary info
+    secondary = {}
+    secondary['hdf5'] = 'secondary.h5'
+    secondary['output'] = 'secondary.raw'
 
     #####Set sub-component
-    insar['master'] = master
-    insar['slave'] = slave
+    insar['reference'] = reference
+    insar['secondary'] = secondary
 
     ####Set properties
     insar['doppler method'] = 'useDEFAULT'
@@ -46,20 +46,20 @@ The output should be of the form.
 
 <insarApp>
     <component name="insar">
-        <component name="master">
+        <component name="reference">
             <property name="hdf5">
-                <value>master.h5</value>
+                <value>reference.h5</value>
             </property>
             <property name="output">
-                <value>master.raw</value>
+                <value>reference.raw</value>
             </property>
         </component>
-        <component name="slave">
+        <component name="secondary">
             <property name="hdf5">
-                <value>slave.h5</value>
+                <value>secondary.h5</value>
             </property>
             <property name="output">
-                <value>slave.raw</value>
+                <value>secondary.raw</value>
             </property>
         </component>
         <property name="doppler method">

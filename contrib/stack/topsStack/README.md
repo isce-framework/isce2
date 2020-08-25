@@ -74,7 +74,7 @@ stackSentinel.py -s ../SLC/ -d ../DEM/demLat_N18_N20_Lon_W100_W097.dem.wgs84 -a 
 
 by running the command above, the configs and run_files folders are created. User needs to execute each run file in order. The order is specified by the index number of the run file name. For the example above, the run_files folder includes the following files:
 
--	run_01_unpack_slc_topo_master
+-	run_01_unpack_slc_topo_reference
 -	run_02_average_baseline
 -	run_03_extract_burst_overlaps
 -	run_04_overlap_geo2rdr_resample
@@ -87,10 +87,10 @@ by running the command above, the configs and run_files folders are created. Use
 
 The generated run files are self descriptive. Below is a short explanation on what each run_file does:
 
-**run_01_unpack_slc_topo_master:**
+**run_01_unpack_slc_topo_reference:**
 
 Includes commands to unpack Sentinel-1 TOPS SLCs using ISCE readers. For older SLCs which need antenna elevation pattern correction, the file is extracted and written to disk. For newer version of SLCs which don’t need the elevation antenna pattern correction, only a gdal virtual “vrt” file (and isce xml file) is generated. The “.vrt” file points to the Sentinel SLC file and reads them whenever required during the processing. If a user wants to write the “.vrt” SLC file to disk, it can be done easily using gdal_translate (e.g. gdal_translate –of ENVI File.vrt File.slc). 
-The “run_01_unpack_slc_topo_master” also includes a command that refers to the config file of the stack master, which includes configuration for running topo for the stack master. Note that in the pair-wise processing strategy one should run topo (mapping from range-Doppler to geo coordinate) for all pairs. However, with stackSentinel, topo needs to be run only one time for the master in the stack. 
+The “run_01_unpack_slc_topo_reference” also includes a command that refers to the config file of the stack reference, which includes configuration for running topo for the stack reference. Note that in the pair-wise processing strategy one should run topo (mapping from range-Doppler to geo coordinate) for all pairs. However, with stackSentinel, topo needs to be run only one time for the reference in the stack. 
 
 **run_02_average_baseline:**
 
@@ -102,7 +102,7 @@ Burst overlaps are extracted for estimating azimuth misregistration using NESD t
 
 **run_04_overlap_geo2rdr_resample:***
 
-Running geo2rdr to estimate geometrical offsets between slave burst overlaps and the stack master burst overlaps. The slave burst overlaps are then resampled to the stack master burst overlaps. 
+Running geo2rdr to estimate geometrical offsets between secondary burst overlaps and the stack reference burst overlaps. The secondary burst overlaps are then resampled to the stack reference burst overlaps. 
 
 **run_05_pairs_misreg:**
 
@@ -110,11 +110,11 @@ Using the coregistered stack burst overlaps generated from the previous step, di
 
 **run_06_timeseries_misreg:**
 
-A time-series of azimuth and range misregistration is estimated with respect to the stack master. The time-series is a least squares esatimation from the pair misregistration from the previous step.
+A time-series of azimuth and range misregistration is estimated with respect to the stack reference. The time-series is a least squares esatimation from the pair misregistration from the previous step.
 
 **run_07_geo2rdr_resample:**
 
-Using orbit and DEM, geometrical offsets among all slave SLCs and the stack master is computed. The goometrical offsets, together with the misregistration time-series (from previous step) are used for precise coregistration of each burst SLC. 
+Using orbit and DEM, geometrical offsets among all secondary SLCs and the stack reference is computed. The goometrical offsets, together with the misregistration time-series (from previous step) are used for precise coregistration of each burst SLC. 
 
 **run_08_extract_stack_valid_region:**
 
@@ -122,11 +122,11 @@ The valid region between burst SLCs at the overlap area of the bursts slightly c
 
 **run_09_merge:**
 
-Merges all bursts for the master and coregistered SLCs. The geometry files are also merged including longitude, latitude, shadow and layer mask, line-of-sight files, etc. .
+Merges all bursts for the reference and coregistered SLCs. The geometry files are also merged including longitude, latitude, shadow and layer mask, line-of-sight files, etc. .
 
 **run_10_grid_baseline:**
 
-A coarse grid of baselines between each slave SLC and the stack master is generated. This is not used in any computation.
+A coarse grid of baselines between each secondary SLC and the stack reference is generated. This is not used in any computation.
 
 #### 4.2 Example workflow: Coregistered stack of SLC with modified parameters ####
 
@@ -136,7 +136,7 @@ In the following example, the same stack generation is requested but where the t
 stackSentinel.py -s ../SLC/ -d ../DEM/demLat_N18_N20_Lon_W100_W097.dem.wgs84 -a ../../AuxDir/ -o ../../Orbits -b '19 20 -99.5 -98.5' -W slc -e 0.7
 ```
 
-When running all the run files, the final products are located in the merge folder which has subdirectories **geom_master**, **baselines** and **SLC**. The **geom_master** folder contains geometry products such as longitude, latitude, height, local incidence angle, look angle, heading, and shadowing/layover mask files. The **baselines** folder contains sparse grids of the perpendicular baseline for each acquisition, while the **SLC** folder contains the coregistered SLCs
+When running all the run files, the final products are located in the merge folder which has subdirectories **geom_reference**, **baselines** and **SLC**. The **geom_reference** folder contains geometry products such as longitude, latitude, height, local incidence angle, look angle, heading, and shadowing/layover mask files. The **baselines** folder contains sparse grids of the perpendicular baseline for each acquisition, while the **SLC** folder contains the coregistered SLCs
 
 #### 4.3 Example workflow: Stack of interferograms ####
 

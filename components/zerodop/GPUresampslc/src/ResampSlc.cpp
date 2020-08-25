@@ -217,9 +217,9 @@ void ResampSlc::resamp() {
         // inWidth points before the actual processing, we can stick to the GDAL convention of checking ~40 pixels on each edge.
         // Since we're reading in entire lines, we only have to check the top/bottom 40 lines of the image (no need to check the
         // edges). So we eval the top 40 lines worth of pixel offsets and find the largest negative row shift (the minimum row
-        // index from the master input image). Then we eval the bottom 40 lines worth of pixel offsets and find the largest
+        // index from the reference input image). Then we eval the bottom 40 lines worth of pixel offsets and find the largest
         // positive row shift (the maximum row index). This gives us the number of lines to read, as well as the firstImageRow
-        // master offset for the tile. Note that firstImageRow/lastImageRow are row indices relative to the master input image.
+        // reference offset for the tile. Note that firstImageRow/lastImageRow are row indices relative to the reference input image.
         
         printf("Reading in image data for tile %d\n", tile);
 
@@ -253,7 +253,7 @@ void ResampSlc::resamp() {
         // Resize the image tile to the necessary number of lines if necessary using value-initialization resizing (automatically resizes/initializes new rows)
         if (imgIn.size() < size_t(nRowsInBlock*inWidth)) imgIn.resize(nRowsInBlock*inWidth);
         for (int i=0; i<nRowsInBlock; i++) {                                    // Read in nRowsInBlock lines of data from the input image to the image block
-            slcInAccObj->getLine((char *)&(imgIn[IDX1D(i,0,inWidth)]), firstImageRow+i);      // Sets imgIn[0] == master_image[firstImageRow]
+            slcInAccObj->getLine((char *)&(imgIn[IDX1D(i,0,inWidth)]), firstImageRow+i);      // Sets imgIn[0] == reference_image[firstImageRow]
             
             // Remove the carriers using OpenMP acceleration
             #pragma omp parallel for private(ph)
@@ -350,7 +350,7 @@ void ResampSlc::resamp() {
 
                     // Data chip without the carriers
                     for (int ii=0; ii<SINC_ONE; ii++) {
-                        // Subtracting off firstImageRow removes the offset from the first row in the master
+                        // Subtracting off firstImageRow removes the offset from the first row in the reference
                         // image to the first row actually contained in imgIn
                         chipi = k - firstImageRow + ii - SINC_HALF;
                         cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));
@@ -508,7 +508,7 @@ void ResampSlc::resamp() {
 
                     // Data chip without the carriers
                     for (int ii=0; ii<SINC_ONE; ii++) {
-                        // Subtracting off firstImageRow removes the offset from the first row in the master
+                        // Subtracting off firstImageRow removes the offset from the first row in the reference
                         // image to the first row actually contained in imgIn
                         chipi = k - firstImageRow + ii - SINC_HALF;
                         cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));

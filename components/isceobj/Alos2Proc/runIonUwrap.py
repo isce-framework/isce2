@@ -23,8 +23,8 @@ def runIonUwrap(self):
         self._insar.procDoc.addAllFromCatalog(catalog)
         return
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
     wbdFile = os.path.abspath(self._insar.wbd)
 
     from isceobj.Alos2Proc.runIonSubband import defineIonDir
@@ -197,8 +197,8 @@ def runIonUwrap(self):
     from isceobj.Alos2Proc.Alos2ProcPublic import snaphuUnwrap
 
     for k in range(2):
-        tmid = masterTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*masterTrack.azimuthLineInterval+
-               masterTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*masterTrack.azimuthLineInterval)
+        tmid = referenceTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*referenceTrack.azimuthLineInterval+
+               referenceTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*referenceTrack.azimuthLineInterval)
 
         if self.filterSubbandInt:
             toBeUnwrapped = 'filt_'+subbandPrefix[k]+ml2+'.int'
@@ -207,7 +207,7 @@ def runIonUwrap(self):
             toBeUnwrapped = subbandPrefix[k]+ml2+'.int'
             coherenceFile = 'diff'+ml2+'.cor'
 
-        snaphuUnwrap(masterTrack, tmid, 
+        snaphuUnwrap(referenceTrack, tmid, 
             toBeUnwrapped, 
             coherenceFile, 
             subbandPrefix[k]+ml2+'.unw', 

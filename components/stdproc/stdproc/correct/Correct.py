@@ -370,14 +370,14 @@ class Correct(Component):
         self.topophaseFlatCreatedHere = False
         self.topophaseFlatImage = None
         self.topophaseFlatAccessor = None
-        self.slaveRangeFilename = ''
-        self.slaveRangeCreatedHere = False
-        self.slaveRangeImage = None
-        self.slaveRangeAccessor = None
-        self.masterRangeFilename = ''
-        self.masterRangeCreatedHere = False
-        self.masterRangeAccessor = None
-        self.masterRangeImage = None
+        self.secondaryRangeFilename = ''
+        self.secondaryRangeCreatedHere = False
+        self.secondaryRangeImage = None
+        self.secondaryRangeAccessor = None
+        self.referenceRangeFilename = ''
+        self.referenceRangeCreatedHere = False
+        self.referenceRangeAccessor = None
+        self.referenceRangeImage = None
         self.polyDopplerAccessor = None
         
         self.initOptionalAndMandatoryLists()
@@ -388,7 +388,7 @@ class Correct(Component):
         planetPort = Port(name='planet',method=self.addPlanet)        
         framePort = Port(name='frame',method=self.addFrame)
         ifgPort = Port(name='interferogram',method=self.addInterferogram)
-        slcPort = Port(name='masterslc',method=self.addMasterSlc) #Piyush
+        slcPort = Port(name='referenceslc',method=self.addReferenceSlc) #Piyush
         
         self._inputPorts.add(pegPort)
         self._inputPorts.add(planetPort)        
@@ -442,11 +442,11 @@ class Correct(Component):
             self.topophaseFlatAccessor = 0
 
         if self.dumpRangeFiles:
-            self.slaveRangeAccessor = self.slaveRangeImage.getImagePointer()
-            self.masterRangeAccessor = self.masterRangeImage.getImagePointer()
+            self.secondaryRangeAccessor = self.secondaryRangeImage.getImagePointer()
+            self.referenceRangeAccessor = self.referenceRangeImage.getImagePointer()
         else:
-            self.slaveRangeAccessor = 0
-            self.masterRangeAccessor = 0
+            self.secondaryRangeAccessor = 0
+            self.referenceRangeAccessor = 0
 
 
         self.polyDopplerAccessor = self.polyDoppler.getPointer()
@@ -457,8 +457,8 @@ class Correct(Component):
                            self.heightSchAccessor,
                            self.topophaseMphAccessor,
                            self.topophaseFlatAccessor,
-                           self.masterRangeAccessor,
-                           self.slaveRangeAccessor)
+                           self.referenceRangeAccessor,
+                           self.secondaryRangeAccessor)
         self.topophaseMphImage.trueDataType = self.topophaseMphImage.getDataType()
         self.topophaseFlatImage.trueDataType = self.topophaseFlatImage.getDataType()
 
@@ -470,8 +470,8 @@ class Correct(Component):
         self.topophaseMphImage.renderHdr()
         self.topophaseFlatImage.renderHdr()
         if self.dumpRangeFiles:
-            self.masterRangeImage.renderHdr()
-            self.slaveRangeImage.renderHdr()
+            self.referenceRangeImage.renderHdr()
+            self.secondaryRangeImage.renderHdr()
 
         return
 
@@ -507,17 +507,17 @@ class Correct(Component):
             self.dumpRangeFiles = False
 
         if self.dumpRangeFiles:
-            if self.slaveRangeFilename == '':
-                self.slaveRangeFilename = 'slaverange.rdr'
+            if self.secondaryRangeFilename == '':
+                self.secondaryRangeFilename = 'secondaryrange.rdr'
                 self.logger.warning(
-                    'Slave range file has been given the default name %s' %
-                    (self.slaveRangeFilename))
+                    'Secondary range file has been given the default name %s' %
+                    (self.secondaryRangeFilename))
     
-            if self.masterRangeFilename == '':
-                self.masterRangeFilename = 'masterrange.rdr'
+            if self.referenceRangeFilename == '':
+                self.referenceRangeFilename = 'referencerange.rdr'
                 self.logger.warning(
-                    'Master range file has been given the default name %s' %
-                    (self.masterRangeFilename))
+                    'Reference range file has been given the default name %s' %
+                    (self.referenceRangeFilename))
 
         if self.polyDoppler is None:
             polyDop = Poly2D(name=self.name + '_correctPoly')
@@ -538,8 +538,8 @@ class Correct(Component):
         self.topophaseFlatImage.finalizeImage()
 
         if self.dumpRangeFiles:
-            self.masterRangeImage.finalizeImage()
-            self.slaveRangeImage.finalizeImage()
+            self.referenceRangeImage.finalizeImage()
+            self.secondaryRangeImage.finalizeImage()
 
         self.polyDoppler.finalize()
 
@@ -592,23 +592,23 @@ class Correct(Component):
                 )
 
         if self.dumpRangeFiles:
-            if (self.slaveRangeImage is None and not self.slaveRangeFilename == ''):
-                self.slaveRangeImage = IF.createImage()
-                self.slaveRangeImage.setFilename(self.slaveRangeFilename)
-                self.slaveRangeImage.setAccessMode('write')
-                self.slaveRangeImage.dataType = 'FLOAT'
-                self.slaveRangeImage.setWidth(self.width)
-                self.slaveRangeImage.bands = 1
-                self.slaveRangeImage.scheme = 'BIL'
+            if (self.secondaryRangeImage is None and not self.secondaryRangeFilename == ''):
+                self.secondaryRangeImage = IF.createImage()
+                self.secondaryRangeImage.setFilename(self.secondaryRangeFilename)
+                self.secondaryRangeImage.setAccessMode('write')
+                self.secondaryRangeImage.dataType = 'FLOAT'
+                self.secondaryRangeImage.setWidth(self.width)
+                self.secondaryRangeImage.bands = 1
+                self.secondaryRangeImage.scheme = 'BIL'
 
-            if (self.masterRangeImage is None and not self.masterRangeFilename == ''):
-                self.masterRangeImage = IF.createImage()
-                self.masterRangeImage.setFilename(self.masterRangeFilename)
-                self.masterRangeImage.setAccessMode('write')
-                self.masterRangeImage.dataType = 'FLOAT'
-                self.masterRangeImage.setWidth(self.width)
-                self.masterRangeImage.bands = 1
-                self.masterRangeImage.scheme = 'BIL'
+            if (self.referenceRangeImage is None and not self.referenceRangeFilename == ''):
+                self.referenceRangeImage = IF.createImage()
+                self.referenceRangeImage.setFilename(self.referenceRangeFilename)
+                self.referenceRangeImage.setAccessMode('write')
+                self.referenceRangeImage.dataType = 'FLOAT'
+                self.referenceRangeImage.setWidth(self.width)
+                self.referenceRangeImage.bands = 1
+                self.referenceRangeImage.scheme = 'BIL'
         
 
         if self.polyDoppler is None:
@@ -625,8 +625,8 @@ class Correct(Component):
         self.topophaseMphImage.createImage()
 
         if self.dumpRangeFiles:
-            self.masterRangeImage.createImage()
-            self.slaveRangeImage.createImage()
+            self.referenceRangeImage.createImage()
+            self.secondaryRangeImage.createImage()
 
         self.polyDoppler.createPoly2D()
 
@@ -915,8 +915,8 @@ class Correct(Component):
 
     #####This part needs to change when formslc is refactored
     #####to use doppler polynomials
-    def addMasterSlc(self): 
-        formslc = self._inputPorts.getPort(name='masterslc').getObject()
+    def addReferenceSlc(self): 
+        formslc = self._inputPorts.getPort(name='referenceslc').getObject()
         if (formslc):
             try:
                 self.rangeFirstSample = formslc.startingRange

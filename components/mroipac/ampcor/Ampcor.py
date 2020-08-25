@@ -294,12 +294,12 @@ class Ampcor(Component):
         if not (slcImage1 == None):
             self.slcImage1 = slcImage1
         if (self.slcImage1 == None):
-            print("Error. master slc image not set.")
+            print("Error. reference slc image not set.")
             raise Exception
         if not (slcImage2 == None):
             self.slcImage2 = slcImage2
         if (self.slcImage2 == None):
-            print("Error. slave slc image not set.")
+            print("Error. secondary slc image not set.")
             raise Exception
 
         if band1 is not None:
@@ -455,7 +455,7 @@ class Ampcor(Component):
        
         xMargin = 2*self.searchWindowSizeWidth + self.windowSizeWidth
         yMargin = 2*self.searchWindowSizeHeight + self.windowSizeHeight
-        ######Checks related to the master image only 
+        ######Checks related to the reference image only 
         #if( self.firstSampleAcross < xMargin):
         #    raise ValueError('First sample is not far enough from the left edge in reference image.')
 
@@ -605,11 +605,11 @@ class Ampcor(Component):
         self.displayFlag = bool(var)
         return
     
-    def setMasterSlcImage(self,im):
+    def setReferenceSlcImage(self,im):
         self.slcImage1 = im
         return
     
-    def setSlaveSlcImage(self,im):
+    def setSecondarySlcImage(self,im):
         self.slcImage2 = im
         return
 

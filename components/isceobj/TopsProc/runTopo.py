@@ -37,12 +37,12 @@ def runTopoCPU(self):
 
     boxes = []
     for swath in swathList:
-        #####Load the master product
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct,  'IW{0}.xml'.format(swath)))
+        #####Load the reference product
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct,  'IW{0}.xml'.format(swath)))
 
 
         numCommon  = self._insar.numberOfCommonBursts[swath-1]
-        startIndex = self._insar.commonBurstStartMasterIndex[swath-1]
+        startIndex = self._insar.commonBurstStartReferenceIndex[swath-1]
 
         if numCommon > 0:
             catalog.addItem('Number of common bursts IW-{0}'.format(swath), self._insar.numberOfCommonBursts[swath-1], 'topo')
@@ -54,7 +54,7 @@ def runTopoCPU(self):
             ###For each burst
             for index in range(numCommon):
                 ind = index + startIndex
-                burst = master.bursts[ind]
+                burst = reference.bursts[ind]
 
                 latname = os.path.join(dirname, 'lat_%02d.rdr'%(ind+1))
                 lonname = os.path.join(dirname, 'lon_%02d.rdr'%(ind+1))
@@ -136,20 +136,20 @@ def runTopoGPU(self):
     swathStarts = []
 
     for swath in swathList:
-        #####Load the master product
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct,  'IW{0}.xml'.format(swath)))
+        #####Load the reference product
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct,  'IW{0}.xml'.format(swath)))
 
         numCommon  = self._insar.numberOfCommonBursts[swath-1]
-        startIndex = self._insar.commonBurstStartMasterIndex[swath-1]
+        startIndex = self._insar.commonBurstStartReferenceIndex[swath-1]
 
         if numCommon > 0:
             catalog.addItem('Number of common bursts IW-{0}'.format(swath), self._insar.numberOfCommonBursts[swath-1], 'topo')
 
 
-            master.bursts = master.bursts[startIndex:startIndex+numCommon]
-            master.numberOfBursts = numCommon
+            reference.bursts = reference.bursts[startIndex:startIndex+numCommon]
+            reference.numberOfBursts = numCommon
 
-            frames.append(master)
+            frames.append(reference)
             swaths.append(swath)
             swathStarts.append(startIndex)
 

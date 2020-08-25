@@ -15,19 +15,19 @@ import shelve
 logger = logging.getLogger('isce.insar.runResampleSubbandSlc')
 
 # Modified by V. Brancato 10.14.2019 added "self" as input parameter of resampleSLC
-def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregDir,
+def resampleSlc(self,referenceFrame, secondaryFrame, imageSlc2, radarWavelength, coregDir,
                 azoffname, rgoffname, azpoly = None, rgpoly = None, misreg=False):
-    logger.info("Resampling slave SLC")
+    logger.info("Resampling secondary SLC")
 
-    imageSlc1 =  masterFrame.getImage().filename
+    imageSlc1 =  referenceFrame.getImage().filename
 
     inimg = isceobj.createSlcImage()
     inimg.load(imageSlc2 + '.xml')
     inimg.setAccessMode('READ')
 
-    prf = slaveFrame.PRF
+    prf = secondaryFrame.PRF
 
-    doppler = slaveFrame._dopplerVsPixel
+    doppler = secondaryFrame._dopplerVsPixel
     factor = 1.0 # this should be zero for zero Doppler SLC.
     coeffs = [factor * 2*np.pi*val/prf/prf for val in doppler]
 
@@ -35,8 +35,8 @@ def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregD
     dpoly.initPoly(rangeOrder=len(coeffs)-1, azimuthOrder=0, coeffs=[coeffs])
 
     rObj = stdproc.createResamp_slc()
-    rObj.slantRangePixelSpacing = slaveFrame.getInstrument().getRangePixelSize()
-    #rObj.radarWavelength = slaveFrame.getInstrument().getRadarWavelength()
+    rObj.slantRangePixelSpacing = secondaryFrame.getInstrument().getRangePixelSize()
+    #rObj.radarWavelength = secondaryFrame.getInstrument().getRadarWavelength()
     rObj.radarWavelength = radarWavelength
     rObj.dopplerPoly = dpoly 
 
@@ -74,19 +74,19 @@ def resampleSlc(self,masterFrame, slaveFrame, imageSlc2, radarWavelength, coregD
     rObj.residualRangeImage = rngImg
     rObj.residualAzimuthImage = aziImg
 
-    if masterFrame is not None:
-        rObj.startingRange = slaveFrame.startingRange
-        rObj.referenceStartingRange = masterFrame.startingRange
-        rObj.referenceSlantRangePixelSpacing = masterFrame.getInstrument().getRangePixelSize()
+    if referenceFrame is not None:
+        rObj.startingRange = secondaryFrame.startingRange
+        rObj.referenceStartingRange = referenceFrame.startingRange
+        rObj.referenceSlantRangePixelSpacing = referenceFrame.getInstrument().getRangePixelSize()
         rObj.referenceWavelength = radarWavelength
     
-    # preparing the output directory for coregistered slave slc
+    # preparing the output directory for coregistered secondary slc
     #coregDir = self.insar.coregDirname
 
     os.makedirs(coregDir, exist_ok=True)
 
-    # output file name of the coregistered slave slc
-    img = slaveFrame.getImage() 
+    # output file name of the coregistered secondary slc
+    img = secondaryFrame.getImage() 
     coregFilename = os.path.join(coregDir , os.path.basename(img.filename))
 
     imgOut = isceobj.createSlcImage()
@@ -109,8 +109,8 @@ def runResampleSubbandSlc(self, misreg=False):
         print('Split spectrum not requested. Skipping...')
         return
     
-    masterFrame = self._insar.loadProduct( self._insar.masterSlcCropProduct)
-    slaveFrame = self._insar.loadProduct( self._insar.slaveSlcCropProduct)
+    referenceFrame = self._insar.loadProduct( self._insar.referenceSlcCropProduct)
+    secondaryFrame = self._insar.loadProduct( self._insar.secondarySlcCropProduct)
 
 # Modified by V. Brancato 10.14.2019
 
@@ -136,20 +136,20 @@ def runResampleSubbandSlc(self, misreg=False):
 
 
     imageSlc2 = os.path.join(self.insar.splitSpectrumDirname, self.insar.lowBandSlcDirname, 
-                        os.path.basename(slaveFrame.getImage().filename))
+                        os.path.basename(secondaryFrame.getImage().filename))
 
     wvlL = self.insar.lowBandRadarWavelength
     coregDir = os.path.join(self.insar.coregDirname, self.insar.lowBandSlcDirname)
     
-    lowbandCoregFilename = resampleSlc(self,masterFrame, slaveFrame, imageSlc2, wvlL, coregDir,
+    lowbandCoregFilename = resampleSlc(self,referenceFrame, secondaryFrame, imageSlc2, wvlL, coregDir,
                 azoffname, rgoffname, azpoly=azpoly, rgpoly=rgpoly,misreg=False)
 
     imageSlc2 = os.path.join(self.insar.splitSpectrumDirname, self.insar.highBandSlcDirname,
-                        os.path.basename(slaveFrame.getImage().filename))
+                        os.path.basename(secondaryFrame.getImage().filename))
     wvlH = self.insar.highBandRadarWavelength
     coregDir = os.path.join(self.insar.coregDirname, self.insar.highBandSlcDirname)
 
-    highbandCoregFilename = resampleSlc(self,masterFrame, slaveFrame, imageSlc2, wvlH, coregDir, 
+    highbandCoregFilename = resampleSlc(self,referenceFrame, secondaryFrame, imageSlc2, wvlH, coregDir, 
                     azoffname, rgoffname, azpoly=azpoly, rgpoly=rgpoly, misreg=False)
 
     self.insar.lowBandSlc2 = lowbandCoregFilename

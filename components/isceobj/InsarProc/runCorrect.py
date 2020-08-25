@@ -52,14 +52,14 @@ def runCorrect(self):
     posIndx = 1
     mocompPosition1 = objFormSlc1.mocompPosition
 
-    planet = self.insar.masterFrame.instrument.platform.planet
-    prf1 = self.insar.masterFrame.instrument.PRF
+    planet = self.insar.referenceFrame.instrument.platform.planet
+    prf1 = self.insar.referenceFrame.instrument.PRF
     objCorrect = stdproc.createCorrect()
     objCorrect.wireInputPort(name='peg', object=self.insar.peg)
-    objCorrect.wireInputPort(name='frame', object=self.insar.masterFrame)
+    objCorrect.wireInputPort(name='frame', object=self.insar.referenceFrame)
     objCorrect.wireInputPort(name='planet', object=planet)
     objCorrect.wireInputPort(name='interferogram', object=intImage)
-    objCorrect.wireInputPort(name='masterslc', object=self.insar.formSLC1) #Piyush
+    objCorrect.wireInputPort(name='referenceslc', object=self.insar.formSLC1) #Piyush
     # Average velocity and height measurements       
     v = self.insar.procVelocity
     h = self.insar.averageHeight

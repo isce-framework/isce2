@@ -19,20 +19,20 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser.add_argument('-m', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
     parser.add_argument('-g', type=str, dest='geom', default=None,
-            help='Directory with geometry products. If not provided: geometry_master')
-    parser.add_argument('-o', type=str, default='mastershift.json', dest='outfile',
+            help='Directory with geometry products. If not provided: geometry_reference')
+    parser.add_argument('-o', type=str, default='referenceshift.json', dest='outfile',
             help='Misregistration in subpixels')
 
     inps = parser.parse_args()
 
-    if inps.master.endswith('/'):
-        inps.master = inps.master[:-1]
+    if inps.reference.endswith('/'):
+        inps.reference = inps.reference[:-1]
 
     if inps.geom is None:
-        inps.geom = 'geometry_' + os.path.basename(inps.master)
+        inps.geom = 'geometry_' + os.path.basename(inps.reference)
 
     return inps
 
@@ -56,7 +56,7 @@ def estimateOffsetField(burst, simfile,offset=0.0):
     width = sar.getWidth()
     length = sar.getLength()
 
-    objOffset = Ampcor(name='master_offset')
+    objOffset = Ampcor(name='reference_offset')
     objOffset.configure()
     objOffset.setWindowSizeWidth(128)
     objOffset.setWindowSizeHeight(128)
@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     inps = cmdLineParse()
 
-    db = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+    db = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
 
     frame = db['frame']
 
@@ -161,7 +161,7 @@ if __name__ == '__main__':
 
     field = estimateOffsetField(frame, outfile)
 
-    odb = shelve.open('masterOffset')
+    odb = shelve.open('referenceOffset')
     odb['raw_field']  = field
 
     shifts, cull = fitOffsets(field)

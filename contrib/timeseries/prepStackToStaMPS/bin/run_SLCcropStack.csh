@@ -20,7 +20,7 @@ if (! -e $proc_dir) then
 endif
     
 # getting the crop extend
-cd $data_path/geom_master
+cd $data_path/geom_reference
 crop_rdr.py -b '27.86 28.2 85.1 85.4' > $proc_dir/crop_log.txt
 
 
@@ -28,7 +28,7 @@ crop_rdr.py -b '27.86 28.2 85.1 85.4' > $proc_dir/crop_log.txt
 
 # getting the files to crop
 cd $proc_dir
-ls -1 $data_path/geom_master/*.full  > $proc_dir/geomFiles2crop.txt
+ls -1 $data_path/geom_reference/*.full  > $proc_dir/geomFiles2crop.txt
 ls -1 $data_path/SLC/2*/2*.slc.full > $proc_dir/slcFiles2crop.txt
 ls -1 $data_path/baselines/2*/2*.full.vrt >  $proc_dir/baselineFiles2crop.txt
 
@@ -41,10 +41,10 @@ echo $command_baseline
 # generating the new geometry files
 # create geom directory
 cd $proc_dir
-if (! -d geom_master ) then
-    mkdir geom_master
+if (! -d geom_reference ) then
+    mkdir geom_reference
 endif
-cd geom_master
+cd geom_reference
 foreach file(`cat $proc_dir/geomFiles2crop.txt`)
    set filename = `basename $file`
    

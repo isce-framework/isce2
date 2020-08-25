@@ -11,28 +11,28 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // set chunk index
     setIndex(idxDown_, idxAcross_);
 
-    // load master image chunk
-    loadMasterChunk();
+    // load reference image chunk
+    loadReferenceChunk();
 
-    //std::cout << "load master chunk ok\n";
+    //std::cout << "load reference chunk ok\n";
 
-    cuArraysAbs(c_masterBatchRaw, r_masterBatchRaw, stream);
-    cuArraysSubtractMean(r_masterBatchRaw, stream);
-    // load slave image chunk
-    loadSlaveChunk();
-    cuArraysAbs(c_slaveBatchRaw, r_slaveBatchRaw, stream);
+    cuArraysAbs(c_referenceBatchRaw, r_referenceBatchRaw, stream);
+    cuArraysSubtractMean(r_referenceBatchRaw, stream);
+    // load secondary image chunk
+    loadSecondaryChunk();
+    cuArraysAbs(c_secondaryBatchRaw, r_secondaryBatchRaw, stream);
 
-    //std::cout << "load slave chunk ok\n";
+    //std::cout << "load secondary chunk ok\n";
 
 
     //cross correlation for none-oversampled data
     if(param->algorithm == 0) {
-        cuCorrFreqDomain->execute(r_masterBatchRaw, r_slaveBatchRaw, r_corrBatchRaw);
+        cuCorrFreqDomain->execute(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw);
     }
     else {
-        cuCorrTimeDomain(r_masterBatchRaw, r_slaveBatchRaw, r_corrBatchRaw, stream); //time domain cross correlation
+        cuCorrTimeDomain(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw, stream); //time domain cross correlation
     }
-    cuCorrNormalize(r_masterBatchRaw, r_slaveBatchRaw, r_corrBatchRaw, stream);
+    cuCorrNormalize(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw, stream);
 
 
     // find the maximum location of none-oversampled correlation
@@ -64,39 +64,39 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // Variance
     // cuEstimateVariance(r_corrBatchRaw, offsetInit, r_maxval, r_covValue, stream);
 
-    // Using the approximate estimation to adjust slave image (half search window size becomes only 4 pixels)
+    // Using the approximate estimation to adjust secondary image (half search window size becomes only 4 pixels)
     //offsetInit->debuginfo(stream);
-    // determine the starting pixel to extract slave images around the max location
-    cuDetermineSlaveExtractOffset(offsetInit,
+    // determine the starting pixel to extract secondary images around the max location
+    cuDetermineSecondaryExtractOffset(offsetInit,
         param->halfSearchRangeDownRaw, // old range
         param->halfSearchRangeAcrossRaw,
         param->halfZoomWindowSizeRaw,  // new range
         param->halfZoomWindowSizeRaw,
         stream);
     //offsetInit->debuginfo(stream);
-    // oversample master
+    // oversample reference
     // (deramping now included in oversampler)
-    masterBatchOverSampler->execute(c_masterBatchRaw, c_masterBatchOverSampled, param->derampMethod);
-    cuArraysAbs(c_masterBatchOverSampled, r_masterBatchOverSampled, stream);
-    cuArraysSubtractMean(r_masterBatchOverSampled, stream);
+    referenceBatchOverSampler->execute(c_referenceBatchRaw, c_referenceBatchOverSampled, param->derampMethod);
+    cuArraysAbs(c_referenceBatchOverSampled, r_referenceBatchOverSampled, stream);
+    cuArraysSubtractMean(r_referenceBatchOverSampled, stream);
 
-    // extract slave and oversample
-    cuArraysCopyExtract(c_slaveBatchRaw, c_slaveBatchZoomIn, offsetInit, stream);
-    slaveBatchOverSampler->execute(c_slaveBatchZoomIn, c_slaveBatchOverSampled, param->derampMethod);
-    cuArraysAbs(c_slaveBatchOverSampled, r_slaveBatchOverSampled, stream);
+    // extract secondary and oversample
+    cuArraysCopyExtract(c_secondaryBatchRaw, c_secondaryBatchZoomIn, offsetInit, stream);
+    secondaryBatchOverSampler->execute(c_secondaryBatchZoomIn, c_secondaryBatchOverSampled, param->derampMethod);
+    cuArraysAbs(c_secondaryBatchOverSampled, r_secondaryBatchOverSampled, stream);
 
     // correlate oversampled images
     if(param->algorithm == 0) {
-        cuCorrFreqDomain_OverSampled->execute(r_masterBatchOverSampled, r_slaveBatchOverSampled, r_corrBatchZoomIn);
+        cuCorrFreqDomain_OverSampled->execute(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn);
     }
     else {
-        cuCorrTimeDomain(r_masterBatchOverSampled, r_slaveBatchOverSampled, r_corrBatchZoomIn, stream);
+        cuCorrTimeDomain(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn, stream);
     }
-    cuCorrNormalize(r_masterBatchOverSampled, r_slaveBatchOverSampled, r_corrBatchZoomIn, stream);
+    cuCorrNormalize(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn, stream);
 
     //std::cout << "debug correlation oversample\n";
-    //std::cout << r_masterBatchOverSampled->height << " " << r_masterBatchOverSampled->width << "\n";
-    //std::cout << r_slaveBatchOverSampled->height << " " << r_slaveBatchOverSampled->width << "\n";
+    //std::cout << r_referenceBatchOverSampled->height << " " << r_referenceBatchOverSampled->width << "\n";
+    //std::cout << r_secondaryBatchOverSampled->height << " " << r_secondaryBatchOverSampled->width << "\n";
     //std::cout << r_corrBatchZoomIn->height << " " << r_corrBatchZoomIn->width << "\n";
 
     // oversample the correlation surface
@@ -185,128 +185,128 @@ void cuAmpcorChunk::getRelativeOffset(int *rStartPixel, const int *oStartPixel, 
     }
 }
 
-void cuAmpcorChunk::loadMasterChunk()
+void cuAmpcorChunk::loadReferenceChunk()
 {
 
-    // we first load the whole chunk of image from cpu to a gpu buffer c(r)_masterChunkRaw
+    // we first load the whole chunk of image from cpu to a gpu buffer c(r)_referenceChunkRaw
     // then copy to a batch of windows with (nImages, height, width) (leading dimension on the right)
 
     // get the chunk size to be loaded to gpu
-    int startD = param->masterChunkStartPixelDown[idxChunk]; //start pixel down (along height)
-    int startA = param->masterChunkStartPixelAcross[idxChunk]; // start pixel across (along width)
-    int height =  param->masterChunkHeight[idxChunk]; // number of pixels along height
-    int width = param->masterChunkWidth[idxChunk];  // number of pixels along width
+    int startD = param->referenceChunkStartPixelDown[idxChunk]; //start pixel down (along height)
+    int startA = param->referenceChunkStartPixelAcross[idxChunk]; // start pixel across (along width)
+    int height =  param->referenceChunkHeight[idxChunk]; // number of pixels along height
+    int width = param->referenceChunkWidth[idxChunk];  // number of pixels along width
 
     //use cpu to compute the starting positions for each window
-    getRelativeOffset(ChunkOffsetDown->hostData, param->masterStartPixelDown, param->masterChunkStartPixelDown[idxChunk]);
+    getRelativeOffset(ChunkOffsetDown->hostData, param->referenceStartPixelDown, param->referenceChunkStartPixelDown[idxChunk]);
     // copy the positions to gpu
     ChunkOffsetDown->copyToDevice(stream);
     // same for the across direction
-    getRelativeOffset(ChunkOffsetAcross->hostData, param->masterStartPixelAcross, param->masterChunkStartPixelAcross[idxChunk]);
+    getRelativeOffset(ChunkOffsetAcross->hostData, param->referenceStartPixelAcross, param->referenceChunkStartPixelAcross[idxChunk]);
     ChunkOffsetAcross->copyToDevice(stream);
 
     // check whether the image is complex (e.g., SLC) or real( e.g. TIFF)
-    if(masterImage->isComplex())
+    if(referenceImage->isComplex())
     {
         // allocate a gpu buffer to load data from cpu/file
         // try allocate/deallocate the buffer on the fly to save gpu memory 07/09/19
-        c_masterChunkRaw = new cuArrays<float2> (param->maxMasterChunkHeight, param->maxMasterChunkWidth);
-        c_masterChunkRaw->allocate();
+        c_referenceChunkRaw = new cuArrays<float2> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+        c_referenceChunkRaw->allocate();
 
         // load the data from cpu
-        masterImage->loadToDevice((void *)c_masterChunkRaw->devData, startD, startA, height, width, stream);
-        //std::cout << "debug load master: " << startD << " " <<  startA << " " <<  height << " "  << width << "\n";
+        referenceImage->loadToDevice((void *)c_referenceChunkRaw->devData, startD, startA, height, width, stream);
+        //std::cout << "debug load reference: " << startD << " " <<  startA << " " <<  height << " "  << width << "\n";
 
         //copy the chunk to a batch format (nImages, height, width)
         // if derampMethod = 0 (no deramp), take amplitudes; otherwise, copy complex data
         if(param->derampMethod == 0) {
-            cuArraysCopyToBatchAbsWithOffset(c_masterChunkRaw, param->masterChunkWidth[idxChunk],
-                c_masterBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+            cuArraysCopyToBatchAbsWithOffset(c_referenceChunkRaw, param->referenceChunkWidth[idxChunk],
+                c_referenceBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
         }
         else {
-            cuArraysCopyToBatchWithOffset(c_masterChunkRaw, param->masterChunkWidth[idxChunk],
-                c_masterBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+            cuArraysCopyToBatchWithOffset(c_referenceChunkRaw, param->referenceChunkWidth[idxChunk],
+                c_referenceBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
         }
         // deallocate the gpu buffer
-        delete c_masterChunkRaw;
+        delete c_referenceChunkRaw;
     }
     // if the image is real
     else {
-        r_masterChunkRaw = new cuArrays<float> (param->maxMasterChunkHeight, param->maxMasterChunkWidth);
-        r_masterChunkRaw->allocate();
+        r_referenceChunkRaw = new cuArrays<float> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+        r_referenceChunkRaw->allocate();
 
         // load the data from cpu
-        masterImage->loadToDevice((void *)r_masterChunkRaw->devData, startD, startA, height, width, stream);
+        referenceImage->loadToDevice((void *)r_referenceChunkRaw->devData, startD, startA, height, width, stream);
 
         // copy the chunk (real) to a batch format (complex)
-        cuArraysCopyToBatchWithOffsetR2C(r_masterChunkRaw, param->masterChunkWidth[idxChunk],
-                c_masterBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+        cuArraysCopyToBatchWithOffsetR2C(r_referenceChunkRaw, param->referenceChunkWidth[idxChunk],
+                c_referenceBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
         // deallocate the gpu buffer
-        delete r_masterChunkRaw;
+        delete r_referenceChunkRaw;
     }
 
 
 }
 
-void cuAmpcorChunk::loadSlaveChunk()
+void cuAmpcorChunk::loadSecondaryChunk()
 {
 
     //copy to a batch format (nImages, height, width)
-    getRelativeOffset(ChunkOffsetDown->hostData, param->slaveStartPixelDown, param->slaveChunkStartPixelDown[idxChunk]);
+    getRelativeOffset(ChunkOffsetDown->hostData, param->secondaryStartPixelDown, param->secondaryChunkStartPixelDown[idxChunk]);
     ChunkOffsetDown->copyToDevice(stream);
-    getRelativeOffset(ChunkOffsetAcross->hostData, param->slaveStartPixelAcross, param->slaveChunkStartPixelAcross[idxChunk]);
+    getRelativeOffset(ChunkOffsetAcross->hostData, param->secondaryStartPixelAcross, param->secondaryChunkStartPixelAcross[idxChunk]);
     ChunkOffsetAcross->copyToDevice(stream);
 
-    if(slaveImage->isComplex())
+    if(secondaryImage->isComplex())
     {
-        c_slaveChunkRaw = new cuArrays<float2> (param->maxSlaveChunkHeight, param->maxSlaveChunkWidth);
-        c_slaveChunkRaw->allocate();
+        c_secondaryChunkRaw = new cuArrays<float2> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+        c_secondaryChunkRaw->allocate();
 
         //load a chunk from mmap to gpu
-        slaveImage->loadToDevice(c_slaveChunkRaw->devData,
-            param->slaveChunkStartPixelDown[idxChunk],
-            param->slaveChunkStartPixelAcross[idxChunk],
-            param->slaveChunkHeight[idxChunk],
-            param->slaveChunkWidth[idxChunk],
+        secondaryImage->loadToDevice(c_secondaryChunkRaw->devData,
+            param->secondaryChunkStartPixelDown[idxChunk],
+            param->secondaryChunkStartPixelAcross[idxChunk],
+            param->secondaryChunkHeight[idxChunk],
+            param->secondaryChunkWidth[idxChunk],
             stream);
 
         if(param->derampMethod == 0) {
-            cuArraysCopyToBatchAbsWithOffset(c_slaveChunkRaw, param->slaveChunkWidth[idxChunk],
-                c_slaveBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+            cuArraysCopyToBatchAbsWithOffset(c_secondaryChunkRaw, param->secondaryChunkWidth[idxChunk],
+                c_secondaryBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
         }
         else {
-           cuArraysCopyToBatchWithOffset(c_slaveChunkRaw, param->slaveChunkWidth[idxChunk],
-                c_slaveBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+           cuArraysCopyToBatchWithOffset(c_secondaryChunkRaw, param->secondaryChunkWidth[idxChunk],
+                c_secondaryBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
         }
-        delete c_slaveChunkRaw;
+        delete c_secondaryChunkRaw;
     }
     else { //real image
         //allocate the gpu buffer
-        r_slaveChunkRaw = new cuArrays<float> (param->maxSlaveChunkHeight, param->maxSlaveChunkWidth);
-        r_slaveChunkRaw->allocate();
+        r_secondaryChunkRaw = new cuArrays<float> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+        r_secondaryChunkRaw->allocate();
 
         //load a chunk from mmap to gpu
-        slaveImage->loadToDevice(r_slaveChunkRaw->devData,
-            param->slaveChunkStartPixelDown[idxChunk],
-            param->slaveChunkStartPixelAcross[idxChunk],
-            param->slaveChunkHeight[idxChunk],
-            param->slaveChunkWidth[idxChunk],
+        secondaryImage->loadToDevice(r_secondaryChunkRaw->devData,
+            param->secondaryChunkStartPixelDown[idxChunk],
+            param->secondaryChunkStartPixelAcross[idxChunk],
+            param->secondaryChunkHeight[idxChunk],
+            param->secondaryChunkWidth[idxChunk],
             stream);
 
         // convert to the batch format
-        cuArraysCopyToBatchWithOffsetR2C(r_slaveChunkRaw, param->slaveChunkWidth[idxChunk],
-                c_slaveBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
-        delete r_slaveChunkRaw;
+        cuArraysCopyToBatchWithOffsetR2C(r_secondaryChunkRaw, param->secondaryChunkWidth[idxChunk],
+                c_secondaryBatchRaw, ChunkOffsetDown->devData, ChunkOffsetAcross->devData, stream);
+        delete r_secondaryChunkRaw;
     }
 }
 
-cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *master_, GDALImage *slave_,
+cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
     cuArrays<float2> *offsetImage_, cuArrays<float> *snrImage_, cuArrays<float3> *covImage_, cuArrays<int> *intImage1_, cuArrays<float> *floatImage1_, cudaStream_t stream_)
 
 {
     param = param_;
-    masterImage = master_;
-    slaveImage = slave_;
+    referenceImage = reference_;
+    secondaryImage = secondary_;
     offsetImage = offsetImage_;
     snrImage = snrImage_;
     covImage = covImage_;
@@ -316,13 +316,13 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *master_, GDAL
 
     stream = stream_;
 
-    // std::cout << "debug Chunk creator " << param->maxMasterChunkHeight << " " << param->maxMasterChunkWidth << "\n";
+    // std::cout << "debug Chunk creator " << param->maxReferenceChunkHeight << " " << param->maxReferenceChunkWidth << "\n";
     // try allocate/deallocate on the fly to save gpu memory 07/09/19
-    // c_masterChunkRaw = new cuArrays<float2> (param->maxMasterChunkHeight, param->maxMasterChunkWidth);
-    // c_masterChunkRaw->allocate();
+    // c_referenceChunkRaw = new cuArrays<float2> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+    // c_referenceChunkRaw->allocate();
 
-    // c_slaveChunkRaw = new cuArrays<float2> (param->maxSlaveChunkHeight, param->maxSlaveChunkWidth);
-    // c_slaveChunkRaw->allocate();
+    // c_secondaryChunkRaw = new cuArrays<float2> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+    // c_secondaryChunkRaw->allocate();
 
     ChunkOffsetDown = new cuArrays<int> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     ChunkOffsetDown->allocate();
@@ -331,58 +331,58 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *master_, GDAL
     ChunkOffsetAcross->allocate();
     ChunkOffsetAcross->allocateHost();
 
-    c_masterBatchRaw = new cuArrays<float2> (
+    c_referenceBatchRaw = new cuArrays<float2> (
         param->windowSizeHeightRaw, param->windowSizeWidthRaw,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_masterBatchRaw->allocate();
+    c_referenceBatchRaw->allocate();
 
-    c_slaveBatchRaw = new cuArrays<float2> (
+    c_secondaryBatchRaw = new cuArrays<float2> (
         param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_slaveBatchRaw->allocate();
+    c_secondaryBatchRaw->allocate();
 
-    r_masterBatchRaw = new cuArrays<float> (
+    r_referenceBatchRaw = new cuArrays<float> (
         param->windowSizeHeightRaw, param->windowSizeWidthRaw,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_masterBatchRaw->allocate();
+    r_referenceBatchRaw->allocate();
 
-    r_slaveBatchRaw = new cuArrays<float> (
+    r_secondaryBatchRaw = new cuArrays<float> (
         param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_slaveBatchRaw->allocate();
+    r_secondaryBatchRaw->allocate();
 
-    c_slaveBatchZoomIn = new cuArrays<float2> (
+    c_secondaryBatchZoomIn = new cuArrays<float2> (
         param->searchWindowSizeHeightRawZoomIn, param->searchWindowSizeWidthRawZoomIn,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_slaveBatchZoomIn->allocate();
+    c_secondaryBatchZoomIn->allocate();
 
-    c_masterBatchOverSampled = new cuArrays<float2> (
+    c_referenceBatchOverSampled = new cuArrays<float2> (
 			param->windowSizeHeight, param->windowSizeWidth,
 			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_masterBatchOverSampled->allocate();
+    c_referenceBatchOverSampled->allocate();
 
-    c_slaveBatchOverSampled = new cuArrays<float2> (
+    c_secondaryBatchOverSampled = new cuArrays<float2> (
 			param->searchWindowSizeHeight, param->searchWindowSizeWidth,
 			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_slaveBatchOverSampled->allocate();
+    c_secondaryBatchOverSampled->allocate();
 
-    r_masterBatchOverSampled = new cuArrays<float> (
+    r_referenceBatchOverSampled = new cuArrays<float> (
 			param->windowSizeHeight, param->windowSizeWidth,
 			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_masterBatchOverSampled->allocate();
+    r_referenceBatchOverSampled->allocate();
 
-    r_slaveBatchOverSampled = new cuArrays<float> (
+    r_secondaryBatchOverSampled = new cuArrays<float> (
 			param->searchWindowSizeHeight, param->searchWindowSizeWidth,
 			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_slaveBatchOverSampled->allocate();
+    r_secondaryBatchOverSampled->allocate();
 
-    masterBatchOverSampler = new cuOverSamplerC2C(
-        c_masterBatchRaw->height, c_masterBatchRaw->width, //orignal size
-        c_masterBatchOverSampled->height, c_masterBatchOverSampled->width, //oversampled size
-        c_masterBatchRaw->count, stream);
+    referenceBatchOverSampler = new cuOverSamplerC2C(
+        c_referenceBatchRaw->height, c_referenceBatchRaw->width, //orignal size
+        c_referenceBatchOverSampled->height, c_referenceBatchOverSampled->width, //oversampled size
+        c_referenceBatchRaw->count, stream);
 
-    slaveBatchOverSampler = new cuOverSamplerC2C(c_slaveBatchZoomIn->height, c_slaveBatchZoomIn->width,
-            c_slaveBatchOverSampled->height, c_slaveBatchOverSampled->width, c_slaveBatchRaw->count, stream);
+    secondaryBatchOverSampler = new cuOverSamplerC2C(c_secondaryBatchZoomIn->height, c_secondaryBatchZoomIn->width,
+            c_secondaryBatchOverSampled->height, c_secondaryBatchOverSampled->width, c_secondaryBatchRaw->count, stream);
 
     r_corrBatchRaw = new cuArrays<float> (
 			param->searchWindowSizeHeightRaw-param->windowSizeHeightRaw+1,
@@ -502,18 +502,18 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *master_, GDAL
 cuAmpcorChunk::~cuAmpcorChunk()
 {
     /*
-    delete masterChunkRaw;
-    delete slaveChunkRaw;
+    delete referenceChunkRaw;
+    delete secondaryChunkRaw;
     delete ChunkOffsetDown;
     delete ChunkOffsetAcross;
-    delete masterBatchRaw;
-    delete slaveBatchRaw;
-    delete masterChunkOverSampled;
-    delete slaveChunkOverSampled;
-    delete masterChunkOverSampler;
-    delete slaveChunkOverSampler;
-    delete masterChunk;
-    delete slaveChunk;
+    delete referenceBatchRaw;
+    delete secondaryBatchRaw;
+    delete referenceChunkOverSampled;
+    delete secondaryChunkOverSampled;
+    delete referenceChunkOverSampler;
+    delete secondaryChunkOverSampler;
+    delete referenceChunk;
+    delete secondaryChunk;
     delete corrChunk;
     delete offsetInit;
     delete zoomInOffset;

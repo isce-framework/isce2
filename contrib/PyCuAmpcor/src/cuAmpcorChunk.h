@@ -24,8 +24,8 @@ private:
 	int devId;
 	cudaStream_t stream;
 
-	GDALImage *masterImage;
-	GDALImage *slaveImage;
+	GDALImage *referenceImage;
+	GDALImage *secondaryImage;
 	cuAmpcorParameter *param;
 	cuArrays<float2> *offsetImage;
 	cuArrays<float> *snrImage;
@@ -36,21 +36,21 @@ private:
     cuArrays<float> *floatImage1;
 
     // gpu buffer
-	cuArrays<float2> * c_masterChunkRaw, * c_slaveChunkRaw;
-	cuArrays<float> * r_masterChunkRaw, * r_slaveChunkRaw;
+	cuArrays<float2> * c_referenceChunkRaw, * c_secondaryChunkRaw;
+	cuArrays<float> * r_referenceChunkRaw, * r_secondaryChunkRaw;
 
 	// gpu windows raw data
-    cuArrays<float2> * c_masterBatchRaw, * c_slaveBatchRaw, * c_slaveBatchZoomIn;
-    cuArrays<float> * r_masterBatchRaw, * r_slaveBatchRaw;
+    cuArrays<float2> * c_referenceBatchRaw, * c_secondaryBatchRaw, * c_secondaryBatchZoomIn;
+    cuArrays<float> * r_referenceBatchRaw, * r_secondaryBatchRaw;
 
     // gpu windows oversampled data
-    cuArrays<float2> * c_masterBatchOverSampled, * c_slaveBatchOverSampled;
-    cuArrays<float> * r_masterBatchOverSampled, * r_slaveBatchOverSampled;
+    cuArrays<float2> * c_referenceBatchOverSampled, * c_secondaryBatchOverSampled;
+    cuArrays<float> * r_referenceBatchOverSampled, * r_secondaryBatchOverSampled;
     cuArrays<float> * r_corrBatchRaw, * r_corrBatchZoomIn, * r_corrBatchZoomInOverSampled, * r_corrBatchZoomInAdjust;
 
     cuArrays<int> *ChunkOffsetDown, *ChunkOffsetAcross;
 
-	cuOverSamplerC2C *masterBatchOverSampler, *slaveBatchOverSampler;
+	cuOverSamplerC2C *referenceBatchOverSampler, *secondaryBatchOverSampler;
 
     cuOverSamplerR2R *corrOverSampler;
     cuSincOverSamplerR2R *corrSincOverSampler;
@@ -80,16 +80,16 @@ private:
 
 public:
 	cuAmpcorChunk()	{}
-	//cuAmpcorChunk(cuAmpcorParameter *param_, SlcImage *master_, SlcImage *slave_);
+	//cuAmpcorChunk(cuAmpcorParameter *param_, SlcImage *reference_, SlcImage *secondary_);
 
 	void setIndex(int idxDown_, int idxAcross_);
 
-	cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *master_, GDALImage *slave_, cuArrays<float2> *offsetImage_,
+	cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_, cuArrays<float2> *offsetImage_,
 	            cuArrays<float> *snrImage_, cuArrays<float3> *covImage_, cuArrays<int> *intImage1_, cuArrays<float> *floatImage1_, cudaStream_t stream_);
 
 
-    void loadMasterChunk();
-    void loadSlaveChunk();
+    void loadReferenceChunk();
+    void loadSecondaryChunk();
     void getRelativeOffset(int *rStartPixel, const int *oStartPixel, int diff);
 
     ~cuAmpcorChunk();

@@ -40,8 +40,8 @@ def runSlcMatch(self):
     os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
-    masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)
-    slaveTrack = self._insar.loadProduct(self._insar.slaveTrackParameter)
+    referenceTrack = self._insar.loadProduct(self._insar.referenceTrackParameter)
+    secondaryTrack = self._insar.loadProduct(self._insar.secondaryTrackParameter)
 
 #########################################################################################
 
@@ -50,34 +50,34 @@ def runSlcMatch(self):
     # compute geometric offsets
     ##################################################
     if self.useGPU and self._insar.hasGPU():
-        topoGPU(masterTrack, 1, 1, demFile, 
+        topoGPU(referenceTrack, 1, 1, demFile, 
                        'lat.rdr', 'lon.rdr', 'hgt.rdr', 'los.rdr')
-        geo2RdrGPU(slaveTrack, 1, 1, 
+        geo2RdrGPU(secondaryTrack, 1, 1, 
             'lat.rdr', 'lon.rdr', 'hgt.rdr', 'rg.off', 'az.off')
     else:
-        topoCPU(masterTrack, 1, 1, demFile, 
+        topoCPU(referenceTrack, 1, 1, demFile, 
                        'lat.rdr', 'lon.rdr', 'hgt.rdr', 'los.rdr')
-        geo2RdrCPU(slaveTrack, 1, 1, 
+        geo2RdrCPU(secondaryTrack, 1, 1, 
             'lat.rdr', 'lon.rdr', 'hgt.rdr', 'rg.off', 'az.off')
 
 
     ##################################################
     # resample SLC
     ##################################################
-    #SlaveSlcResampled = os.path.splitext(self._insar.slaveSlc)[0]+'_resamp'+os.path.splitext(self._insar.slaveSlc)[1]
-    SlaveSlcResampled = self._insar.slaveSlcCoregistered
+    #SecondarySlcResampled = os.path.splitext(self._insar.secondarySlc)[0]+'_resamp'+os.path.splitext(self._insar.secondarySlc)[1]
+    SecondarySlcResampled = self._insar.secondarySlcCoregistered
     rangeOffsets2Frac = 0.0
     azimuthOffsets2Frac = 0.0
-    resamp(self._insar.slaveSlc,
-           SlaveSlcResampled,
+    resamp(self._insar.secondarySlc,
+           SecondarySlcResampled,
            'rg.off',
            'az.off',
-           masterTrack.numberOfSamples, masterTrack.numberOfLines,
-           slaveTrack.prf,
-           slaveTrack.dopplerVsPixel,
+           referenceTrack.numberOfSamples, referenceTrack.numberOfLines,
+           secondaryTrack.prf,
+           secondaryTrack.dopplerVsPixel,
            [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
            [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    create_xml(SlaveSlcResampled, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'slc')
+    create_xml(SecondarySlcResampled, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'slc')
 
 
     if self.estimateResidualOffset:
@@ -85,8 +85,8 @@ def runSlcMatch(self):
         numberOfOffsets = 800
         rangeStep = 50
 
-        length = masterTrack.numberOfLines
-        width = masterTrack.numberOfSamples
+        length = referenceTrack.numberOfLines
+        width = referenceTrack.numberOfSamples
         waterBodyRadar('lat.rdr', 'lon.rdr', wbdFile, 'wbd.rdr')
         wbd=np.memmap('wbd.rdr', dtype=np.int8, mode='r', shape=(length, width))
         azimuthStep = int(length/width*rangeStep+0.5)
@@ -119,20 +119,20 @@ def runSlcMatch(self):
             ampcor.configure()
 
             mSLC = isceobj.createSlcImage()
-            mSLC.load(self._insar.masterSlc+'.xml')
+            mSLC.load(self._insar.referenceSlc+'.xml')
             mSLC.setAccessMode('read')
             mSLC.createImage()
 
             sSLC = isceobj.createSlcImage()
-            sSLC.load(SlaveSlcResampled+'.xml')
+            sSLC.load(SecondarySlcResampled+'.xml')
             sSLC.setAccessMode('read')
             sSLC.createImage()
 
             ampcor.setImageDataType1('complex')
             ampcor.setImageDataType2('complex')
 
-            ampcor.setMasterSlcImage(mSLC)
-            ampcor.setSlaveSlcImage(sSLC)
+            ampcor.setReferenceSlcImage(mSLC)
+            ampcor.setSecondarySlcImage(sSLC)
 
             #MATCH REGION
             #compute an offset at image center to use
@@ -220,22 +220,22 @@ def runSlcMatch(self):
                 catalog.addItem('warning message', 'too few offsets left for slc residual offset estimation', 'runSlcMatch')
             else:
                 rangeOffset, azimuthOffset = meanOffset(refinedOffsets)
-                os.remove(SlaveSlcResampled)
-                os.remove(SlaveSlcResampled+'.vrt')
-                os.remove(SlaveSlcResampled+'.xml')
+                os.remove(SecondarySlcResampled)
+                os.remove(SecondarySlcResampled+'.vrt')
+                os.remove(SecondarySlcResampled+'.xml')
                 
                 rangeOffsets2Frac = rangeOffset
                 azimuthOffsets2Frac = azimuthOffset
-                resamp(self._insar.slaveSlc,
-                       SlaveSlcResampled,
+                resamp(self._insar.secondarySlc,
+                       SecondarySlcResampled,
                        'rg.off',
                        'az.off',
-                       masterTrack.numberOfSamples, masterTrack.numberOfLines,
-                       slaveTrack.prf,
-                       slaveTrack.dopplerVsPixel,
+                       referenceTrack.numberOfSamples, referenceTrack.numberOfLines,
+                       secondaryTrack.prf,
+                       secondaryTrack.dopplerVsPixel,
                        [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                        [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-                create_xml(SlaveSlcResampled, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'slc')
+                create_xml(SecondarySlcResampled, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'slc')
 
                 catalog.addItem('number of offsets range', numberOfOffsetsRange, 'runSlcMatch')
                 catalog.addItem('number of offsets azimuth', numberOfOffsetsAzimuth, 'runSlcMatch')
