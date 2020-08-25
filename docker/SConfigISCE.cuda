@@ -10,7 +10,7 @@ LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib
 
 # The location of Python.h. If you have multiple installations of python
 # make sure that it points to the right one
-CPPPATH = /opt/conda/include/python3.7m /opt/conda/lib/python3.7/site-packages/numpy/core/include /opt/conda/include /usr/include
+CPPPATH = /opt/conda/include/python3.8 /opt/conda/lib/python3.8/site-packages/numpy/core/include /opt/conda/include /usr/include
 
 # The location of the fftw3.h (most likely something like /usr/include or
 # /usr/local/include /opt/local/include
