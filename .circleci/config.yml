@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   test-cmake:
     docker:
-        - image: hysds/pge-base:latest
+        - image: hysds/dev:latest
           user: root
     steps:
       - checkout:
@@ -56,7 +56,7 @@ jobs:
 
   test:
     docker:
-        - image: hysds/pge-base:latest
+        - image: hysds/dev:latest
           user: root
     steps:
       - checkout:
