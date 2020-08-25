@@ -34,11 +34,11 @@ RUN set -ex \
       scons \
       hdf4 \
       hdf5 \
-      netcdf4 \
       libgcc \
       libstdcxx-ng \
       cmake \
  && yum install -y uuid-devel x11-devel motif-devel jq \
+    opencv opencv-devel opencv-python \
  && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3 \
  && mkdir -p /opt/isce2/src
 
@@ -63,13 +63,13 @@ COPY . /opt/isce2/src/isce2
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && cd /opt/isce2/src/isce2 \
+ && tar xvf stanford_components.tgz \
  && source docker/build_env.sh \
  && mkdir -p $BUILD_DIR \
  && cp docker/SConfigISCE.cuda configuration/SConfigISCE \
  && scons install \
  && cp docker/isce_env.sh $ISCE_INSTALL_ROOT \
  && cd /tmp \
- && rm -rf /opt/isce2/src \
  && mkdir -p /tmp/rpm-build/opt \
  && mv $ISCE_INSTALL_ROOT /tmp/rpm-build/opt \
  && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/main \
@@ -101,7 +101,6 @@ RUN set -ex \
       scipy \
       hdf4 \
       hdf5 \
-      netcdf4 \
  && sudo yum update -y \
  && sudo yum install -y uuid-devel x11-devel motif-devel gcc-gfortran \
  && cd /opt/conda/lib \
