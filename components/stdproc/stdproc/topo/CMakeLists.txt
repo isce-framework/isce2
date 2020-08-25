@@ -11,6 +11,11 @@ target_link_libraries(topo PUBLIC
     combinedLib
     utilLib
     )
+if(TARGET OpenMP::OpenMP_Fortran)
+    target_link_libraries(topo PUBLIC
+        OpenMP::OpenMP_Fortran
+        )
+endif()
 
 InstallSameDir(
     topo

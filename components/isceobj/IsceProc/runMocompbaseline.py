@@ -77,8 +77,8 @@ def run(objFormSlc1, objFormSlc2, orbit1, orbit2, ellipsoid, averageHeight, peg,
     objMocompbaseline.setMocompPosition2(mocompPosition2[posIndx])
     objMocompbaseline.setMocompPositionIndex2(mocompIndex2)
 
-    objMocompbaseline.wireInputPort(name='masterOrbit', object=orbit1)
-    objMocompbaseline.wireInputPort(name='slaveOrbit', object=orbit2)
+    objMocompbaseline.wireInputPort(name='referenceOrbit', object=orbit1)
+    objMocompbaseline.wireInputPort(name='secondaryOrbit', object=orbit2)
     objMocompbaseline.wireInputPort(name='ellipsoid', object=ellipsoid)
     objMocompbaseline.wireInputPort(name='peg', object=peg)
     objMocompbaseline.setHeight(averageHeight)

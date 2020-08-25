@@ -276,7 +276,7 @@ static inline __device__ int dev_adjustOffset(const size_t newRange, const size_
     return start;
 }
 
-__global__ void cudaKernel_determineSlaveExtractOffset(int2 * maxloc, 
+__global__ void cudaKernel_determineSecondaryExtractOffset(int2 * maxloc, 
     const size_t nImages, int xOldRange, int yOldRange, int xNewRange, int yNewRange)
 {
     int imageIndex = threadIdx.x + blockDim.x *blockIdx.x; //image index
@@ -289,12 +289,12 @@ __global__ void cudaKernel_determineSlaveExtractOffset(int2 * maxloc,
 
 ///@param[in] xOldRange, yOldRange are (half) search ranges in first step
 ///@param[in] x
-void cuDetermineSlaveExtractOffset(cuArrays<int2> *maxLoc, 
+void cuDetermineSecondaryExtractOffset(cuArrays<int2> *maxLoc, 
     int xOldRange, int yOldRange, int xNewRange, int yNewRange, cudaStream_t stream) 
 {
 	int threadsperblock=NTHREADS;
 	int blockspergrid=IDIVUP(maxLoc->size, threadsperblock);
-	cudaKernel_determineSlaveExtractOffset<<<blockspergrid, threadsperblock, 0, stream>>>
+	cudaKernel_determineSecondaryExtractOffset<<<blockspergrid, threadsperblock, 0, stream>>>
 	    (maxLoc->devData, maxLoc->size, xOldRange, yOldRange, xNewRange, yNewRange);
 }
 

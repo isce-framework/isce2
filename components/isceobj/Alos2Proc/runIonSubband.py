@@ -22,13 +22,13 @@ def runIonSubband(self):
         self._insar.procDoc.addAllFromCatalog(catalog)
         return
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     #using 1/3, 1/3, 1/3 band split
-    radarWavelength = masterTrack.radarWavelength
-    rangeBandwidth = masterTrack.frames[0].swaths[0].rangeBandwidth
-    rangeSamplingRate = masterTrack.frames[0].swaths[0].rangeSamplingRate
+    radarWavelength = referenceTrack.radarWavelength
+    rangeBandwidth = referenceTrack.frames[0].swaths[0].rangeBandwidth
+    rangeSamplingRate = referenceTrack.frames[0].swaths[0].rangeSamplingRate
     radarWavelengthLower = SPEED_OF_LIGHT/(SPEED_OF_LIGHT / radarWavelength - rangeBandwidth / 3.0)
     radarWavelengthUpper = SPEED_OF_LIGHT/(SPEED_OF_LIGHT / radarWavelength + rangeBandwidth / 3.0)
     subbandRadarWavelength = [radarWavelengthLower, radarWavelengthUpper]
@@ -64,7 +64,7 @@ def runIonSubband(self):
     #create insar processing directories
     for k in range(2):
         subbandDir = ionDir['subband'][k]
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
@@ -84,7 +84,7 @@ def runIonSubband(self):
     from isceobj.Alos2Proc.Alos2ProcPublic import readOffset
     from contrib.alos2proc.alos2proc import rg_filter
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
             swathDir = 's{}'.format(swathNumber)
@@ -105,8 +105,8 @@ def runIonSubband(self):
                 print('interferogram already exists at swath {}, frame {}'.format(swathNumber, frameNumber))
                 continue
 
-            #filter master and slave images
-            for slcx in [self._insar.masterSlc, self._insar.slaveSlc]:
+            #filter reference and secondary images
+            for slcx in [self._insar.referenceSlc, self._insar.secondarySlc]:
                 slc = os.path.join('../', frameDir, swathDir, slcx)
                 slcLower = os.path.join(ionDir['subband'][0], frameDir, swathDir, slcx)
                 slcUpper = os.path.join(ionDir['subband'][1], frameDir, swathDir, slcx)
@@ -120,7 +120,7 @@ def runIonSubband(self):
                 os.chdir(os.path.join(ionDir['subband'][k], frameDir, swathDir))
                 #recreate xml file to remove the file path
                 #can also use fixImageXml.py?
-                for x in [self._insar.masterSlc, self._insar.slaveSlc]:
+                for x in [self._insar.referenceSlc, self._insar.secondarySlc]:
                     img = isceobj.createSlcImage()
                     img.load(x + '.xml')
                     img.setFilename(x)
@@ -131,23 +131,23 @@ def runIonSubband(self):
                 #############################################
                 #1. form interferogram
                 #############################################
-                masterSwath = masterTrack.frames[i].swaths[j]
-                slaveSwath = slaveTrack.frames[i].swaths[j]
+                referenceSwath = referenceTrack.frames[i].swaths[j]
+                secondarySwath = secondaryTrack.frames[i].swaths[j]
 
                 refinedOffsets = readOffset(os.path.join('../../../../', frameDir, swathDir, 'cull.off'))
-                intWidth = int(masterSwath.numberOfSamples / self._insar.numberRangeLooks1)
-                intLength = int(masterSwath.numberOfLines / self._insar.numberAzimuthLooks1)
-                dopplerVsPixel = [i/slaveSwath.prf for i in slaveSwath.dopplerVsPixel]
+                intWidth = int(referenceSwath.numberOfSamples / self._insar.numberRangeLooks1)
+                intLength = int(referenceSwath.numberOfLines / self._insar.numberAzimuthLooks1)
+                dopplerVsPixel = [i/secondarySwath.prf for i in secondarySwath.dopplerVsPixel]
 
-                #master slc
+                #reference slc
                 mSLC = isceobj.createSlcImage()
-                mSLC.load(self._insar.masterSlc+'.xml')
+                mSLC.load(self._insar.referenceSlc+'.xml')
                 mSLC.setAccessMode('read')
                 mSLC.createImage()
 
-                #slave slc
+                #secondary slc
                 sSLC = isceobj.createSlcImage()
-                sSLC.load(self._insar.slaveSlc+'.xml')
+                sSLC.load(self._insar.secondarySlc+'.xml')
                 sSLC.setAccessMode('read')
                 sSLC.createImage()
 
@@ -180,14 +180,14 @@ def runIonSubband(self):
                 objResamp.wireInputPort(name='offsets', object=refinedOffsets)
                 objResamp.stdWriter = stdWriter
                 objResamp.setNumberFitCoefficients(6)
-                objResamp.setNumberRangeBin1(masterSwath.numberOfSamples)
-                objResamp.setNumberRangeBin2(slaveSwath.numberOfSamples)    
+                objResamp.setNumberRangeBin1(referenceSwath.numberOfSamples)
+                objResamp.setNumberRangeBin2(secondarySwath.numberOfSamples)    
                 objResamp.setStartLine(1)
-                objResamp.setNumberLines(masterSwath.numberOfLines)
+                objResamp.setNumberLines(referenceSwath.numberOfLines)
                 objResamp.setFirstLineOffset(1)
                 objResamp.setDopplerCentroidCoefficients(dopplerVsPixel)
                 objResamp.setRadarWavelength(subbandRadarWavelength[k])
-                objResamp.setSlantRangePixelSpacing(slaveSwath.rangePixelSize)
+                objResamp.setSlantRangePixelSpacing(secondarySwath.rangePixelSize)
                 objResamp.setNumberRangeLooks(self._insar.numberRangeLooks1)
                 objResamp.setNumberAzimuthLooks(self._insar.numberAzimuthLooks1)
                 objResamp.setFlattenWithOffsetFitFlag(0)
@@ -214,12 +214,12 @@ def runIonSubband(self):
                 #############################################
                 #3. delete subband slcs
                 #############################################
-                os.remove(self._insar.masterSlc)
-                os.remove(self._insar.masterSlc + '.vrt')
-                os.remove(self._insar.masterSlc + '.xml')
-                os.remove(self._insar.slaveSlc)
-                os.remove(self._insar.slaveSlc + '.vrt')
-                os.remove(self._insar.slaveSlc + '.xml')
+                os.remove(self._insar.referenceSlc)
+                os.remove(self._insar.referenceSlc + '.vrt')
+                os.remove(self._insar.referenceSlc + '.xml')
+                os.remove(self._insar.secondarySlc)
+                os.remove(self._insar.secondarySlc + '.vrt')
+                os.remove(self._insar.secondarySlc + '.xml')
 
                 os.chdir('../../../')
 
@@ -232,7 +232,7 @@ def runIonSubband(self):
 
     for k in range(2):
         os.chdir(ionDir['subband'][k])
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             os.chdir(frameDir)
 
@@ -249,7 +249,7 @@ def runIonSubband(self):
                    (self._insar.endingSwath-self._insar.startingSwath+1 > 1)
                    ):
                 import shutil
-                swathDir = 's{}'.format(masterTrack.frames[i].swaths[0].swathNumber)
+                swathDir = 's{}'.format(referenceTrack.frames[i].swaths[0].swathNumber)
                 
                 # if not os.path.isfile(self._insar.interferogram):
                 #     os.symlink(os.path.join('../', swathDir, self._insar.interferogram), self._insar.interferogram)
@@ -275,20 +275,20 @@ def runIonSubband(self):
                 continue
 
             #choose offsets
-            numberOfFrames = len(masterTrack.frames)
-            numberOfSwaths = len(masterTrack.frames[i].swaths)
+            numberOfFrames = len(referenceTrack.frames)
+            numberOfSwaths = len(referenceTrack.frames[i].swaths)
             if self.swathOffsetMatching:
                 #no need to do this as the API support 2-d list
-                #rangeOffsets = (np.array(self._insar.swathRangeOffsetMatchingMaster)).reshape(numberOfFrames, numberOfSwaths)
-                #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetMatchingMaster)).reshape(numberOfFrames, numberOfSwaths)
-                rangeOffsets = self._insar.swathRangeOffsetMatchingMaster
-                azimuthOffsets = self._insar.swathAzimuthOffsetMatchingMaster
+                #rangeOffsets = (np.array(self._insar.swathRangeOffsetMatchingReference)).reshape(numberOfFrames, numberOfSwaths)
+                #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetMatchingReference)).reshape(numberOfFrames, numberOfSwaths)
+                rangeOffsets = self._insar.swathRangeOffsetMatchingReference
+                azimuthOffsets = self._insar.swathAzimuthOffsetMatchingReference
 
             else:
-                #rangeOffsets = (np.array(self._insar.swathRangeOffsetGeometricalMaster)).reshape(numberOfFrames, numberOfSwaths)
-                #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetGeometricalMaster)).reshape(numberOfFrames, numberOfSwaths)
-                rangeOffsets = self._insar.swathRangeOffsetGeometricalMaster
-                azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalMaster
+                #rangeOffsets = (np.array(self._insar.swathRangeOffsetGeometricalReference)).reshape(numberOfFrames, numberOfSwaths)
+                #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetGeometricalReference)).reshape(numberOfFrames, numberOfSwaths)
+                rangeOffsets = self._insar.swathRangeOffsetGeometricalReference
+                azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalReference
 
             rangeOffsets = rangeOffsets[i]
             azimuthOffsets = azimuthOffsets[i]
@@ -304,16 +304,16 @@ def runIonSubband(self):
 
                 #compute phase needed to be compensated using startingRange
                 if j >= 1:
-                    #phaseDiffSwath1 = -4.0 * np.pi * (masterTrack.frames[i].swaths[j-1].startingRange - slaveTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
-                    #phaseDiffSwath2 = -4.0 * np.pi * (masterTrack.frames[i].swaths[j].startingRange - slaveTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
-                    phaseDiffSwath1 = +4.0 * np.pi * masterTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * slaveTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    phaseDiffSwath2 = +4.0 * np.pi * masterTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * slaveTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    if masterTrack.frames[i].swaths[j-1].startingRange - slaveTrack.frames[i].swaths[j-1].startingRange == \
-                       masterTrack.frames[i].swaths[j].startingRange - slaveTrack.frames[i].swaths[j].startingRange:
+                    #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
+                    #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
+                    phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                    phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                    if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
+                       referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
                         #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
-                        #if master and slave versions are all before or after version 2.025 (starting range error < 0.5 m), 
+                        #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
                         #it should be OK to do the above.
                         #see results in neom where it meets the above requirement, but there is still phase diff
                         #to be less risky, we do not input values here
@@ -323,7 +323,7 @@ def runIonSubband(self):
 
             #note that frame parameters are updated after mosaicking, here no need to update parameters
             #mosaic amplitudes
-            swathMosaic(masterTrack.frames[i], inputAmplitudes, self._insar.amplitude, 
+            swathMosaic(referenceTrack.frames[i], inputAmplitudes, self._insar.amplitude, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, resamplingMethod=0)
             #mosaic interferograms
             #These are for ALOS-2, may need to change for ALOS-4!
@@ -338,7 +338,7 @@ def runIonSubband(self):
                 phaseDiffFixed = None
                 snapThreshold = None
 
-            (phaseDiffEst, phaseDiffUsed, phaseDiffSource) = swathMosaic(masterTrack.frames[i], inputInterferograms, self._insar.interferogram, 
+            (phaseDiffEst, phaseDiffUsed, phaseDiffSource) = swathMosaic(referenceTrack.frames[i], inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=False, 
                 phaseCompensation=True, phaseDiff=phaseDiff, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, pcRangeLooks=1, pcAzimuthLooks=4, 
                 filt=False, resamplingMethod=1)
@@ -357,10 +357,10 @@ def runIonSubband(self):
                     phaseDiffUnstableExist = True
             catalog.addItem('{} subswath phase difference unstable exists'.format(ionDir['subband'][k]), phaseDiffUnstableExist, 'runIonSubband')
 
-            create_xml(self._insar.amplitude, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'amp')
-            create_xml(self._insar.interferogram, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'int')
+            create_xml(self._insar.amplitude, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'amp')
+            create_xml(self._insar.interferogram, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'int')
 
-            #update slave frame parameters here, here no need to update parameters
+            #update secondary frame parameters here, here no need to update parameters
             os.chdir('../')
             #save parameter file, here no need to save parameter file
             os.chdir('../')
@@ -380,10 +380,10 @@ def runIonSubband(self):
         os.makedirs(mosaicDir, exist_ok=True)
         os.chdir(mosaicDir)
 
-        numberOfFrames = len(masterTrack.frames)
+        numberOfFrames = len(referenceTrack.frames)
         if numberOfFrames == 1:
             import shutil
-            frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.masterFrames[0]))
+            frameDir = os.path.join('f1_{}/mosaic'.format(self._insar.referenceFrames[0]))
             # if not os.path.isfile(self._insar.interferogram):
             #     os.symlink(os.path.join('../', frameDir, self._insar.interferogram), self._insar.interferogram)
             # #shutil.copy2() can overwrite
@@ -406,34 +406,34 @@ def runIonSubband(self):
         else:
             #choose offsets
             if self.frameOffsetMatching:
-                rangeOffsets = self._insar.frameRangeOffsetMatchingMaster
-                azimuthOffsets = self._insar.frameAzimuthOffsetMatchingMaster
+                rangeOffsets = self._insar.frameRangeOffsetMatchingReference
+                azimuthOffsets = self._insar.frameAzimuthOffsetMatchingReference
             else:
-                rangeOffsets = self._insar.frameRangeOffsetGeometricalMaster
-                azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalMaster
+                rangeOffsets = self._insar.frameRangeOffsetGeometricalReference
+                azimuthOffsets = self._insar.frameAzimuthOffsetGeometricalReference
 
             #list of input files
             inputInterferograms = []
             inputAmplitudes = []
-            for i, frameNumber in enumerate(self._insar.masterFrames):
+            for i, frameNumber in enumerate(self._insar.referenceFrames):
                 frameDir = 'f{}_{}'.format(i+1, frameNumber)
                 inputInterferograms.append(os.path.join('../', frameDir, 'mosaic', self._insar.interferogram))
                 inputAmplitudes.append(os.path.join('../', frameDir, 'mosaic', self._insar.amplitude))
 
             #note that track parameters are updated after mosaicking
             #mosaic amplitudes
-            frameMosaic(masterTrack, inputAmplitudes, self._insar.amplitude, 
+            frameMosaic(referenceTrack, inputAmplitudes, self._insar.amplitude, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=False, resamplingMethod=0)
             #mosaic interferograms
-            frameMosaic(masterTrack, inputInterferograms, self._insar.interferogram, 
+            frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=True, resamplingMethod=1)
 
-            create_xml(self._insar.amplitude, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'amp')
-            create_xml(self._insar.interferogram, masterTrack.numberOfSamples, masterTrack.numberOfLines, 'int')
+            create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
+            create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
 
-            #update slave parameters here, no need to update slave parameters here
+            #update secondary parameters here, no need to update secondary parameters here
 
         os.chdir('../')
         #save parameter file, no need to save parameter file here
@@ -448,7 +448,7 @@ def runIonSubband(self):
 
     for k in range(2):
         os.chdir(ionDir['subband'][k])
-        for i, frameNumber in enumerate(self._insar.masterFrames):
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
             frameDir = 'f{}_{}'.format(i+1, frameNumber)
             #keep subswath interferograms
             #shutil.rmtree(frameDir)
@@ -470,7 +470,7 @@ def runIonSubband(self):
         os.makedirs(insarDir, exist_ok=True)
         os.chdir(insarDir)
 
-        rangePixelSize = self._insar.numberRangeLooks1 * masterTrack.rangePixelSize
+        rangePixelSize = self._insar.numberRangeLooks1 * referenceTrack.rangePixelSize
         radarWavelength = subbandRadarWavelength[k]
         rectRangeOffset = os.path.join('../../../', insarDir, self._insar.rectRangeOffset)
 

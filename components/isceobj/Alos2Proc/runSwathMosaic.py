@@ -20,10 +20,10 @@ def runSwathMosaic(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
 
@@ -40,7 +40,7 @@ def runSwathMosaic(self):
                (self._insar.endingSwath-self._insar.startingSwath+1 > 1)
                ):
             import shutil
-            swathDir = 's{}'.format(masterTrack.frames[i].swaths[0].swathNumber)
+            swathDir = 's{}'.format(referenceTrack.frames[i].swaths[0].swathNumber)
             
             if not os.path.isfile(self._insar.interferogram):
                 os.symlink(os.path.join('../', swathDir, self._insar.interferogram), self._insar.interferogram)
@@ -60,7 +60,7 @@ def runSwathMosaic(self):
 
             #update frame parameters
             #########################################################
-            frame = masterTrack.frames[i]
+            frame = referenceTrack.frames[i]
             infImg = isceobj.createImage()
             infImg.load(self._insar.interferogram+'.xml')
             #mosaic size
@@ -77,9 +77,9 @@ def runSwathMosaic(self):
             frame.azimuthPixelSize = frame.swaths[0].azimuthPixelSize
             frame.azimuthLineInterval = frame.swaths[0].azimuthLineInterval
 
-            #update frame parameters, slave
+            #update frame parameters, secondary
             #########################################################
-            frame = slaveTrack.frames[i]
+            frame = secondaryTrack.frames[i]
             #mosaic size
             frame.numberOfSamples = int(frame.swaths[0].numberOfSamples/self._insar.numberRangeLooks1)
             frame.numberOfLines = int(frame.swaths[0].numberOfLines/self._insar.numberAzimuthLooks1)
@@ -97,28 +97,28 @@ def runSwathMosaic(self):
             os.chdir('../')
 
             #save parameter file
-            self._insar.saveProduct(masterTrack.frames[i], self._insar.masterFrameParameter)
-            self._insar.saveProduct(slaveTrack.frames[i], self._insar.slaveFrameParameter)
+            self._insar.saveProduct(referenceTrack.frames[i], self._insar.referenceFrameParameter)
+            self._insar.saveProduct(secondaryTrack.frames[i], self._insar.secondaryFrameParameter)
 
             os.chdir('../')
 
             continue
 
         #choose offsets
-        numberOfFrames = len(masterTrack.frames)
-        numberOfSwaths = len(masterTrack.frames[i].swaths)
+        numberOfFrames = len(referenceTrack.frames)
+        numberOfSwaths = len(referenceTrack.frames[i].swaths)
         if self.swathOffsetMatching:
             #no need to do this as the API support 2-d list
-            #rangeOffsets = (np.array(self._insar.swathRangeOffsetMatchingMaster)).reshape(numberOfFrames, numberOfSwaths)
-            #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetMatchingMaster)).reshape(numberOfFrames, numberOfSwaths)
-            rangeOffsets = self._insar.swathRangeOffsetMatchingMaster
-            azimuthOffsets = self._insar.swathAzimuthOffsetMatchingMaster
+            #rangeOffsets = (np.array(self._insar.swathRangeOffsetMatchingReference)).reshape(numberOfFrames, numberOfSwaths)
+            #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetMatchingReference)).reshape(numberOfFrames, numberOfSwaths)
+            rangeOffsets = self._insar.swathRangeOffsetMatchingReference
+            azimuthOffsets = self._insar.swathAzimuthOffsetMatchingReference
 
         else:
-            #rangeOffsets = (np.array(self._insar.swathRangeOffsetGeometricalMaster)).reshape(numberOfFrames, numberOfSwaths)
-            #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetGeometricalMaster)).reshape(numberOfFrames, numberOfSwaths)
-            rangeOffsets = self._insar.swathRangeOffsetGeometricalMaster
-            azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalMaster
+            #rangeOffsets = (np.array(self._insar.swathRangeOffsetGeometricalReference)).reshape(numberOfFrames, numberOfSwaths)
+            #azimuthOffsets = (np.array(self._insar.swathAzimuthOffsetGeometricalReference)).reshape(numberOfFrames, numberOfSwaths)
+            rangeOffsets = self._insar.swathRangeOffsetGeometricalReference
+            azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalReference
 
         rangeOffsets = rangeOffsets[i]
         azimuthOffsets = azimuthOffsets[i]
@@ -133,28 +133,28 @@ def runSwathMosaic(self):
 
         #note that frame parameters are updated after mosaicking
         #mosaic amplitudes
-        swathMosaic(masterTrack.frames[i], inputAmplitudes, self._insar.amplitude, 
+        swathMosaic(referenceTrack.frames[i], inputAmplitudes, self._insar.amplitude, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, resamplingMethod=0)
         #mosaic interferograms
-        swathMosaic(masterTrack.frames[i], inputInterferograms, self._insar.interferogram, 
+        swathMosaic(referenceTrack.frames[i], inputInterferograms, self._insar.interferogram, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=True, resamplingMethod=1)
 
-        create_xml(self._insar.amplitude, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'amp')
-        create_xml(self._insar.interferogram, masterTrack.frames[i].numberOfSamples, masterTrack.frames[i].numberOfLines, 'int')
+        create_xml(self._insar.amplitude, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'amp')
+        create_xml(self._insar.interferogram, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'int')
 
-        #update slave frame parameters here
-        #no matching for slave, always use geometry
-        rangeOffsets = self._insar.swathRangeOffsetGeometricalSlave
-        azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalSlave
+        #update secondary frame parameters here
+        #no matching for secondary, always use geometry
+        rangeOffsets = self._insar.swathRangeOffsetGeometricalSecondary
+        azimuthOffsets = self._insar.swathAzimuthOffsetGeometricalSecondary
         rangeOffsets = rangeOffsets[i]
         azimuthOffsets = azimuthOffsets[i]
-        swathMosaicParameters(slaveTrack.frames[i], rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1)
+        swathMosaicParameters(secondaryTrack.frames[i], rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1)
 
         os.chdir('../')
 
         #save parameter file
-        self._insar.saveProduct(masterTrack.frames[i], self._insar.masterFrameParameter)
-        self._insar.saveProduct(slaveTrack.frames[i], self._insar.slaveFrameParameter)
+        self._insar.saveProduct(referenceTrack.frames[i], self._insar.referenceFrameParameter)
+        self._insar.saveProduct(secondaryTrack.frames[i], self._insar.secondaryFrameParameter)
 
         os.chdir('../')
 

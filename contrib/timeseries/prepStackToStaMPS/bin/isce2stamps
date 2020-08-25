@@ -33,10 +33,10 @@ endif
 if ("$datasource" != "slc_stack_burst") then
     ## default filenames when starting from scratch with isce stack generation:
     # this is when one start processing with isce from scratch
-    set los_file = $curdir/master/geom/los.rdr$geom_suffix
-    set lon_file = $curdir/master/geom/lon.rdr$geom_suffix
-    set lat_file = $curdir/master/geom/lat.rdr$geom_suffix
-    set dem_file = $curdir/master/geom/z.rdr$geom_suffix
+    set los_file = $curdir/reference/geom/los.rdr$geom_suffix
+    set lon_file = $curdir/reference/geom/lon.rdr$geom_suffix
+    set lat_file = $curdir/reference/geom/lat.rdr$geom_suffix
+    set dem_file = $curdir/reference/geom/z.rdr$geom_suffix
     # setting the output filenames
     set heading_file_out = $curdir/heading.raw
     set incangle_file_out = $curdir/inc_angle.raw
@@ -45,7 +45,7 @@ if ("$datasource" != "slc_stack_burst") then
     set dem_file_out = $curdir/dem.raw
     ## modification of the height filename for the SLC stack processing:
     if ("$datasource" == "slc_stack") then
-         set dem_file = $curdir/master/geom/hgt.rdr$geom_suffix
+         set dem_file = $curdir/reference/geom/hgt.rdr$geom_suffix
     endif 
 
     # extracting the dem

@@ -72,7 +72,7 @@ RUN set -ex \
  && rm -rf /opt/isce2/src \
  && mkdir -p /tmp/rpm-build/opt \
  && mv $ISCE_INSTALL_ROOT /tmp/rpm-build/opt \
- && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/master \
+ && curl -s https://api.github.com/repos/$ISCE_ORG/isce2/git/refs/heads/main \
     > /tmp/rpm-build/opt/isce2/version.json \
  && hash=$(cat /tmp/rpm-build/opt/isce2/version.json | jq -r .object.sha) \
  && short_hash=$(echo $hash | cut -c1-5) \

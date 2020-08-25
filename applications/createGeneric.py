@@ -81,9 +81,9 @@ def main():
     fi.defaultInitModule = 'InitFromXmlFile'
     fi.initComponentFromFile()
 
-    master = fi.getComponent('Master')
+    reference = fi.getComponent('Reference')
 
-    toGeneric = ToGeneric(rawObj=master)
+    toGeneric = ToGeneric(rawObj=reference)
     toGeneric.convert()
 
 if __name__ == "__main__":

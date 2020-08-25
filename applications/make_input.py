@@ -8,9 +8,9 @@ import xml.etree.ElementTree as ElementTree
 
 class App(Tkinter.Frame):
 
-    def __init__(self,master=None):
-        Tkinter.Frame.__init__(self,master)
-        self.master.title('ISSI Input File Generator')
+    def __init__(self,reference=None):
+        Tkinter.Frame.__init__(self,reference)
+        self.reference.title('ISSI Input File Generator')
 
         self.filterList = None
         self.filterX = Tkinter.IntVar()

@@ -938,7 +938,7 @@ class Estamb(Component):
 
 
 if __name__ == '__main__':
-    '''Sample implementation. Estimates ambiguity on the master.'''
+    '''Sample implementation. Estimates ambiguity on the reference.'''
     import isceobj
     import stdproc
     from iscesys.StdOEL.StdOELPy import create_writer
@@ -953,7 +953,7 @@ if __name__ == '__main__':
         import copy
 
         stdWriter = create_writer("log", "", True, filename="estamb.log")
-        objRaw = insar.masterRawImage.copy(access_mode='read')
+        objRaw = insar.referenceRawImage.copy(access_mode='read')
         v,h = insar.vh()
 
         objFormSlc = stdproc.createestamb()
@@ -965,20 +965,20 @@ if __name__ == '__main__':
         objFormSlc.setSpacecraftHeight(h)
         objFormSlc.setFirstLine(5000)
         objFormSlc.setNumberPatches(1)
-        objFormSlc.setNumberRangeBin(insar._masterFrame.numberRangeBins)
+        objFormSlc.setNumberRangeBin(insar._referenceFrame.numberRangeBins)
         objFormSlc.setLookSide(insar._lookSide)
-        doppler = copy.deepcopy(insar.masterDoppler)
+        doppler = copy.deepcopy(insar.referenceDoppler)
 #        doppler.fractionalCentroid = 0.39
         doppler.linearTerm = 0.
         doppler.quadraticTerm = 0.
         doppler.cubicTerm = 0.
 
-        print ("Focusing Master image")
+        print ("Focusing Reference image")
         objFormSlc.stdWriter = stdWriter
         entropy, Amb = objFormSlc(rawImage=objRaw,
-                orbit=insar.masterOrbit,
-                frame=insar.masterFrame,
-                planet=insar.masterFrame.instrument.platform.planet,
+                orbit=insar.referenceOrbit,
+                frame=insar.referenceFrame,
+                planet=insar.referenceFrame.instrument.platform.planet,
                 doppler=doppler,
                 peg=insar.peg)
 

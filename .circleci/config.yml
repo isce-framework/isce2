@@ -247,13 +247,13 @@ workflows:
       - build:
           filters:
             branches:
-              only: master
+              only: main
       - deploy:
           requires:
             - build
           filters:
             branches:
-              only: master
+              only: main
   build-deploy-release:
     jobs:
       - build-release:
@@ -277,15 +277,15 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - build-periodically:
           filters:
             branches:
-              only: master
+              only: main
       - deploy:
           requires:
             - build-periodically
           filters:
             branches:
-              only: master
+              only: main

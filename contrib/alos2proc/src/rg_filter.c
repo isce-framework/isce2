@@ -51,8 +51,8 @@ int rg_filter(char *inputfile, int nrg, int naz, int nout, char **outputfile, fl
 ///////////////////////////////
 
 
-  FILE *infp;   //slave image to be resampled
-  FILE **outfp;  //resampled slave image
+  FILE *infp;   //secondary image to be resampled
+  FILE **outfp;  //resampled secondary image
 
   fcomplex **filter;
   fcomplex *in;

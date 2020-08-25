@@ -33,17 +33,17 @@ def runUpdatePreprocInfo(self, use_dop="average"):
     
     peg = self.insar.peg
     pegRc = peg.radiusOfCurvature
-    masterFrame = self.insar.masterFrame
-    slaveFrame = self.insar.slaveFrame
-    prf1 = masterFrame.getInstrument().getPulseRepetitionFrequency()
-    prf2 = slaveFrame.getInstrument().getPulseRepetitionFrequency()
-    masterDoppler = self.insar.masterDoppler
-    slaveDoppler = self.insar.slaveDoppler
+    referenceFrame = self.insar.referenceFrame
+    secondaryFrame = self.insar.secondaryFrame
+    prf1 = referenceFrame.getInstrument().getPulseRepetitionFrequency()
+    prf2 = secondaryFrame.getInstrument().getPulseRepetitionFrequency()
+    referenceDoppler = self.insar.referenceDoppler
+    secondaryDoppler = self.insar.secondaryDoppler
 
     ## red flag.
     fd = runFdMocomp(self, use_dop=use_dop)
     
-    averageDoppler = masterDoppler.average(slaveDoppler)
+    averageDoppler = referenceDoppler.average(secondaryDoppler)
     averageDoppler.fractionalCentroid = fd
     self.insar.dopplerCentroid =averageDoppler
     return None

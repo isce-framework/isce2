@@ -136,8 +136,8 @@ def setup(self):
     ionParam.ioncalDirname = 'ion_cal'
     ionParam.ionBurstDirname = 'ion_burst'
     #these are same directory names as topsApp.py/TopsProc.py
-    #ionParam.masterSlcProduct = 'master'
-    #ionParam.slaveSlcProduct = 'slave'
+    #ionParam.referenceSlcProduct = 'reference'
+    #ionParam.secondarySlcProduct = 'secondary'
     #ionParam.fineCoregDirname = 'fine_coreg'
     ionParam.fineIfgDirname = 'fine_interferogram'
     ionParam.mergedDirname = 'merged'
@@ -161,27 +161,27 @@ def setup(self):
 
     #SECTION 4. DEFINE WAVELENGTHS AND DETERMINE IF CALCULATE IONOSPHERE WITH MERGED INTERFEROGRAM
     getParamFromData = False
-    masterStartingRange = np.zeros(3)
-    slaveStartingRange = np.zeros(3)
+    referenceStartingRange = np.zeros(3)
+    secondaryStartingRange = np.zeros(3)
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        ####Load slave metadata
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
+        ####Load secondary metadata
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
 
-        ####Indices w.r.t master
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
-        slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits(swath-1)
+        ####Indices w.r.t reference
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits(swath-1)
 
         if minBurst == maxBurst:
             #print('Skipping processing of swath {0}'.format(swath))
             continue
         else:
             ii = minBurst
-            jj = slaveBurstStart + ii - minBurst
+            jj = secondaryBurstStart + ii - minBurst
 
-            masBurst = master.bursts[ii]
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii]
+            slvBurst = secondary.bursts[jj]
 
             #use the 1/3, 1/3, 1/3 scheme for splitting
             ionParam.radarWavelength = masBurst.radarWavelength
@@ -190,12 +190,12 @@ def setup(self):
             #use this to determine which polynomial to use to calculate a ramp when calculating ionosphere for cross A/B interferogram
             ionParam.passDirection = masBurst.passDirection.lower()
 
-            masterStartingRange[swath-1] = masBurst.startingRange
-            slaveStartingRange[swath-1] = slvBurst.startingRange
+            referenceStartingRange[swath-1] = masBurst.startingRange
+            secondaryStartingRange[swath-1] = slvBurst.startingRange
             getParamFromData = True
 
     #determine if calculate ionosphere using merged interferogram
-    if np.sum(masterStartingRange==slaveStartingRange) != 3:
+    if np.sum(referenceStartingRange==secondaryStartingRange) != 3:
         ionParam.calIonWithMerged = False
     else:
         ionParam.calIonWithMerged = True
@@ -204,16 +204,16 @@ def setup(self):
     if len(swathList) == 1:
         ionParam.calIonWithMerged = True
     #for cross Sentinel-1A/B interferogram, always not using merged interferogram
-    if master.mission != slave.mission:
+    if reference.mission != secondary.mission:
         ionParam.calIonWithMerged = False
 
     #determine if remove an empirical ramp
-    if master.mission == slave.mission:
+    if reference.mission == secondary.mission:
         ionParam.rampRemovel = 0
     else:
         #estimating ionospheric phase for cross Sentinel-1A/B interferogram
         #an empirical ramp will be removed from the estimated ionospheric phase
-        if master.mission == 'S1A' and slave.mission == 'S1B':
+        if reference.mission == 'S1A' and secondary.mission == 'S1B':
             ionParam.rampRemovel = 1
         else:
             ionParam.rampRemovel = -1
@@ -289,24 +289,24 @@ def runCmd(cmd, silent=0):
         raise Exception('error when running:\n{}\n'.format(cmd))
 
 
-def adjustValidLineSample(master,slave):
+def adjustValidLineSample(reference,secondary):
 
-    master_lastValidLine = master.firstValidLine + master.numValidLines - 1
-    master_lastValidSample = master.firstValidSample + master.numValidSamples - 1
-    slave_lastValidLine = slave.firstValidLine + slave.numValidLines - 1
-    slave_lastValidSample = slave.firstValidSample + slave.numValidSamples - 1
+    reference_lastValidLine = reference.firstValidLine + reference.numValidLines - 1
+    reference_lastValidSample = reference.firstValidSample + reference.numValidSamples - 1
+    secondary_lastValidLine = secondary.firstValidLine + secondary.numValidLines - 1
+    secondary_lastValidSample = secondary.firstValidSample + secondary.numValidSamples - 1
 
-    igram_lastValidLine = min(master_lastValidLine, slave_lastValidLine)
-    igram_lastValidSample = min(master_lastValidSample, slave_lastValidSample)
+    igram_lastValidLine = min(reference_lastValidLine, secondary_lastValidLine)
+    igram_lastValidSample = min(reference_lastValidSample, secondary_lastValidSample)
 
-    master.firstValidLine = max(master.firstValidLine, slave.firstValidLine)
-    master.firstValidSample = max(master.firstValidSample, slave.firstValidSample)
+    reference.firstValidLine = max(reference.firstValidLine, secondary.firstValidLine)
+    reference.firstValidSample = max(reference.firstValidSample, secondary.firstValidSample)
 
-    master.numValidLines = igram_lastValidLine - master.firstValidLine + 1
-    master.numValidSamples = igram_lastValidSample - master.firstValidSample + 1
+    reference.numValidLines = igram_lastValidLine - reference.firstValidLine + 1
+    reference.numValidSamples = igram_lastValidSample - reference.firstValidSample + 1
 
 
-def multiply2(mastername, slavename, fact, rngname=None, ionname=None, infname=None, overlapBox=None, valid=True, virtual=True):
+def multiply2(referencename, secondaryname, fact, rngname=None, ionname=None, infname=None, overlapBox=None, valid=True, virtual=True):
     '''
     This routine forms interferogram and possibly removes topographic and ionospheric phases.
     all the following indexes start from 1
@@ -316,25 +316,25 @@ def multiply2(mastername, slavename, fact, rngname=None, ionname=None, infname=N
     overlapBox[3]: last sample
     '''
 
-    #use master image
+    #use reference image
     img = isceobj.createSlcImage()
-    img.load(mastername + '.xml')
+    img.load(referencename + '.xml')
     width = img.getWidth()
     length = img.getLength()
 
-    #master
+    #reference
     if not virtual:
-        master = np.memmap(mastername, dtype=np.complex64, mode='r', shape=(length,width))
+        reference = np.memmap(referencename, dtype=np.complex64, mode='r', shape=(length,width))
     else:
-        master = loadVirtualArray(mastername + '.vrt')
+        reference = loadVirtualArray(referencename + '.vrt')
 
-    #slave
-    slave = np.memmap(slavename, dtype=np.complex64, mode='r', shape=(length, width))
+    #secondary
+    secondary = np.memmap(secondaryname, dtype=np.complex64, mode='r', shape=(length, width))
 
     #interferogram
     cJ = np.complex64(-1j)
-    inf = master[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1] \
-        * np.conj(slave[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1])
+    inf = reference[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1] \
+        * np.conj(secondary[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1])
 
     #topography
     if rngname != None:
@@ -352,8 +352,8 @@ def multiply2(mastername, slavename, fact, rngname=None, ionname=None, infname=N
         inf2 = np.zeros((length,width), dtype=np.complex64)
         inf2[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1] = inf
 
-    #inf = master[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1] \
-    #    * np.conj(slave[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1]) \
+    #inf = reference[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1] \
+    #    * np.conj(secondary[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1]) \
     #    * np.exp(cJ*ion[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1]) \
     #    * np.exp(cJ*fact*rng2[overlapBox[0]-1:overlapBox[1]-1+1, overlapBox[2]-1:overlapBox[3]-1+1])
 
@@ -382,7 +382,7 @@ def subband(self, ionParam):
     from isceobj.Util.Poly2D import Poly2D
     from contrib.alos2proc.alos2proc import rg_filter
 
-    from isceobj.TopsProc.runFineResamp import resampSlave
+    from isceobj.TopsProc.runFineResamp import resampSecondary
     from isceobj.TopsProc.runFineResamp import getRelativeShifts
     from isceobj.TopsProc.runFineResamp import adjustValidSampleLine
     from isceobj.TopsProc.runFineResamp import getValidLines
@@ -393,19 +393,19 @@ def subband(self, ionParam):
     virtual = self.useVirtualFiles
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        ####Load slave metadata
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.slaveSlcProduct, 'IW{0}.xml'.format(swath)))
+        ####Load secondary metadata
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.secondarySlcProduct, 'IW{0}.xml'.format(swath)))
 
-        dt = slave.bursts[0].azimuthTimeInterval
-        dr = slave.bursts[0].rangePixelSize
+        dt = secondary.bursts[0].azimuthTimeInterval
+        dr = secondary.bursts[0].rangePixelSize
 
         ###Directory with offsets
         offdir = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath))
 
-        ####Indices w.r.t master
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
-        slaveBurstStart, slaveBurstEnd = self._insar.commonSlaveBurstLimits(swath-1)
+        ####Indices w.r.t reference
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
+        secondaryBurstStart, secondaryBurstEnd = self._insar.commonSecondaryBurstLimits(swath-1)
 
         if minBurst == maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
@@ -419,7 +419,7 @@ def subband(self, ionParam):
 
         ##############################################################
         #for resampling
-        relShifts = getRelativeShifts(master, slave, minBurst, maxBurst, slaveBurstStart)
+        relShifts = getRelativeShifts(reference, secondary, minBurst, maxBurst, secondaryBurstStart)
         print('Shifts IW-{0}: '.format(swath), relShifts) 
    
         ####Can corporate known misregistration here
@@ -429,8 +429,8 @@ def subband(self, ionParam):
         rpoly = Poly2D()
         rpoly.initPoly(rangeOrder=0,azimuthOrder=0,coeffs=[[0.]])
 
-        misreg_az = self._insar.slaveTimingCorrection / dt
-        misreg_rg = self._insar.slaveRangeCorrection / dr
+        misreg_az = self._insar.secondaryTimingCorrection / dt
+        misreg_rg = self._insar.secondaryRangeCorrection / dr
         ##############################################################
 
         fineIfgLower = createTOPSSwathSLCProduct()
@@ -441,26 +441,26 @@ def subband(self, ionParam):
 
         #only process common bursts
         for ii in range(minBurst, maxBurst):
-            jj = slaveBurstStart + ii - minBurst 
+            jj = secondaryBurstStart + ii - minBurst 
     
-            masBurst = master.bursts[ii]
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii]
+            slvBurst = secondary.bursts[jj]
 
-            print('processing master burst: %02d, slave burst: %02d, swath: %d'%(ii+1, jj+1, swath))
+            print('processing reference burst: %02d, secondary burst: %02d, swath: %d'%(ii+1, jj+1, swath))
             ################################################################
             #1. removing window and subband
-            for ms in ['master', 'slave']:
+            for ms in ['reference', 'secondary']:
                 #setup something
-                if ms == 'master':
+                if ms == 'reference':
                     burst = masBurst
                     #put the temporary file in the lower directory
-                    tmpFilename = os.path.join(lowerDir, 'master_dw_'+os.path.basename(burst.image.filename))
-                    tmpFilename2 = 'master_'+os.path.basename(burst.image.filename)
+                    tmpFilename = os.path.join(lowerDir, 'reference_dw_'+os.path.basename(burst.image.filename))
+                    tmpFilename2 = 'reference_'+os.path.basename(burst.image.filename)
                 else:
                     burst = slvBurst
                     #put the temporary file in the lower directory
-                    tmpFilename = os.path.join(lowerDir, 'slave_dw_'+os.path.basename(burst.image.filename))
-                    tmpFilename2 = 'slave_'+os.path.basename(burst.image.filename)
+                    tmpFilename = os.path.join(lowerDir, 'secondary_dw_'+os.path.basename(burst.image.filename))
+                    tmpFilename2 = 'secondary_'+os.path.basename(burst.image.filename)
 
                 #removing window
                 rangeSamplingRate = SPEED_OF_LIGHT / (2.0 * burst.rangePixelSize)
@@ -493,7 +493,7 @@ def subband(self, ionParam):
             try:
                 offset = relShifts[jj]
             except:
-                raise Exception('Trying to access shift for slave burst index {0}, which may not overlap with master for swath {1}'.format(jj, swath))
+                raise Exception('Trying to access shift for secondary burst index {0}, which may not overlap with reference for swath {1}'.format(jj, swath))
 
             ####Setup initial polynomials
             ### If no misregs are given, these are zero
@@ -505,7 +505,7 @@ def subband(self, ionParam):
 
 
             ###For future - should account for azimuth and range misreg here .. ignoring for now.
-            azCarrPoly, dpoly = slave.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
+            azCarrPoly, dpoly = secondary.estimateAzimuthCarrierPolynomials(slvBurst, offset = -1.0 * offset)
 
             rdict['carrPoly'] = azCarrPoly
             rdict['doppPoly'] = dpoly
@@ -518,28 +518,28 @@ def subband(self, ionParam):
                 if lu == 'lower':
                     masBurst2.radarWavelength = ionParam.radarWavelengthLower
                     masBurst2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    masBurst2.image.filename = os.path.join(lowerDir, 'master_'+os.path.basename(masBurst.image.filename))
+                    masBurst2.image.filename = os.path.join(lowerDir, 'reference_'+os.path.basename(masBurst.image.filename))
                     slvBurst2.radarWavelength = ionParam.radarWavelengthLower
                     slvBurst2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    slvBurst2.image.filename = os.path.join(lowerDir, 'slave_'+os.path.basename(slvBurst.image.filename))
+                    slvBurst2.image.filename = os.path.join(lowerDir, 'secondary_'+os.path.basename(slvBurst.image.filename))
                     slvBurstResamp2.radarWavelength = ionParam.radarWavelengthLower
                     slvBurstResamp2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    slvBurstResamp2.image.filename = os.path.join(lowerDir, 'master_'+os.path.basename(masBurst.image.filename))
-                    outname = os.path.join(lowerDir, 'slave_resamp_'+os.path.basename(slvBurst.image.filename))
+                    slvBurstResamp2.image.filename = os.path.join(lowerDir, 'reference_'+os.path.basename(masBurst.image.filename))
+                    outname = os.path.join(lowerDir, 'secondary_resamp_'+os.path.basename(slvBurst.image.filename))
                     ifgdir = lowerDir
                 else:
                     masBurst2.radarWavelength = ionParam.radarWavelengthUpper
                     masBurst2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    masBurst2.image.filename = os.path.join(upperDir, 'master_'+os.path.basename(masBurst.image.filename))
+                    masBurst2.image.filename = os.path.join(upperDir, 'reference_'+os.path.basename(masBurst.image.filename))
                     slvBurst2.radarWavelength = ionParam.radarWavelengthUpper
                     slvBurst2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    slvBurst2.image.filename = os.path.join(upperDir, 'slave_'+os.path.basename(slvBurst.image.filename))
+                    slvBurst2.image.filename = os.path.join(upperDir, 'secondary_'+os.path.basename(slvBurst.image.filename))
                     slvBurstResamp2.radarWavelength = ionParam.radarWavelengthUpper
                     slvBurstResamp2.rangeProcessingBandwidth = ionParam.rgBandwidthSub
-                    slvBurstResamp2.image.filename = os.path.join(upperDir, 'master_'+os.path.basename(masBurst.image.filename))
-                    outname = os.path.join(upperDir, 'slave_resamp_'+os.path.basename(slvBurst.image.filename))
+                    slvBurstResamp2.image.filename = os.path.join(upperDir, 'reference_'+os.path.basename(masBurst.image.filename))
+                    outname = os.path.join(upperDir, 'secondary_resamp_'+os.path.basename(slvBurst.image.filename))
                     ifgdir = upperDir
-                outimg = resampSlave(masBurst2, slvBurst2, rdict, outname)
+                outimg = resampSecondary(masBurst2, slvBurst2, rdict, outname)
                 minAz, maxAz, minRg, maxRg = getValidLines(slvBurst2, rdict, outname,
                         misreg_az = misreg_az - offset, misreg_rng = misreg_rg)
                 adjustValidSampleLine(slvBurstResamp2, slvBurst2,
@@ -548,8 +548,8 @@ def subband(self, ionParam):
                 slvBurstResamp2.image.filename = outimg.filename
                 
                 #forming interferogram
-                mastername = masBurst2.image.filename
-                slavename = slvBurstResamp2.image.filename
+                referencename = masBurst2.image.filename
+                secondaryname = slvBurstResamp2.image.filename
                 rngname = os.path.join(offdir, 'range_%02d.off'%(ii+1))
                 infname = os.path.join(ifgdir, 'burst_%02d.int'%(ii+1))
 
@@ -558,7 +558,7 @@ def subband(self, ionParam):
 
 
                 #in original runBurstIfg.py, valid samples in the interferogram are the following (indexes in the numpy matrix):
-                #masterFrame.firstValidLine:masterFrame.firstValidLine + masterFrame.numValidLines, masterFrame.firstValidSample:masterFrame.firstValidSample + masterFrame.numValidSamples
+                #referenceFrame.firstValidLine:referenceFrame.firstValidLine + referenceFrame.numValidLines, referenceFrame.firstValidSample:referenceFrame.firstValidSample + referenceFrame.numValidSamples
                 #after the following processing, valid samples in the interferogram are the following (indexes in the numpy matrix):
                 #[masBurst.firstValidLine:masBurst.firstValidLine + masBurst.numValidLines, masBurst.firstValidSample:masBurst.firstValidSample + masBurst.numValidSamples]
                 #SO THEY ARE EXACTLY THE SAME
@@ -567,7 +567,7 @@ def subband(self, ionParam):
                 firstcolumn = masBurst2.firstValidSample + 1
                 lastcolumn  = firstcolumn + masBurst2.numValidSamples - 1
                 overlapBox = [firstline, lastline, firstcolumn, lastcolumn]
-                multiply2(mastername, slavename, fact, rngname=rngname, ionname=None, infname=infname, overlapBox=overlapBox, valid=False, virtual=virtual)
+                multiply2(referencename, secondaryname, fact, rngname=rngname, ionname=None, infname=infname, overlapBox=overlapBox, valid=False, virtual=virtual)
 
                 #directly from multiply() of runBurstIfg.py
                 img = isceobj.createIntImage()
@@ -587,7 +587,7 @@ def subband(self, ionParam):
                 else:
                     fineIfgUpper.bursts.append(masBurst2)
 
-                #remove master and slave subband slcs
+                #remove reference and secondary subband slcs
                 os.remove(masBurst2_filename)
                 os.remove(masBurst2_filename+'.xml')
                 os.remove(masBurst2_filename+'.vrt')
@@ -608,7 +608,7 @@ def cal_coherence(inf, win=5, edge=0):
     '''
     compute coherence uisng only interferogram (phase).
     This routine still follows the regular equation for computing coherence,
-    but assumes the amplitudes of master and slave are one, so that coherence
+    but assumes the amplitudes of reference and secondary are one, so that coherence
     can be computed using phase only.
 
     inf: interferogram
@@ -683,7 +683,7 @@ def getMergeBox(self, xmlDirname, numberRangeLooks=1, numberAzimuthLooks=1):
     #get bursts
     frames=[]
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         if minBurst==maxBurst:
             #print('Skipping processing of swath {0}'.format(swath))
             continue
@@ -723,7 +723,7 @@ def merge(self, ionParam):
         burstList = []
         swathList = self._insar.getValidSwathList(self.swaths)
         for swath in swathList:
-            minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+            minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
             if minBurst==maxBurst:
                 continue
             ifg = self._insar.loadProduct( os.path.join(xmlDirname, 'IW{0}.xml'.format(swath)))
@@ -1395,7 +1395,7 @@ def ionSwathBySwath(self, ionParam):
     numValidSwaths = 0
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         if minBurst==maxBurst:
             #print('Skipping processing of swath {0}'.format(swath))
             continue
@@ -1415,7 +1415,7 @@ def ionSwathBySwath(self, ionParam):
     ii = -1
     for i in range(nswath):
         swath = swathList[i]
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         if minBurst==maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
             continue
@@ -1715,13 +1715,13 @@ def grd2ion(self, ionParam):
     amp = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[0:length*2:2, :]
     ionos = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
 
-    #use the satellite height of the mid burst of first swath of master acquistion
+    #use the satellite height of the mid burst of first swath of reference acquistion
     swathList = self._insar.getValidSwathList(self.swaths)
-    master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swathList[0])))
-    minBurst, maxBurst = self._insar.commonMasterBurstLimits(swathList[0]-1)
+    reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swathList[0])))
+    minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swathList[0]-1)
     #no problem with this index at all
     midBurst = np.int(np.around((minBurst+ maxBurst-1) / 2.0))
-    masBurst = master.bursts[midBurst]
+    masBurst = reference.bursts[midBurst]
     #satellite height
     satHeight = np.linalg.norm(masBurst.orbit.interpolateOrbit(masBurst.sensingMid, method='hermite').getPosition())
     #orgininal doppler offset should be multiplied by this ratio
@@ -1735,7 +1735,7 @@ def grd2ion(self, ionParam):
     frames=[]
     #for valid swaths and bursts, consistent with runMergeBursts.py
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
 
         if minBurst==maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
@@ -1750,7 +1750,7 @@ def grd2ion(self, ionParam):
         for i in range(nswath):
             nburst = len(frames[i].bursts)
             for j in range(nburst):
-                #according to runBurstIfg.py, this is originally from self._insar.masterSlcProduct, 'IW{0}.xml'
+                #according to runBurstIfg.py, this is originally from self._insar.referenceSlcProduct, 'IW{0}.xml'
                 masBurst = frames[i].bursts[j]
                 (dopplerOffset, Ka) = computeDopplerOffset(masBurst, burstValidBox2[i][j][0], burstValidBox2[i][j][1], burstValidBox2[i][j][2], burstValidBox2[i][j][3], nrlks=ionParam.numberRangeLooks, nalks=ionParam.numberAzimuthLooks)
                 offset = ratio * dopplerOffset
@@ -2082,13 +2082,13 @@ def ionosphere_shift(self, ionParam):
     #STEP 4. CONVERT TO AZIMUTH SHIFT
 ####################################################################
 
-    #use the satellite height of the mid burst of first swath of master acquistion
+    #use the satellite height of the mid burst of first swath of reference acquistion
     swathList = self._insar.getValidSwathList(self.swaths)
-    master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swathList[0])))
-    minBurst, maxBurst = self._insar.commonMasterBurstLimits(swathList[0]-1)
+    reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swathList[0])))
+    minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swathList[0]-1)
     #no problem with this index at all
     midBurst = np.int(np.around((minBurst+ maxBurst-1) / 2.0))
-    masBurst = master.bursts[midBurst]
+    masBurst = reference.bursts[midBurst]
 
     #shift casued by ionosphere [unit: masBurst.azimuthTimeInterval]
     rng = masBurst.rangePixelSize * ((np.arange(width))*ionParam.numberRangeLooks + (ionParam.numberRangeLooks - 1.0) / 2.0) + masBurst.startingRange
@@ -2149,13 +2149,13 @@ def ion2grd(self, ionParam):
             f2 = interp1d(indexRange2, dion[i, :], kind='cubic', fill_value="extrapolate")
             dionOneRangeLook[i, :] = f2(indexRange)
  
-    #use the satellite height of the mid burst of first swath of master acquistion
+    #use the satellite height of the mid burst of first swath of reference acquistion
     swathList = self._insar.getValidSwathList(self.swaths)
-    master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swathList[0])))
-    minBurst, maxBurst = self._insar.commonMasterBurstLimits(swathList[0]-1)
+    reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swathList[0])))
+    minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swathList[0]-1)
     #no problem with this index at all
     midBurst = np.int(np.around((minBurst+ maxBurst-1) / 2.0))
-    masBurst = master.bursts[midBurst]
+    masBurst = reference.bursts[midBurst]
     #satellite height
     satHeight = np.linalg.norm(masBurst.orbit.interpolateOrbit(masBurst.sensingMid, method='hermite').getPosition())
     #orgininal doppler offset should be multiplied by this ratio
@@ -2171,7 +2171,7 @@ def ion2grd(self, ionParam):
     minBurst2 =[]
     #for valid swaths and bursts, consistent with runMergeBursts.py
     for swath in swathList:
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
 
         if minBurst==maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
@@ -2192,7 +2192,7 @@ def ion2grd(self, ionParam):
         os.makedirs(outdir, exist_ok=True)
 
         for j in range(nburst):
-            #according to runBurstIfg.py, this is originally from self._insar.masterSlcProduct, 'IW{0}.xml'
+            #according to runBurstIfg.py, this is originally from self._insar.referenceSlcProduct, 'IW{0}.xml'
             masBurst = frames[i].bursts[j]
             (dopplerOffset, Ka) = computeDopplerOffset(masBurst, 1, masBurst.numberOfLines, 1, masBurst.numberOfSamples, nrlks=1, nalks=1)
             offset = ratio * dopplerOffset
@@ -2351,24 +2351,24 @@ def esd(self, ionParam):
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
 
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         nBurst = maxBurst - minBurst
 
         if nBurst <= 1:
             continue
     
         ####Load relevant products
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
 
         #get overlap area
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = master.bursts[ii] 
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii] 
+            slvBurst = secondary.bursts[jj]
             adjustValidLineSample(masBurst,slvBurst)
-        overlapBox = get_overlap_box(master, minBurst, maxBurst)
+        overlapBox = get_overlap_box(reference, minBurst, maxBurst)
         
         #using esd to calculate mis-registration
         misreg = np.array([])
@@ -2376,32 +2376,32 @@ def esd(self, ionParam):
         for ii in range(minBurst+1, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurstTop = master.bursts[ii-1] 
-            slvBurstTop = slave.bursts[jj-1]
+            masBurstTop = reference.bursts[ii-1] 
+            slvBurstTop = secondary.bursts[jj-1]
 
-            masBurstCur = master.bursts[ii] 
-            slvBurstCur = slave.bursts[jj]
+            masBurstCur = reference.bursts[ii] 
+            slvBurstCur = secondary.bursts[jj]
 
             #get info
-            mastername = masBurstTop.image.filename
-            slavename = slvBurstTop.image.filename
+            referencename = masBurstTop.image.filename
+            secondaryname = slvBurstTop.image.filename
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1-1))
             rngname = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath), 'range_%02d.off'%(ii+1-1))
             fact = 4.0 * np.pi * slvBurstTop.rangePixelSize / slvBurstTop.radarWavelength
-            #infTop = multiply2(mastername, slavename, ionname, rngname, fact, overlapBox[jj][0:4], virtual=virtual)
-            infTop = multiply2(mastername, slavename, fact, rngname=rngname, ionname=ionname, infname=None, overlapBox=overlapBox[jj][0:4], valid=True, virtual=virtual)
+            #infTop = multiply2(referencename, secondaryname, ionname, rngname, fact, overlapBox[jj][0:4], virtual=virtual)
+            infTop = multiply2(referencename, secondaryname, fact, rngname=rngname, ionname=ionname, infname=None, overlapBox=overlapBox[jj][0:4], valid=True, virtual=virtual)
             (dopTop, Ka) = computeDopplerOffset(masBurstTop, overlapBox[jj][0], overlapBox[jj][1], overlapBox[jj][2], overlapBox[jj][3], nrlks=nrlks, nalks=nalks)
             #rng = multilookIndex(overlapBox[jj][2]-1, overlapBox[jj][3]-1, nrlks) * masBurstTop.rangePixelSize + masBurstTop.startingRange
             #Ka  = masBurstTop.azimuthFMRate(rng)
             frqTop = dopTop * Ka[None,:] * (masBurstTop.azimuthTimeInterval * nalks)
 
-            mastername = masBurstCur.image.filename
-            slavename = slvBurstCur.image.filename
+            referencename = masBurstCur.image.filename
+            secondaryname = slvBurstCur.image.filename
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
             rngname = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath), 'range_%02d.off'%(ii+1))
             fact = 4.0 * np.pi * slvBurstCur.rangePixelSize / slvBurstCur.radarWavelength
-            #infCur = multiply2(mastername, slavename, ionname, rngname, fact, overlapBox[jj][4:8], virtual=virtual)
-            infCur = multiply2(mastername, slavename, fact, rngname=rngname, ionname=ionname, infname=None, overlapBox=overlapBox[jj][4:8], valid=True, virtual=virtual)
+            #infCur = multiply2(referencename, secondaryname, ionname, rngname, fact, overlapBox[jj][4:8], virtual=virtual)
+            infCur = multiply2(referencename, secondaryname, fact, rngname=rngname, ionname=ionname, infname=None, overlapBox=overlapBox[jj][4:8], valid=True, virtual=virtual)
             (dopCur, Ka) = computeDopplerOffset(masBurstCur, overlapBox[jj][4], overlapBox[jj][5], overlapBox[jj][6], overlapBox[jj][7], nrlks=nrlks, nalks=nalks)
             #rng = multilookIndex(overlapBox[jj][6]-1, overlapBox[jj][7]-1, nrlks) * masBurstCur.rangePixelSize + masBurstCur.startingRange
             #Ka  = masBurstCur.azimuthFMRate(rng)
@@ -2415,7 +2415,7 @@ def esd(self, ionParam):
             totalSamples += infTop.size
 
             if index[0].size:
-                #misregistration in sec. it should be OK to only use master frequency to compute ESD
+                #misregistration in sec. it should be OK to only use reference frequency to compute ESD
                 misreg0 = np.angle(infDif[index]) / (2.0 * np.pi * (frqTop[index]-frqCur[index]))
                 misreg=np.append(misreg, misreg0.flatten())
                 print("misregistration at burst %02d and burst %02d of swath %d: %10.5f azimuth lines"%(ii+1-1, ii+1, swath, np.mean(misreg0, dtype=np.float64)/masBurstCur.azimuthTimeInterval))
@@ -2431,14 +2431,14 @@ def esd(self, ionParam):
             continue
         else:
             misreg = np.mean(misreg, dtype=np.float64)
-            print("misregistration from ESD: {} sec, {} azimuth lines\n".format(misreg, misreg/master.bursts[minBurst].azimuthTimeInterval))
+            print("misregistration from ESD: {} sec, {} azimuth lines\n".format(misreg, misreg/reference.bursts[minBurst].azimuthTimeInterval))
 
         #use mis-registration estimated from esd to compute phase error
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = master.bursts[ii] 
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii] 
+            slvBurst = secondary.bursts[jj]
 
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
             ion = np.fromfile(ionname, dtype=np.float32).reshape(masBurst.numberOfLines, masBurst.numberOfSamples)
@@ -2472,24 +2472,24 @@ def esd_noion(self, ionParam):
     swathList = self._insar.getValidSwathList(self.swaths)
     for swath in swathList:
 
-        minBurst, maxBurst = self._insar.commonMasterBurstLimits(swath-1)
+        minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
         nBurst = maxBurst - minBurst
 
         if nBurst <= 1:
             continue
     
         ####Load relevant products
-        master = self._insar.loadProduct( os.path.join(self._insar.masterSlcProduct, 'IW{0}.xml'.format(swath)))
-        slave = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
+        reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
+        secondary = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
 
         #get overlap area
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = master.bursts[ii] 
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii] 
+            slvBurst = secondary.bursts[jj]
             adjustValidLineSample(masBurst,slvBurst)
-        overlapBox = get_overlap_box(master, minBurst, maxBurst)
+        overlapBox = get_overlap_box(reference, minBurst, maxBurst)
         
         #using esd to calculate mis-registration
         misreg = np.array([])
@@ -2497,32 +2497,32 @@ def esd_noion(self, ionParam):
         for ii in range(minBurst+1, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurstTop = master.bursts[ii-1] 
-            slvBurstTop = slave.bursts[jj-1]
+            masBurstTop = reference.bursts[ii-1] 
+            slvBurstTop = secondary.bursts[jj-1]
 
-            masBurstCur = master.bursts[ii] 
-            slvBurstCur = slave.bursts[jj]
+            masBurstCur = reference.bursts[ii] 
+            slvBurstCur = secondary.bursts[jj]
 
             #get info
-            mastername = masBurstTop.image.filename
-            slavename = slvBurstTop.image.filename
+            referencename = masBurstTop.image.filename
+            secondaryname = slvBurstTop.image.filename
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1-1))
             rngname = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath), 'range_%02d.off'%(ii+1-1))
             fact = 4.0 * np.pi * slvBurstTop.rangePixelSize / slvBurstTop.radarWavelength
-            #infTop = multiply2(mastername, slavename, ionname, rngname, fact, overlapBox[jj][0:4], virtual=virtual)
-            infTop = multiply2(mastername, slavename, fact, rngname=rngname, ionname=None, infname=None, overlapBox=overlapBox[jj][0:4], valid=True, virtual=virtual)
+            #infTop = multiply2(referencename, secondaryname, ionname, rngname, fact, overlapBox[jj][0:4], virtual=virtual)
+            infTop = multiply2(referencename, secondaryname, fact, rngname=rngname, ionname=None, infname=None, overlapBox=overlapBox[jj][0:4], valid=True, virtual=virtual)
             (dopTop, Ka) = computeDopplerOffset(masBurstTop, overlapBox[jj][0], overlapBox[jj][1], overlapBox[jj][2], overlapBox[jj][3], nrlks=nrlks, nalks=nalks)
             #rng = multilookIndex(overlapBox[jj][2]-1, overlapBox[jj][3]-1, nrlks) * masBurstTop.rangePixelSize + masBurstTop.startingRange
             #Ka  = masBurstTop.azimuthFMRate(rng)
             frqTop = dopTop * Ka[None,:] * (masBurstTop.azimuthTimeInterval * nalks)
 
-            mastername = masBurstCur.image.filename
-            slavename = slvBurstCur.image.filename
+            referencename = masBurstCur.image.filename
+            secondaryname = slvBurstCur.image.filename
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
             rngname = os.path.join(self._insar.fineOffsetsDirname, 'IW{0}'.format(swath), 'range_%02d.off'%(ii+1))
             fact = 4.0 * np.pi * slvBurstCur.rangePixelSize / slvBurstCur.radarWavelength
-            #infCur = multiply2(mastername, slavename, ionname, rngname, fact, overlapBox[jj][4:8], virtual=virtual)
-            infCur = multiply2(mastername, slavename, fact, rngname=rngname, ionname=None, infname=None, overlapBox=overlapBox[jj][4:8], valid=True, virtual=virtual)
+            #infCur = multiply2(referencename, secondaryname, ionname, rngname, fact, overlapBox[jj][4:8], virtual=virtual)
+            infCur = multiply2(referencename, secondaryname, fact, rngname=rngname, ionname=None, infname=None, overlapBox=overlapBox[jj][4:8], valid=True, virtual=virtual)
             (dopCur, Ka) = computeDopplerOffset(masBurstCur, overlapBox[jj][4], overlapBox[jj][5], overlapBox[jj][6], overlapBox[jj][7], nrlks=nrlks, nalks=nalks)
             #rng = multilookIndex(overlapBox[jj][6]-1, overlapBox[jj][7]-1, nrlks) * masBurstCur.rangePixelSize + masBurstCur.startingRange
             #Ka  = masBurstCur.azimuthFMRate(rng)
@@ -2536,7 +2536,7 @@ def esd_noion(self, ionParam):
             totalSamples += infTop.size
 
             if index[0].size:
-                #misregistration in sec. it should be OK to only use master frequency to compute ESD
+                #misregistration in sec. it should be OK to only use reference frequency to compute ESD
                 misreg0 = np.angle(infDif[index]) / (2.0 * np.pi * (frqTop[index]-frqCur[index]))
                 misreg=np.append(misreg, misreg0.flatten())
                 print("misregistration at burst %02d and burst %02d of swath %d: %10.5f azimuth lines"%(ii+1-1, ii+1, swath, np.mean(misreg0, dtype=np.float64)/masBurstCur.azimuthTimeInterval))
@@ -2552,7 +2552,7 @@ def esd_noion(self, ionParam):
             continue
         else:
             misreg = np.mean(misreg, dtype=np.float64)
-            print("misregistration from ESD: {} sec, {} azimuth lines\n".format(misreg, misreg/master.bursts[minBurst].azimuthTimeInterval))
+            print("misregistration from ESD: {} sec, {} azimuth lines\n".format(misreg, misreg/reference.bursts[minBurst].azimuthTimeInterval))
 
 
         sdir = os.path.join(ionParam.ionDirname, esddir, 'IW{0}'.format(swath))
@@ -2562,8 +2562,8 @@ def esd_noion(self, ionParam):
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = master.bursts[ii] 
-            slvBurst = slave.bursts[jj]
+            masBurst = reference.bursts[ii] 
+            slvBurst = secondary.bursts[jj]
 
             #ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
             #ion = np.fromfile(ionname, dtype=np.float32).reshape(masBurst.numberOfLines, masBurst.numberOfSamples)

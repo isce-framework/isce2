@@ -24,7 +24,7 @@ SOURCE = Component.Facility('source',
 '''
 
 adding reference and source to TOPSSwathSLCProduct and name the new instance coregSwathSLCProduct. 
-This way we can store the source(before coregistration) and the refernce (stack master) images.
+This way we can store the source(before coregistration) and the refernce (stack reference) images.
 
 '''
 class coregSwathSLCProduct(TOPSSwathSLCProduct):

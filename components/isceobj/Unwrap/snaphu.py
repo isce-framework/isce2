@@ -43,7 +43,7 @@ class snaphu(Component):
         self.wrapName = basename
         self.unwrapName = basename.replace('.flat', '.unw')
 
-        self.wavelength = obj.insar.masterFrame.getInstrument().getRadarWavelength()
+        self.wavelength = obj.insar.referenceFrame.getInstrument().getRadarWavelength()
         self.width      = obj.insar.resampIntImage.width 
         self.costMode   = 'DEFO'
         self.initMethod = 'MST'
@@ -53,10 +53,10 @@ class snaphu(Component):
         self.rangeLooks = obj.insar.topo.numberRangeLooks
         self.azimuthLooks = obj.insar.topo.numberAzimuthLooks
 
-        azres = obj.insar.masterFrame.platform.antennaLength/2.0
+        azres = obj.insar.referenceFrame.platform.antennaLength/2.0
         azfact = azres / obj.insar.topo.azimuthSpacing
 
-        rBW = obj.insar.masterFrame.instrument.pulseLength * obj.insar.masterFrame.instrument.chirpSlope
+        rBW = obj.insar.referenceFrame.instrument.pulseLength * obj.insar.referenceFrame.instrument.chirpSlope
         rgres = abs(SPEED_OF_LIGHT / (2.0 * rBW))
         rngfact = rgres/obj.insar.topo.slantRangePixelSpacing
 

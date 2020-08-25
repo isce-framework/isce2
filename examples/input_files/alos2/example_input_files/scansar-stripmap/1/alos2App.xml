@@ -2,10 +2,10 @@
 <alos2App>
   <component name="alos2insar">
 
-    <property name="master directory">../../../z_common_data/insarzd_test_dataset/gorkha/a157/140809</property>
-    <property name="slave directory">../../../z_common_data/insarzd_test_dataset/gorkha/a157/150725</property>
-    <property name="master frames">[0550]</property>
-    <property name="slave frames">[0540]</property>
+    <property name="reference directory">../../../z_common_data/insarzd_test_dataset/gorkha/a157/140809</property>
+    <property name="secondary directory">../../../z_common_data/insarzd_test_dataset/gorkha/a157/150725</property>
+    <property name="reference frames">[0550]</property>
+    <property name="secondary frames">[0540]</property>
 
     <property name="dem for coregistration">../../../z_common_data/insarzd_test_dataset/gorkha/dem/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
     <property name="dem for geocoding">../../../z_common_data/insarzd_test_dataset/gorkha/dem/3/demLat_N22_N33_Lon_E078_E092.dem.wgs84</property>
@@ -44,9 +44,9 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 ======================================================================================================-->
 
 
-    <!--Note that, in ScanSAR-stripmap interferometry, ScanSAR must be master!-->
-    <!--<property name="master directory">None</property>-->
-    <!--<property name="slave directory">None</property>-->
+    <!--Note that, in ScanSAR-stripmap interferometry, ScanSAR must be reference!-->
+    <!--<property name="reference directory">None</property>-->
+    <!--<property name="secondary directory">None</property>-->
 
     <!--=========================================================================================
     This is a list of frames, e.g., [0680, 0690]. Here is how you can find frame number. Below 
@@ -58,10 +58,10 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     The number 0685 (indicated by ^) is the frame number. DON'T use the frame number in the zip
     file name, as it may be incorrect (like the above example).
     ==========================================================================================-->
-    <!--<property name="master frames">None</property>-->
-    <!--<property name="slave frames">None</property>-->
-    <!--<property name="master polarization">HH</property>-->
-    <!--<property name="slave polarization">HH</property>-->
+    <!--<property name="reference frames">None</property>-->
+    <!--<property name="secondary frames">None</property>-->
+    <!--<property name="reference polarization">HH</property>-->
+    <!--<property name="secondary polarization">HH</property>-->
 
 
     <!--=========================================================================================
@@ -124,20 +124,20 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
     <!--=========================================================================================
     if ScanSAR burst synchronization is lower than this threshold, an MBF filter is applied to 
-    the master/slave images to remove non-overlap azimuth burst spectrum to improve coherence.
+    the reference/secondary images to remove non-overlap azimuth burst spectrum to improve coherence.
     ==========================================================================================-->
     <!--<property name="burst synchronization threshold">75.0</property>-->
 
 
     <!--=========================================================================================
-    crop slcs to the master/slave overlap area. Cropping is always done for ScanSAR-stripmap 
+    crop slcs to the reference/secondary overlap area. Cropping is always done for ScanSAR-stripmap 
     interferometry
     ==========================================================================================-->
     <!--<property name="crop slc">False</property>-->
 
 
     <!--=========================================================================================
-    This is for determining the number of offsets to be estimated between master and slave SLCs.
+    This is for determining the number of offsets to be estimated between reference and secondary SLCs.
     for areas where no water body data available, turn this off, otherwise the program will use 
     geometrical offset, which is not accuate enough. If it still does not work, set 
     "number of range offsets for slc matching" and "number of azimuth offsets for slc matching"

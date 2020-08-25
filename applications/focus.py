@@ -315,9 +315,9 @@ def main():
     fi.defaultInitModule = 'InitFromXmlFile'
     fi.initComponentFromFile()
 
-    master = fi.getComponent('Master')
+    reference = fi.getComponent('Reference')
 
-    focuser = Focuser(rawObj=master)
+    focuser = Focuser(rawObj=reference)
     focuser.focuser()
 
 if __name__ == "__main__":

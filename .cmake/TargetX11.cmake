@@ -5,9 +5,6 @@ set(components
 
 find_package(X11 COMPONENTS ${components})
 
-# The X11::{component} targets only exist for CMake ≥ 3.14,
-# so we create them here for backwards compatibility.
-
 if(X11_FOUND)
 
     # make X11 look like a regular find_package component

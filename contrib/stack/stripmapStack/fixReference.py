@@ -11,9 +11,9 @@ def cmdLineParse():
     Command line parser.
     '''
 
-    parser = argparse.ArgumentParser(description='Fix master metadata')
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master SLC')
+    parser = argparse.ArgumentParser(description='Fix reference metadata')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference SLC')
     parser.add_argument('-o', '--offset', dest='offset', type=str, required=True,
             help='Pickle with offsets')
 
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     
     inps = cmdLineParse()
 
-    mdb = shelve.open( os.path.join(inps.master, 'data'), writeback=True)
+    mdb = shelve.open( os.path.join(inps.reference, 'data'), writeback=True)
     odb = shelve.open( inps.offset, flag='r')
 
     field = odb['cull_field']

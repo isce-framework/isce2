@@ -14,8 +14,8 @@ def createParser():
     Create command line parser.
     '''
     
-    parser = argparse.ArgumentParser(description='Generate all kml files for the master and slave slc')
-    parser.add_argument('-i', '--i', dest='inputdir', type=str, default="slaves", help='Input directory')
+    parser = argparse.ArgumentParser(description='Generate all kml files for the reference and secondary slc')
+    parser.add_argument('-i', '--i', dest='inputdir', type=str, default="secondarys", help='Input directory')
     parser.add_argument('-o', '--o', dest='outputdir', type=str, default="kml_slcs", help='Output directory')
     return parser
 
@@ -41,12 +41,12 @@ def main(iargs=None):
         os.mkdir(outputdir)
 
     
-    # see if the masterdir also exist
-    indir = os.path.abspath(os.path.join(inputdir, '..',"master"))
+    # see if the referencedir also exist
+    indir = os.path.abspath(os.path.join(inputdir, '..',"reference"))
     if os.path.isdir(inputdir):
-        outfile = os.path.join(outputdir,'master.kml')
+        outfile = os.path.join(outputdir,'reference.kml')
         cmd = "plotBursts.py -i " + indir + " -k " + outfile   
-        print("master date:")
+        print("reference date:")
         print(cmd)
         os.system(cmd)
 

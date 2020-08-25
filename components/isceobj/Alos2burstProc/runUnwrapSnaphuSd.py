@@ -24,8 +24,8 @@ def runUnwrapSnaphuSd(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    #slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    #secondaryTrack = self._insar.loadTrack(reference=False)
 
     sdDir = 'sd'
     os.makedirs(sdDir, exist_ok=True)
@@ -68,9 +68,9 @@ def runUnwrapSnaphuSd(self):
             os.remove(amplitudeMultilook+'.vrt')
             os.remove(amplitudeMultilook+'.xml')
         else:
-            tmid = masterTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*masterTrack.azimuthLineInterval+
-                   masterTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*masterTrack.azimuthLineInterval)
-            snaphuUnwrap(masterTrack, tmid, 
+            tmid = referenceTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*referenceTrack.azimuthLineInterval+
+                   referenceTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*referenceTrack.azimuthLineInterval)
+            snaphuUnwrap(referenceTrack, tmid, 
                 sdInterferogramFilt, 
                 sdCoherence, 
                 sdInterferogramUnwrap, 
@@ -109,17 +109,17 @@ def runUnwrapSnaphuSd(self):
     # STEP 4. convert to azimuth deformation
     ############################################################
     #burst cycle in s
-    burstCycleLength = masterTrack.frames[0].swaths[0].burstCycleLength / masterTrack.frames[0].swaths[0].prf
+    burstCycleLength = referenceTrack.frames[0].swaths[0].burstCycleLength / referenceTrack.frames[0].swaths[0].prf
 
     #compute azimuth fmrate
     #stack all azimuth fmrates
     index = np.array([], dtype=np.float64)
     ka = np.array([], dtype=np.float64)
-    for frame in masterTrack.frames:
+    for frame in referenceTrack.frames:
         for swath in frame.swaths:
-            startingRangeMultilook = masterTrack.frames[0].swaths[0].startingRange + \
-                                    (self._insar.numberRangeLooks1*self._insar.numberRangeLooksSd-1.0)/2.0*masterTrack.frames[0].swaths[0].rangePixelSize
-            rangePixelSizeMultilook = self._insar.numberRangeLooks1 * self._insar.numberRangeLooksSd * masterTrack.frames[0].swaths[0].rangePixelSize
+            startingRangeMultilook = referenceTrack.frames[0].swaths[0].startingRange + \
+                                    (self._insar.numberRangeLooks1*self._insar.numberRangeLooksSd-1.0)/2.0*referenceTrack.frames[0].swaths[0].rangePixelSize
+            rangePixelSizeMultilook = self._insar.numberRangeLooks1 * self._insar.numberRangeLooksSd * referenceTrack.frames[0].swaths[0].rangePixelSize
             index0 = (swath.startingRange + np.arange(swath.numberOfSamples) * swath.rangePixelSize - startingRangeMultilook) / rangePixelSizeMultilook
             ka0 = np.polyval(swath.azimuthFmrateVsPixel[::-1], np.arange(swath.numberOfSamples))
             index = np.concatenate((index, index0))
@@ -129,9 +129,9 @@ def runUnwrapSnaphuSd(self):
     ka = np.polyval(p, np.arange(width))
 
     #compute radar beam footprint velocity at middle track
-    tmid = masterTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*masterTrack.azimuthLineInterval+
-           masterTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*masterTrack.azimuthLineInterval)
-    svmid = masterTrack.orbit.interpolateOrbit(tmid, method='hermite')
+    tmid = referenceTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*referenceTrack.azimuthLineInterval+
+           referenceTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*referenceTrack.azimuthLineInterval)
+    svmid = referenceTrack.orbit.interpolateOrbit(tmid, method='hermite')
     #earth radius in meters
     r = 6371 * 1000.0
     #radar footprint velocity

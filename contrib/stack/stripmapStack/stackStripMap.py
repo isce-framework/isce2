@@ -40,8 +40,8 @@ def createParser():
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
             help='DEM file (with .xml and .vrt files)')
 
-    parser.add_argument('-m', '--master_date', dest='masterDate', type=str, default=None,
-            help='Directory with master acquisition')
+    parser.add_argument('-m', '--reference_date', dest='referenceDate', type=str, default=None,
+            help='Directory with reference acquisition')
     
     parser.add_argument('-t', '--time_threshold', dest='dtThr', type=float, default=10000.0,
             help='Time threshold (max temporal baseline in days)')
@@ -128,15 +128,15 @@ def get_dates(inps):
     acuisitionDates.sort()
     print (dirs)
     print (acuisitionDates)
-    if inps.masterDate not in acuisitionDates:
-        print ('master date was not found. The first acquisition will be considered as the stack master date.')
-    if inps.masterDate is None or inps.masterDate not in acuisitionDates:
-        inps.masterDate = acuisitionDates[0]
-    slaveDates = acuisitionDates.copy()
-    slaveDates.remove(inps.masterDate)
-    return acuisitionDates, inps.masterDate, slaveDates 
+    if inps.referenceDate not in acuisitionDates:
+        print ('reference date was not found. The first acquisition will be considered as the stack reference date.')
+    if inps.referenceDate is None or inps.referenceDate not in acuisitionDates:
+        inps.referenceDate = acuisitionDates[0]
+    secondaryDates = acuisitionDates.copy()
+    secondaryDates.remove(inps.referenceDate)
+    return acuisitionDates, inps.referenceDate, secondaryDates 
   
-def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFlag=False, rubberSheet=False):
+def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False):
     # A coregistered stack of SLCs
     i=0
 
@@ -152,30 +152,30 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_master")
-    config_prefix = "config_master_"
-    runObj.master_focus_split_geometry(stackMasterDate, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
+    runObj.configure(inps, 'run_' + str(i) + "_reference")
+    config_prefix = "config_reference_"
+    runObj.reference_focus_split_geometry(stackReferenceDate, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
     runObj.finalize()
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_focus_split")
     config_prefix = "config_focus_split"
-    runObj.slaves_focus_split(slaveDates, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
+    runObj.secondarys_focus_split(secondaryDates, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
     runObj.finalize()
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_geo2rdr_coarseResamp")
     config_prefix = "config_geo2rdr_coarseResamp_"
-    runObj.slaves_geo2rdr_resampleSlc(stackMasterDate, slaveDates, config_prefix, native=(not inps.nofocus) or (not inps.zerodop))
+    runObj.secondarys_geo2rdr_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, native=(not inps.nofocus) or (not inps.zerodop))
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_refineSlaveTiming")
-    config_prefix = 'config_refineSlaveTiming_'
-    runObj.refineSlaveTiming_Network(pairs, stackMasterDate, slaveDates, config_prefix)
+    runObj.configure(inps, 'run_' + str(i) + "_refineSecondaryTiming")
+    config_prefix = 'config_refineSecondaryTiming_'
+    runObj.refineSecondaryTiming_Network(pairs, stackReferenceDate, secondaryDates, config_prefix)
     runObj.finalize()
 
     i+=1
@@ -188,7 +188,7 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_fineResamp")
     config_prefix = 'config_fineResamp_'
-    runObj.slaves_fine_resampleSlc(stackMasterDate, slaveDates, config_prefix, split=splitFlag)
+    runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
     runObj.finalize()
     
     if rubberSheet:
@@ -196,7 +196,7 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
        runObj = run()
        runObj.configure(inps, 'run_' + str(i) + "_denseOffset")
        config_prefix = 'config_denseOffset_'
-       runObj.denseOffsets_Network(pairs, stackMasterDate, slaveDates, config_prefix) 
+       runObj.denseOffsets_Network(pairs, stackReferenceDate, secondaryDates, config_prefix) 
        runObj.finalize()
 
        i+=1
@@ -209,20 +209,20 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
        runObj = run()
        runObj.configure(inps, 'run_' + str(i) + "_resampleOffset")
        config_prefix = 'config_resampOffsets_'
-       runObj.resampleOffset(slaveDates, config_prefix)
+       runObj.resampleOffset(secondaryDates, config_prefix)
        runObj.finalize()
 
        i+=1
        runObj = run()
        runObj.configure(inps, 'run_' + str(i) + "_replaceOffsets")
-       runObj.replaceOffsets(slaveDates)
+       runObj.replaceOffsets(secondaryDates)
        runObj.finalize()
 
        i+=1
        runObj = run()
        runObj.configure(inps, 'run_' + str(i) + "_fineResamp")
        config_prefix = 'config_fineResamp_'
-       runObj.slaves_fine_resampleSlc(stackMasterDate, slaveDates, config_prefix, split=splitFlag)
+       runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
        runObj.finalize()
 
     # adding the baseline grid generation
@@ -230,27 +230,27 @@ def slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFl
     config_prefix = 'config_baselinegrid_'
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_grid_baseline")
-    runObj.gridBaseline(stackMasterDate, slaveDates,config_prefix)
+    runObj.gridBaseline(stackReferenceDate, secondaryDates,config_prefix)
     runObj.finalize()
 
     return i
 
-def interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs):
+def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs):
     # an interferogram stack without ionosphere correction. 
     # coregistration is with geometry + const offset
 
 
-    i = slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFlag=False, rubberSheet=False)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False)
     
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_igram")
     config_prefix = 'config_igram_'
     low_or_high = "/"
-    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix)    
+    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)    
     runObj.finalize()
 
-def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs):
+def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs):
 
     # raise exception for ALOS-1 if --fbd2fbs was used
     run_unpack_file = os.path.join(inps.workDir, 'run_unPackALOS')
@@ -265,14 +265,14 @@ def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, 
     # an interferogram stack with ionosphere correction.
     # coregistration is with geometry + const offset + rubbersheeting
 
-    i = slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFlag=True, rubberSheet=True)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=True, rubberSheet=True)
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_' + str(i) + "_igram")
     config_prefix = 'config_igram_'
     low_or_high = "/"
-    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix)
+    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
     runObj.finalize()    
 
     i+=1
@@ -280,7 +280,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, 
     runObj.configure(inps, 'run_' + str(i) + "_igramLowBand")
     config_prefix = 'config_igramLowBand_'
     low_or_high = "/LowBand/"
-    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix)
+    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
     runObj.finalize()
 
     i+=1
@@ -288,7 +288,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, 
     runObj.configure(inps, 'run_' + str(i) + "_igramHighBand")
     config_prefix = 'config_igramHighBand_'
     low_or_high = "/HighBand/"
-    runObj.igrams_network(pairs, acquisitionDates, stackMasterDate, low_or_high, config_prefix)
+    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
     runObj.finalize()
 
     i+=1
@@ -297,14 +297,14 @@ def interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, 
     config_prefix = 'config_iono_'
     lowBand = '/LowBand/'
     highBand = '/HighBand/'
-    runObj.dispersive_nonDispersive(pairs, acquisitionDates, stackMasterDate,
+    runObj.dispersive_nonDispersive(pairs, acquisitionDates, stackReferenceDate,
                            lowBand, highBand, config_prefix)
     runObj.finalize()
 
 def main(iargs=None):
 
   inps = cmdLineParse(iargs)
-  # name of the folder of the coreg SLCs including baselines, SLC, geom_master subfolders
+  # name of the folder of the coreg SLCs including baselines, SLC, geom_reference subfolders
   inps.stack_folder = 'merged'
   inps.dense_offsets_folder = 'dense_offsets'
 
@@ -324,16 +324,16 @@ def main(iargs=None):
   inps.alks = str(int(inps.alks)*int(ar))
  
   # getting the acquisitions
-  acquisitionDates, stackMasterDate, slaveDates = get_dates(inps)
+  acquisitionDates, stackReferenceDate, secondaryDates = get_dates(inps)
   configDir = os.path.join(inps.workDir,'configs')
   os.makedirs(configDir, exist_ok=True)
   runDir = os.path.join(inps.workDir,'run_files')
   os.makedirs(runDir, exist_ok=True)
 
   if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
-    pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=False)
+    pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
   else:
-    pairs = selectPairs(inps,stackMasterDate, slaveDates, acquisitionDates,doBaselines=True)  
+    pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)  
   print ('number of pairs: ', len(pairs))
 
   ###If only a summary is requested quit after this
@@ -348,13 +348,13 @@ def main(iargs=None):
   #############################
 
   if inps.workflow == 'slc':
-     slcStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs, splitFlag=False, rubberSheet=False)
+     slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False)
 
   elif inps.workflow == 'interferogram':
-     interferogramStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs)
+     interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs)
 
   elif inps.workflow == 'ionosphere':
-     interferogramIonoStack(inps, acquisitionDates, stackMasterDate, slaveDates, pairs) 
+     interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs) 
 
   
 if __name__ == "__main__":

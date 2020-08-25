@@ -46,10 +46,10 @@ def runLooks(self):
     '''
    
     refPol = self._grd.polarizations[0]
-    master = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
+    reference = self._grd.loadProduct( os.path.join(self._grd.outputFolder, 'beta_{0}.xml'.format(refPol)))
 
 
-    azlooks, rglooks = self._grd.getLooks( self.posting, master.groundRangePixelSize, master.azimuthPixelSize, self.numberAzimuthLooks, self.numberRangeLooks)
+    azlooks, rglooks = self._grd.getLooks( self.posting, reference.groundRangePixelSize, reference.azimuthPixelSize, self.numberAzimuthLooks, self.numberRangeLooks)
 
 
     if (azlooks == 1) and (rglooks == 1):
@@ -61,7 +61,7 @@ def runLooks(self):
         takeLooks(inname, azlooks, rglooks)
 
         if not slantRange:
-            inname = master.slantRangeImage.filename
+            inname = reference.slantRangeImage.filename
             takeLooks(inname, azlooks, rglooks)
             slantRange = True
 

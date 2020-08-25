@@ -26,8 +26,8 @@ def cmdLineParse():
             help = 'Number of range looks')
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
             help = 'Input DEM to use')
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help = 'Dir with master frame')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help = 'Dir with reference frame')
     parser.add_argument('-o', '--output', dest='outdir', type=str, required=True,
             help = 'Output directory')
     parser.add_argument('-n','--native', dest='nativedop', action='store_true',
@@ -382,10 +382,10 @@ if __name__ == '__main__':
     if (inps.sntl1a):
         pm = ProductManager()
         pm.configure()
-        frame = pm.loadProduct(inps.master)
+        frame = pm.loadProduct(inps.reference)
         doppler = [0.]
     else:
-        db = shelve.open(os.path.join(inps.master, 'data'))
+        db = shelve.open(os.path.join(inps.reference, 'data'))
         frame = db['frame']
         
         try:

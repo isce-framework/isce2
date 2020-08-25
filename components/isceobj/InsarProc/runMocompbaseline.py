@@ -39,7 +39,7 @@ posIndx = 1
 
 def runMocompbaseline(self):
     logger.info("Calculating Baseline")
-    ellipsoid = self._insar.getMasterFrame().getInstrument().getPlatform().getPlanet().get_elp()
+    ellipsoid = self._insar.getReferenceFrame().getInstrument().getPlatform().getPlanet().get_elp()
     # schPositions computed in orbit2sch
     # objFormSlc's  created during formSlc
 
@@ -58,10 +58,10 @@ def runMocompbaseline(self):
     objMocompbaseline.setMocompPosition2(mocompPosition2[posIndx])
     objMocompbaseline.setMocompPositionIndex2(mocompIndex2)
 
-    objMocompbaseline.wireInputPort(name='masterOrbit',
-                                    object=self.insar.masterOrbit)
-    objMocompbaseline.wireInputPort(name='slaveOrbit',
-                                    object=self.insar.slaveOrbit)
+    objMocompbaseline.wireInputPort(name='referenceOrbit',
+                                    object=self.insar.referenceOrbit)
+    objMocompbaseline.wireInputPort(name='secondaryOrbit',
+                                    object=self.insar.secondaryOrbit)
     objMocompbaseline.wireInputPort(name='ellipsoid', object=ellipsoid)
     objMocompbaseline.wireInputPort(name='peg', object=self.insar.peg)
     objMocompbaseline.setHeight(h)

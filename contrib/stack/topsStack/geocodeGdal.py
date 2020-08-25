@@ -103,7 +103,7 @@ def prepare_lat_lon(inps):
 
     return 'tempLAT.vrt', 'tempLON.vrt' 
 
-    # gdal_translate -of VRT -srcwin  384 384 64889 12785 -outsize 1013 199 ../../COMBINED/GEOM_MASTER/LAT.rdr LAT_off.vrt
+    # gdal_translate -of VRT -srcwin  384 384 64889 12785 -outsize 1013 199 ../../COMBINED/GEOM_REFERENCE/LAT.rdr LAT_off.vrt
     
 
 def writeVRT(infile, latFile, lonFile):

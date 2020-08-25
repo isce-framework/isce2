@@ -23,8 +23,8 @@ def runIonFilt(self):
         self._insar.procDoc.addAllFromCatalog(catalog)
         return
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
     from isceobj.Alos2Proc.runIonSubband import defineIonDir
     ionDir = defineIonDir()

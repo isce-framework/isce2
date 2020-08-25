@@ -16,11 +16,11 @@ import filecmp
 def createParser():
     parser = argparse.ArgumentParser( description='Generate a baseline grid for interferograms')
 
-    parser.add_argument('-m', '--master', dest='master', type=str, required=True,
-            help='Directory with master acquisition shelf file')
+    parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
+            help='Directory with reference acquisition shelf file')
 
-    parser.add_argument('-s', '--slave', dest='slave', type=str, required=True,
-            help='Directory with slave acquisition shelf file')
+    parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
+            help='Directory with secondary acquisition shelf file')
 
     parser.add_argument('-b', '--baseline_file', dest='baselineFile', type=str, required=True,
                 help='An output text file which contains the computed baseline')
@@ -60,35 +60,35 @@ def main(iargs=None):
         os.makedirs(baselineDir, exist_ok=True)
 
 
-    with shelve.open(os.path.join(inps.master, 'data'), flag='r') as mdb:
-         master = mdb['frame'] 
+    with shelve.open(os.path.join(inps.reference, 'data'), flag='r') as mdb:
+         reference = mdb['frame'] 
 
-    with shelve.open(os.path.join(inps.slave, 'data'), flag='r') as mdb:
-         slave = mdb['frame']
+    with shelve.open(os.path.join(inps.secondary, 'data'), flag='r') as mdb:
+         secondary = mdb['frame']
 
-    # check if the master and slave shelf are the same, i.e. it is baseline grid for the master
-    master_SensingStart = master.getSensingStart()
-    slave_SensingStart = slave.getSensingStart()
-    if master_SensingStart==slave_SensingStart:
-        masterBaseline = True
+    # check if the reference and secondary shelf are the same, i.e. it is baseline grid for the reference
+    reference_SensingStart = reference.getSensingStart()
+    secondary_SensingStart = secondary.getSensingStart()
+    if reference_SensingStart==secondary_SensingStart:
+        referenceBaseline = True
     else:
-        masterBaseline = False
+        referenceBaseline = False
 
     refElp = Planet(pname='Earth').ellipsoid
 
-    dr = master.instrument.rangePixelSize
-    dt = 1./master.PRF  #master.azimuthTimeInterval
+    dr = reference.instrument.rangePixelSize
+    dt = 1./reference.PRF  #reference.azimuthTimeInterval
 
-    mStartingRange =  master.startingRange  #min([x.startingRange for x in masterswaths])
-    mFarRange = master.startingRange + dr*(master.numberOfSamples - 1)  #max([x.farRange for x in masterswaths])
-    mSensingStart =  master.sensingStart #  min([x.sensingStart for x in masterswaths])
-    mSensingStop = master.sensingStop    #max([x.sensingStop for x in masterswaths])
-    mOrb = getMergedOrbit(master)
+    mStartingRange =  reference.startingRange  #min([x.startingRange for x in referenceswaths])
+    mFarRange = reference.startingRange + dr*(reference.numberOfSamples - 1)  #max([x.farRange for x in referenceswaths])
+    mSensingStart =  reference.sensingStart #  min([x.sensingStart for x in referenceswaths])
+    mSensingStop = reference.sensingStop    #max([x.sensingStop for x in referenceswaths])
+    mOrb = getMergedOrbit(reference)
 
     nPixels = int(np.round( (mFarRange - mStartingRange)/dr)) + 1
     nLines = int(np.round( (mSensingStop - mSensingStart).total_seconds() / dt)) + 1
 
-    sOrb = getMergedOrbit(slave)
+    sOrb = getMergedOrbit(secondary)
 
     rangeLimits = mFarRange - mStartingRange
 
@@ -108,15 +108,15 @@ def main(iargs=None):
     fid = open(inps.baselineFile, 'wb')
     print('Baseline file {0} dims: {1}L x {2}P'.format(inps.baselineFile, nAzimuth, nRange))
 
-    if masterBaseline:
+    if referenceBaseline:
         Bperp = np.zeros((nAzimuth,nRange), dtype=np.float32)
         Bperp.tofile(fid)
     else:
         for ii, taz in enumerate(azimuthTime):
 
-            masterSV = mOrb.interpolate(taz, method='hermite')
-            mxyz = np.array(masterSV.getPosition())
-            mvel = np.array(masterSV.getVelocity())
+            referenceSV = mOrb.interpolate(taz, method='hermite')
+            mxyz = np.array(referenceSV.getPosition())
+            mvel = np.array(referenceSV.getVelocity())
             
             for jj, rng in enumerate(slantRange):
     
@@ -125,9 +125,9 @@ def main(iargs=None):
                 targxyz = np.array(refElp.LLH(target[0], target[1], target[2]).ecef().tolist())
                 slvTime,slvrng = sOrb.geo2rdr(target)
     
-                slaveSV = sOrb.interpolateOrbit(slvTime, method='hermite')
+                secondarySV = sOrb.interpolateOrbit(slvTime, method='hermite')
     
-                sxyz = np.array( slaveSV.getPosition())
+                sxyz = np.array( secondarySV.getPosition())
     
                 aa = np.linalg.norm(sxyz-mxyz)
                 costheta = (rng*rng + aa*aa - slvrng*slvrng)/(2.*rng*aa)

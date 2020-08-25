@@ -35,11 +35,11 @@ from isceobj.Orbit.Orbit import Orbit
 logger = logging.getLogger('isce.insar.runPulseTiming')
 
 def runPulseTiming(self):
-    master = self.insar.masterFrame
-    slave = self.insar.slaveFrame
+    reference = self.insar.referenceFrame
+    secondary = self.insar.secondaryFrame
     # add orbits to main object -law of demeter pls.
-    self.insar.masterOrbit = pulseTiming(master, self.insar.procDoc, 'master')
-    self.insar.slaveOrbit = pulseTiming(slave, self.insar.procDoc, 'slave')
+    self.insar.referenceOrbit = pulseTiming(reference, self.insar.procDoc, 'reference')
+    self.insar.secondaryOrbit = pulseTiming(secondary, self.insar.procDoc, 'secondary')
     return None
 
 def pulseTiming(frame, catalog, which):

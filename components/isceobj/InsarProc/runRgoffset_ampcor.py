@@ -66,7 +66,7 @@ def runRgoffset(self):
   
     simWidth = imageSim.getWidth()
     simLength = imageSim.getLength()
-    fs1 = self._insar.getMasterFrame().getInstrument().getRangeSamplingRate()  ##check
+    fs1 = self._insar.getReferenceFrame().getInstrument().getRangeSamplingRate()  ##check
     delRg1 = CN.SPEED_OF_LIGHT / (2*fs1)                                          ## if it's correct
   
     objAmpcor = Ampcor(name='insarapp_intsim_ampcor')
@@ -117,7 +117,7 @@ def runRgoffset(self):
     self._stdWriter.setFileTag("rgoffset", "err")
     self._stdWriter.setFileTag("rgoffset", "out")
     objAmpcor.setStdWriter(self._stdWriter)
-    prf = self._insar.getMasterFrame().getInstrument().getPulseRepetitionFrequency()
+    prf = self._insar.getReferenceFrame().getInstrument().getPulseRepetitionFrequency()
     
     
     objAmpcor.setFirstPRF(prf)

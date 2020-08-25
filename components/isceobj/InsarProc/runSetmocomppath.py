@@ -60,28 +60,28 @@ def runSetmocomppath(self, peg=None):
 
     logger.info("Selecting individual peg points")
 
-    planet = self._insar.getMasterFrame().getInstrument().getPlatform().getPlanet()
-    masterOrbit = self._insar.getMasterOrbit()
-    slaveOrbit = self._insar.getSlaveOrbit()
+    planet = self._insar.getReferenceFrame().getInstrument().getPlatform().getPlanet()
+    referenceOrbit = self._insar.getReferenceOrbit()
+    secondaryOrbit = self._insar.getSecondaryOrbit()
 
     if peg:
         self._insar.setPeg(peg)
         logger.info("Using the given peg = %r", peg)
         self._insar.setFirstAverageHeight(
-            averageHeightAboveElp(planet, peg, masterOrbit))
+            averageHeightAboveElp(planet, peg, referenceOrbit))
         self._insar.setSecondAverageHeight(
-            averageHeightAboveElp(planet, peg, slaveOrbit))
+            averageHeightAboveElp(planet, peg, secondaryOrbit))
         self._insar.setFirstProcVelocity(
-            sVelocityAtMidOrbit(planet, peg, masterOrbit))
+            sVelocityAtMidOrbit(planet, peg, referenceOrbit))
         self._insar.setSecondProcVelocity(
-            sVelocityAtMidOrbit(planet, peg, slaveOrbit))
+            sVelocityAtMidOrbit(planet, peg, secondaryOrbit))
 
         return
 
 
     pegpts = []
 
-    for orbitObj, order in zip((masterOrbit, slaveOrbit)
+    for orbitObj, order in zip((referenceOrbit, secondaryOrbit)
                                 ,('First', 'Second')):
         objGetpeg = stdproc.createGetpeg()
         if peg:
@@ -109,11 +109,11 @@ def runSetmocomppath(self, peg=None):
     logger.info('Combining individual peg points.')
     peg = averagePeg(pegpts, planet)
 
-    if self.pegSelect.upper() == 'MASTER':
-        logger.info('Using master info for peg point')
+    if self.pegSelect.upper() == 'REFERENCE':
+        logger.info('Using reference info for peg point')
         self._insar.setPeg(pegpts[0])
-    elif self.pegSelect.upper() == 'SLAVE':
-        logger.info('Using slave infor for peg point')
+    elif self.pegSelect.upper() == 'SECONDARY':
+        logger.info('Using secondary infor for peg point')
         self._insar.setPeg(pegpts[1])
     elif self.pegSelect.upper() == 'AVERAGE':
         logger.info('Using average peg point')

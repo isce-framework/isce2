@@ -28,8 +28,8 @@ def runFiltOffset(self):
     os.makedirs(denseOffsetDir, exist_ok=True)
     os.chdir(denseOffsetDir)
 
-    #masterTrack = self._insar.loadProduct(self._insar.masterTrackParameter)
-    #slaveTrack = self._insar.loadProduct(self._insar.slaveTrackParameter)
+    #referenceTrack = self._insar.loadProduct(self._insar.referenceTrackParameter)
+    #secondaryTrack = self._insar.loadProduct(self._insar.secondaryTrackParameter)
 
 #########################################################################################
 

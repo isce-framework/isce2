@@ -11,19 +11,19 @@ from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTU
 from iscesys.Compatibility import Compatibility
 
 
-MASTER_DATE = Component.Parameter('masterDate',
-                                public_name='master date',
+REFERENCE_DATE = Component.Parameter('referenceDate',
+                                public_name='reference date',
                                 default=None,
                                 type=str,
                                 mandatory=True,
-                                doc='master acquistion date')
+                                doc='reference acquistion date')
 
-SLAVE_DATE = Component.Parameter('slaveDate',
-                                public_name='slave date',
+SECONDARY_DATE = Component.Parameter('secondaryDate',
+                                public_name='secondary date',
                                 default=None,
                                 type=str,
                                 mandatory=True,
-                                doc='slave acquistion date')
+                                doc='secondary acquistion date')
 
 MODE_COMBINATION = Component.Parameter('modeCombination',
                                 public_name='mode combination',
@@ -32,21 +32,21 @@ MODE_COMBINATION = Component.Parameter('modeCombination',
                                 mandatory=True,
                                 doc='mode combination')
 
-MASTER_FRAMES = Component.Parameter('masterFrames',
-                                public_name = 'master frames',
+REFERENCE_FRAMES = Component.Parameter('referenceFrames',
+                                public_name = 'reference frames',
                                 default = None,
                                 type=str,
                                 container=list,
                                 mandatory=False,
-                                doc = 'master frames to process')
+                                doc = 'reference frames to process')
 
-SLAVE_FRAMES = Component.Parameter('slaveFrames',
-                                public_name = 'slave frames',
+SECONDARY_FRAMES = Component.Parameter('secondaryFrames',
+                                public_name = 'secondary frames',
                                 default = None,
                                 type=str,
                                 container=list,
                                 mandatory=False,
-                                doc = 'slave frames to process')
+                                doc = 'secondary frames to process')
 
 STARTING_SWATH = Component.Parameter('startingSwath',
                                 public_name='starting swath',
@@ -108,135 +108,135 @@ AZIMUTH_RESIDUAL_OFFSET_SD = Component.Parameter('azimuthResidualOffsetSd',
                                 container = list,
                                 doc = 'azimuth residual offset estimated by spectral diversity')
 
-SWATH_RANGE_OFFSET_GEOMETRICAL_MASTER = Component.Parameter('swathRangeOffsetGeometricalMaster',
-                                public_name = 'swath range offset from geometry master',
+SWATH_RANGE_OFFSET_GEOMETRICAL_REFERENCE = Component.Parameter('swathRangeOffsetGeometricalReference',
+                                public_name = 'swath range offset from geometry reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath range offset from geometry master')
+                                doc = 'swath range offset from geometry reference')
 
-SWATH_AZIMUTH_OFFSET_GEOMETRICAL_MASTER = Component.Parameter('swathAzimuthOffsetGeometricalMaster',
-                                public_name = 'swath azimuth offset from geometry master',
+SWATH_AZIMUTH_OFFSET_GEOMETRICAL_REFERENCE = Component.Parameter('swathAzimuthOffsetGeometricalReference',
+                                public_name = 'swath azimuth offset from geometry reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath azimuth offset from geometry master')
+                                doc = 'swath azimuth offset from geometry reference')
 
-SWATH_RANGE_OFFSET_MATCHING_MASTER = Component.Parameter('swathRangeOffsetMatchingMaster',
-                                public_name = 'swath range offset from matching master',
+SWATH_RANGE_OFFSET_MATCHING_REFERENCE = Component.Parameter('swathRangeOffsetMatchingReference',
+                                public_name = 'swath range offset from matching reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath range offset from matching master')
+                                doc = 'swath range offset from matching reference')
 
-SWATH_AZIMUTH_OFFSET_MATCHING_MASTER = Component.Parameter('swathAzimuthOffsetMatchingMaster',
-                                public_name = 'swath azimuth offset from matching master',
+SWATH_AZIMUTH_OFFSET_MATCHING_REFERENCE = Component.Parameter('swathAzimuthOffsetMatchingReference',
+                                public_name = 'swath azimuth offset from matching reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath azimuth offset from matching master')
+                                doc = 'swath azimuth offset from matching reference')
 
-SWATH_RANGE_OFFSET_GEOMETRICAL_SLAVE = Component.Parameter('swathRangeOffsetGeometricalSlave',
-                                public_name = 'swath range offset from geometry slave',
+SWATH_RANGE_OFFSET_GEOMETRICAL_SECONDARY = Component.Parameter('swathRangeOffsetGeometricalSecondary',
+                                public_name = 'swath range offset from geometry secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath range offset from geometry slave')
+                                doc = 'swath range offset from geometry secondary')
 
-SWATH_AZIMUTH_OFFSET_GEOMETRICAL_SLAVE = Component.Parameter('swathAzimuthOffsetGeometricalSlave',
-                                public_name = 'swath azimuth offset from geometry slave',
+SWATH_AZIMUTH_OFFSET_GEOMETRICAL_SECONDARY = Component.Parameter('swathAzimuthOffsetGeometricalSecondary',
+                                public_name = 'swath azimuth offset from geometry secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath azimuth offset from geometry slave')
+                                doc = 'swath azimuth offset from geometry secondary')
 
-SWATH_RANGE_OFFSET_MATCHING_SLAVE = Component.Parameter('swathRangeOffsetMatchingSlave',
-                                public_name = 'swath range offset from matching slave',
+SWATH_RANGE_OFFSET_MATCHING_SECONDARY = Component.Parameter('swathRangeOffsetMatchingSecondary',
+                                public_name = 'swath range offset from matching secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath range offset from matching slave')
+                                doc = 'swath range offset from matching secondary')
 
-SWATH_AZIMUTH_OFFSET_MATCHING_SLAVE = Component.Parameter('swathAzimuthOffsetMatchingSlave',
-                                public_name = 'swath azimuth offset from matching slave',
+SWATH_AZIMUTH_OFFSET_MATCHING_SECONDARY = Component.Parameter('swathAzimuthOffsetMatchingSecondary',
+                                public_name = 'swath azimuth offset from matching secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'swath azimuth offset from matching slave')
+                                doc = 'swath azimuth offset from matching secondary')
 
 
 
-FRAME_RANGE_OFFSET_GEOMETRICAL_MASTER = Component.Parameter('frameRangeOffsetGeometricalMaster',
-                                public_name = 'frame range offset from geometry master',
+FRAME_RANGE_OFFSET_GEOMETRICAL_REFERENCE = Component.Parameter('frameRangeOffsetGeometricalReference',
+                                public_name = 'frame range offset from geometry reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame range offset from geometry master')
+                                doc = 'frame range offset from geometry reference')
 
-FRAME_AZIMUTH_OFFSET_GEOMETRICAL_MASTER = Component.Parameter('frameAzimuthOffsetGeometricalMaster',
-                                public_name = 'frame azimuth offset from geometry master',
+FRAME_AZIMUTH_OFFSET_GEOMETRICAL_REFERENCE = Component.Parameter('frameAzimuthOffsetGeometricalReference',
+                                public_name = 'frame azimuth offset from geometry reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame azimuth offset from geometry master')
+                                doc = 'frame azimuth offset from geometry reference')
 
-FRAME_RANGE_OFFSET_MATCHING_MASTER = Component.Parameter('frameRangeOffsetMatchingMaster',
-                                public_name = 'frame range offset from matching master',
+FRAME_RANGE_OFFSET_MATCHING_REFERENCE = Component.Parameter('frameRangeOffsetMatchingReference',
+                                public_name = 'frame range offset from matching reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame range offset from matching master')
+                                doc = 'frame range offset from matching reference')
 
-FRAME_AZIMUTH_OFFSET_MATCHING_MASTER = Component.Parameter('frameAzimuthOffsetMatchingMaster',
-                                public_name = 'frame azimuth offset from matching master',
+FRAME_AZIMUTH_OFFSET_MATCHING_REFERENCE = Component.Parameter('frameAzimuthOffsetMatchingReference',
+                                public_name = 'frame azimuth offset from matching reference',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame azimuth offset from matching master')
+                                doc = 'frame azimuth offset from matching reference')
 
-FRAME_RANGE_OFFSET_GEOMETRICAL_SLAVE = Component.Parameter('frameRangeOffsetGeometricalSlave',
-                                public_name = 'frame range offset from geometry slave',
+FRAME_RANGE_OFFSET_GEOMETRICAL_SECONDARY = Component.Parameter('frameRangeOffsetGeometricalSecondary',
+                                public_name = 'frame range offset from geometry secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame range offset from geometry slave')
+                                doc = 'frame range offset from geometry secondary')
 
-FRAME_AZIMUTH_OFFSET_GEOMETRICAL_SLAVE = Component.Parameter('frameAzimuthOffsetGeometricalSlave',
-                                public_name = 'frame azimuth offset from geometry slave',
+FRAME_AZIMUTH_OFFSET_GEOMETRICAL_SECONDARY = Component.Parameter('frameAzimuthOffsetGeometricalSecondary',
+                                public_name = 'frame azimuth offset from geometry secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame azimuth offset from geometry slave')
+                                doc = 'frame azimuth offset from geometry secondary')
 
-FRAME_RANGE_OFFSET_MATCHING_SLAVE = Component.Parameter('frameRangeOffsetMatchingSlave',
-                                public_name = 'frame range offset from matching slave',
+FRAME_RANGE_OFFSET_MATCHING_SECONDARY = Component.Parameter('frameRangeOffsetMatchingSecondary',
+                                public_name = 'frame range offset from matching secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame range offset from matching slave')
+                                doc = 'frame range offset from matching secondary')
 
-FRAME_AZIMUTH_OFFSET_MATCHING_SLAVE = Component.Parameter('frameAzimuthOffsetMatchingSlave',
-                                public_name = 'frame azimuth offset from matching slave',
+FRAME_AZIMUTH_OFFSET_MATCHING_SECONDARY = Component.Parameter('frameAzimuthOffsetMatchingSecondary',
+                                public_name = 'frame azimuth offset from matching secondary',
                                 default = None,
                                 type = float,
                                 mandatory = True,
                                 container = list,
-                                doc = 'frame azimuth offset from matching slave')
+                                doc = 'frame azimuth offset from matching secondary')
 
 NUMBER_RANGE_LOOKS1 = Component.Parameter('numberRangeLooks1',
                                 public_name='number of range looks 1',
@@ -324,103 +324,103 @@ RADAR_DEM_AFFINE_TRANSFORM = Component.Parameter('radarDemAffineTransform',
                                 container = list,
                                 doc = 'radar dem affine transform parameters')
 
-MASTER_SLC = Component.Parameter('masterSlc',
-                                public_name='master slc',
+REFERENCE_SLC = Component.Parameter('referenceSlc',
+                                public_name='reference slc',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master slc file')
+                                doc='reference slc file')
 
-SLAVE_SLC = Component.Parameter('slaveSlc',
-                                public_name='slave slc',
+SECONDARY_SLC = Component.Parameter('secondarySlc',
+                                public_name='secondary slc',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave slc file')
+                                doc='secondary slc file')
 
-MASTER_BURST_PREFIX = Component.Parameter('masterBurstPrefix',
-                                public_name='master burst prefix',
+REFERENCE_BURST_PREFIX = Component.Parameter('referenceBurstPrefix',
+                                public_name='reference burst prefix',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master burst prefix')
+                                doc='reference burst prefix')
 
-SLAVE_BURST_PREFIX = Component.Parameter('slaveBurstPrefix',
-                                public_name='slave burst prefix',
+SECONDARY_BURST_PREFIX = Component.Parameter('secondaryBurstPrefix',
+                                public_name='secondary burst prefix',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave burst prefix')
+                                doc='secondary burst prefix')
 
-MASTER_MAGNITUDE = Component.Parameter('masterMagnitude',
-                                public_name='master magnitude',
+REFERENCE_MAGNITUDE = Component.Parameter('referenceMagnitude',
+                                public_name='reference magnitude',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master magnitude file')
+                                doc='reference magnitude file')
 
-SLAVE_MAGNITUDE = Component.Parameter('slaveMagnitude',
-                                public_name='slave magnitude',
+SECONDARY_MAGNITUDE = Component.Parameter('secondaryMagnitude',
+                                public_name='secondary magnitude',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave magnitude file')
+                                doc='secondary magnitude file')
 
-MASTER_SWATH_OFFSET = Component.Parameter('masterSwathOffset',
-                                public_name='master swath offset',
+REFERENCE_SWATH_OFFSET = Component.Parameter('referenceSwathOffset',
+                                public_name='reference swath offset',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master swath offset file')
+                                doc='reference swath offset file')
 
-SLAVE_SWATH_OFFSET = Component.Parameter('slaveSwathOffset',
-                                public_name='slave swath offset',
+SECONDARY_SWATH_OFFSET = Component.Parameter('secondarySwathOffset',
+                                public_name='secondary swath offset',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave swath offset file')
+                                doc='secondary swath offset file')
 
-MASTER_FRAME_OFFSET = Component.Parameter('masterFrameOffset',
-                                public_name='master frame offset',
+REFERENCE_FRAME_OFFSET = Component.Parameter('referenceFrameOffset',
+                                public_name='reference frame offset',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master frame offset file')
+                                doc='reference frame offset file')
 
-SLAVE_FRAME_OFFSET = Component.Parameter('slaveFrameOffset',
-                                public_name='slave frame offset',
+SECONDARY_FRAME_OFFSET = Component.Parameter('secondaryFrameOffset',
+                                public_name='secondary frame offset',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave frame offset file')
+                                doc='secondary frame offset file')
 
-MASTER_FRAME_PARAMETER = Component.Parameter('masterFrameParameter',
-                                public_name='master frame parameter',
+REFERENCE_FRAME_PARAMETER = Component.Parameter('referenceFrameParameter',
+                                public_name='reference frame parameter',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master frame parameter file')
+                                doc='reference frame parameter file')
 
-SLAVE_FRAME_PARAMETER = Component.Parameter('slaveFrameParameter',
-                                public_name='slave frame parameter',
+SECONDARY_FRAME_PARAMETER = Component.Parameter('secondaryFrameParameter',
+                                public_name='secondary frame parameter',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave frame parameter file')
+                                doc='secondary frame parameter file')
 
-MASTER_TRACK_PARAMETER = Component.Parameter('masterTrackParameter',
-                                public_name='master track parameter',
+REFERENCE_TRACK_PARAMETER = Component.Parameter('referenceTrackParameter',
+                                public_name='reference track parameter',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='master track parameter file')
+                                doc='reference track parameter file')
 
-SLAVE_TRACK_PARAMETER = Component.Parameter('slaveTrackParameter',
-                                public_name='slave track parameter',
+SECONDARY_TRACK_PARAMETER = Component.Parameter('secondaryTrackParameter',
+                                public_name='secondary track parameter',
                                 default=None,
                                 type=str,
                                 mandatory=False,
-                                doc='slave track parameter file')
+                                doc='secondary track parameter file')
 
 DEM = Component.Parameter('dem',
                                 public_name='dem for coregistration',
@@ -793,11 +793,11 @@ class Alos2burstProc(Component):
     to modify and return their values.
     """
 
-    parameter_list = (MASTER_DATE,
-                      SLAVE_DATE,
+    parameter_list = (REFERENCE_DATE,
+                      SECONDARY_DATE,
                       MODE_COMBINATION,
-                      MASTER_FRAMES,
-                      SLAVE_FRAMES,
+                      REFERENCE_FRAMES,
+                      SECONDARY_FRAMES,
                       STARTING_SWATH,
                       ENDING_SWATH,
                       BURST_UNSYNCHRONIZED_TIME,
@@ -806,22 +806,22 @@ class Alos2burstProc(Component):
                       AZIMUTH_RESIDUAL_OFFSET_CC,
                       RANGE_RESIDUAL_OFFSET_SD,
                       AZIMUTH_RESIDUAL_OFFSET_SD,
-                      SWATH_RANGE_OFFSET_GEOMETRICAL_MASTER,
-                      SWATH_AZIMUTH_OFFSET_GEOMETRICAL_MASTER,
-                      SWATH_RANGE_OFFSET_MATCHING_MASTER,
-                      SWATH_AZIMUTH_OFFSET_MATCHING_MASTER,
-                      SWATH_RANGE_OFFSET_GEOMETRICAL_SLAVE,
-                      SWATH_AZIMUTH_OFFSET_GEOMETRICAL_SLAVE,
-                      SWATH_RANGE_OFFSET_MATCHING_SLAVE,
-                      SWATH_AZIMUTH_OFFSET_MATCHING_SLAVE,
-                      FRAME_RANGE_OFFSET_GEOMETRICAL_MASTER,
-                      FRAME_AZIMUTH_OFFSET_GEOMETRICAL_MASTER,
-                      FRAME_RANGE_OFFSET_MATCHING_MASTER,
-                      FRAME_AZIMUTH_OFFSET_MATCHING_MASTER,
-                      FRAME_RANGE_OFFSET_GEOMETRICAL_SLAVE,
-                      FRAME_AZIMUTH_OFFSET_GEOMETRICAL_SLAVE,
-                      FRAME_RANGE_OFFSET_MATCHING_SLAVE,
-                      FRAME_AZIMUTH_OFFSET_MATCHING_SLAVE,
+                      SWATH_RANGE_OFFSET_GEOMETRICAL_REFERENCE,
+                      SWATH_AZIMUTH_OFFSET_GEOMETRICAL_REFERENCE,
+                      SWATH_RANGE_OFFSET_MATCHING_REFERENCE,
+                      SWATH_AZIMUTH_OFFSET_MATCHING_REFERENCE,
+                      SWATH_RANGE_OFFSET_GEOMETRICAL_SECONDARY,
+                      SWATH_AZIMUTH_OFFSET_GEOMETRICAL_SECONDARY,
+                      SWATH_RANGE_OFFSET_MATCHING_SECONDARY,
+                      SWATH_AZIMUTH_OFFSET_MATCHING_SECONDARY,
+                      FRAME_RANGE_OFFSET_GEOMETRICAL_REFERENCE,
+                      FRAME_AZIMUTH_OFFSET_GEOMETRICAL_REFERENCE,
+                      FRAME_RANGE_OFFSET_MATCHING_REFERENCE,
+                      FRAME_AZIMUTH_OFFSET_MATCHING_REFERENCE,
+                      FRAME_RANGE_OFFSET_GEOMETRICAL_SECONDARY,
+                      FRAME_AZIMUTH_OFFSET_GEOMETRICAL_SECONDARY,
+                      FRAME_RANGE_OFFSET_MATCHING_SECONDARY,
+                      FRAME_AZIMUTH_OFFSET_MATCHING_SECONDARY,
                       NUMBER_RANGE_LOOKS1,
                       NUMBER_AZIMUTH_LOOKS1,
                       NUMBER_RANGE_LOOKS2,
@@ -834,20 +834,20 @@ class Alos2burstProc(Component):
                       NUMBER_AZIMUTH_LOOKS_SD,
                       SUBBAND_RADAR_WAVLENGTH,
                       RADAR_DEM_AFFINE_TRANSFORM,
-                      MASTER_SLC,
-                      SLAVE_SLC,
-                      MASTER_BURST_PREFIX,
-                      SLAVE_BURST_PREFIX,
-                      MASTER_MAGNITUDE,
-                      SLAVE_MAGNITUDE,
-                      MASTER_SWATH_OFFSET,
-                      SLAVE_SWATH_OFFSET,
-                      MASTER_FRAME_OFFSET,
-                      SLAVE_FRAME_OFFSET,
-                      MASTER_FRAME_PARAMETER,
-                      SLAVE_FRAME_PARAMETER,
-                      MASTER_TRACK_PARAMETER,
-                      SLAVE_TRACK_PARAMETER,
+                      REFERENCE_SLC,
+                      SECONDARY_SLC,
+                      REFERENCE_BURST_PREFIX,
+                      SECONDARY_BURST_PREFIX,
+                      REFERENCE_MAGNITUDE,
+                      SECONDARY_MAGNITUDE,
+                      REFERENCE_SWATH_OFFSET,
+                      SECONDARY_SWATH_OFFSET,
+                      REFERENCE_FRAME_OFFSET,
+                      SECONDARY_FRAME_OFFSET,
+                      REFERENCE_FRAME_PARAMETER,
+                      SECONDARY_FRAME_PARAMETER,
+                      REFERENCE_TRACK_PARAMETER,
+                      SECONDARY_TRACK_PARAMETER,
                       DEM,
                       DEM_GEO,
                       WBD,
@@ -912,12 +912,12 @@ class Alos2burstProc(Component):
         self.procDoc = procDoc
         return None
 
-    def setFilename(self, masterDate, slaveDate, nrlks1, nalks1, nrlks2, nalks2):
+    def setFilename(self, referenceDate, secondaryDate, nrlks1, nalks1, nrlks2, nalks2):
 
-        # if masterDate == None:
-        #     masterDate = self.masterDate
-        # if slaveDate == None:
-        #     slaveDate = self.slaveDate
+        # if referenceDate == None:
+        #     referenceDate = self.referenceDate
+        # if secondaryDate == None:
+        #     secondaryDate = self.secondaryDate
         # if nrlks1 == None:
         #     nrlks1 = self.numberRangeLooks1
         # if nalks1 == None:
@@ -927,24 +927,24 @@ class Alos2burstProc(Component):
         # if nalks2 == None:
         #     nalks2 = self.numberAzimuthLooks2
 
-        ms = masterDate + '-' + slaveDate
+        ms = referenceDate + '-' + secondaryDate
         ml1 = '_{}rlks_{}alks'.format(nrlks1, nalks1)
         ml2 = '_{}rlks_{}alks'.format(nrlks1*nrlks2, nalks1*nalks2)
 
-        self.masterSlc = masterDate + '.slc'
-        self.slaveSlc = slaveDate + '.slc'
-        self.masterBurstPrefix = masterDate
-        self.slaveBurstPrefix = slaveDate
-        self.masterMagnitude = masterDate + '.mag'
-        self.slaveMagnitude = slaveDate + '.mag'
-        self.masterSwathOffset = 'swath_offset_' + masterDate + '.txt'
-        self.slaveSwathOffset = 'swath_offset_' + slaveDate + '.txt'
-        self.masterFrameOffset = 'frame_offset_' + masterDate + '.txt'
-        self.slaveFrameOffset = 'frame_offset_' + slaveDate + '.txt'
-        self.masterFrameParameter = masterDate + '.frame.xml'
-        self.slaveFrameParameter = slaveDate + '.frame.xml'
-        self.masterTrackParameter = masterDate + '.track.xml'
-        self.slaveTrackParameter = slaveDate + '.track.xml'
+        self.referenceSlc = referenceDate + '.slc'
+        self.secondarySlc = secondaryDate + '.slc'
+        self.referenceBurstPrefix = referenceDate
+        self.secondaryBurstPrefix = secondaryDate
+        self.referenceMagnitude = referenceDate + '.mag'
+        self.secondaryMagnitude = secondaryDate + '.mag'
+        self.referenceSwathOffset = 'swath_offset_' + referenceDate + '.txt'
+        self.secondarySwathOffset = 'swath_offset_' + secondaryDate + '.txt'
+        self.referenceFrameOffset = 'frame_offset_' + referenceDate + '.txt'
+        self.secondaryFrameOffset = 'frame_offset_' + secondaryDate + '.txt'
+        self.referenceFrameParameter = referenceDate + '.frame.xml'
+        self.secondaryFrameParameter = secondaryDate + '.frame.xml'
+        self.referenceTrackParameter = referenceDate + '.track.xml'
+        self.secondaryTrackParameter = secondaryDate + '.track.xml'
         #self.dem = 
         #self.demGeo = 
         #self.wbd = 
@@ -983,12 +983,12 @@ class Alos2burstProc(Component):
         self.geoIon = ms + ml2 + '.ion.geo'
 
 
-    def setFilenameSd(self, masterDate, slaveDate, nrlks1, nalks1, nrlks_sd, nalks_sd, nsd=3):
+    def setFilenameSd(self, referenceDate, secondaryDate, nrlks1, nalks1, nrlks_sd, nalks_sd, nsd=3):
         #spectral diversity
-        # if masterDate == None:
-        #     masterDate = self.masterDate
-        # if slaveDate == None:
-        #     slaveDate = self.slaveDate
+        # if referenceDate == None:
+        #     referenceDate = self.referenceDate
+        # if secondaryDate == None:
+        #     secondaryDate = self.secondaryDate
         # if nrlks1 == None:
         #     nrlks1 = self.numberRangeLooks1
         # if nalks1 == None:
@@ -998,7 +998,7 @@ class Alos2burstProc(Component):
         # if nalks_sd == None:
         #     nalks_sd = self.numberAzimuthLooksSd
 
-        ms = masterDate + '-' + slaveDate
+        ms = referenceDate + '-' + secondaryDate
         ml1 = '_{}rlks_{}alks'.format(nrlks1, nalks1)
         ml2sd = '_{}rlks_{}alks'.format(nrlks1*nrlks_sd, nalks1*nalks_sd)
         self.interferogramSd = ['sd_{}_'.format(i+1) + ms + ml1 + '.int' for i in range(nsd)]
@@ -1051,42 +1051,42 @@ class Alos2burstProc(Component):
         return None
 
 
-    def loadTrack(self, master=True):
+    def loadTrack(self, reference=True):
         '''
         Load the track using Product Manager.
         '''
-        if master:
-            track = self.loadProduct(self.masterTrackParameter)
+        if reference:
+            track = self.loadProduct(self.referenceTrackParameter)
         else:
-            track = self.loadProduct(self.slaveTrackParameter)
+            track = self.loadProduct(self.secondaryTrackParameter)
 
         track.frames = []
-        for i, frameNumber in enumerate(self.masterFrames):
+        for i, frameNumber in enumerate(self.referenceFrames):
             os.chdir('f{}_{}'.format(i+1, frameNumber))
-            if master:
-                track.frames.append(self.loadProduct(self.masterFrameParameter))
+            if reference:
+                track.frames.append(self.loadProduct(self.referenceFrameParameter))
             else:
-                track.frames.append(self.loadProduct(self.slaveFrameParameter))
+                track.frames.append(self.loadProduct(self.secondaryFrameParameter))
             os.chdir('../')
 
         return track
 
 
-    def saveTrack(self, track, master=True):
+    def saveTrack(self, track, reference=True):
         '''
         Save the track to XML files using Product Manager.
         '''
-        if master:
-            self.saveProduct(track, self.masterTrackParameter)
+        if reference:
+            self.saveProduct(track, self.referenceTrackParameter)
         else:
-            self.saveProduct(track, self.slaveTrackParameter)
+            self.saveProduct(track, self.secondaryTrackParameter)
 
-        for i, frameNumber in enumerate(self.masterFrames):
+        for i, frameNumber in enumerate(self.referenceFrames):
             os.chdir('f{}_{}'.format(i+1, frameNumber))
-            if master:
-                self.saveProduct(track.frames[i], self.masterFrameParameter)
+            if reference:
+                self.saveProduct(track.frames[i], self.referenceFrameParameter)
             else:
-                self.saveProduct(track.frames[i], self.slaveFrameParameter)
+                self.saveProduct(track.frames[i], self.secondaryFrameParameter)
             os.chdir('../')
 
         return None

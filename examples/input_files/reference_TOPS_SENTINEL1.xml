@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component name="master">
+<component name="reference">
   <property name="safe">../data/S1A_IW_SLC__1SSV_20150119T135944_20150119T140004_004241_005286_4271.SAFE</property>
   <property name="swath number">2</property>
-  <!-- Be careful. Metadata for unpacked product will be stored in "output directory".xml file. So don't use the same name for input catalog file and output directory. You will end up overwriting the input catalog. We use masterdir to ensure we dont overwrite master.xml -->
-  <property name="output directory">masterdir</property>
+  <!-- Be careful. Metadata for unpacked product will be stored in "output directory".xml file. So don't use the same name for input catalog file and output directory. You will end up overwriting the input catalog. We use referencedir to ensure we dont overwrite reference.xml -->
+  <property name="output directory">referencedir</property>
   <property name="orbit directory">/home/vagrant/orbit/S1A/precise</property>
   <property name="auxiliary data directory">/home/vagrant/orbit/S1A/aux</property>
 </component>
-<!-- Shown above is the bare minimum input XML file for TOPS SENTINEL1 sensor. The master and slave catalog xml files have the same structure.
+<!-- Shown above is the bare minimum input XML file for TOPS SENTINEL1 sensor. The reference and secondary catalog xml files have the same structure.
 
 All file paths in the input files should either be absolute paths or relative to the processing directory.
 

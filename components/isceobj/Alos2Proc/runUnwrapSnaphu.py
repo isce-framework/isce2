@@ -22,8 +22,8 @@ def runUnwrapSnaphu(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    #slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    #secondaryTrack = self._insar.loadTrack(reference=False)
 
     insarDir = 'insar'
     os.makedirs(insarDir, exist_ok=True)
@@ -43,9 +43,9 @@ def runUnwrapSnaphu(self):
             costMode = 's', 
             initMethod = 'mcf')
     else:
-        tmid = masterTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*masterTrack.azimuthLineInterval+
-               masterTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*masterTrack.azimuthLineInterval)
-        snaphuUnwrap(masterTrack, tmid, 
+        tmid = referenceTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*referenceTrack.azimuthLineInterval+
+               referenceTrack.numberOfLines/2.0*self._insar.numberAzimuthLooks1*referenceTrack.azimuthLineInterval)
+        snaphuUnwrap(referenceTrack, tmid, 
             self._insar.filteredInterferogram, 
             self._insar.multilookPhsig, 
             self._insar.unwrappedInterferogram, 

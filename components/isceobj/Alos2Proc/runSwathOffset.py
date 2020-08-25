@@ -21,10 +21,10 @@ def runSwathOffset(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
 
@@ -46,34 +46,34 @@ def runSwathOffset(self):
             continue
 
         #compute swath offset
-        offsetMaster = swathOffset(masterTrack.frames[i], self._insar.masterSlc, self._insar.masterSwathOffset, 
+        offsetReference = swathOffset(referenceTrack.frames[i], self._insar.referenceSlc, self._insar.referenceSwathOffset, 
                                    crossCorrelation=self.swathOffsetMatching, numberOfAzimuthLooks=10)
-        #only use geometrical offset for slave
-        offsetSlave = swathOffset(slaveTrack.frames[i], self._insar.slaveSlc, self._insar.slaveSwathOffset, 
+        #only use geometrical offset for secondary
+        offsetSecondary = swathOffset(secondaryTrack.frames[i], self._insar.secondarySlc, self._insar.secondarySwathOffset, 
                                   crossCorrelation=False, numberOfAzimuthLooks=10)
 
         #initialization
         if i == 0:
-            self._insar.swathRangeOffsetGeometricalMaster = []
-            self._insar.swathAzimuthOffsetGeometricalMaster = []
-            self._insar.swathRangeOffsetGeometricalSlave = []
-            self._insar.swathAzimuthOffsetGeometricalSlave = []
+            self._insar.swathRangeOffsetGeometricalReference = []
+            self._insar.swathAzimuthOffsetGeometricalReference = []
+            self._insar.swathRangeOffsetGeometricalSecondary = []
+            self._insar.swathAzimuthOffsetGeometricalSecondary = []
             if self.swathOffsetMatching:
-                self._insar.swathRangeOffsetMatchingMaster = []
-                self._insar.swathAzimuthOffsetMatchingMaster = []
-                #self._insar.swathRangeOffsetMatchingSlave = []
-                #self._insar.swathAzimuthOffsetMatchingSlave = []
+                self._insar.swathRangeOffsetMatchingReference = []
+                self._insar.swathAzimuthOffsetMatchingReference = []
+                #self._insar.swathRangeOffsetMatchingSecondary = []
+                #self._insar.swathAzimuthOffsetMatchingSecondary = []
 
         #append list directly, as the API support 2-d list
-        self._insar.swathRangeOffsetGeometricalMaster.append(offsetMaster[0])
-        self._insar.swathAzimuthOffsetGeometricalMaster.append(offsetMaster[1])
-        self._insar.swathRangeOffsetGeometricalSlave.append(offsetSlave[0])
-        self._insar.swathAzimuthOffsetGeometricalSlave.append(offsetSlave[1])
+        self._insar.swathRangeOffsetGeometricalReference.append(offsetReference[0])
+        self._insar.swathAzimuthOffsetGeometricalReference.append(offsetReference[1])
+        self._insar.swathRangeOffsetGeometricalSecondary.append(offsetSecondary[0])
+        self._insar.swathAzimuthOffsetGeometricalSecondary.append(offsetSecondary[1])
         if self.swathOffsetMatching:
-            self._insar.swathRangeOffsetMatchingMaster.append(offsetMaster[2])
-            self._insar.swathAzimuthOffsetMatchingMaster.append(offsetMaster[3])
-            #self._insar.swathRangeOffsetMatchingSlave.append(offsetSlave[2])
-            #self._insar.swathAzimuthOffsetMatchingSlave.append(offsetSlave[3])
+            self._insar.swathRangeOffsetMatchingReference.append(offsetReference[2])
+            self._insar.swathAzimuthOffsetMatchingReference.append(offsetReference[3])
+            #self._insar.swathRangeOffsetMatchingSecondary.append(offsetSecondary[2])
+            #self._insar.swathAzimuthOffsetMatchingSecondary.append(offsetSecondary[3])
 
         os.chdir('../../')
 
@@ -300,8 +300,8 @@ def estimateSwathOffset(swath1, swath2, image1, image2, rangeScale1=1, azimuthSc
     ampcor.setImageDataType1('real')
     ampcor.setImageDataType2('real')
 
-    ampcor.setMasterSlcImage(mMag)
-    ampcor.setSlaveSlcImage(sMag)
+    ampcor.setReferenceSlcImage(mMag)
+    ampcor.setSecondarySlcImage(sMag)
 
     #MATCH REGION
     rgoff = 0

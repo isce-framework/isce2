@@ -756,8 +756,8 @@ class Geocode(Component):
                 self.logger.error(strerr)
                 raise AttributeError
 
-    def addMasterSlc(self):   #Piyush
-        formslc = self._inputPorts.getPort(name='masterslc').getObject()
+    def addReferenceSlc(self):   #Piyush
+        formslc = self._inputPorts.getPort(name='referenceslc').getObject()
         if(formslc):
             try:
                 self.rangeFirstSample = formslc.startingRange
@@ -892,7 +892,7 @@ class Geocode(Component):
         demPort = Port(name='dem',method=self.addDem)
         ifgPort = Port(name='tobegeocoded',method=self.addInterferogram)
         geoPort = Port(name='geoPosting',method=self.addGeoPosting)
-        slcPort = Port(name='masterslc',method=self.addMasterSlc)    #Piyush
+        slcPort = Port(name='referenceslc',method=self.addReferenceSlc)    #Piyush
 
         self._inputPorts.add(framePort)
         self._inputPorts.add(pegPort)

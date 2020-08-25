@@ -1018,8 +1018,8 @@ class Topo(Component):
                 self.logger.error(strerr)
                 raise AttributeError
 
-    def addMasterSlc(self):     #Piyush
-        formslc = self._inputPorts.getPort(name='masterslc').getObject()
+    def addReferenceSlc(self):     #Piyush
+        formslc = self._inputPorts.getPort(name='referenceslc').getObject()
 
         if (formslc):
             try:
@@ -1103,7 +1103,7 @@ class Topo(Component):
         self.inputPorts['planet'] = self.addPlanet
         self.inputPorts['dem'] = self.addDEM
         self.inputPorts['interferogram'] = self.addInterferogram
-        slcPort = Port(name='masterslc', method=self.addMasterSlc)  #Piyush
+        slcPort = Port(name='referenceslc', method=self.addReferenceSlc)  #Piyush
         self.inputPorts.add(slcPort)     #Piyush
         return None
 

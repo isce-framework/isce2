@@ -21,10 +21,10 @@ def runFormInterferogram(self):
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
-    masterTrack = self._insar.loadTrack(master=True)
-    slaveTrack = self._insar.loadTrack(master=False)
+    referenceTrack = self._insar.loadTrack(reference=True)
+    secondaryTrack = self._insar.loadTrack(reference=False)
 
-    for i, frameNumber in enumerate(self._insar.masterFrames):
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
         frameDir = 'f{}_{}'.format(i+1, frameNumber)
         os.chdir(frameDir)
         for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
@@ -33,27 +33,27 @@ def runFormInterferogram(self):
 
             print('forming interferogram frame {}, swath {}'.format(frameNumber, swathNumber))
 
-            masterSwath = masterTrack.frames[i].swaths[j]
-            slaveSwath = slaveTrack.frames[i].swaths[j]
+            referenceSwath = referenceTrack.frames[i].swaths[j]
+            secondarySwath = secondaryTrack.frames[i].swaths[j]
 
 
             #############################################
             #1. form interferogram
             #############################################
             refinedOffsets = readOffset('cull.off')
-            intWidth = int(masterSwath.numberOfSamples / self._insar.numberRangeLooks1)
-            intLength = int(masterSwath.numberOfLines / self._insar.numberAzimuthLooks1)
-            dopplerVsPixel = [i/slaveSwath.prf for i in slaveSwath.dopplerVsPixel]
+            intWidth = int(referenceSwath.numberOfSamples / self._insar.numberRangeLooks1)
+            intLength = int(referenceSwath.numberOfLines / self._insar.numberAzimuthLooks1)
+            dopplerVsPixel = [i/secondarySwath.prf for i in secondarySwath.dopplerVsPixel]
 
-            #master slc
+            #reference slc
             mSLC = isceobj.createSlcImage()
-            mSLC.load(self._insar.masterSlc+'.xml')
+            mSLC.load(self._insar.referenceSlc+'.xml')
             mSLC.setAccessMode('read')
             mSLC.createImage()
 
-            #slave slc
+            #secondary slc
             sSLC = isceobj.createSlcImage()
-            sSLC.load(self._insar.slaveSlc+'.xml')
+            sSLC.load(self._insar.secondarySlc+'.xml')
             sSLC.setAccessMode('read')
             sSLC.createImage()
 
@@ -86,14 +86,14 @@ def runFormInterferogram(self):
             objResamp.wireInputPort(name='offsets', object=refinedOffsets)
             objResamp.stdWriter = stdWriter
             objResamp.setNumberFitCoefficients(6)
-            objResamp.setNumberRangeBin1(masterSwath.numberOfSamples)
-            objResamp.setNumberRangeBin2(slaveSwath.numberOfSamples)    
+            objResamp.setNumberRangeBin1(referenceSwath.numberOfSamples)
+            objResamp.setNumberRangeBin2(secondarySwath.numberOfSamples)    
             objResamp.setStartLine(1)
-            objResamp.setNumberLines(masterSwath.numberOfLines)
+            objResamp.setNumberLines(referenceSwath.numberOfLines)
             objResamp.setFirstLineOffset(1)
             objResamp.setDopplerCentroidCoefficients(dopplerVsPixel)
-            objResamp.setRadarWavelength(slaveTrack.radarWavelength)
-            objResamp.setSlantRangePixelSpacing(slaveSwath.rangePixelSize)
+            objResamp.setRadarWavelength(secondaryTrack.radarWavelength)
+            objResamp.setSlantRangePixelSpacing(secondarySwath.rangePixelSize)
             objResamp.setNumberRangeLooks(self._insar.numberRangeLooks1)
             objResamp.setNumberAzimuthLooks(self._insar.numberAzimuthLooks1)
             objResamp.setFlattenWithOffsetFitFlag(0)

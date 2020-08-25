@@ -10,7 +10,7 @@
     </property>
 </component>
 
-<!-- Shown above is the bare minimum input XML file for ALOS sensor. The master and slave catalog xml files have the same structure.
+<!-- Shown above is the bare minimum input XML file for ALOS sensor. The reference and secondary catalog xml files have the same structure.
 
 All file paths in the input files should either be absolute paths or relative to the processing directory.
 

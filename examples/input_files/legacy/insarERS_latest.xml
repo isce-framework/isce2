@@ -44,7 +44,7 @@
         <property name="Doppler Method">
             <value>useDopIQ</value>
         </property>
-        <component name="Master">
+        <component name="Reference">
            <property name="IMAGEFILE">
                 <value>'../IMAGERY19920715'</value>
            </property>
@@ -61,7 +61,7 @@
                <value>"../../orbit/ODR/ERS1"</value>
            </property>
         </component>
-        <component name="Slave">
+        <component name="Secondary">
            <property name="IMAGEFILE">
                 <value>'../IMAGERY19920819'</value>
            </property>

@@ -15,8 +15,8 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
-    parser.add_argument('-m', type=str, dest='master', required=True,
-            help='Directory with the master image')
+    parser.add_argument('-m', type=str, dest='reference', required=True,
+            help='Directory with the reference image')
 
     parser.add_argument('-l', action='store_true', dest='legendre', description='Use legendre interpolation instead of default hermite')
 
@@ -36,9 +36,9 @@ if __name__ == '__main__':
         method = 'hermite'
 
     try:
-        mdb = shelve.open( os.path.join(inps.master, 'data'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'data'), flag='r')
     except:
-        mdb = shelve.open( os.path.join(inps.master, 'raw'), flag='r')
+        mdb = shelve.open( os.path.join(inps.reference, 'raw'), flag='r')
 
     mFrame = mdb['frame']
 

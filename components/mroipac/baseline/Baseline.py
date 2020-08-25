@@ -73,10 +73,10 @@ BASELINE_LOCATION = Component.Parameter('baselineLocation',
     type=str,
     mandatory=False,
     doc = ('Location at which to compute baselines - "all" implies '+
-           'top, middle, bottom of master image, '+
-           '"top" implies near start of master image, '+
-           '"bottom" implies at bottom of master image, '+
-           '"middle" implies near middle of master image. '+
+           'top, middle, bottom of reference image, '+
+           '"top" implies near start of reference image, '+
+           '"bottom" implies at bottom of reference image, '+
+           '"middle" implies near middle of reference image. '+
            'To be used in case there is a large shift between images.')
 )
 
@@ -89,15 +89,15 @@ class Baseline(Component):
 
     parameter_list = (BASELINE_LOCATION,)
 
-    # Calculate the Look Angle of the master frame
+    # Calculate the Look Angle of the reference frame
     def calculateLookAngle(self):
         lookVector = self.calculateLookVector()
         return math.degrees(math.atan2(lookVector[1],lookVector[0]))
 
-    # Calculate the look vector of the master frame
+    # Calculate the look vector of the reference frame
     def calculateLookVector(self):
         try:
-            z = self.masterFrame.terrainHeight
+            z = self.referenceFrame.terrainHeight
         except:
             z = 0.0
         cosl = ((self.height-z)*(2*self.radius + self.height + z) +
@@ -141,7 +141,7 @@ class Baseline(Component):
 
     # Given two position vectors and a basis, calculate the offset between the two positions in this basis
     def calculateBasisOffset(self,x1,x2,basis):
-        dx = [(x2[j] - x1[j]) for j in range(len(x1))] # Calculate the difference between the master and slave position vectors
+        dx = [(x2[j] - x1[j]) for j in range(len(x1))] # Calculate the difference between the reference and secondary position vectors
         z_offset = MM.dotProduct(dx,basis.getVelocityVector()) # Calculate the length of the projection of the difference in position and the "velocity" component
         v_offset = MM.dotProduct(dx,basis.getPositionVector())
         c_offset = MM.dotProduct(dx,basis.getCrossTrackVector())
@@ -151,7 +151,7 @@ class Baseline(Component):
     # Calculate the baseline components between two frames
     def baseline(self):
         #TODO This could be further refactored into a method that calculates the baseline between
-        #TODO frames when given a master time and a slave time and a method that calls this method
+        #TODO frames when given a reference time and a secondary time and a method that calls this method
         #TODO multiple times to calculate the rate of baseline change over time.
         for port in self.inputPorts:
             port()
@@ -167,50 +167,50 @@ class Baseline(Component):
 
         if self.baselineLocation.lower() == 'all':
             print('Using entire span of image for estimating baselines')
-            masterTime = [self.masterFrame.getSensingStart(),self.masterFrame.getSensingMid(),self.masterFrame.getSensingStop()]
+            referenceTime = [self.referenceFrame.getSensingStart(),self.referenceFrame.getSensingMid(),self.referenceFrame.getSensingStop()]
         elif self.baselineLocation.lower() == 'middle':
-            print('Estimating baselines around center of master image')
-            masterTime = [self.masterFrame.getSensingMid() - datetime.timedelta(seconds=1.0), self.masterFrame.getSensingMid(), self.masterFrame.getSensingMid() + datetime.timedelta(seconds=1.0)]
+            print('Estimating baselines around center of reference image')
+            referenceTime = [self.referenceFrame.getSensingMid() - datetime.timedelta(seconds=1.0), self.referenceFrame.getSensingMid(), self.referenceFrame.getSensingMid() + datetime.timedelta(seconds=1.0)]
 
         elif self.baselineLocation.lower() == 'top':
-            print('Estimating baselines at top of master image')
-            masterTime =  [self.masterFrame.getSensingStart(), self.masterFrame.getSensingStart() + datetime.timedelta(seconds=1.0), self.masterFrame.getSensingStart() + datetime.timedelta(seconds=2.0)]
+            print('Estimating baselines at top of reference image')
+            referenceTime =  [self.referenceFrame.getSensingStart(), self.referenceFrame.getSensingStart() + datetime.timedelta(seconds=1.0), self.referenceFrame.getSensingStart() + datetime.timedelta(seconds=2.0)]
         elif self.baselineLocation.lower() == 'bottom':
-            print('Estimating baselines at bottom of master image')
-            masterTime =  [self.masterFrame.getSensingStop() - datetime.timedelta(seconds=2.0), self.masterFrame.getSensingStop() - datetime.timedelta(seconds=1.0), self.masterFrame.getSensingStop()]
+            print('Estimating baselines at bottom of reference image')
+            referenceTime =  [self.referenceFrame.getSensingStop() - datetime.timedelta(seconds=2.0), self.referenceFrame.getSensingStop() - datetime.timedelta(seconds=1.0), self.referenceFrame.getSensingStop()]
         else:
             raise Exception('Unknown baseline location: {0}'.format(self.baselineLocation))
 
 
-        slaveTime = [self.slaveFrame.getSensingMid() - datetime.timedelta(seconds=1.0), self.slaveFrame.getSensingMid(), self.slaveFrame.getSensingMid() + datetime.timedelta(seconds=1.0)]
+        secondaryTime = [self.secondaryFrame.getSensingMid() - datetime.timedelta(seconds=1.0), self.secondaryFrame.getSensingMid(), self.secondaryFrame.getSensingMid() + datetime.timedelta(seconds=1.0)]
 
-#        slaveTime = [self.slaveFrame.getSensingStart(),self.slaveFrame.getSensingMid(),self.slaveFrame.getSensingStop()]
+#        secondaryTime = [self.secondaryFrame.getSensingStart(),self.secondaryFrame.getSensingMid(),self.secondaryFrame.getSensingStop()]
 
         for i in range(3):
             # Calculate the Baseline at the start of the scene, mid-scene, and the end of the scene
             # First, get the position and velocity at the start of the scene
             self.logger.info("Sampling time %s" % i)
-            masterBasis = self.calculateBasis(self.masterOrbit,masterTime[i])
-            normV = self.calculateScalarVelocity(self.masterOrbit,masterTime[i])
+            referenceBasis = self.calculateBasis(self.referenceOrbit,referenceTime[i])
+            normV = self.calculateScalarVelocity(self.referenceOrbit,referenceTime[i])
 
             # Calculate the distance moved since the last baseline point
             if (i > 0):
-                deltaT = self._timeDeltaToSeconds(masterTime[i] - masterTime[0])
+                deltaT = self._timeDeltaToSeconds(referenceTime[i] - referenceTime[0])
                 s[i] = s[i-1] + deltaT*normV
 
-            masterSV = self.masterOrbit.interpolateOrbit(masterTime[i], method='hermite')
+            referenceSV = self.referenceOrbit.interpolateOrbit(referenceTime[i], method='hermite')
 
-            slaveSV = self.slaveOrbit.interpolateOrbit(slaveTime[i], method='hermite')
-            x1 = masterSV.getPosition()
-            x2 = slaveSV.getPosition()
-            (z_offset,v_offset,c_offset) = self.calculateBasisOffset(x1,x2,masterBasis)
+            secondarySV = self.secondaryOrbit.interpolateOrbit(secondaryTime[i], method='hermite')
+            x1 = referenceSV.getPosition()
+            x2 = secondarySV.getPosition()
+            (z_offset,v_offset,c_offset) = self.calculateBasisOffset(x1,x2,referenceBasis)
             az_offset.append(z_offset) # Save the position offset
             # Calculate a new start time
-            relativeSlaveTime = slaveTime[i] - datetime.timedelta(seconds=(z_offset/normV))
-            slaveSV = self.slaveOrbit.interpolateOrbit(relativeSlaveTime, method='hermite')
+            relativeSecondaryTime = secondaryTime[i] - datetime.timedelta(seconds=(z_offset/normV))
+            secondarySV = self.secondaryOrbit.interpolateOrbit(relativeSecondaryTime, method='hermite')
             # Recalculate the offsets
-            x2 = slaveSV.getPosition()
-            (z_offset,v_offset,c_offset) = self.calculateBasisOffset(x1,x2,masterBasis)
+            x2 = secondarySV.getPosition()
+            (z_offset,v_offset,c_offset) = self.calculateBasisOffset(x1,x2,referenceBasis)
             vb.append(v_offset)
             hb.append(c_offset)
             csb.append(-hb[i]*lookVector[0] + vb[i]*lookVector[1]) # Multiply the horizontal and vertical baseline components by the look angle vector
@@ -278,11 +278,11 @@ class Baseline(Component):
         self.radius = radius
         return
 
-    def setMasterStartingRange(self,range):
+    def setReferenceStartingRange(self,range):
         self.startingRange1 = range
         return
 
-    def setSlaveStartingRange(self,range):
+    def setSecondaryStartingRange(self,range):
         self.startingRange2 = range
         return
 
@@ -329,15 +329,15 @@ class Baseline(Component):
         return (td.microseconds + (td.seconds + td.days * 24.0 * 3600) * 10**6) / 10**6
 
 
-    def addMasterFrame(self):
-        frame = self._inputPorts.getPort(name='masterFrame').getObject()
-        self.masterFrame = frame
+    def addReferenceFrame(self):
+        frame = self._inputPorts.getPort(name='referenceFrame').getObject()
+        self.referenceFrame = frame
         self.startingRange1 = frame.getStartingRange()
 
         prf = frame.getInstrument().getPulseRepetitionFrequency()
         self.rangePixelSize = frame.getInstrument().getRangePixelSize()
-        self.masterOrbit = frame.getOrbit()
-        midSV = self.masterOrbit.interpolateOrbit(frame.getSensingMid(), method='hermite')
+        self.referenceOrbit = frame.getOrbit()
+        midSV = self.referenceOrbit.interpolateOrbit(frame.getSensingMid(), method='hermite')
 
         self.azimuthPixelSize = midSV.getScalarVelocity()/prf
         try:
@@ -349,17 +349,17 @@ class Baseline(Component):
             self.radius = ellipsoid.get_a()
             self.height = midSV.calculateHeight(ellipsoid)
 
-    def addSlaveFrame(self):
-        frame = self._inputPorts.getPort(name='slaveFrame').getObject()
-        self.slaveFrame = frame
+    def addSecondaryFrame(self):
+        frame = self._inputPorts.getPort(name='secondaryFrame').getObject()
+        self.secondaryFrame = frame
         self.startingRange2 = frame.getStartingRange()
-        self.slaveOrbit = frame.getOrbit()
+        self.secondaryOrbit = frame.getOrbit()
 
     def __init__(self, name=''):
-        self.masterOrbit = None
-        self.slaveOrbit = None
-        self.masterFrame = None
-        self.slaveFrame = None
+        self.referenceOrbit = None
+        self.secondaryOrbit = None
+        self.referenceFrame = None
+        self.secondaryFrame = None
         self.lookAngle = None
         self.rangePixelSize = None
         self.azimuthPixelSize = None
@@ -399,10 +399,10 @@ class Baseline(Component):
         # These provide the orbits
         # These provide the range and azimuth pixel sizes, starting ranges,
         # satellite heights and times for the first lines
-        masterFramePort = Port(name='masterFrame',method=self.addMasterFrame)
-        slaveFramePort = Port(name='slaveFrame',method=self.addSlaveFrame)
-        self._inputPorts.add(masterFramePort)
-        self._inputPorts.add(slaveFramePort)
+        referenceFramePort = Port(name='referenceFrame',method=self.addReferenceFrame)
+        secondaryFramePort = Port(name='secondaryFrame',method=self.addSecondaryFrame)
+        self._inputPorts.add(referenceFramePort)
+        self._inputPorts.add(secondaryFramePort)
         return None
 
 

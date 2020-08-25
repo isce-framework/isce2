@@ -13,8 +13,8 @@ from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTU
 from iscesys.Compatibility import Compatibility
 from isceobj.Scene.Frame import FrameMixin
 
-## Master Slave Hash Table
-MASTER_SLAVE = {0:'master', 1:'slave', 'master':'master', 'slave':'slave'}
+## Reference Secondary Hash Table
+REFERENCE_SECONDARY = {0:'reference', 1:'secondary', 'reference':'reference', 'secondary':'secondary'}
 
 
 FIRST_SAMPLE_ACROSS = Component.Parameter('firstSampleAcross',
@@ -48,71 +48,71 @@ NUMBER_LOCATION_DOWN = Component.Parameter('numberLocationDown',
                                 mandatory=False,
                                 doc='')
 
-MASTER_RAW_PRODUCT = Component.Parameter('masterRawProduct',
-                                public_name = 'master raw product',
+REFERENCE_RAW_PRODUCT = Component.Parameter('referenceRawProduct',
+                                public_name = 'reference raw product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'master raw product xml name')
+                                doc = 'reference raw product xml name')
 
-SLAVE_RAW_PRODUCT = Component.Parameter('slaveRawProduct',
-                                public_name = 'slave raw product',
+SECONDARY_RAW_PRODUCT = Component.Parameter('secondaryRawProduct',
+                                public_name = 'secondary raw product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'slave raw product xml name')
+                                doc = 'secondary raw product xml name')
 
-MASTER_RAW_CROP_PRODUCT = Component.Parameter('masterRawCropProduct',
-                                public_name = 'master raw cropped product',
+REFERENCE_RAW_CROP_PRODUCT = Component.Parameter('referenceRawCropProduct',
+                                public_name = 'reference raw cropped product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'master raw cropped product xml name')
+                                doc = 'reference raw cropped product xml name')
 
-SLAVE_RAW_CROP_PRODUCT = Component.Parameter('slaveRawCropProduct',
-                                public_name = 'slave raw cropped product',
+SECONDARY_RAW_CROP_PRODUCT = Component.Parameter('secondaryRawCropProduct',
+                                public_name = 'secondary raw cropped product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'slave raw cropped product xml name')
-MASTER_SLC_PRODUCT = Component.Parameter('masterSlcProduct',
-                                public_name = 'master slc product',
+                                doc = 'secondary raw cropped product xml name')
+REFERENCE_SLC_PRODUCT = Component.Parameter('referenceSlcProduct',
+                                public_name = 'reference slc product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'master slc product xml name')
+                                doc = 'reference slc product xml name')
 
-SLAVE_SLC_PRODUCT = Component.Parameter('slaveSlcProduct',
-                                public_name = 'slave slc product',
+SECONDARY_SLC_PRODUCT = Component.Parameter('secondarySlcProduct',
+                                public_name = 'secondary slc product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'slave slc product xml name')
+                                doc = 'secondary slc product xml name')
 
-MASTER_SLC_CROP_PRODUCT = Component.Parameter('masterSlcCropProduct',
-                                public_name = 'master slc cropped product',
+REFERENCE_SLC_CROP_PRODUCT = Component.Parameter('referenceSlcCropProduct',
+                                public_name = 'reference slc cropped product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'master slc cropped product xml name')
+                                doc = 'reference slc cropped product xml name')
 
-SLAVE_SLC_CROP_PRODUCT = Component.Parameter('slaveSlcCropProduct',
-                                public_name = 'slave slc cropped product',
+SECONDARY_SLC_CROP_PRODUCT = Component.Parameter('secondarySlcCropProduct',
+                                public_name = 'secondary slc cropped product',
                                 default = None,
                                 type = str,
                                 mandatory = False,
-                                doc = 'slave slc cropped product xml name')
+                                doc = 'secondary slc cropped product xml name')
 
 
-MASTER_GEOMETRY_SYSTEM = Component.Parameter('masterGeometrySystem',
-                                public_name = 'master geometry system',
+REFERENCE_GEOMETRY_SYSTEM = Component.Parameter('referenceGeometrySystem',
+                                public_name = 'reference geometry system',
                                 default = None,
                                 type = str,
                                 mandatory = False,
                                 doc = 'zero doppler or native doppler')
 
-SLAVE_GEOMETRY_SYSTEM = Component.Parameter('slaveGeometrySystem',
-                                public_name = 'slave geometry system',
+SECONDARY_GEOMETRY_SYSTEM = Component.Parameter('secondaryGeometrySystem',
+                                public_name = 'secondary geometry system',
                                 default = None,
                                 type = str,
                                 mandatory = False,
@@ -445,16 +445,16 @@ class StripmapProc(Component, FrameMixin):
     to modify and return their values.
     """
 
-    parameter_list = (MASTER_RAW_PRODUCT,
-                      SLAVE_RAW_PRODUCT,
-                      MASTER_RAW_CROP_PRODUCT,
-                      SLAVE_RAW_CROP_PRODUCT,
-                      MASTER_SLC_PRODUCT,
-                      SLAVE_SLC_PRODUCT,
-                      MASTER_SLC_CROP_PRODUCT,
-                      SLAVE_SLC_CROP_PRODUCT,
-                      MASTER_GEOMETRY_SYSTEM,
-                      SLAVE_GEOMETRY_SYSTEM,
+    parameter_list = (REFERENCE_RAW_PRODUCT,
+                      SECONDARY_RAW_PRODUCT,
+                      REFERENCE_RAW_CROP_PRODUCT,
+                      SECONDARY_RAW_CROP_PRODUCT,
+                      REFERENCE_SLC_PRODUCT,
+                      SECONDARY_SLC_PRODUCT,
+                      REFERENCE_SLC_CROP_PRODUCT,
+                      SECONDARY_SLC_CROP_PRODUCT,
+                      REFERENCE_GEOMETRY_SYSTEM,
+                      SECONDARY_GEOMETRY_SYSTEM,
                       GEOMETRY_DIRECTORY,
                       OFFSETS_DIRECTORY,
                       DENSE_OFFSETS_DIRECTORY,
@@ -531,11 +531,11 @@ class StripmapProc(Component, FrameMixin):
         #        self.geocode_list[i] = y
         return
 
-    def getMasterFrame(self):
-        return self._masterFrame
+    def getReferenceFrame(self):
+        return self._referenceFrame
 
-    def getSlaveFrame(self):
-        return self._slaveFrame
+    def getSecondaryFrame(self):
+        return self._secondaryFrame
 
     def getDemImage(self):
         return self._demImage
@@ -546,23 +546,23 @@ class StripmapProc(Component, FrameMixin):
     def getTopo(self):
         return self._topo
 
-    def setMasterRawImage(self, image):
-        self._masterRawImage = image
+    def setReferenceRawImage(self, image):
+        self._referenceRawImage = image
 
-    def setSlaveRawImage(self, image):
-        self._slaveRawImage = image
+    def setSecondaryRawImage(self, image):
+        self._secondaryRawImage = image
 
-    def setMasterFrame(self, frame):
-        self._masterFrame = frame
+    def setReferenceFrame(self, frame):
+        self._referenceFrame = frame
 
-    def setSlaveFrame(self, frame):
-        self._slaveFrame = frame
+    def setSecondaryFrame(self, frame):
+        self._secondaryFrame = frame
 
-    def setMasterSquint(self, squint):
-        self._masterSquint = squint
+    def setReferenceSquint(self, squint):
+        self._referenceSquint = squint
 
-    def setSlaveSquint(self, squint):
-        self._slaveSquint = squint
+    def setSecondarySquint(self, squint):
+        self._secondarySquint = squint
 
     def setLookSide(self, lookSide):
         self._lookSide = lookSide
@@ -579,12 +579,12 @@ class StripmapProc(Component, FrameMixin):
      ## This overides the _FrameMixin.frame
     @property
     def frame(self):
-        return self.masterFrame
+        return self.referenceFrame
 
     # Some line violate PEP008 in order to facilitate using "grep"
     # for development
-    masterFrame = property(getMasterFrame, setMasterFrame)
-    slaveFrame = property(getSlaveFrame, setSlaveFrame)
+    referenceFrame = property(getReferenceFrame, setReferenceFrame)
+    secondaryFrame = property(getSecondaryFrame, setSecondaryFrame)
     demImage = property(getDemImage, setDemImage) 
     numberPatches = property(getNumberPatches, setNumberPatches)
     topo = property(getTopo, setTopo)
