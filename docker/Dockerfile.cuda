@@ -63,7 +63,6 @@ COPY . /opt/isce2/src/isce2
 RUN set -ex \
  && . /opt/conda/bin/activate root \
  && cd /opt/isce2/src/isce2 \
- && tar xvf stanford_components.tgz \
  && source docker/build_env.sh \
  && mkdir -p $BUILD_DIR \
  && cp docker/SConfigISCE.cuda configuration/SConfigISCE \
