@@ -97,7 +97,12 @@ def main(iargs=None):
         for ind in range(reference.numberOfBursts):
             inputs.append((dirname, demImage, reference, ind))
 
-    pool = mp.Pool(mp.cpu_count())
+    # parallel processing
+    numThread = int(os.environ.get('OMP_NUM_THREADS', mp.cpu_count()))
+    numThread = min(numThread, mp.cpu_count())
+    print('running in parallel with {} processes'.format(numThread))
+
+    pool = mp.Pool(numThread)
     results = pool.map(call_topo, inputs)
     pool.close()
 
@@ -106,7 +111,7 @@ def main(iargs=None):
 
     boxes = np.array(boxes)
     bbox = [np.min(boxes[:,0]), np.max(boxes[:,1]), np.min(boxes[:,2]), np.max(boxes[:,3])]
-    print ('bbox : ',bbox)
+    print('bbox : ', bbox)
     
 
 if __name__ == '__main__':
