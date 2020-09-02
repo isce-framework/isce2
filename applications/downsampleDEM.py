@@ -30,11 +30,12 @@
 
 
 
-
+import os
 import sys
 import argparse
-import os
 from osgeo import gdal
+from isce.applications.gdal2isce_xml import gdal2isce_xml
+
 
 # command line parsing of input file
 def cmdLineParse():
@@ -62,11 +63,11 @@ if __name__ == '__main__':
 
     # check if the input file exist
     if not os.path.isfile(inps.input_dem_vrt):
-       raise Exception('Input file is not found ....')
+        raise Exception('Input file is not found ....')
     # check if the provided input file is a .vrt file and also get the envi filename
     input_dem_envi, file_extension = os.path.splitext(inps.input_dem_vrt)
     if file_extension != '.vrt':
-       raise Exception('Input file is not a vrt file ....')
+        raise Exception('Input file is not a vrt file ....')
     # get the file path
     input_path = os.path.dirname(os.path.abspath(inps.input_dem_vrt))
 
@@ -74,10 +75,20 @@ if __name__ == '__main__':
     # convert the output resolution from m in degrees
     # (this is approximate, could use instead exact expression)
     if inps.res_meter != '':
-        gdal_opts =  gdal.WarpOptions(format='ENVI',outputType=gdal.GDT_Int16,dstSRS='EPSG:4326',xRes=float(inps.res_meter)/110/1000,yRes=float(inps.res_meter)/110/1000,targetAlignedPixels=True)
+        gdal_opts =  gdal.WarpOptions(format='ENVI',
+                                      outputType=gdal.GDT_Int16,
+                                      dstSRS='EPSG:4326',
+                                      xRes=float(inps.res_meter)/110/1000,
+                                      yRes=float(inps.res_meter)/110/1000,
+                                      targetAlignedPixels=True)
 #        res_degree = float(inps.res_meter)/110/1000
     elif inps.res_seconds != '':
-        gdal_opts =  gdal.WarpOptions(format='ENVI',outputType=gdal.GDT_Int16,dstSRS='EPSG:4326',xRes=float(inps.res_seconds)*1/60*1/60,yRes=float(inps.res_seconds)*1/60*1/60,targetAlignedPixels=True)
+        gdal_opts =  gdal.WarpOptions(format='ENVI',
+                                      outputType=gdal.GDT_Int16,
+                                      dstSRS='EPSG:4326',
+                                      xRes=float(inps.res_seconds)*1/60*1/60,
+                                      yRes=float(inps.res_seconds)*1/60*1/60,
+                                      targetAlignedPixels=True)
 #        res_degree = float(1/60*1/60*float(inps.res_seconds))
 
     # The ENVI filename of the coarse DEM to be generated
@@ -90,5 +101,5 @@ if __name__ == '__main__':
     ds = None
 
     # Generating the ISCE xml and vrt of this coarse DEM
-    cmd = "gdal2isce_xml.py -i " + coarse_dem_envi
-    os.system(cmd)
+    gdal2isce_xml(coarse_dem_envi+'.vrt')
+

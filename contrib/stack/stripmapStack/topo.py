@@ -419,9 +419,8 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
 
                 # generate ISCE .xml file
                 if not os.path.isfile(out_file+'.xml'):
-                    cmd = 'gdal2isce_xml.py -i {}.vrt'.format(out_file)
-                    print(cmd)
-                    os.system(cmd)
+                    from isce.applications.gdal2isce_xml import gdal2isce_xml
+                    gdal2isce_xml(out_file+'.vrt')
 
             else:
                 raise ValueError('un-supported multilook method: {}'.format(method))
