@@ -234,7 +234,7 @@ def get_dates(inps):
     if inps.startDate is not None:
         stackStartDate = datetime.datetime(*time.strptime(inps.startDate, "%Y-%m-%d")[0:6])
     else:
-        #if startDate is None let's fix it to first JPL's staellite lunch date :)
+        #if startDate is None let's fix it to first JPL's satellite lunch date :)
         stackStartDate = datetime.datetime(*time.strptime("1958-01-31", "%Y-%m-%d")[0:6])
 
     if inps.stopDate is not None:
@@ -747,7 +747,8 @@ def main(iargs=None):
         print('')
         print('Updating an existing stack ...')
         print('')
-        pairs = selectNeighborPairs(secondaryDates, inps.num_connections,updateStack)   # will be change later
+        dates4NewPairs = sorted(secondaryDates + [stackReferenceDate])[1:]
+        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,updateStack)   # will be change later
     else:
         pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack)
 
