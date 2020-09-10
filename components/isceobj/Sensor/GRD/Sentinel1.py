@@ -467,7 +467,7 @@ class Sentinel1(Component):
         timeStamp = self.product.sensingStart+(self.product.sensingStop - self.product.sensingStart)/2.
         
         for orbType in types:
-            files = glob.glob( os.path.join(self.orbitDir, 'S1A_OPER_AUX_' + orbType + '_OPOD*'))
+            files = glob.glob( os.path.join(self.orbitDir, 'S1?_OPER_AUX_' + orbType + '_OPOD*'))
             filelist.extend(files)
             ###List all orbit files
 
