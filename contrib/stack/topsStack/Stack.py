@@ -940,8 +940,9 @@ class sentinelSLC(object):
            print ("downloading precise or restituted orbits ...")
 
            restitutedOrbitDir = os.path.join(workDir ,'orbits/' + self.date)
-           if os.path.exists(restitutedOrbitDir):
-              orbitFile = glob.glob(os.path.join(restitutedOrbitDir,'*.EOF'))[0]
+           orbitFiles = glob.glob(os.path.join(restitutedOrbitDir,'*.EOF'))
+           if len(orbitFiles) > 0:
+              orbitFile = orbitFiles[0]
 
               #fields = orbitFile.split('_')
               fields = os.path.basename(orbitFile).split('_')
@@ -954,7 +955,7 @@ class sentinelSLC(object):
 
            #if not os.path.exists(restitutedOrbitDir):
            else:
-              os.makedirs(restitutedOrbitDir)
+              os.makedirs(restitutedOrbitDir, exist_ok=True)
 
               cmd = 'fetchOrbit.py -i ' + self.safe_file + ' -o ' + restitutedOrbitDir
               print(cmd)
