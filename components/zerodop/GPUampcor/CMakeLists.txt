@@ -16,7 +16,7 @@ target_include_directories(GPUampcor PUBLIC
     )
 target_link_libraries(GPUampcor PRIVATE
     CUDA::cublas
-    DataAccessor_static
+    isce2::DataAccessorLib
     FFTW::Float
     )
 InstallSameDir(

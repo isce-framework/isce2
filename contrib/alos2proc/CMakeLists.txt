@@ -1,4 +1,4 @@
-Python_add_library(libalos2proc MODULE
+isce2_add_cdll(libalos2proc MODULE
     src/rg_filter.c
     src/lib_file.c
     src/lib_cpx.c

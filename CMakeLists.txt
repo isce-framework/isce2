@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13...3.18)
 
 project(isce2 LANGUAGES C CXX Fortran)
 
@@ -25,6 +25,18 @@ include(TargetGDAL)
 include(TargetMotif)
 include(TargetX11)
 include(UseCython)
+
+# If we're the root cmake project (e.g. not add_subdirectory):
+if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
+    # override this to also test the resulting extension
+    function(Python_add_library target)
+        _Python_add_library(${target} ${ARGN})
+        add_test(NAME import_${target}
+                 COMMAND ${Python_EXECUTABLE} -c
+                     "import ${target}"
+                 )
+    endfunction()
+endif()
 
 if(NOT DEFINED PYTHON_MODULE_DIR)
     set(PYTHON_MODULE_DIR packages CACHE PATH

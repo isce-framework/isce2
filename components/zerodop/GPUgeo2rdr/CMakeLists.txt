@@ -12,7 +12,7 @@ target_include_directories(GPUgeo2rdr PUBLIC
     include
     )
 target_link_libraries(GPUgeo2rdr PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 if(TARGET OpenMP::OpenMP_CXX)
     target_link_libraries(GPUgeo2rdr PRIVATE OpenMP::OpenMP_CXX)

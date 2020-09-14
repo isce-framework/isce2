@@ -1,15 +1,14 @@
-add_library(LineAccessor_static STATIC
+isce2_add_staticlib(LineAccessorLib
     src/ImageAccessor.cpp
     src/LineAccessor.cpp
     src/LineAccessorF.cpp
     )
-target_include_directories(LineAccessor_static PUBLIC include)
-set_property(TARGET LineAccessor_static PROPERTY POSITION_INDEPENDENT_CODE ON)
+target_include_directories(LineAccessorLib PUBLIC include)
 
 Python_add_library(LineAccessor MODULE
     bindings/LineAccessormodule.cpp
     )
-target_link_libraries(LineAccessor PUBLIC LineAccessor_static)
+target_link_libraries(LineAccessor PRIVATE isce2::LineAccessorLib)
 
 InstallSameDir(
     LineAccessor

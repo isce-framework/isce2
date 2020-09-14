@@ -13,11 +13,11 @@ target_include_directories(formslc PUBLIC
     formslc/include
     )
 target_link_libraries(formslc PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 target_link_libraries(formslc PUBLIC
-    utilLib
+    isce2::utilLib
     )
 
 InstallSameDir(

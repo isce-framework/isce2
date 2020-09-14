@@ -1,4 +1,4 @@
-Python_add_library(libfilter MODULE
+isce2_add_cdll(libfilter
     src/rescale_magnitude.c
     src/psfilt.c
     src/timing.c

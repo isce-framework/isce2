@@ -8,9 +8,9 @@ Python_add_library(topozero MODULE
     )
 target_include_directories(topozero PUBLIC include)
 target_link_libraries(topozero PRIVATE
-    combinedLib
-    utilLib
-    DataAccessor_static
+    isce2::combinedLib
+    isce2::utilLib
+    isce2::DataAccessorLib
     )
 set_source_files_properties(src/topozero.f90 PROPERTIES COMPILE_OPTIONS -cpp)
 if(TARGET OpenMP::OpenMP_Fortran)

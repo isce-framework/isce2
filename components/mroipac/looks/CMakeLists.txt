@@ -3,7 +3,7 @@ Python_add_library(looks MODULE
     )
 target_include_directories(looks PUBLIC include)
 target_link_libraries(looks PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 InstallSameDir(

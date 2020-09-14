@@ -7,6 +7,11 @@ Python_add_library(resamp_only MODULE
     src/resamp_onlyState.F
     )
 target_include_directories(resamp_only PUBLIC include)
+target_link_libraries(resamp_only PRIVATE
+    isce2::DataAccessorLib
+    isce2::resampLib
+    isce2::stdoelLib
+    )
 
 InstallSameDir(
     resamp_only

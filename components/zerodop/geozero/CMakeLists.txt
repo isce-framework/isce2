@@ -10,9 +10,9 @@ Python_add_library(geozero MODULE
     )
 target_include_directories(geozero PUBLIC include)
 target_link_libraries(geozero PUBLIC
-    DataAccessor_static
-    combinedLib
-    utilLib
+    isce2::DataAccessorLib
+    isce2::combinedLib
+    isce2::utilLib
     OpenMP::OpenMP_Fortran
     )
 

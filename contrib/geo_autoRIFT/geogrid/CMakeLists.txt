@@ -7,7 +7,7 @@ target_include_directories(geogrid PRIVATE
     )
 target_link_libraries(geogrid PRIVATE
     GDAL::GDAL
-    combinedLib
+    isce2::combinedLib
     )
 
 InstallSameDir(

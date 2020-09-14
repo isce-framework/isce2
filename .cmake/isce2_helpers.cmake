@@ -10,6 +10,40 @@ macro(isce2_get_dir_prefix)
     string(REPLACE "/" "." dir_prefix ${dir_prefix})
 endmacro()
 
+# Usage: isce2_add_staticlib(name [sources ...])
+# Creates a SCons-like isce2 intermediate library.
+# The actual target will also be available via the namespaced isce2:: alias.
+macro(isce2_add_staticlib name)
+    add_library(${name} STATIC ${ARGN})
+    set_target_properties(${name} PROPERTIES
+        OUTPUT_NAME ${name}
+        POSITION_INDEPENDENT_CODE ON
+        )
+    # add alias matching exported target
+    add_library(isce2::${name} ALIAS ${name})
+endmacro()
+
+# Usage: isce2_add_cdll(libname [sources ...])
+# These libraries are loaded using a hardcoded filename, so this
+# macro simplifies adding target properties to make that possible.
+macro(isce2_add_cdll target)
+    add_library(${target} SHARED ${ARGN})
+    set_target_properties(${target} PROPERTIES
+        PREFIX ""
+        OUTPUT_NAME ${target}
+        SUFFIX .so)
+
+    # If we're the root cmake project (e.g. not add_subdirectory):
+    if("${CMAKE_SOURCE_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
+        # override this to also test the resulting extension
+        add_test(NAME load_cdll_${target}
+                 COMMAND ${Python_EXECUTABLE} -c
+                    "from ctypes import cdll; \
+                     cdll.LoadLibrary('$<TARGET_FILE:${target}>')"
+                 )
+    endif()
+endmacro()
+
 # Usage:
 # add_exe_test(main.cpp helpers.F [additional_source.c ...] )
 # or

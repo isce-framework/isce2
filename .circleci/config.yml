@@ -47,7 +47,7 @@ jobs:
             set -ex
             cd /root/project/src/build
             . /opt/conda/bin/activate root
-            ctest
+            ctest --output-on-failure
             ISCE2DIR=$(python3 -c "import os, isce2; print(os.path.dirname(isce2.__file__))" | tail -n 1)
             export PATH=$ISCE2DIR/applications:$PATH
             topsApp.py --help --steps

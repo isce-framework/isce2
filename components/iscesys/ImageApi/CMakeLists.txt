@@ -1,8 +1,4 @@
-# TODO (subdir-staticlib)
-# This library is in a subdirectory but used by other libraries,
-# so it's compiled as a static library so we don't need to worry
-# about RPATH. Is there a better way to this?
-add_library(DataAccessor_static STATIC
+isce2_add_staticlib(DataAccessorLib
     DataAccessor/src/DataAccessorCaster.cpp
     DataAccessor/src/DataAccessor.cpp
     DataAccessor/src/DataAccessorF.cpp
@@ -18,33 +14,31 @@ add_library(DataAccessor_static STATIC
     InterleavedAccessor/src/Poly1dInterpolator.cpp
     InterleavedAccessor/src/Poly2dInterpolator.cpp
     )
-
-set_property(TARGET DataAccessor_static PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(DataAccessor_static PUBLIC
+target_include_directories(DataAccessorLib PUBLIC
     DataAccessor/include
     DataCaster/include
     Factories/include
     InterleavedAccessor/include
     )
-target_link_libraries(DataAccessor_static PUBLIC
-    combinedLib
+target_link_libraries(DataAccessorLib PUBLIC
+    isce2::combinedLib
     )
 
 if(TARGET GDAL::GDAL)
-    target_sources(DataAccessor_static PRIVATE
+    target_sources(DataAccessorLib PRIVATE
         InterleavedAccessor/src/GDALAccessor.cpp
         )
-    target_link_libraries(DataAccessor_static PUBLIC
+    target_link_libraries(DataAccessorLib PUBLIC
         GDAL::GDAL
         )
 else()
-    target_compile_definitions(DataAccessor_static PRIVATE -DHAVE_GDAL=0)
+    target_compile_definitions(DataAccessorLib PRIVATE -DHAVE_GDAL=0)
 endif()
 
 Python_add_library(DataAccessor MODULE
     DataAccessor/bindings/DataAccessormodule.cpp
     )
-target_link_libraries(DataAccessor PRIVATE DataAccessor_static)
+target_link_libraries(DataAccessor PRIVATE isce2::DataAccessorLib)
 
 InstallSameDir(
     Factories/CasterFactory.py
