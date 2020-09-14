@@ -155,10 +155,10 @@ class GeogridOptical():
         
         #   For now print inputs that were obtained
     
-        print("Optical Image parameters: ")
+        print("\nOptical Image parameters: ")
         print("X-direction coordinate: " + str(self.startingX) + "  " + str(self.XSize))
         print("Y-direction coordinate: " + str(self.startingY) + "  " + str(self.YSize))
-        print("Dimensions: " + str(self.numberOfSamples) + "  " + str(self.numberOfLines))
+        print("Dimensions: " + str(self.numberOfSamples) + "  " + str(self.numberOfLines) + "\n")
         
         print("Map inputs: ")
         print("EPSG: " + str(self.epsgDem))
@@ -167,25 +167,45 @@ class GeogridOptical():
         print("XLimits: " + str(self._xlim[0]) + "  " + str(self._xlim[1]))
         print("YLimits: " + str(self._ylim[0]) + "  " + str(self._ylim[1]))
         print("Extent in km: " + str((self._xlim[1]-self._xlim[0])/1000.0) + "  " + str((self._ylim[1]-self._ylim[0])/1000.0))
-        print("DEM: " + str(self.demname))
-        print("Velocities: " + str(self.vxname) + "  " + str(self.vyname))
-        print("Search Range: " + str(self.srxname) + "  " + str(self.sryname))
-        print("Chip Size Min: " + str(self.csminxname) + "  " + str(self.csminyname))
-        print("Chip Size Max: " + str(self.csmaxxname) + "  " + str(self.csmaxyname))
-        print("Stable Surface Mask: " + str(self.ssmname))
-        print("Slopes: " + str(self.dhdxname) + "  " + str(self.dhdyname))
-        print("Output Nodata Value: " + str(self.nodata_out))
-        
-        print("Outputs: ")
+        if (self.demname != ""):
+            print("DEM: " + str(self.demname))
+        if (self.dhdxname != ""):
+            print("Slopes: " + str(self.dhdxname) + "  " + str(self.dhdyname))
+        if (self.vxname != ""):
+            print("Velocities: " + str(self.vxname) + "  " + str(self.vyname))
+        if (self.srxname != ""):
+            print("Search Range: " + str(self.srxname) + "  " + str(self.sryname))
+        if (self.csminxname != ""):
+            print("Chip Size Min: " + str(self.csminxname) + "  " + str(self.csminyname))
+        if (self.csmaxxname != ""):
+            print("Chip Size Max: " + str(self.csmaxxname) + "  " + str(self.csmaxyname))
+        if (self.ssmname != ""):
+            print("Stable Surface Mask: " + str(self.ssmname))
+
+
+        print("\nOutputs: ")
+
         print("Window locations: " + str(self.winlocname))
-        print("Window offsets: " + str(self.winoffname))
-        print("Window search range: " + str(self.winsrname))
-        print("Window chip size min: " + str(self.wincsminname))
-        print("Window chip size max: " + str(self.wincsmaxname))
-        print("Window stable surface mask: " + str(self.winssmname))
-        print("Window rdr_off2vel_x vector: " + str(self.winro2vxname))
-        print("Window rdr_off2vel_y vector: " + str(self.winro2vyname))
-        
+
+        if (self.dhdxname != ""):
+            if (self.vxname != ""):
+                print("Window offsets: " + str(self.winoffname))
+            
+            print("Window rdr_off2vel_x vector: " + str(self.winro2vxname))
+            print("Window rdr_off2vel_y vector: " + str(self.winro2vyname))
+            
+            if (self.srxname != ""):
+                print("Window search range: " + str(self.winsrname))
+
+        if (self.csminxname != ""):
+            print("Window chip size min: " + str(self.wincsminname))
+        if (self.csmaxxname != ""):
+            print("Window chip size max: " + str(self.wincsmaxname))
+        if (self.ssmname != ""):
+            print("Window stable surface mask: " + str(self.winssmname))
+
+        print("Output Nodata Value: " + str(self.nodata_out) + "\n")
+
         
         
         print("Starting processing .... ")
@@ -277,6 +297,8 @@ class GeogridOptical():
 
         print("Ylimits : " + str(geoTrans[3] + (lOff + lCount) * geoTrans[5]) +  "  " + str(geoTrans[3] + lOff * geoTrans[5]))
     
+        print("Origin index (in DEM) of geogrid: " + str(pOff) + "   " + str(lOff))
+        
         print("Dimensions of geogrid: " + str(pCount) + " x " + str(lCount))
                 
         projDem = osr.SpatialReference()
@@ -296,12 +318,14 @@ class GeogridOptical():
             
         if (self.vxname != ""):
             nodata = vxDS.GetRasterBand(1).GetNoDataValue()
+        else:
+            nodata = 0
 
         nodata_out = self.nodata_out
 
 
         pszFormat = "GTiff"
-        adfGeoTransform = ( self._xlim[0], (self._xlim[1]-self._xlim[0])/pCount, 0, self._ylim[1], 0, (self._ylim[0]-self._ylim[1])/lCount )
+        adfGeoTransform = ( geoTrans[0] + pOff * geoTrans[1], geoTrans[1], 0, geoTrans[3] + lOff * geoTrans[5], 0, geoTrans[5] )
         oSRS = osr.SpatialReference()
         pszSRS_WKT = projDem.ExportToWkt()
 
@@ -323,115 +347,113 @@ class GeogridOptical():
 
 
 
+        if ((self.dhdxname != "")&(self.vxname != "")):
+            poDriverOff = gdal.GetDriverByName(pszFormat)
+            if( poDriverOff is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameOff = self.winoffname
+            poDstDSOff = poDriverOff.Create(pszDstFilenameOff, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
+            poDstDSOff.SetGeoTransform( adfGeoTransform )
+            poDstDSOff.SetProjection( pszSRS_WKT )
+            
+            poBand1Off = poDstDSOff.GetRasterBand(1)
+            poBand2Off = poDstDSOff.GetRasterBand(2)
+            poBand1Off.SetNoDataValue(nodata_out)
+            poBand2Off.SetNoDataValue(nodata_out)
 
-        poDriverOff = gdal.GetDriverByName(pszFormat)
-        if( poDriverOff is None ):
-            raise Exception('Cannot create gdal driver for output')
+
+        if ((self.dhdxname != "")&(self.srxname != "")):
+            poDriverSch = gdal.GetDriverByName(pszFormat)
+            if( poDriverSch is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameSch = self.winsrname
+            poDstDSSch = poDriverSch.Create(pszDstFilenameSch, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
+            poDstDSSch.SetGeoTransform( adfGeoTransform )
+            poDstDSSch.SetProjection( pszSRS_WKT )
+            
+            poBand1Sch = poDstDSSch.GetRasterBand(1)
+            poBand2Sch = poDstDSSch.GetRasterBand(2)
+            poBand1Sch.SetNoDataValue(nodata_out)
+            poBand2Sch.SetNoDataValue(nodata_out)
+
+        if (self.csminxname != ""):
+            poDriverMin = gdal.GetDriverByName(pszFormat)
+            if( poDriverMin is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameMin = self.wincsminname
+            poDstDSMin = poDriverMin.Create(pszDstFilenameMin, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
+            poDstDSMin.SetGeoTransform( adfGeoTransform )
+            poDstDSMin.SetProjection( pszSRS_WKT )
+            
+            poBand1Min = poDstDSMin.GetRasterBand(1)
+            poBand2Min = poDstDSMin.GetRasterBand(2)
+            poBand1Min.SetNoDataValue(nodata_out)
+            poBand2Min.SetNoDataValue(nodata_out)
         
-        pszDstFilenameOff = self.winoffname
-        poDstDSOff = poDriverOff.Create(pszDstFilenameOff, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
-        poDstDSOff.SetGeoTransform( adfGeoTransform )
-        poDstDSOff.SetProjection( pszSRS_WKT )
-        
-        poBand1Off = poDstDSOff.GetRasterBand(1)
-        poBand2Off = poDstDSOff.GetRasterBand(2)
-        poBand1Off.SetNoDataValue(nodata_out)
-        poBand2Off.SetNoDataValue(nodata_out)
+        if (self.csmaxxname != ""):
+            poDriverMax = gdal.GetDriverByName(pszFormat)
+            if( poDriverMax is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameMax = self.wincsmaxname
+            poDstDSMax = poDriverMax.Create(pszDstFilenameMax, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
+            poDstDSMax.SetGeoTransform( adfGeoTransform )
+            poDstDSMax.SetProjection( pszSRS_WKT )
+            
+            poBand1Max = poDstDSMax.GetRasterBand(1)
+            poBand2Max = poDstDSMax.GetRasterBand(2)
+            poBand1Max.SetNoDataValue(nodata_out)
+            poBand2Max.SetNoDataValue(nodata_out)
 
 
-
-        poDriverSch = gdal.GetDriverByName(pszFormat)
-        if( poDriverSch is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameSch = self.winsrname
-        poDstDSSch = poDriverSch.Create(pszDstFilenameSch, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
-        poDstDSSch.SetGeoTransform( adfGeoTransform )
-        poDstDSSch.SetProjection( pszSRS_WKT )
-        
-        poBand1Sch = poDstDSSch.GetRasterBand(1)
-        poBand2Sch = poDstDSSch.GetRasterBand(2)
-        poBand1Sch.SetNoDataValue(nodata_out)
-        poBand2Sch.SetNoDataValue(nodata_out)
-
-
-        poDriverMin = gdal.GetDriverByName(pszFormat)
-        if( poDriverMin is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameMin = self.wincsminname
-        poDstDSMin = poDriverMin.Create(pszDstFilenameMin, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
-        poDstDSMin.SetGeoTransform( adfGeoTransform )
-        poDstDSMin.SetProjection( pszSRS_WKT )
-        
-        poBand1Min = poDstDSMin.GetRasterBand(1)
-        poBand2Min = poDstDSMin.GetRasterBand(2)
-        poBand1Min.SetNoDataValue(nodata_out)
-        poBand2Min.SetNoDataValue(nodata_out)
-        
-        
-        poDriverMax = gdal.GetDriverByName(pszFormat)
-        if( poDriverMax is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameMax = self.wincsmaxname
-        poDstDSMax = poDriverMax.Create(pszDstFilenameMax, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Int32)
-        poDstDSMax.SetGeoTransform( adfGeoTransform )
-        poDstDSMax.SetProjection( pszSRS_WKT )
-        
-        poBand1Max = poDstDSMax.GetRasterBand(1)
-        poBand2Max = poDstDSMax.GetRasterBand(2)
-        poBand1Max.SetNoDataValue(nodata_out)
-        poBand2Max.SetNoDataValue(nodata_out)
-
-
-
-        poDriverMsk = gdal.GetDriverByName(pszFormat)
-        if( poDriverMsk is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameMsk = self.winssmname
-        poDstDSMsk = poDriverMsk.Create(pszDstFilenameMsk, xsize=pCount, ysize=lCount, bands=1, eType=gdal.GDT_Int32)
-        poDstDSMsk.SetGeoTransform( adfGeoTransform )
-        poDstDSMsk.SetProjection( pszSRS_WKT )
-        
-        poBand1Msk = poDstDSMsk.GetRasterBand(1)
-        poBand1Msk.SetNoDataValue(nodata_out)
+        if (self.ssmname != ""):
+            poDriverMsk = gdal.GetDriverByName(pszFormat)
+            if( poDriverMsk is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameMsk = self.winssmname
+            poDstDSMsk = poDriverMsk.Create(pszDstFilenameMsk, xsize=pCount, ysize=lCount, bands=1, eType=gdal.GDT_Int32)
+            poDstDSMsk.SetGeoTransform( adfGeoTransform )
+            poDstDSMsk.SetProjection( pszSRS_WKT )
+            
+            poBand1Msk = poDstDSMsk.GetRasterBand(1)
+            poBand1Msk.SetNoDataValue(nodata_out)
 
 
 
 
-
-        poDriverRO2VX = gdal.GetDriverByName(pszFormat)
-        if( poDriverRO2VX is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameRO2VX = self.winro2vxname
-        poDstDSRO2VX = poDriverRO2VX.Create(pszDstFilenameRO2VX, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Float64)
-        poDstDSRO2VX.SetGeoTransform( adfGeoTransform )
-        poDstDSRO2VX.SetProjection( pszSRS_WKT )
-        
-        poBand1RO2VX = poDstDSRO2VX.GetRasterBand(1)
-        poBand2RO2VX = poDstDSRO2VX.GetRasterBand(2)
-        poBand1RO2VX.SetNoDataValue(nodata_out)
-        poBand2RO2VX.SetNoDataValue(nodata_out)
-
-
+        if (self.dhdxname != ""):
+            poDriverRO2VX = gdal.GetDriverByName(pszFormat)
+            if( poDriverRO2VX is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameRO2VX = self.winro2vxname
+            poDstDSRO2VX = poDriverRO2VX.Create(pszDstFilenameRO2VX, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Float64)
+            poDstDSRO2VX.SetGeoTransform( adfGeoTransform )
+            poDstDSRO2VX.SetProjection( pszSRS_WKT )
+            
+            poBand1RO2VX = poDstDSRO2VX.GetRasterBand(1)
+            poBand2RO2VX = poDstDSRO2VX.GetRasterBand(2)
+            poBand1RO2VX.SetNoDataValue(nodata_out)
+            poBand2RO2VX.SetNoDataValue(nodata_out)
 
 
-        poDriverRO2VY = gdal.GetDriverByName(pszFormat)
-        if( poDriverRO2VY is None ):
-            raise Exception('Cannot create gdal driver for output')
-        
-        pszDstFilenameRO2VY = self.winro2vyname
-        poDstDSRO2VY = poDriverRO2VY.Create(pszDstFilenameRO2VY, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Float64)
-        poDstDSRO2VY.SetGeoTransform( adfGeoTransform )
-        poDstDSRO2VY.SetProjection( pszSRS_WKT )
-        
-        poBand1RO2VY = poDstDSRO2VY.GetRasterBand(1)
-        poBand2RO2VY = poDstDSRO2VY.GetRasterBand(2)
-        poBand1RO2VY.SetNoDataValue(nodata_out)
-        poBand2RO2VY.SetNoDataValue(nodata_out)
+            poDriverRO2VY = gdal.GetDriverByName(pszFormat)
+            if( poDriverRO2VY is None ):
+                raise Exception('Cannot create gdal driver for output')
+            
+            pszDstFilenameRO2VY = self.winro2vyname
+            poDstDSRO2VY = poDriverRO2VY.Create(pszDstFilenameRO2VY, xsize=pCount, ysize=lCount, bands=2, eType=gdal.GDT_Float64)
+            poDstDSRO2VY.SetGeoTransform( adfGeoTransform )
+            poDstDSRO2VY.SetProjection( pszSRS_WKT )
+            
+            poBand1RO2VY = poDstDSRO2VY.GetRasterBand(1)
+            poBand2RO2VY = poDstDSRO2VY.GetRasterBand(2)
+            poBand1RO2VY.SetNoDataValue(nodata_out)
+            poBand2RO2VY.SetNoDataValue(nodata_out)
 
 
 
@@ -512,6 +534,8 @@ class GeogridOptical():
                     slp = np.array([sxLine[jj], syLine[jj], -1.0])
                 if (self.vxname != ""):
                     vel = np.array([vxLine[jj], vyLine[jj], 0.0])
+                else:
+                    vel = np.array([0., 0., 0.])
                 if (self.srxname != ""):
                     schrng1 = np.array([srxLine[jj], sryLine[jj], 0.0])
                     schrng2 = np.array([-srxLine[jj], sryLine[jj], 0.0])
@@ -576,98 +600,106 @@ class GeogridOptical():
 #                    else:
 #                        raster11[jj] = 0.
 #                        raster22[jj] = 0.
-                    if (self.vxname == ""):
-#                        pdb.set_trace()
-                        raster11[jj] = 0.
-                        raster22[jj] = 0.
-                    elif (vel[0] == nodata):
-                        raster11[jj] = 0.
-                        raster22[jj] = 0.
-                    else:
-                        raster11[jj] = np.round(np.dot(vel,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1)
-                        raster22[jj] = np.round(np.dot(vel,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1)
+                    if (self.dhdxname != ""):
 
+                        if (self.vxname != ""):
+                            if (vel[0] == nodata):
+                                raster11[jj] = 0.
+                                raster22[jj] = 0.
+                            else:
+                                raster11[jj] = np.round(np.dot(vel,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1)
+                                raster22[jj] = np.round(np.dot(vel,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1)
 
-                    if (self.srxname == ""):
-                        sr_raster11[jj] = nodata_out
-                        sr_raster22[jj] = nodata_out
-                    elif (vel[0] == nodata):
-                        sr_raster11[jj] = 0
-                        sr_raster22[jj] = 0
-                    else:
-                        sr_raster11[jj] = np.abs(np.round(np.dot(schrng1,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1))
-                        sr_raster22[jj] = np.abs(np.round(np.dot(schrng1,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1))
-                        if (np.abs(np.round(np.dot(schrng2,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1)) > sr_raster11[jj]):
-                            sr_raster11[jj] = np.abs(np.round(np.dot(schrng2,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1))
-                        if (np.abs(np.round(np.dot(schrng2,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1)) > sr_raster22[jj]):
-                            sr_raster22[jj] = np.abs(np.round(np.dot(schrng2,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1))
-                        if (sr_raster11[jj] == 0):
-                            sr_raster11[jj] = 1
-                        if (sr_raster22[jj] == 0):
-                            sr_raster22[jj] = 1
+                        cross = np.cross(xunit,yunit)
+                        cross = cross / np.linalg.norm(cross)
+                        cross_check = np.abs(np.arccos(np.dot(normal,cross))/np.pi*180.0-90.0)
+                        
+                        if (cross_check > 1.0):
+                            raster1a[jj] = normal[2]/(self.repeatTime/self.XSize/365.0/24.0/3600.0)*(normal[2]*yunit[1]-normal[1]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                            raster1b[jj] = -normal[2]/(self.repeatTime/self.YSize/365.0/24.0/3600.0)*(normal[2]*xunit[1]-normal[1]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                            raster2a[jj] = -normal[2]/(self.repeatTime/self.XSize/365.0/24.0/3600.0)*(normal[2]*yunit[0]-normal[0]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                            raster2b[jj] = normal[2]/(self.repeatTime/self.YSize/365.0/24.0/3600.0)*(normal[2]*xunit[0]-normal[0]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                        else:
+                            raster1a[jj] = nodata_out
+                            raster1b[jj] = nodata_out
+                            raster2a[jj] = nodata_out
+                            raster2b[jj] = nodata_out
+
+                        if (self.srxname != ""):
+                            if ((self.vxname != "")&(vel[0] == nodata)):
+                                sr_raster11[jj] = 0
+                                sr_raster22[jj] = 0
+                            else:
+                                sr_raster11[jj] = np.abs(np.round(np.dot(schrng1,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1))
+                                sr_raster22[jj] = np.abs(np.round(np.dot(schrng1,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1))
+                                if (np.abs(np.round(np.dot(schrng2,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1)) > sr_raster11[jj]):
+                                    sr_raster11[jj] = np.abs(np.round(np.dot(schrng2,xunit)*self.repeatTime/self.XSize/365.0/24.0/3600.0*1))
+                                if (np.abs(np.round(np.dot(schrng2,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1)) > sr_raster22[jj]):
+                                    sr_raster22[jj] = np.abs(np.round(np.dot(schrng2,yunit)*self.repeatTime/self.YSize/365.0/24.0/3600.0*1))
+                                if (sr_raster11[jj] == 0):
+                                    sr_raster11[jj] = 1
+                                if (sr_raster22[jj] == 0):
+                                    sr_raster22[jj] = 1
 
                     if (self.csminxname != ""):
                         csmin_raster11[jj] = csminxLine[jj] / self.chipSizeX0 * ChipSizeX0_PIX_X
                         csmin_raster22[jj] = csminyLine[jj] / self.chipSizeX0 * ChipSizeX0_PIX_Y
-                    else:
-                        csmin_raster11[jj] = nodata_out
-                        csmin_raster22[jj] = nodata_out
+
 
                     if (self.csmaxxname != ""):
                         csmax_raster11[jj] = csmaxxLine[jj] / self.chipSizeX0 * ChipSizeX0_PIX_X
                         csmax_raster22[jj] = csmaxyLine[jj] / self.chipSizeX0 * ChipSizeX0_PIX_Y
-                    else:
-                        csmax_raster11[jj] = nodata_out
-                        csmax_raster22[jj] = nodata_out
+
 
 
                     if (self.ssmname != ""):
                         ssm_raster[jj] = ssmLine[jj]
-                    else:
-                        ssm_raster[jj] = nodata_out
+                    
 
 
 
-                    raster1a[jj] = normal[2]/(self.repeatTime/self.XSize/365.0/24.0/3600.0)*(normal[2]*yunit[1]-normal[1]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
-                    raster1b[jj] = -normal[2]/(self.repeatTime/self.YSize/365.0/24.0/3600.0)*(normal[2]*xunit[1]-normal[1]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
-                    raster2a[jj] = -normal[2]/(self.repeatTime/self.XSize/365.0/24.0/3600.0)*(normal[2]*yunit[0]-normal[0]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
-                    raster2b[jj] = normal[2]/(self.repeatTime/self.YSize/365.0/24.0/3600.0)*(normal[2]*xunit[0]-normal[0]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
-
+                    
 
 #            pdb.set_trace()
             
             poBand1.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster1.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
             poBand2.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster2.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1Off.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand2Off.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1Sch.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=sr_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand2Sch.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=sr_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1Min.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmin_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand2Min.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmin_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1Max.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmax_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand2Max.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmax_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1Msk.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=ssm_raster.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
-            poBand1RO2VX.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster1a.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
-            poBand2RO2VX.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster1b.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
-            poBand1RO2VY.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster2a.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
-            poBand2RO2VY.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster2b.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
+            if ((self.dhdxname != "")&(self.vxname != "")):
+                poBand1Off.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+                poBand2Off.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+            if ((self.dhdxname != "")&(self.srxname != "")):
+                poBand1Sch.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=sr_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+                poBand2Sch.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=sr_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+            if (self.csminxname != ""):
+                poBand1Min.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmin_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+                poBand2Min.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmin_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+            if (self.csmaxxname != ""):
+                poBand1Max.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmax_raster11.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+                poBand2Max.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=csmax_raster22.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+            if (self.ssmname != ""):
+                poBand1Msk.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=ssm_raster.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Int32)
+            if (self.dhdxname != ""):
+                poBand1RO2VX.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster1a.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
+                poBand2RO2VX.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster1b.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
+                poBand1RO2VY.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster2a.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
+                poBand2RO2VY.WriteRaster(xoff=0, yoff=ii, xsize=pCount, ysize=1, buf_len=raster2b.tostring(), buf_xsize=pCount, buf_ysize=1, buf_type=gdal.GDT_Float64)
 
         
         poDstDS = None
-                    
-        poDstDSOff = None
+        if ((self.dhdxname != "")&(self.vxname != "")):
+            poDstDSOff = None
+        if ((self.dhdxname != "")&(self.srxname != "")):
+            poDstDSSch = None
+        if (self.csminxname != ""):
+            poDstDSMin = None
+        if (self.csmaxxname != ""):
+            poDstDSMax = None
+        if (self.ssmname != ""):
+            poDstDSMsk = None
+        if (self.dhdxname != ""):
+            poDstDSRO2VX = None
         
-        poDstDSSch = None
-        
-        poDstDSMin = None
-        
-        poDstDSMax = None
-        
-        poDstDSMsk = None
-
-        poDstDSRO2VX = None
-    
-        poDstDSRO2VY = None
+            poDstDSRO2VY = None
     
         demDS = None
         
