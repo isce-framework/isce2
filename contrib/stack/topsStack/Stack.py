@@ -76,7 +76,7 @@ class config(object):
         self.f.write('dem : ' + self.dem + '\n')
         self.f.write('geom_referenceDir : ' + self.geom_referenceDir + '\n')
         self.f.write('##########################' + '\n')
-    
+
     def geo2rdr(self,function):
         self.f.write('##########################' + '\n')
         self.f.write(function + '\n')
@@ -207,10 +207,10 @@ class config(object):
         self.f.write('strength : ' + self.filtStrength + '\n')
         self.f.write('slc1 : ' + self.slc1 + '\n')
         self.f.write('slc2 : ' + self.slc2 + '\n')
-        self.f.write('complex_coh : '+ self.cpxcor + '\n')
+        self.f.write('complex_coh : '+ self.cpxCohName + '\n')
         self.f.write('range_looks : ' + self.rangeLooks + '\n')
         self.f.write('azimuth_looks : ' + self.azimuthLooks + '\n')
-	
+
     def unwrap(self, function):
         self.f.write('###################################'+'\n')
         self.f.write(function + '\n')
@@ -248,18 +248,18 @@ class config(object):
 
         # CPU or GPU
         self.f.write('denseOffsets : ' + '\n')
-        #self.f.write('DenseOffsets : ' + '\n') 
-        #self.f.write('cuDenseOffsets : ' + '\n') 
+        #self.f.write('DenseOffsets : ' + '\n')
+        #self.f.write('cuDenseOffsets : ' + '\n')
         self.f.write('reference : ' + self.reference + '\n')
         self.f.write('secondary : ' + self.secondary + '\n')
         self.f.write('outprefix : ' + self.output + '\n')
-        
+
         #self.f.write('ww : 256\n')
         #self.f.write('wh : 128\n')
 
     def finalize(self):
         self.f.close()
- 
+
 
 class run(object):
     """
@@ -360,7 +360,7 @@ class run(object):
             configObj.reference = os.path.join(self.work_dir,'reference/')
             configObj.secondary = os.path.join(self.work_dir,'secondarys/'+secondary)
             configObj.baselineFile = os.path.join(self.work_dir, 'merged/baselines/' + secondary + '/' + secondary )
-            configObj.computeGridBaseline('[Function-1]')                                                                                                            
+            configObj.computeGridBaseline('[Function-1]')
             configObj.finalize()
             del configObj
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
@@ -370,8 +370,8 @@ class run(object):
         configObj.configure(self)
         configObj.reference = os.path.join(self.work_dir,'reference/')
         configObj.secondary = os.path.join(self.work_dir,'reference/')
-        configObj.baselineFile = os.path.join(self.work_dir, 'merged/baselines/' + stackReferenceDate + '/' + stackReferenceDate) 
-        configObj.computeGridBaseline('[Function-1]')                                                                                                            
+        configObj.baselineFile = os.path.join(self.work_dir, 'merged/baselines/' + stackReferenceDate + '/' + stackReferenceDate)
+        configObj.computeGridBaseline('[Function-1]')
         configObj.finalize()
         del configObj
         self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
@@ -476,11 +476,11 @@ class run(object):
             configObj.misregFile = os.path.join(self.work_dir , 'misreg/range/pairs/' + reference+'_'+secondary + '/' + reference+'_'+secondary + '.txt')
             configObj.rangeMisreg('[Function-4]')
             configObj.finalize()
-            
+
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
             ########################
-    
-    
+
+
 
     def timeseries_misregistration(self):
         #inverting the misregistration offsets of the overlap pairs to estimate the offsets of each date
@@ -588,7 +588,7 @@ class run(object):
         geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
         multiookToolDict = {'lat*rdr': 'gdal', 'lon*rdr': 'gdal', 'los*rdr': 'gdal' , 'hgt*rdr':"gdal", 'shadowMask*rdr':"isce",'incLocal*rdr':"gdal"}
         noDataDict = {'lat*rdr': '0', 'lon*rdr': '0', 'los*rdr': '0' , 'hgt*rdr':None, 'shadowMask*rdr':None,'incLocal*rdr':"0"}
-        
+
         for i in range(len(geometryList)):
             pattern = geometryList[i]
             configName = os.path.join(self.config_path,'config_merge_' + pattern.split('*')[0])
@@ -629,7 +629,7 @@ class run(object):
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
-    
+
             geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
             for i in range(len(geometryList)):
                 pattern = geometryList[i]
@@ -656,16 +656,18 @@ class run(object):
             reference = pair[0]
             secondary = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
-            mergedSLCDir = os.path.join(self.work_dir, 'merged/SLC')        
-            configName = os.path.join(self.config_path ,'config_igram_filt_coh_' + reference + '_' + secondary)
+            mergedSLCDir = os.path.join(self.work_dir, 'merged/SLC')
+            configName = os.path.join(self.config_path, 'config_igram_filt_coh_' + reference + '_' + secondary)
             configObj = config(configName)
             configObj.configure(self)
-            configObj.input = os.path.join(mergedDir,'fine.int')
-            configObj.filtName = os.path.join(mergedDir,'filt_fine.int')
-            configObj.cohName = os.path.join(mergedDir,'filt_fine.cor')
-            configObj.slc1=os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(reference, reference))
-            configObj.slc2=os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(secondary, secondary))
-            configObj.cpxcor=os.path.join(mergedDir,'fine.cor.full')
+            configObj.input = os.path.join(mergedDir, 'fine.int')
+            configObj.filtName = os.path.join(mergedDir, 'filt_fine.int')
+            configObj.cohName = os.path.join(mergedDir, 'filt_fine.cor')
+            configObj.slc1 = os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(reference, reference))
+            configObj.slc2 = os.path.join(mergedSLCDir, '{}/{}.slc.full'.format(secondary, secondary))
+            configObj.cpxCohName = os.path.join(mergedDir, 'fine.cor')
+            if int(self.rangeLooks) * int(self.azimuthLooks) == 1:
+                configObj.cpxCohName += '.full'
             #configObj.filtStrength = str(self.filtStrength)
             configObj.FilterAndCoherence('[Function-1]')
             configObj.finalize()
@@ -769,7 +771,7 @@ class sentinelSLC(object):
             start = '<coordinates>'
             end = '</coordinates>'
             pnts = xmlstr[xmlstr.find(start)+len(start):xmlstr.find(end)].split()
-        
+
         else:
             file=os.path.join(safe,'preview/map-overlay.kml')
             kmlFile = open( file, 'r' ).read(-1)
@@ -777,7 +779,7 @@ class sentinelSLC(object):
             kmlData = ET.fromstring( kmlFile )
             document = kmlData.find('Document/Folder/GroundOverlay/gxLatLonQuad')
             pnts = document.find('coordinates').text.split()
-    
+
         # convert the pnts to a list
         from scipy.spatial import distance as dist
         import numpy as np
@@ -816,7 +818,7 @@ class sentinelSLC(object):
         # our bottom-right point
         D = dist.cdist(tl[np.newaxis], rightMost, "euclidean")[0]
         (br, tr) = rightMost[np.argsort(D)[::-1], :]
-        
+
         # return the coordinates in top-left, top-right,
         # bottom-right, and bottom-left order
         temp = np.array([tl, tr, br, bl], dtype="float32")
@@ -839,7 +841,7 @@ class sentinelSLC(object):
         for safe in self.safe_file.split():
            safeObj=sentinelSLC(safe)
            pnts = safeObj.getkmlQUAD(safe)
-           # The coordinates must be specified in counter-clockwise order with the first coordinate corresponding 
+           # The coordinates must be specified in counter-clockwise order with the first coordinate corresponding
            # to the lower-left corner of the overlayed image
            counter=0
            for pnt in pnts:
@@ -852,7 +854,7 @@ class sentinelSLC(object):
               elif counter==3:
                   lat_frame_max.append(float(pnt.split(',')[1]))
               counter+=1
-        
+
         self.SNWE=[min(lats),max(lats),min(lons),max(lons)]
 
         # checking for missing gaps, by doing a difference between end and start of frames
@@ -864,7 +866,7 @@ class sentinelSLC(object):
         lat_frame_min.sort()
         lat_frame_max.append(temp2)
         lat_frame_max.sort()
-        
+
         # combining the frame north and south left edge
         lat_frame_min = np.transpose(np.array(lat_frame_min))
         lat_frame_max = np.transpose(np.array(lat_frame_max))
@@ -882,7 +884,7 @@ class sentinelSLC(object):
             print(lat_frame_max)
             print(lat_frame_min-lat_frame_max)
             print("gap")"""
-        
+
         #raise Exception("STOP")
         self.frame_nogap=overlap_check
 
@@ -899,7 +901,7 @@ class sentinelSLC(object):
            print(obj.polarization)
            # add by Minyan
            obj.polarization='vv'
-          #obj.output = '{0}-SW{1}'.format(safe,swathnum)    
+          #obj.output = '{0}-SW{1}'.format(safe,swathnum)
            obj.parse()
 
            s,n,w,e = obj.product.bursts[0].getBbox()
@@ -1001,7 +1003,7 @@ echo This jobs runs on the following processors:
 echo `cat $PBS_NODEFILE`
 echo " "
 
-# 
+#
 # Run the parallel with the nodelist and command file
 #
 
@@ -1010,8 +1012,5 @@ echo " "
   f.write('parallel --sshloginfile $PBS_NODEFILE  -a ' + os.path.basename(runFile) + '\n')
   f.write('')
   f.close()
-  
+
 """
-
-
-

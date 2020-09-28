@@ -1,4 +1,4 @@
-Python_add_library(libgrass MODULE
+isce2_add_cdll(libgrass
     src/corr_flag.c
     src/grass.c
     src/trees.c

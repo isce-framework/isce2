@@ -2,16 +2,17 @@
 
 #Author: Heresh Fattahi
 
+import os
+import argparse
+import glob
+import numpy as np
+import gdal
 import isce
 import isceobj
-import numpy as np
-import argparse
-import os
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct
 from mroipac.correlation.correlation import Correlation
 import s1a_isce_utils as ut
-import gdal
-import glob
+
 
 def createParser():
     parser = argparse.ArgumentParser( description='Extract valid overlap region for the stack')
@@ -76,7 +77,7 @@ def main(iargs=None):
     if not os.path.exists(stackDir):
         print('creating ', stackDir)
         os.makedirs(stackDir)
-    else:
+    elif len(glob.glob(os.path.join(stackDir, '*.xml'))) > 0:
         print(stackDir , ' already exists.')
         print('Replacing reference with existing stack.')
         inps.reference = stackDir
@@ -139,7 +140,7 @@ swath = ut.loadProduct(os.path.join(slcPath , 'IW{0}.xml'.format(2)))
 
 tref = swath.sensingStart
 rref = swath.bursts[0].startingRange
-dt = swath.bursts[0].azimuthTimeInterval 
+dt = swath.bursts[0].azimuthTimeInterval
 dr = swath.bursts[0].rangePixelSize
 
 

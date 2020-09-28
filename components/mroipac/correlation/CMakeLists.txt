@@ -5,7 +5,7 @@ Python_add_library(correlationlib MODULE
     )
 target_include_directories(correlationlib PUBLIC include)
 target_link_libraries(correlationlib PRIVATE
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 InstallSameDir(

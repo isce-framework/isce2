@@ -11,11 +11,11 @@ Python_add_library(geocode MODULE
     )
 target_include_directories(geocode PUBLIC include)
 target_link_libraries(geocode PUBLIC
-    DataAccessor_static
+    isce2::DataAccessorLib
     OpenMP::OpenMP_CXX
-    stdoel_static
-    combinedLib
-    utilLib
+    isce2::stdoelLib
+    isce2::combinedLib
+    isce2::utilLib
     )
 
 InstallSameDir(

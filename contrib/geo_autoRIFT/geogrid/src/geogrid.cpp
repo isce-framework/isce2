@@ -60,24 +60,68 @@ void geoGrid::geogrid()
     std::cout << "XLimits: " << xmin << "  " << xmax << "\n";
     std::cout << "YLimits: " << ymin << "  " << ymax << "\n";
     std::cout << "Extent in km: " << (xmax - xmin)/1000. << "  " << (ymax - ymin)/1000. << "\n";
-    std::cout << "DEM: " << demname << "\n";
-    std::cout << "Velocities: " << vxname << "  " << vyname << "\n";
-    std::cout << "Search Range: " << srxname << "  " << sryname << "\n";
-    std::cout << "Chip Size Min: " << csminxname << "  " << csminyname << "\n";
-    std::cout << "Chip Size Max: " << csmaxxname << "  " << csmaxyname << "\n";
-    std::cout << "Slopes: " << dhdxname << "  " << dhdyname << "\n";
-    std::cout << "Stable Surface Mask: " << ssmname << "\n";
-    std::cout << "Output Nodata Value: " << nodata_out << "\n";
+    if (demname != "")
+    {
+        std::cout << "DEM: " << demname << "\n";
+    }
+    if (dhdxname != "")
+    {
+        std::cout << "Slopes: " << dhdxname << "  " << dhdyname << "\n";
+    }
+    if (vxname != "")
+    {
+        std::cout << "Velocities: " << vxname << "  " << vyname << "\n";
+    }
+    if (srxname != "")
+    {
+        std::cout << "Search Range: " << srxname << "  " << sryname << "\n";
+    }
+    if (csminxname != "")
+    {
+        std::cout << "Chip Size Min: " << csminxname << "  " << csminyname << "\n";
+    }
+    if (csmaxxname != "")
+    {
+        std::cout << "Chip Size Max: " << csmaxxname << "  " << csmaxyname << "\n";
+    }
+    if (ssmname != "")
+    {
+        std::cout << "Stable Surface Mask: " << ssmname << "\n";
+    }
+    
     
     std::cout << "\nOutputs: \n";
     std::cout << "Window locations: " << pixlinename << "\n";
-    std::cout << "Window offsets: " << offsetname << "\n";
-    std::cout << "Window search range: " << searchrangename << "\n";
-    std::cout << "Window chip size min: " << chipsizeminname << "\n";
-    std::cout << "Window chip size max: " << chipsizemaxname << "\n";
-    std::cout << "Window rdr_off2vel_x vector: " << ro2vx_name << "\n";
-    std::cout << "Window rdr_off2vel_y vector: " << ro2vy_name << "\n";
-    std::cout << "Window stable surface mask: " << stablesurfacemaskname << "\n";
+    if (dhdxname != "")
+    {
+        if (vxname != "")
+        {
+            std::cout << "Window offsets: " << offsetname << "\n";
+        }
+        
+        std::cout << "Window rdr_off2vel_x vector: " << ro2vx_name << "\n";
+        std::cout << "Window rdr_off2vel_y vector: " << ro2vy_name << "\n";
+        
+        if (srxname != "")
+        {
+            std::cout << "Window search range: " << searchrangename << "\n";
+        }
+    }
+            
+    if (csminxname != "")
+    {
+        std::cout << "Window chip size min: " << chipsizeminname << "\n";
+    }
+    if (csmaxxname != "")
+    {
+        std::cout << "Window chip size max: " << chipsizemaxname << "\n";
+    }
+    if (ssmname != "")
+    {
+        std::cout << "Window stable surface mask: " << stablesurfacemaskname << "\n";
+    }
+    
+    std::cout << "Output Nodata Value: " << nodata_out << "\n";
     
 
     std::cout << "\nStarting processing .... \n";
@@ -223,12 +267,15 @@ void geoGrid::geogrid()
             exit(101);
         }
     }
-    if (ssmDS == NULL)
+    if (ssmname != "")
     {
-        std::cout << "Error opening stable surface mask file { " << ssmname << " }\n";
-        std::cout << "Exiting with error code .... (101) \n";
-        GDALDestroyDriverManager();
-        exit(101);
+        if (ssmDS == NULL)
+        {
+            std::cout << "Error opening stable surface mask file { " << ssmname << " }\n";
+            std::cout << "Exiting with error code .... (101) \n";
+            GDALDestroyDriverManager();
+            exit(101);
+        }
     }
 
     demDS->GetGeoTransform(geoTrans);
@@ -251,7 +298,9 @@ void geoGrid::geogrid()
     std::cout << "Ylimits : " << geoTrans[3] + (lOff + lCount) * geoTrans[5] <<  "  "
                              << geoTrans[3] + lOff * geoTrans[5] << "\n";
 
-    std::cout << "Dimensions of geogrid: " << pCount << " x " << lCount << "\n\n";
+    std::cout << "Origin index (in DEM) of geogrid: " << pOff << "   " << lOff << "\n";
+    
+    std::cout << "Dimensions of geogrid: " << pCount << " x " << lCount << "\n";
 
 
     //Create GDAL Transformers 
@@ -329,6 +378,32 @@ void geoGrid::geogrid()
     double raster2a[pCount];
     double raster2b[pCount];
 //    double raster2c[pCount];
+    
+    GDALRasterBand *poBand1 = NULL;
+    GDALRasterBand *poBand2 = NULL;
+    GDALRasterBand *poBand1Off = NULL;
+    GDALRasterBand *poBand2Off = NULL;
+    GDALRasterBand *poBand1Sch = NULL;
+    GDALRasterBand *poBand2Sch = NULL;
+    GDALRasterBand *poBand1Min = NULL;
+    GDALRasterBand *poBand2Min = NULL;
+    GDALRasterBand *poBand1Max = NULL;
+    GDALRasterBand *poBand2Max = NULL;
+    GDALRasterBand *poBand1Msk = NULL;
+    GDALRasterBand *poBand1RO2VX = NULL;
+    GDALRasterBand *poBand1RO2VY = NULL;
+    GDALRasterBand *poBand2RO2VX = NULL;
+    GDALRasterBand *poBand2RO2VY = NULL;
+    
+    GDALDataset *poDstDS = NULL;
+    GDALDataset *poDstDSOff = NULL;
+    GDALDataset *poDstDSSch = NULL;
+    GDALDataset *poDstDSMin = NULL;
+    GDALDataset *poDstDSMax = NULL;
+    GDALDataset *poDstDSMsk = NULL;
+    GDALDataset *poDstDSRO2VX = NULL;
+    GDALDataset *poDstDSRO2VY = NULL;
+    
 
     double nodata;
 //    double nodata_out;
@@ -342,7 +417,7 @@ void geoGrid::geogrid()
     const char *pszFormat = "GTiff";
     char **papszOptions = NULL;
     std::string str = "";
-    double adfGeoTransform[6] = { xmin, (xmax-xmin)/pCount, 0, ymax, 0, (ymin-ymax)/lCount };
+    double adfGeoTransform[6] = { geoTrans[0] + pOff * geoTrans[1], geoTrans[1], 0, geoTrans[3] + lOff * geoTrans[5], 0, geoTrans[5]};
     OGRSpatialReference oSRS;
     char *pszSRS_WKT = NULL;
     demSRS.exportToWkt( &pszSRS_WKT );
@@ -353,7 +428,7 @@ void geoGrid::geogrid()
     poDriver = GetGDALDriverManager()->GetDriverByName(pszFormat);
     if( poDriver == NULL )
     exit(107);
-    GDALDataset *poDstDS;
+//    GDALDataset *poDstDS;
     
     str = pixlinename;
     const char * pszDstFilename = str.c_str();
@@ -366,188 +441,210 @@ void geoGrid::geogrid()
 //    CPLFree( pszSRS_WKT );
     
     
-    GDALRasterBand *poBand1;
-    GDALRasterBand *poBand2;
+//    GDALRasterBand *poBand1;
+//    GDALRasterBand *poBand2;
     poBand1 = poDstDS->GetRasterBand(1);
     poBand2 = poDstDS->GetRasterBand(2);
     poBand1->SetNoDataValue(nodata_out);
     poBand2->SetNoDataValue(nodata_out);
     
     
-    
+    if ((dhdxname != "")&(vxname != ""))
+    {
 
-    GDALDriver *poDriverOff;
-    poDriverOff = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverOff == NULL )
-    exit(107);
-    GDALDataset *poDstDSOff;
+        GDALDriver *poDriverOff;
+        poDriverOff = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverOff == NULL )
+        exit(107);
+//        GDALDataset *poDstDSOff;
     
-    str = offsetname;
-    const char * pszDstFilenameOff = str.c_str();
-    poDstDSOff = poDriverOff->Create( pszDstFilenameOff, pCount, lCount, 2, GDT_Int32,
-                                     papszOptions );
+        str = offsetname;
+        const char * pszDstFilenameOff = str.c_str();
+        poDstDSOff = poDriverOff->Create( pszDstFilenameOff, pCount, lCount, 2, GDT_Int32,
+                                         papszOptions );
     
-    poDstDSOff->SetGeoTransform( adfGeoTransform );
-    poDstDSOff->SetProjection( pszSRS_WKT );
-//    CPLFree( pszSRS_WKT );
-    
-    GDALRasterBand *poBand1Off;
-    GDALRasterBand *poBand2Off;
-    poBand1Off = poDstDSOff->GetRasterBand(1);
-    poBand2Off = poDstDSOff->GetRasterBand(2);
-    poBand1Off->SetNoDataValue(nodata_out);
-    poBand2Off->SetNoDataValue(nodata_out);
-    
-    
-    
-    GDALDriver *poDriverSch;
-    poDriverSch = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverSch == NULL )
-    exit(107);
-    GDALDataset *poDstDSSch;
-    
-    str = searchrangename;
-    const char * pszDstFilenameSch = str.c_str();
-    poDstDSSch = poDriverSch->Create( pszDstFilenameSch, pCount, lCount, 2, GDT_Int32,
-                                     papszOptions );
-    
-    poDstDSSch->SetGeoTransform( adfGeoTransform );
-    poDstDSSch->SetProjection( pszSRS_WKT );
+        poDstDSOff->SetGeoTransform( adfGeoTransform );
+        poDstDSOff->SetProjection( pszSRS_WKT );
     //    CPLFree( pszSRS_WKT );
     
-    GDALRasterBand *poBand1Sch;
-    GDALRasterBand *poBand2Sch;
-    poBand1Sch = poDstDSSch->GetRasterBand(1);
-    poBand2Sch = poDstDSSch->GetRasterBand(2);
-    poBand1Sch->SetNoDataValue(nodata_out);
-    poBand2Sch->SetNoDataValue(nodata_out);
+//        GDALRasterBand *poBand1Off;
+//        GDALRasterBand *poBand2Off;
+        poBand1Off = poDstDSOff->GetRasterBand(1);
+        poBand2Off = poDstDSOff->GetRasterBand(2);
+        poBand1Off->SetNoDataValue(nodata_out);
+        poBand2Off->SetNoDataValue(nodata_out);
+        
+    }
+    
+    if ((dhdxname != "")&(srxname != ""))
+    {
+    
+        GDALDriver *poDriverSch;
+        poDriverSch = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverSch == NULL )
+        exit(107);
+//        GDALDataset *poDstDSSch;
+        
+        str = searchrangename;
+        const char * pszDstFilenameSch = str.c_str();
+        poDstDSSch = poDriverSch->Create( pszDstFilenameSch, pCount, lCount, 2, GDT_Int32,
+                                         papszOptions );
+        
+        poDstDSSch->SetGeoTransform( adfGeoTransform );
+        poDstDSSch->SetProjection( pszSRS_WKT );
+        //    CPLFree( pszSRS_WKT );
+        
+//        GDALRasterBand *poBand1Sch;
+//        GDALRasterBand *poBand2Sch;
+        poBand1Sch = poDstDSSch->GetRasterBand(1);
+        poBand2Sch = poDstDSSch->GetRasterBand(2);
+        poBand1Sch->SetNoDataValue(nodata_out);
+        poBand2Sch->SetNoDataValue(nodata_out);
+    
+    }
+    
+    if (csminxname != "")
+    {
+        
+        GDALDriver *poDriverMin;
+        poDriverMin = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverMin == NULL )
+        exit(107);
+//        GDALDataset *poDstDSMin;
+        
+        str = chipsizeminname;
+        const char * pszDstFilenameMin = str.c_str();
+        poDstDSMin = poDriverMin->Create( pszDstFilenameMin, pCount, lCount, 2, GDT_Int32,
+                                         papszOptions );
+        
+        poDstDSMin->SetGeoTransform( adfGeoTransform );
+        poDstDSMin->SetProjection( pszSRS_WKT );
+        //    CPLFree( pszSRS_WKT );
+        
+//        GDALRasterBand *poBand1Min;
+//        GDALRasterBand *poBand2Min;
+        poBand1Min = poDstDSMin->GetRasterBand(1);
+        poBand2Min = poDstDSMin->GetRasterBand(2);
+        poBand1Min->SetNoDataValue(nodata_out);
+        poBand2Min->SetNoDataValue(nodata_out);
+        
+    }
+    
+    
+    if (csmaxxname != "")
+    {
+    
+        GDALDriver *poDriverMax;
+        poDriverMax = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverMax == NULL )
+        exit(107);
+//        GDALDataset *poDstDSMax;
+        
+        str = chipsizemaxname;
+        const char * pszDstFilenameMax = str.c_str();
+        poDstDSMax = poDriverMax->Create( pszDstFilenameMax, pCount, lCount, 2, GDT_Int32,
+                                         papszOptions );
+        
+        poDstDSMax->SetGeoTransform( adfGeoTransform );
+        poDstDSMax->SetProjection( pszSRS_WKT );
+        //    CPLFree( pszSRS_WKT );
+        
+//        GDALRasterBand *poBand1Max;
+//        GDALRasterBand *poBand2Max;
+        poBand1Max = poDstDSMax->GetRasterBand(1);
+        poBand2Max = poDstDSMax->GetRasterBand(2);
+        poBand1Max->SetNoDataValue(nodata_out);
+        poBand2Max->SetNoDataValue(nodata_out);
+        
+    }
     
     
     
-    GDALDriver *poDriverMin;
-    poDriverMin = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverMin == NULL )
-    exit(107);
-    GDALDataset *poDstDSMin;
+    if (ssmname != "")
+    {
     
-    str = chipsizeminname;
-    const char * pszDstFilenameMin = str.c_str();
-    poDstDSMin = poDriverMin->Create( pszDstFilenameMin, pCount, lCount, 2, GDT_Int32,
-                                     papszOptions );
+        GDALDriver *poDriverMsk;
+        poDriverMsk = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverMsk == NULL )
+        exit(107);
+//        GDALDataset *poDstDSMsk;
+        
+        str = stablesurfacemaskname;
+        const char * pszDstFilenameMsk = str.c_str();
+        poDstDSMsk = poDriverMsk->Create( pszDstFilenameMsk, pCount, lCount, 1, GDT_Int32,
+                                         papszOptions );
+        
+        poDstDSMsk->SetGeoTransform( adfGeoTransform );
+        poDstDSMsk->SetProjection( pszSRS_WKT );
+        //    CPLFree( pszSRS_WKT );
+        
+//        GDALRasterBand *poBand1Msk;
+        poBand1Msk = poDstDSMsk->GetRasterBand(1);
+        poBand1Msk->SetNoDataValue(nodata_out);
+        
+    }
     
-    poDstDSMin->SetGeoTransform( adfGeoTransform );
-    poDstDSMin->SetProjection( pszSRS_WKT );
+    
+    if (dhdxname != "")
+    {
+    
+        GDALDriver *poDriverRO2VX;
+        poDriverRO2VX = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverRO2VX == NULL )
+        exit(107);
+//        GDALDataset *poDstDSRO2VX;
+        
+        str = ro2vx_name;
+        const char * pszDstFilenameRO2VX = str.c_str();
+        poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 2, GDT_Float64,
+                                         papszOptions );
+        
+        poDstDSRO2VX->SetGeoTransform( adfGeoTransform );
+        poDstDSRO2VX->SetProjection( pszSRS_WKT );
     //    CPLFree( pszSRS_WKT );
-    
-    GDALRasterBand *poBand1Min;
-    GDALRasterBand *poBand2Min;
-    poBand1Min = poDstDSMin->GetRasterBand(1);
-    poBand2Min = poDstDSMin->GetRasterBand(2);
-    poBand1Min->SetNoDataValue(nodata_out);
-    poBand2Min->SetNoDataValue(nodata_out);
-    
-    
-    
-    
-    GDALDriver *poDriverMax;
-    poDriverMax = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverMax == NULL )
-    exit(107);
-    GDALDataset *poDstDSMax;
-    
-    str = chipsizemaxname;
-    const char * pszDstFilenameMax = str.c_str();
-    poDstDSMax = poDriverMax->Create( pszDstFilenameMax, pCount, lCount, 2, GDT_Int32,
-                                     papszOptions );
-    
-    poDstDSMax->SetGeoTransform( adfGeoTransform );
-    poDstDSMax->SetProjection( pszSRS_WKT );
-    //    CPLFree( pszSRS_WKT );
-    
-    GDALRasterBand *poBand1Max;
-    GDALRasterBand *poBand2Max;
-    poBand1Max = poDstDSMax->GetRasterBand(1);
-    poBand2Max = poDstDSMax->GetRasterBand(2);
-    poBand1Max->SetNoDataValue(nodata_out);
-    poBand2Max->SetNoDataValue(nodata_out);
-    
-    
-    
-    
-    
-    GDALDriver *poDriverMsk;
-    poDriverMsk = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverMsk == NULL )
-    exit(107);
-    GDALDataset *poDstDSMsk;
-    
-    str = stablesurfacemaskname;
-    const char * pszDstFilenameMsk = str.c_str();
-    poDstDSMsk = poDriverMsk->Create( pszDstFilenameMsk, pCount, lCount, 1, GDT_Int32,
-                                     papszOptions );
-    
-    poDstDSMsk->SetGeoTransform( adfGeoTransform );
-    poDstDSMsk->SetProjection( pszSRS_WKT );
-    //    CPLFree( pszSRS_WKT );
-    
-    GDALRasterBand *poBand1Msk;
-    poBand1Msk = poDstDSMsk->GetRasterBand(1);
-    poBand1Msk->SetNoDataValue(nodata_out);
-    
-    
-    
-    
-    GDALDriver *poDriverRO2VX;
-    poDriverRO2VX = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverRO2VX == NULL )
-    exit(107);
-    GDALDataset *poDstDSRO2VX;
-    
-    str = ro2vx_name;
-    const char * pszDstFilenameRO2VX = str.c_str();
-    poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 2, GDT_Float64,
-                                     papszOptions );
-    
-    poDstDSRO2VX->SetGeoTransform( adfGeoTransform );
-    poDstDSRO2VX->SetProjection( pszSRS_WKT );
-//    CPLFree( pszSRS_WKT );
-    
-    GDALRasterBand *poBand1RO2VX;
-    GDALRasterBand *poBand2RO2VX;
-//    GDALRasterBand *poBand3Los;
-    poBand1RO2VX = poDstDSRO2VX->GetRasterBand(1);
-    poBand2RO2VX = poDstDSRO2VX->GetRasterBand(2);
-//    poBand3Los = poDstDSLos->GetRasterBand(3);
-    poBand1RO2VX->SetNoDataValue(nodata_out);
-    poBand2RO2VX->SetNoDataValue(nodata_out);
-//    poBand3Los->SetNoDataValue(nodata_out);
-    
-    
+        
+//        GDALRasterBand *poBand1RO2VX;
+//        GDALRasterBand *poBand2RO2VX;
+    //    GDALRasterBand *poBand3Los;
+        poBand1RO2VX = poDstDSRO2VX->GetRasterBand(1);
+        poBand2RO2VX = poDstDSRO2VX->GetRasterBand(2);
+    //    poBand3Los = poDstDSLos->GetRasterBand(3);
+        poBand1RO2VX->SetNoDataValue(nodata_out);
+        poBand2RO2VX->SetNoDataValue(nodata_out);
+    //    poBand3Los->SetNoDataValue(nodata_out);
+        
 
-    GDALDriver *poDriverRO2VY;
-    poDriverRO2VY = GetGDALDriverManager()->GetDriverByName(pszFormat);
-    if( poDriverRO2VY == NULL )
-    exit(107);
-    GDALDataset *poDstDSRO2VY;
+        GDALDriver *poDriverRO2VY;
+        poDriverRO2VY = GetGDALDriverManager()->GetDriverByName(pszFormat);
+        if( poDriverRO2VY == NULL )
+        exit(107);
+//        GDALDataset *poDstDSRO2VY;
+        
+        str = ro2vy_name;
+        const char * pszDstFilenameRO2VY = str.c_str();
+        poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 2, GDT_Float64,
+                                         papszOptions );
+        
+        poDstDSRO2VY->SetGeoTransform( adfGeoTransform );
+        poDstDSRO2VY->SetProjection( pszSRS_WKT );
+//        CPLFree( pszSRS_WKT );
+        
+//        GDALRasterBand *poBand1RO2VY;
+//        GDALRasterBand *poBand2RO2VY;
+    //    GDALRasterBand *poBand3Alt;
+        poBand1RO2VY = poDstDSRO2VY->GetRasterBand(1);
+        poBand2RO2VY = poDstDSRO2VY->GetRasterBand(2);
+    //    poBand3Alt = poDstDSAlt->GetRasterBand(3);
+        poBand1RO2VY->SetNoDataValue(nodata_out);
+        poBand2RO2VY->SetNoDataValue(nodata_out);
+    //    poBand3Alt->SetNoDataValue(nodata_out);
+        
+    }
     
-    str = ro2vy_name;
-    const char * pszDstFilenameRO2VY = str.c_str();
-    poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 2, GDT_Float64,
-                                     papszOptions );
-    
-    poDstDSRO2VY->SetGeoTransform( adfGeoTransform );
-    poDstDSRO2VY->SetProjection( pszSRS_WKT );
     CPLFree( pszSRS_WKT );
+
     
-    GDALRasterBand *poBand1RO2VY;
-    GDALRasterBand *poBand2RO2VY;
-//    GDALRasterBand *poBand3Alt;
-    poBand1RO2VY = poDstDSRO2VY->GetRasterBand(1);
-    poBand2RO2VY = poDstDSRO2VY->GetRasterBand(2);
-//    poBand3Alt = poDstDSAlt->GetRasterBand(3);
-    poBand1RO2VY->SetNoDataValue(nodata_out);
-    poBand2RO2VY->SetNoDataValue(nodata_out);
-//    poBand3Alt->SetNoDataValue(nodata_out);
+    
     
     
     // ground range and azimuth pixel size
@@ -865,6 +962,8 @@ void geoGrid::geogrid()
             double los[3];
             double alt[3];
             double normal[3];
+            double cross[3];
+            double cross_check;
             
             double dopfact;
             double height;
@@ -1110,92 +1209,104 @@ void geoGrid::geogrid()
                 raster2a[jj] = nodata_out;
                 raster2b[jj] = nodata_out;
 //                raster2c[jj] = nodata_out;
+                
             }
             else
             {
                 raster1[jj] = rgind;
                 raster2[jj] = azind;
                 
-                if (vxname == "")
+                if (dhdxname != "")
                 {
-                    raster11[jj] = 0.;
-                    raster22[jj] = 0.;
-                }
-                else if (vel[0] == nodata)
-                {
-                    raster11[jj] = 0.;
-                    raster22[jj] = 0.;
-                }
-                else
-                {
-                    raster11[jj] = std::round(dot_C(vel,los)*dt/dr/365.0/24.0/3600.0*1);
-                    raster22[jj] = std::round(dot_C(vel,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1);
+                    
+                    if (vxname != "")
+                    {
+                        if (vel[0] == nodata)
+                        {
+                            raster11[jj] = 0.;
+                            raster22[jj] = 0.;
+                        }
+                        else
+                        {
+                            raster11[jj] = std::round(dot_C(vel,los)*dt/dr/365.0/24.0/3600.0*1);
+                            raster22[jj] = std::round(dot_C(vel,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1);
+                        }
+                      
+                    }
+                    
+                    cross_C(los,temp,cross);
+                    unitvec_C(cross, cross);
+                    cross_check = std::abs(std::acos(dot_C(normal,cross))/deg2rad-90.0);
+                    
+                    if (cross_check > 1.0)
+                    {
+                        raster1a[jj] = normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[1]-normal[1]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                        raster1b[jj] = -normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[1]-normal[1]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                        raster2a[jj] = -normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[0]-normal[0]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                        raster2b[jj] = normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[0]-normal[0]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                    }
+                    else
+                    {
+                        raster1a[jj] = nodata_out;
+                        raster1b[jj] = nodata_out;
+                        raster2a[jj] = nodata_out;
+                        raster2b[jj] = nodata_out;
+                    }
+                    
+                    if (srxname != "")
+                    {
+                        if ((vxname != "")&(vel[0] == nodata))
+                        {
+                            sr_raster11[jj] = 0;
+                            sr_raster22[jj] = 0;
+                        }
+                        else
+                        {
+                            sr_raster11[jj] = std::abs(std::round(dot_C(schrng1,los)*dt/dr/365.0/24.0/3600.0*1));
+                            sr_raster22[jj] = std::abs(std::round(dot_C(schrng1,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
+                            if (std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1)) > sr_raster11[jj])
+                            {
+                                sr_raster11[jj] = std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1));
+                            }
+                            if (std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1)) > sr_raster22[jj])
+                            {
+                                sr_raster22[jj] = std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
+                            }
+                            if (sr_raster11[jj] == 0)
+                            {
+                                sr_raster11[jj] = 1;
+                            }
+                            if (sr_raster22[jj] == 0)
+                            {
+                                sr_raster22[jj] = 1;
+                            }
+                        }
+                    }
+ 
                 }
                 
-                if (srxname == "")
-                {
-                    sr_raster11[jj] = nodata_out;
-                    sr_raster22[jj] = nodata_out;
-                }
-                else if (vel[0] == nodata)
-                {
-                    sr_raster11[jj] = 0;
-                    sr_raster22[jj] = 0;
-                }
-                else
-                {
-                    sr_raster11[jj] = std::abs(std::round(dot_C(schrng1,los)*dt/dr/365.0/24.0/3600.0*1));
-                    sr_raster22[jj] = std::abs(std::round(dot_C(schrng1,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
-                    if (std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1)) > sr_raster11[jj])
-                    {
-                        sr_raster11[jj] = std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1));
-                    }
-                    if (std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1)) > sr_raster22[jj])
-                    {
-                        sr_raster22[jj] = std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
-                    }
-                    if (sr_raster11[jj] == 0)
-                    {
-                        sr_raster11[jj] = 1;
-                    }
-                    if (sr_raster22[jj] == 0)
-                    {
-                        sr_raster22[jj] = 1;
-                    }
-                }
+                
                 
                 if (csminxname != "")
                 {
                     csmin_raster11[jj] = csminxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
                     csmin_raster22[jj] = csminyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
                 }
-                else
-                {
-                    csmin_raster11[jj] = nodata_out;
-                    csmin_raster22[jj] = nodata_out;
-                }
+                
+                
                 if (csmaxxname != "")
                 {
                     csmax_raster11[jj] = csmaxxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
                     csmax_raster22[jj] = csmaxyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
                 }
-                else
-                {
-                    csmax_raster11[jj] = nodata_out;
-                    csmax_raster22[jj] = nodata_out;
-                }
+                
+                
                 if (ssmname != "")
                 {
                     ssm_raster[jj] = ssmLine[jj];
                 }
-                else
-                {
-                    ssm_raster[jj] = nodata_out;
-                }
-                raster1a[jj] = normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[1]-normal[1]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                raster1b[jj] = -normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[1]-normal[1]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                raster2a[jj] = -normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[0]-normal[0]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                raster2b[jj] = normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[0]-normal[0]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                
+                
                 
 //                raster1a[jj] = los[0]*dt/dr/365.0/24.0/3600.0;
 //                raster1b[jj] = los[1]*dt/dr/365.0/24.0/3600.0;
@@ -1212,68 +1323,112 @@ void geoGrid::geogrid()
 //            std::cout << raster1[ii][jj] << "\n";
         }
         
+        
+        
         poBand1->RasterIO( GF_Write, 0, ii, pCount, 1,
                           raster1, pCount, 1, GDT_Int32, 0, 0 );
         poBand2->RasterIO( GF_Write, 0, ii, pCount, 1,
                           raster2, pCount, 1, GDT_Int32, 0, 0 );
-        poBand1Off->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster11, pCount, 1, GDT_Int32, 0, 0 );
-        poBand2Off->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster22, pCount, 1, GDT_Int32, 0, 0 );
         
-        poBand1Sch->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             sr_raster11, pCount, 1, GDT_Int32, 0, 0 );
-        poBand2Sch->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             sr_raster22, pCount, 1, GDT_Int32, 0, 0 );
-        poBand1Min->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             csmin_raster11, pCount, 1, GDT_Int32, 0, 0 );
-        poBand2Min->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             csmin_raster22, pCount, 1, GDT_Int32, 0, 0 );
-        poBand1Max->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             csmax_raster11, pCount, 1, GDT_Int32, 0, 0 );
-        poBand2Max->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             csmax_raster22, pCount, 1, GDT_Int32, 0, 0 );
-        poBand1Msk->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             ssm_raster, pCount, 1, GDT_Int32, 0, 0 );
+        if ((dhdxname != "")&(vxname != ""))
+        {
+            poBand1Off->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster11, pCount, 1, GDT_Int32, 0, 0 );
+            poBand2Off->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster22, pCount, 1, GDT_Int32, 0, 0 );
+        }
         
-        poBand1RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster1a, pCount, 1, GDT_Float64, 0, 0 );
-        poBand2RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster1b, pCount, 1, GDT_Float64, 0, 0 );
-//        poBand3Los->RasterIO( GF_Write, 0, ii, pCount, 1,
-//                             raster1c, pCount, 1, GDT_Float64, 0, 0 );
-        poBand1RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster2a, pCount, 1, GDT_Float64, 0, 0 );
-        poBand2RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
-                             raster2b, pCount, 1, GDT_Float64, 0, 0 );
-//        poBand3Alt->RasterIO( GF_Write, 0, ii, pCount, 1,
-//                             raster2c, pCount, 1, GDT_Float64, 0, 0 );
+        if ((dhdxname != "")&(srxname != ""))
+        {
+            poBand1Sch->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 sr_raster11, pCount, 1, GDT_Int32, 0, 0 );
+            poBand2Sch->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 sr_raster22, pCount, 1, GDT_Int32, 0, 0 );
+        }
+        
+        if (csminxname != "")
+        {
+            poBand1Min->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 csmin_raster11, pCount, 1, GDT_Int32, 0, 0 );
+            poBand2Min->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 csmin_raster22, pCount, 1, GDT_Int32, 0, 0 );
+        }
+        
+        if (csmaxxname != "")
+        {
+            poBand1Max->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 csmax_raster11, pCount, 1, GDT_Int32, 0, 0 );
+            poBand2Max->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 csmax_raster22, pCount, 1, GDT_Int32, 0, 0 );
+        }
+        
+        if (ssmname != "")
+        {
+            poBand1Msk->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 ssm_raster, pCount, 1, GDT_Int32, 0, 0 );
+        }
+        
+        if (dhdxname != "")
+        {
+            poBand1RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster1a, pCount, 1, GDT_Float64, 0, 0 );
+            poBand2RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster1b, pCount, 1, GDT_Float64, 0, 0 );
+    //        poBand3Los->RasterIO( GF_Write, 0, ii, pCount, 1,
+    //                             raster1c, pCount, 1, GDT_Float64, 0, 0 );
+            poBand1RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster2a, pCount, 1, GDT_Float64, 0, 0 );
+            poBand2RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster2b, pCount, 1, GDT_Float64, 0, 0 );
+    //        poBand3Alt->RasterIO( GF_Write, 0, ii, pCount, 1,
+    //                             raster2c, pCount, 1, GDT_Float64, 0, 0 );
+        }
+        
         
     }
     
     /* Once we're done, close properly the dataset */
     GDALClose( (GDALDatasetH) poDstDS );
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSOff );
+    if ((dhdxname != "")&(vxname != ""))
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSOff );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSSch );
+    if ((dhdxname != "")&(srxname != ""))
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSSch );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSMin );
+    if (csminxname != "")
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSMin );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSMax );
+    if (csmaxxname != "")
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSMax );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSMsk );
+    if (ssmname != "")
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSMsk );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSRO2VX );
+    if (dhdxname != "")
+    {
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSRO2VX );
+        
+        /* Once we're done, close properly the dataset */
+        GDALClose( (GDALDatasetH) poDstDSRO2VY );
+    }
     
-    /* Once we're done, close properly the dataset */
-    GDALClose( (GDALDatasetH) poDstDSRO2VY );
     
     GDALClose(demDS);
     

@@ -7,7 +7,7 @@ Python_add_library(dopiq MODULE
     src/dopiqState.f
     )
 target_include_directories(dopiq PUBLIC include)
-target_link_libraries(dopiq PUBLIC DataAccessor_static)
+target_link_libraries(dopiq PUBLIC isce2::DataAccessorLib)
 
 InstallSameDir(
     dopiq

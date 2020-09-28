@@ -1,17 +1,10 @@
-add_library(stdoel_static STATIC
-    src/ScreenWriter.cpp
-    src/StdOELF.cpp
-    src/FileWriter.cpp
-    src/StdOEL.cpp
-    src/WriterFactory.cpp
-    )
-set_property(TARGET stdoel_static PROPERTY POSITION_INDEPENDENT_CODE ON)
-target_include_directories(stdoel_static PUBLIC include)
+add_subdirectory(src)
+target_include_directories(stdoelLib PUBLIC include)
 
 Python_add_library(StdOEL MODULE
     bindings/StdOELmodule.cpp
     )
-target_link_libraries(StdOEL PUBLIC stdoel_static)
+target_link_libraries(StdOEL PUBLIC isce2::stdoelLib)
 
 InstallSameDir(
     StdOEL
@@ -19,12 +12,7 @@ InstallSameDir(
     StdOELPy.py
     )
 
-add_executable(testStdOEL test/testStdOEL.cpp
-    src/ScreenWriter.cpp
-    src/StdOELF.cpp
-    src/FileWriter.cpp
-    src/StdOEL.cpp
-    src/WriterFactory.cpp
-    )
+add_executable(testStdOEL test/testStdOEL.cpp)
 target_include_directories(testStdOEL PUBLIC include)
+target_link_libraries(testStdOEL PRIVATE isce2::stdoelLib)
 add_exe_test(testStdOEL)

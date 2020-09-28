@@ -6,9 +6,9 @@ Python_add_library(geo2rdr MODULE
     )
 target_include_directories(geo2rdr PUBLIC include)
 target_link_libraries(geo2rdr PUBLIC
-    DataAccessor_static
-    combinedLib
-    utilLib
+    isce2::DataAccessorLib
+    isce2::combinedLib
+    isce2::utilLib
     )
 
 if(TARGET OpenMP::OpenMP_Fortran)

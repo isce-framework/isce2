@@ -403,6 +403,7 @@ PyObject* setRO2VYFilename(PyObject *self, PyObject *args)
     return Py_BuildValue("i", 0);
 }
 
+
 PyObject* setLookSide(PyObject *self, PyObject *args)
 {
     uint64_t ptr;

@@ -7,7 +7,7 @@ Python_add_library(aikima MODULE
     )
 target_include_directories(aikima PUBLIC include)
 target_link_libraries(aikima PUBLIC
-    DataAccessor_static
+    isce2::DataAccessorLib
     )
 
 InstallSameDir(

@@ -22,6 +22,7 @@ import os
 Import('envcontrib')
 package = 'geo_autoRIFT'
 envgeoAutorift = envcontrib.Clone()
+envgeoAutorift.MergeFlags('-std=c++11')
 envgeoAutorift['PACKAGE'] = envcontrib['PACKAGE'] + '/' + package
 install = envcontrib['PRJ_SCONS_INSTALL'] + '/' + envgeoAutorift['PACKAGE']
 listFiles = ['__init__.py']

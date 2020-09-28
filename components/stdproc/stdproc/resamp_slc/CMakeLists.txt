@@ -7,8 +7,9 @@ Python_add_library(resamp_slc MODULE
     )
 target_include_directories(resamp_slc PUBLIC include)
 target_link_libraries(resamp_slc PUBLIC
-    combinedLib
-    utilLib
+    isce2::combinedLib
+    isce2::utilLib
+    isce2::DataAccessorLib
     )
 target_compile_options(resamp_slc PRIVATE
     -ffree-line-length-none

@@ -34,12 +34,11 @@ RUN set -ex \
       scons \
       hdf4 \
       hdf5 \
-      netcdf4 \
       libgcc \
       libstdcxx-ng \
       cmake \
-      opencv \
  && yum install -y uuid-devel x11-devel motif-devel jq \
+    opencv opencv-devel opencv-python \
  && ln -sf /opt/conda/bin/cython /opt/conda/bin/cython3 \
  && mkdir -p /opt/isce2/src
 
@@ -101,7 +100,6 @@ RUN set -ex \
       scipy \
       hdf4 \
       hdf5 \
-      netcdf4 \
  && sudo yum update -y \
  && sudo yum install -y uuid-devel x11-devel motif-devel gcc-gfortran \
  && cd /opt/conda/lib \
