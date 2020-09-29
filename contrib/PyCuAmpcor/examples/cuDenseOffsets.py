@@ -4,19 +4,25 @@
 
 
 import os
+import sys
+import time
 import argparse
 import numpy as np
+from osgeo import gdal
 
 import isce
 import isceobj
 from isceobj.Util.decorators import use_api
+from isceobj.Util.ImageUtil import ImageLib as IML
 from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
 
 
 EXAMPLE = '''example
-  cuDenseOffsets.py -r ./merged/SLC/20151120/20151120.slc.full -s ./merged/SLC/20151214/20151214.slc.full
-      --outprefix ./merged/offsets/20151120_20151214/offset
-      --ww 256 --wh 256 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --sw 8 --sh 8 --gpuid 2
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2
+
+  # offset and its geometry
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
 
@@ -25,8 +31,7 @@ def createParser():
     Command line parser.
     '''
 
-
-    parser = argparse.ArgumentParser(description='Generate offset field between two Sentinel slc',
+    parser = argparse.ArgumentParser(description='Generate offset field between two SLCs',
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=EXAMPLE)
 
@@ -38,9 +43,9 @@ def createParser():
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
-                        help='Output prefix, default: offset.')
+                        help='Output prefix (default: %(default)s).')
     parser.add_argument('--os','--outsuffix', type=str, dest='outsuffix', default='',
-                        help='Output suffix, default:.')
+                        help='Output suffix (default: %(default)s).')
 
     # window size settings
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
@@ -66,9 +71,11 @@ def createParser():
     parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
                         help='Number of window down (default: %(default)s).')
     parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=-1,
-                        help='Starting Pixel across of the reference image(default: %(default)s to be determined by margin and search range).')
+                        help='Starting Pixel across of the reference image.' +
+                             'Default: %(default)s to be determined by margin and search range.')
     parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=-1,
-                        help='Starting Pixel down of the reference image (default: %(default)s).')
+                        help='Starting Pixel down of the reference image.' +
+                             'Default: %(default)s to be determined by margin and search range.')
 
     # cross-correlation algorithm
     parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
@@ -103,6 +110,12 @@ def createParser():
     corr.add_argument('--corr-osm', '--corr-over-samp-method', type=int, dest='corr_oversamplemethod', default=0,
                       help = 'Oversampling method for the correlation surface 0=fft, 1=sinc (default: %(default)s).')
 
+    geom = parser.add_argument_group('Geometry', 'generate corresponding geometry datasets ')
+    geom.add_argument('--full-geom', dest='full_geometry_dir', type=str,
+                      help='(Input) Directory of geometry files in full resolution.')
+    geom.add_argument('--out-geom', dest='out_geometry_dir', type=str,
+                      help='(Output) Directory of geometry files corresponding to the offset field.')
+
     # gpu settings
     proc = parser.add_argument_group('Processing parameters')
     proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=0,
@@ -126,7 +139,7 @@ def createParser():
 
 def cmdLineParse(iargs = None):
     parser = createParser()
-    inps =  parser.parse_args(args=iargs)
+    inps = parser.parse_args(args=iargs)
 
     # check oversampled window size
     if (inps.winwidth + 2 * inps.srcwidth ) * inps.raw_oversample > 1024:
@@ -144,6 +157,21 @@ def cmdLineParse(iargs = None):
 @use_api
 def estimateOffsetField(reference, secondary, inps=None):
 
+    # check redo
+    print('redo: ', inps.redo)
+    if not inps.redo:
+        offsetImageName = '{}{}.bip'.format(inps.outprefix, inps.outsuffix)
+        if os.path.exists(offsetImageName):
+            print('offset field file: {} exists and w/o redo, skip re-estimation.'.format(offsetImageName))
+            return 0
+
+    # update file path in xml file
+    for fname in [reference, secondary]:
+        fname = os.path.abspath(fname)
+        img = IML.loadImage(fname)[0]
+        img.filename = fname
+        img.setAccessMode('READ')
+        img.renderHdr()
 
     ###Loading the secondary image object
     sim = isceobj.createSlcImage()
@@ -169,7 +197,6 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.nStreams = inps.nstreams #cudaStreams
     objOffset.derampMethod = inps.deramp
     print('deramp method (0 for magnitude, 1 for complex): ', objOffset.derampMethod)
-
 
     objOffset.referenceImageName = reference+'.vrt'
     objOffset.referenceImageHeight = length
@@ -231,10 +258,11 @@ def estimateOffsetField(reference, secondary, inps=None):
     print('correlation surface oversampling factor:', inps.corr_oversample)
 
     # output filenames
-    objOffset.offsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '.bip'
-    objOffset.grossOffsetImageName = str(inps.outprefix) + str(inps.outsuffix) + '_gross.bip'
-    objOffset.snrImageName = str(inps.outprefix) + str(inps.outsuffix) + '_snr.bip'
-    objOffset.covImageName = str(inps.outprefix) + str(inps.outsuffix) + '_cov.bip'
+    fbase = '{}{}'.format(inps.outprefix, inps.outsuffix)
+    objOffset.offsetImageName = fbase + '.bip'
+    objOffset.grossOffsetImageName = fbase + '_gross.bip'
+    objOffset.snrImageName = fbase + '_snr.bip'
+    objOffset.covImageName = fbase + '_cov.bip'
     print("offsetfield: ",objOffset.offsetImageName)
     print("gross offsetfield: ",objOffset.grossOffsetImageName)
     print("snr: ",objOffset.snrImageName)
@@ -243,14 +271,16 @@ def estimateOffsetField(reference, secondary, inps=None):
     # whether to include the gross offset in offsetImage
     objOffset.mergeGrossOffset = inps.merge_gross_offset
 
-    offsetImageName = objOffset.offsetImageName
-    grossOffsetImageName = objOffset.grossOffsetImageName
-    snrImageName = objOffset.snrImageName
-    covImageName = objOffset.covImageName
-
-    if os.path.exists(offsetImageName) and not inps.redo:
-        print('offsetfield file {} exists while the redo flag is {}.'.format(offsetImageName, inps.redo))
-        return 0
+    try:
+        offsetImageName = objOffset.offsetImageName.decode('utf8')
+        grossOffsetImageName = objOffset.grossOffsetImageName.decode('utf8')
+        snrImageName = objOffset.snrImageName.decode('utf8')
+        covImageName = objOffset.covImageName.decode('utf8')
+    except:
+        offsetImageName = objOffset.offsetImageName
+        grossOffsetImageName = objOffset.grossOffsetImageName
+        snrImageName = objOffset.snrImageName
+        covImageName = objOffset.covImageName
 
     # generic control
     objOffset.numberWindowDownInChunk = inps.numWinDownInChunk
@@ -271,7 +301,8 @@ def estimateOffsetField(reference, secondary, inps=None):
         grossOffset = np.fromfile(inps.gross_offset_file, dtype=np.int32)
         numberWindows = objOffset.numberWindowDown*objOffset.numberWindowAcross
         if grossOffset.size != 2*numberWindows :
-            print('The input gross offsets do not match the number of windows {} by {} in int32 type'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
+            print(('WARNING: The input gross offsets do not match the number of windows:'
+                   ' {} by {} in int32 type').format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
             return 0;
         grossOffset = grossOffset.reshape(numberWindows, 2)
         grossAzimuthOffset = grossOffset[:, 0]
@@ -338,22 +369,86 @@ def estimateOffsetField(reference, secondary, inps=None):
     covImg.setAccessMode('read')
     covImg.renderHdr()
 
+    return objOffset
+
+
+def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, num_win_x, num_win_y,
+                    fbases=['hgt','lat','lon','los','shadowMask','waterMask']):
+    """Generate multilooked geometry datasets in the same grid as the estimated offset field
+    from the full resolution geometry datasets.
+    Parameters: full_dir    - str, path of input  geometry directory in full resolution
+                out_dir     - str, path of output geometry directory
+                x/y_start   - int, starting column/row number
+                x/y_step    - int, output pixel step in column/row direction
+                num_win_x/y - int, number of columns/rows
+    """
+    print('-'*50)
+    print('generate the corresponding multi-looked geometry datasets using gdal ...')
+    in_files = [os.path.join(full_dir, '{}.rdr.full'.format(i)) for i in fbases]
+    in_files = [i for i in in_files if os.path.isfile(i)]
+    if len(in_files) == 0:
+        raise ValueError('No full resolution geometry file found in: {}'.format(full_dir))
+
+    fbases = [os.path.basename(i).split('.')[0] for i in in_files]
+    out_files = [os.path.join(out_dir, '{}.rdr'.format(i)) for i in fbases]
+    os.makedirs(out_dir, exist_ok=True)
+
+    for i in range(len(in_files)):
+        in_file = in_files[i]
+        out_file = out_files[i]
+
+        # input file size
+        ds = gdal.Open(in_file, gdal.GA_ReadOnly)
+        in_wid = ds.RasterXSize
+        in_len = ds.RasterYSize
+
+        # starting column/row and column/row number
+        src_win = [x_start, y_start, num_win_x * x_step, num_win_y * y_step]
+        print('read {} from file: {}'.format(src_win, in_file))
+
+        # write binary data file
+        print('write file: {}'.format(out_file))
+        opts = gdal.TranslateOptions(format='ENVI',
+                                     width=num_win_x,
+                                     height=num_win_y,
+                                     srcWin=src_win,
+                                     noData=0)
+        gdal.Translate(out_file, ds, options=opts)
+        ds = None
+
+        # write VRT file
+        print('write file: {}'.format(out_file+'.vrt'))
+        ds = gdal.Open(out_file, gdal.GA_ReadOnly)
+        gdal.Translate(out_file+'.vrt', ds, options=gdal.TranslateOptions(format='VRT'))
+        ds = None
+
     return
 
 
 def main(iargs=None):
-
     inps = cmdLineParse(iargs)
-    outDir = os.path.dirname(inps.outprefix)
-    print(inps.outprefix)
+    start_time = time.time()
 
+    print(inps.outprefix)
+    outDir = os.path.dirname(inps.outprefix)
     os.makedirs(outDir, exist_ok=True)
 
-    estimateOffsetField(inps.reference, inps.secondary, inps)
+    # estimate offset
+    objOffset = estimateOffsetField(inps.reference, inps.secondary, inps)
+
+    # generate geometry
+    if inps.full_geometry_dir and inps.out_geometry_dir:
+        prepareGeometry(inps.full_geometry_dir, inps.out_geometry_dir,
+                        x_start=objOffset.referenceStartPixelAcrossStatic,
+                        y_start=objOffset.referenceStartPixelDownStatic,
+                        x_step=objOffset.skipSampleAcross,
+                        y_step=objOffset.skipSampleDown,
+                        num_win_x=objOffset.numberWindowAcross,
+                        num_win_y=objOffset.numberWindowDown)
+
+    m, s = divmod(time.time() - start_time, 60)
+    print('time used: {:02.0f} mins {:02.1f} secs.\n'.format(m, s))
     return
 
-
-
 if __name__ == '__main__':
-
-    main()
+    main(sys.argv[1:])
