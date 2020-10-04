@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# modified to pass the segment number to unpackFrame_UAVSAR EJF 2020/08/02
 # modified to work for different UAVSAR stack segments EJF 2019/05/04
 
 import os
@@ -78,7 +79,7 @@ def main(iargs=None):
         imgDir = os.path.join(outputDir,imgDate)
         os.makedirs(imgDir, exist_ok=True)
 
-        cmd = 'unpackFrame_UAVSAR.py -i ' + annFile  + ' -d '+ inps.dopFile + ' -o ' + imgDir
+        cmd = 'unpackFrame_UAVSAR.py -i ' + annFile  + ' -d '+ inps.dopFile + ' -s '+ inps.segment + ' -o ' + imgDir
         print (cmd)
         os.system(cmd)
         

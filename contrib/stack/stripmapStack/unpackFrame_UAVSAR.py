@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# modified to pass the segment number to UAVSAR_STACK sensor EJF 2020/08/02
 
 import isce
 from isceobj.Sensor import createSensor
@@ -14,17 +15,19 @@ def cmdLineParse():
     Command line parser.
     '''
 
-    parser = argparse.ArgumentParser(description='Unpack CSK SLC data and store metadata in pickle file.')
+    parser = argparse.ArgumentParser(description='Unpack UAVSAR SLC data and store metadata in pickle file.')
     parser.add_argument('-i','--input', dest='h5dir', type=str,
-            required=True, help='Input CSK directory')
+            required=True, help='Input UAVSAR directory')
     parser.add_argument('-d','--dop_file', dest='dopFile', type=str,
             default=None, help='Doppler file')
+    parser.add_argument('-s','--segment', dest='stackSegment', type=int,
+            default=1, help='stack segment')
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output SLC directory')
     return parser.parse_args()
 
 
-def unpack(hdf5, slcname, dopFile, parse=False):
+def unpack(hdf5, slcname, dopFile, stackSegment, parse=False):
     '''
     Unpack HDF5 to binary SLC file.
     '''
@@ -33,6 +36,7 @@ def unpack(hdf5, slcname, dopFile, parse=False):
     obj.configure()
     obj.metadataFile = hdf5
     obj.dopplerFile = dopFile
+    obj.segment_index = stackSegment
     obj.parse()
 
     if not os.path.isdir(slcname):
@@ -54,4 +58,4 @@ if __name__ == '__main__':
     if inps.h5dir.endswith('/'):
         inps.h5dir = inps.h5dir[:-1]
 
-    unpack(inps.h5dir, inps.slcdir, inps.dopFile)
+    unpack(inps.h5dir, inps.slcdir, inps.dopFile, inps.stackSegment)
