@@ -58,16 +58,21 @@ target_include_directories(combinedLib INTERFACE
     $<$<COMPILE_LANGUAGE:Fortran>:${mdir}>
     )
 
+add_subdirectory(simamplitude)
+
 InstallSameDir(
+    simamplitude
     combinedlibmodule
     offoutliers
     __init__.py
     decorators.py
     mathModule.py
     offoutliers/Offoutliers.py
+    py2to3.py
     StringUtils.py
     Library/python/Poly1D.py
     Library/python/Poly2D.py
     Library/python/PolyFactory.py
     Library/python/Polynomial.py
+    simamplitude/Simamplitude.py
     )
