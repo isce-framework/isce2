@@ -172,6 +172,9 @@ def createParser():
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
                         help='Allow App to use GPU when available')
 
+    parser.add_argument('--num-proc', '--num-process', dest='numProcess', type=int, default=1,
+                        help='number of parallel processes (for topo only) (default: %(default)s).')
+
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
                         help='Unwrapping method (default: %(default)s).')
 
