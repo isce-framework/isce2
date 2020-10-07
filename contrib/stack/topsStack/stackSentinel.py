@@ -94,81 +94,86 @@ def createParser():
     parser = argparse.ArgumentParser( description='Preparing the directory structure and config files for stack processing of Sentinel data')
 
     parser.add_argument('-H','--hh', nargs=0, action=customArgparseAction,
-                help='Display detailed help information.')
+                        help='Display detailed help information.')
 
     parser.add_argument('-s', '--slc_directory', dest='slc_dirname', type=str, required=True,
-            help='Directory with all Sentinel SLCs')
+                        help='Directory with all Sentinel SLCs')
 
     parser.add_argument('-o', '--orbit_directory', dest='orbit_dirname', type=str, required=True,
-            help='Directory with all orbits')
+                        help='Directory with all orbits')
 
     parser.add_argument('-a', '--aux_directory', dest='aux_dirname', type=str, required=True,
-            help='Directory with all aux files')
+                        help='Directory with all aux files')
 
     parser.add_argument('-w', '--working_directory', dest='work_dir', type=str, default='./',
-            help='Working directory ')
+                        help='Working directory (default: %(default)s).')
 
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
-            help='Directory with the DEM')
+                        help='Directory with the DEM')
 
     parser.add_argument('-m', '--reference_date', dest='reference_date', type=str, default=None,
-            help='Directory with reference acquisition')
+                        help='Directory with reference acquisition')
 
     parser.add_argument('-c','--num_connections', dest='num_connections', type=str, default = '1',
-            help='number of interferograms between each date and subsequent dates. -- Default : 1')
-
-    parser.add_argument('-O','--num_overlap_connections', dest='num_overlap_connections', type=str, default = '3',
-                help='number of overlap interferograms between each date and subsequent dates used for NESD computation (for azimuth offsets misregistration). -- Default : 3')
+                        help='number of interferograms between each date and subsequent dates (default: %(default)s).')
 
     parser.add_argument('-n', '--swath_num', dest='swath_num', type=str, default='1 2 3',
-            help="A list of swaths to be processed. -- Default : '1 2 3'")
+                        help="A list of swaths to be processed. -- Default : '1 2 3'")
 
-    parser.add_argument('-b', '--bbox', dest='bbox', type=str, default=None, help="Lat/Lon Bounding SNWE. -- Example : '19 20 -99.5 -98.5' -- Default : common overlap between stack")
+    parser.add_argument('-b', '--bbox', dest='bbox', type=str, default=None,
+                        help="Lat/Lon Bounding SNWE. -- Example : '19 20 -99.5 -98.5' -- Default : common overlap between stack")
 
-    parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default=''
-       , help="text command to be added to the beginning of each line of the run files. -- Example : 'source ~/.bash_profile;' -- Default : ''")
+    parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='', 
+                        help="text command to be added to the beginning of each line of the run files (default: '%(default)s'). "
+                             "Example : 'source ~/.bash_profile;'")
 
-    parser.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None
-       , help="List of the dates to be excluded for processing. -- Example : '20141007,20141031' -- Default: No dates excluded")
+    parser.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None, 
+                        help="List of the dates to be excluded for processing. -- Example : '20141007,20141031' (default: %(default)s).")
 
-    parser.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None
-       , help="List of the dates to be included for processing. -- Example : '20141007,20141031' -- Default: No dates excluded")
+    parser.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None, 
+                        help="List of the dates to be included for processing. -- Example : '20141007,20141031' (default: %(default)s).")
 
-    parser.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3'
-       , help='Number of looks in azimuth for interferogram multi-looking. -- Default : 3')
+    parser.add_argument('--start_date', dest='startDate', type=str, default=None, 
+                        help='Start date for stack processing. Acquisitions before start date are ignored. '
+                             'format should be YYYY-MM-DD e.g., 2015-01-23')
 
-    parser.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9'
-       , help='Number of looks in range for interferogram multi-looking. -- Default : 9')
+    parser.add_argument('--stop_date', dest='stopDate', type=str, default=None, 
+                        help='Stop date for stack processing. Acquisitions after stop date are ignored. '
+                             'format should be YYYY-MM-DD e.g., 2017-02-26')
 
-    parser.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5'
-       , help='Filter strength for interferogram filtering. -- Default : 0.5')
+    parser.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3', 
+                        help='Number of looks in azimuth for interferogram multi-looking (default: %(default)s).')
 
-    parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85'
-           , help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity. -- Default : 0.85')
+    parser.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9', 
+                        help='Number of looks in range for interferogram multi-looking (default: %(default)s).')
 
-    parser.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10'
-               , help='SNR threshold for estimating range misregistration using cross correlation. -- Default : 10')
+    parser.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5', 
+                        help='Filter strength for interferogram filtering (default: %(default)s).')
 
-    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu'
-       , help='Unwrapping method (icu or snaphu). -- Default : snaphu')
+    parser.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10', 
+                        help='SNR threshold for estimating range misregistration using cross correlation (default: %(default)s).')
 
-    parser.add_argument('-p', '--polarization', dest='polarization', type=str, default='vv'
-       , help='SAR data polarization -- Default : vv')
+    parser.add_argument('-p', '--polarization', dest='polarization', type=str, default='vv', 
+                        help='SAR data polarization (default: %(default)s).')
 
-    parser.add_argument('-C', '--coregistration', dest='coregistration', type=str, default='NESD'
-           , help='Coregistration options: a) geometry b) NESD -- Default : NESD')
+    parser.add_argument('-C', '--coregistration', dest='coregistration', type=str, default='NESD', choices=['geometry', 'NESD'],
+                        help='Coregistration options (default: %(default)s).')
 
-    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram'
-       , help='The InSAR processing workflow : (interferogram, offset, slc, correlation) -- Default : interferogram')
+    parser.add_argument('-O','--num_overlap_connections', dest='num_overlap_connections', type=str, default = '3',
+                        help='number of overlap interferograms between each date and subsequent dates used for NESD computation '
+                             '(for azimuth offsets misregistration) (default: %(default)s).')
 
-    parser.add_argument('--start_date', dest='startDate', type=str, default=None
-       , help='Start date for stack processing. Acquisitions before start date are ignored. format should be YYYY-MM-DD e.g., 2015-01-23')
+    parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85', 
+                        help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
 
-    parser.add_argument('--stop_date', dest='stopDate', type=str, default=None
-       , help='Stop date for stack processing. Acquisitions after stop date are ignored. format should be YYYY-MM-DD e.g., 2017-02-26')
+    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram', choices=['slc', 'correlation', 'interferogram', 'offset'],
+                        help='The InSAR processing workflow (default: %(default)s).')
 
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
-        help='Allow App to use GPU when available')
+                        help='Allow App to use GPU when available')
+
+    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
+                        help='Unwrapping method (default: %(default)s).')
 
     parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
