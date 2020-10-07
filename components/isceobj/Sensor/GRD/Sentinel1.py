@@ -1,20 +1,20 @@
-#!/usr/bin/env python3 
+#!/usr/bin/env python3
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Copyright 2014 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # United States Government Sponsorship acknowledged. This software is subject to
 # U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
 # (No [Export] License Required except when exporting to an embargoed country,
@@ -31,6 +31,7 @@
 
 import isce
 import xml.etree.ElementTree as ElementTree
+from collections import defaultdict
 import datetime
 import isceobj
 from isceobj.Util import Poly1D, Poly2D
@@ -111,7 +112,7 @@ class Sentinel1(Component):
     facility_list = (PRODUCT,)
 
     def __init__(self):
-        Component.__init__(self)        
+        Component.__init__(self)
         self.xml = None
         self.tiff = None
         self.calibrationXml = None
@@ -121,8 +122,9 @@ class Sentinel1(Component):
         self.noiseCorrectionApplied = False
 
         self.betaLUT = None
-        self.noiseLUT = None
         self.gr2srLUT = None
+        self.noiseRangeLUT = None
+        self.noiseAzimuthLUT = None
 
 
         self._xml_root=None
@@ -150,8 +152,8 @@ class Sentinel1(Component):
             with zipfile.ZipFile(self.safe, 'r') as zf:
                 namelist = zf.namelist()
 
-   
-        
+
+
 
 
         ####First find VV annotation file
@@ -161,11 +163,11 @@ class Sentinel1(Component):
             #Find XML file
             patt = os.path.join('*.SAFE', 'annotation', swathid+'*')
             match = fnmatch.filter(namelist, patt)
-   
+
             if len(match) == 0 :
                 raise Exception('Annotation file for {0} not found in {1}'.format(self.polarization, self.safe))
-            
-            self.xml = os.path.join('/vsizip', self.safe, match[0]) 
+
+            self.xml = os.path.join('/vsizip', self.safe, match[0])
 
 
             #Find TIFF file
@@ -184,7 +186,7 @@ class Sentinel1(Component):
             if len(match) == 0 :
                 raise Exception('Annotation file found for {0} but no calibration in {1}'.format(self.polarization, self.safe))
 
-            self.calibrationXml = os.path.join('/vsizip', self.safe, match[0]) 
+            self.calibrationXml = os.path.join('/vsizip', self.safe, match[0])
 
             #Find Noise file
             patt = os.path.join('*.SAFE', 'annotation', 'calibration', 'noise-'+swathid+'*')
@@ -203,7 +205,7 @@ class Sentinel1(Component):
             self.manifest = os.path.join('/vsizip', self.safe, match[0])
 
         else:
-           
+
             ####Find annotation file
             patt = os.path.join( self.safe, 'annotation', swathid + '*')
             match = glob.glob(patt)
@@ -216,7 +218,7 @@ class Sentinel1(Component):
             ####Find TIFF file
             patt = os.path.join( self.safe, 'measurement', swathid+'*')
             match = glob.glob(patt)
-        
+
             if len(match) == 0:
                 raise Exception('Annotation file found for {0} but not measurement in {1}'.format(self.polarization, self.safe))
 
@@ -294,7 +296,7 @@ class Sentinel1(Component):
             orb = self.extractPreciseOrbit()
         elif '_RESORB_' in self.orbitFile:
             orb = self.extractOrbit()
-        
+
         self.product.orbit.setOrbitSource('Header')
         for sv in orb:
             self.product.orbit.addStateVector(sv)
@@ -355,11 +357,11 @@ class Sentinel1(Component):
 
         lines = int(self.getxmlvalue('imageAnnotation/imageInformation/numberOfLines'))
         samples = int(self.getxmlvalue('imageAnnotation/imageInformation/numberOfSamples'))
-        
+
         slantRangeTime = float(self.getxmlvalue('imageAnnotation/imageInformation/slantRangeTime'))
         startingSlantRange = float(self.getxmlvalue('imageAnnotation/imageInformation/slantRangeTime'))*Const.c/2.0
         incidenceAngle = float(self.getxmlvalue('imageAnnotation/imageInformation/incidenceAngleMidSwath'))
-       
+
 
         sensingStart = self.convertToDateTime( self.getxmlvalue('imageAnnotation/imageInformation/productFirstLineUtcTime'))
         sensingStop = self.convertToDateTime( self.getxmlvalue('imageAnnotation/imageInformation/productLastLineUtcTime'))
@@ -369,7 +371,7 @@ class Sentinel1(Component):
 
         ###Read ascending node for phase calibration
         ascTime = self.convertToDateTime(self.getxmlvalue('imageAnnotation/imageInformation/ascendingNodeTime'))
-       
+
         ###Noise correction
         correctionApplied = self.getxmlvalue('imageAnnotation/processingInformation/thermalNoiseCorrectionPerformed').upper() == 'TRUE'
 
@@ -378,9 +380,9 @@ class Sentinel1(Component):
         self.product.numberOfLines = lines
         self.product.startingGroundRange = 0.0
         self.product.startingSlantRange = startingSlantRange
-        self.product.trackNumber = ((orbitnumber-73)%175) + 1 
-        self.product.orbitNumber = orbitnumber 
-        self.product.frameNumber = 1 
+        self.product.trackNumber = ((orbitnumber-73)%175) + 1
+        self.product.orbitNumber = orbitnumber
+        self.product.frameNumber = 1
         self.product.polarization = polarization
         self.product.passDirection = passDirection
         self.product.radarWavelength = Const.c / frequency
@@ -410,7 +412,7 @@ class Sentinel1(Component):
 
         self.product.bbox = [min(lat) - margin, max(lat) + margin, min(lon) - margin, max(lon) + margin]
         print(self.product.bbox)
-        return        
+        return
 
     def populateIPFVersion(self):
         '''
@@ -424,7 +426,7 @@ class Sentinel1(Component):
 
         if '.zip' in self.manifest:
 
-            import zipfile    
+            import zipfile
             parts = self.manifest.split(os.path.sep)
             zipname = os.path.join('/',*(parts[:-2]))
             fname = os.path.join(*(parts[-2:]))
@@ -443,12 +445,12 @@ class Sentinel1(Component):
 
         try:
             root = ElementTree.fromstring(xmlstr)
-        
+
             elem = root.find('.//metadataObject[@ID="processing"]')
             rdict = elem.find('.//xmlData/' + nsp + 'processing/' + nsp + 'facility/' + nsp + 'software').attrib
 
             self.IPFversion = rdict['version']
-            print('Setting IPF version to : ', self.IPFversion) 
+            print('Setting IPF version to : ', self.IPFversion)
 
         except:
             print('Could not read version number successfully from manifest file: ', self.manifest)
@@ -465,7 +467,7 @@ class Sentinel1(Component):
         filelist = []
         match = []
         timeStamp = self.product.sensingStart+(self.product.sensingStop - self.product.sensingStart)/2.
-        
+
         for orbType in types:
             files = glob.glob( os.path.join(self.orbitDir, 'S1?_OPER_AUX_' + orbType + '_OPOD*'))
             filelist.extend(files)
@@ -476,7 +478,7 @@ class Sentinel1(Component):
             taft = datetime.datetime.strptime(fields[-1][0:15], datefmt)
             tbef = datetime.datetime.strptime(fields[-2][1:16], datefmt)
             print(taft, tbef)
-                
+
             #####Get all files that span the acquisition
             if (tbef <= timeStamp) and (taft >= timeStamp):
                 tmid = tbef + 0.5 * (taft - tbef)
@@ -486,7 +488,7 @@ class Sentinel1(Component):
                 bestmatch = min(match, key = lambda x: x[1])
                 return bestmatch[0]
 
-       
+
         if len(match) == 0:
             raise Exception('No suitable orbit file found. If you want to process anyway - unset the orbitdir parameter')
 
@@ -495,7 +497,7 @@ class Sentinel1(Component):
         Extract orbit information from xml node.
         '''
         node = self._xml_root.find('generalAnnotation/orbitList')
-        
+
         print('Extracting orbit from annotation XML file')
         frameOrbit = Orbit()
         frameOrbit.configure()
@@ -519,7 +521,7 @@ class Sentinel1(Component):
             frameOrbit.addStateVector(vec)
 
         return frameOrbit
-            
+
     def extractPreciseOrbit(self):
         '''
         Extract precise orbit from given Orbit file.
@@ -546,7 +548,7 @@ class Sentinel1(Component):
 
             if (timestamp >= tstart) and (timestamp < tend):
 
-                pos = [] 
+                pos = []
                 vel = []
 
                 for tag in ['VX','VY','VZ']:
@@ -582,7 +584,7 @@ class Sentinel1(Component):
             parts = self.calibrationXml.split(os.path.sep)
             zipname = os.path.join('/',*(parts[:-4]))
             fname = os.path.join(*(parts[-4:]))
-            
+
             try:
                 with zipfile.ZipFile(zipname, 'r') as zf:
                     xmlstr = zf.read(fname)
@@ -617,7 +619,7 @@ class Sentinel1(Component):
             signode = child.find('betaNought')
             data[ii,:] = [float(x) for x in signode.text.split()]
 
-      
+
         lines = np.array(lines)
         pixels = np.array(pixels)
 
@@ -637,24 +639,19 @@ class Sentinel1(Component):
         Extract Noise look up table from calibration file.
         '''
 
-        if not self.noiseCorrectionApplied:
-            self.noiseLUT = 0.0
-            return
-		
-
-        from scipy.interpolate import RectBivariateSpline
+        from scipy.interpolate import interp1d, InterpolatedUnivariateSpline
 
         if self.noiseXml is None:
             raise Exception('No calibration file provided')
 
-        if self.noiseXml.startswith('/vsizip'):
+        if '.zip' in self.noiseXml:
             import zipfile
-            parts = self.noiseXml.split(os.path.sep)
-            zipname = os.path.join(*(parts[2:-4]))
-            fname = os.path.join(*(parts[-4:]))
+            parts = self.noiseXml.split('.zip/')
+            zipname = parts[0] + '.zip'
+            fname = parts[1]
 
             try:
-                with zipfile.ZipFile(zipname, 'r'):
+                with zipfile.ZipFile(zipname, 'r') as zf:
                     xmlstr = zf.read(fname)
             except:
                 raise Exception('Could not read noise file: {0}'.format(self.calibrationXml))
@@ -665,33 +662,78 @@ class Sentinel1(Component):
             except:
                 raise Exception('Could not read noise file: {0}'.format(self.calibrationXml))
 
+        if float(self.IPFversion) < 2.90:
+            noise_range_vector_name = "noiseVectorList"
+            noise_range_lut_name = "noiseLut"
+            has_azimuth_noise_vectors = False
+            self.noiseAzimuthLUT = None
+        else:
+            noise_range_vector_name = "noiseRangeVectorList"
+            noise_range_lut_name = "noiseRangeLut"
+            has_azimuth_noise_vectors = True
+
+        print("Extracting noise LUT's...")
+
         _xml_root = ElementTree.fromstring(xmlstr)
 
-        node = _xml_root.find('noiseVectorList')
-        num = int(node.attrib['count'])
+        node = _xml_root.find(noise_range_vector_name)
+        num_vectors = int(node.attrib['count'])
 
-        lines = []
-        pixels = []
-        data = None
+        print("File contains {} range noise vectors.".format(num_vectors))
+
+        full_samples_range = np.arange(self.product.numberOfSamples)
+        noise_range_lut_indices = np.zeros((num_vectors,))
+        noise_range_lut_values = np.zeros((num_vectors, self.product.numberOfSamples))
 
         for ii, child in enumerate(node.getchildren()):
+            print("Processing range noise vector {}/{}".format(ii + 1, num_vectors))
             pixnode = child.find('pixel')
-            nump = int(pixnode.attrib['count'])
 
-            if ii==0:
-                data = np.zeros((num,nump))
-                pixels = [float(x) for x in pixnode.text.split()]
+            sample_pixels = [float(x) for x in pixnode.text.split()]
 
+            signode = child.find(noise_range_lut_name)
+            vector = np.asarray([float(x) for x in signode.text.split()])
+            vector_interpolator = InterpolatedUnivariateSpline(sample_pixels, vector, k=1)
+            vector_interpolated = vector_interpolator(full_samples_range)
 
-            lines.append( int(child.find('line').text))
-            signode = child.find('noiseLut')
-            data[ii,:] = [float(x) for x in signode.text.split()]
+            noise_range_lut_indices[ii] = int(child.find('line').text)
+            noise_range_lut_values[ii] = vector_interpolated
 
-        fp.close()
-        lines = np.array(lines)
-        pixels = np.array(pixels)
+        self.noiseRangeLUT = interp1d(noise_range_lut_indices, noise_range_lut_values, kind='linear', axis=0, fill_value="extrapolate")
 
-        self.noiseLUT = RectBivariateSpline(lines,pixels, data, kx=1,ky=1)
+        if has_azimuth_noise_vectors:
+
+            node = _xml_root.find("noiseAzimuthVectorList")
+            num_vectors = int(node.attrib['count'])
+
+            print("File contains {} azimuth noise blocks.".format(num_vectors))
+
+            noise_azimuth_lut_indices = defaultdict(list)
+            noise_azimuth_lut_values = defaultdict(list)
+
+            for block_i, child in enumerate(node.getchildren()):
+                print("Processing azimuth noise vector {}/{}".format(block_i + 1, num_vectors))
+                linenode = child.find('line')
+                signode = child.find("noiseAzimuthLut")
+                block_range_start = int(child.find('firstRangeSample').text)
+                block_range_end = int(child.find('lastRangeSample').text)
+                block_azimuth_start = int(child.find('firstAzimuthLine').text)
+                block_azimuth_end = int(child.find('lastAzimuthLine').text)
+                block_line_index = [float(x) for x in linenode.text.split()]
+                block_vector = [float(x) for x in signode.text.split()]
+
+                block_line_range = np.arange(block_azimuth_start, block_azimuth_end + 1)
+                block_vector_interpolator = InterpolatedUnivariateSpline(block_line_index, block_vector, k=1)
+
+                for line in block_line_range:
+                    noise_azimuth_lut_indices[line].extend([block_range_start, block_range_end])
+                    noise_azimuth_lut_values[line].extend([block_vector_interpolator(line)] * 2)
+
+            self.noiseAzimuthLUT = (noise_azimuth_lut_indices, noise_azimuth_lut_values)
+
+        else:
+            print("File contains no azimuth noise blocks.")
+
 
         if False:
             import matplotlib.pyplot as plt
@@ -711,7 +753,7 @@ class Sentinel1(Component):
         except ImportError:
             raise Exception('GDAL python bindings not found. Need this for RSAT2/ TandemX / Sentinel1.')
 
-        from scipy.interpolate import interp2d
+        from scipy.interpolate import interp1d
 
         if parse:
             self.parse()
@@ -727,7 +769,7 @@ class Sentinel1(Component):
         if self.product.numberOfLines != src.RasterYSize:
             raise Exception('Length in metadata and image dont match')
 
-       
+
         noiseFactor = 0.0
         if (not removeNoise) and self.noiseCorrectionApplied:
             print('User asked for data without noise corrections, but product appears to be corrected. Adding back noise from LUT ....')
@@ -739,10 +781,13 @@ class Sentinel1(Component):
             print('User asked for data without noise corrections. The product contains uncorrected data ... unpacking ....')
         else:
             print('User asked for noise corrected data and the product appears to be noise corrected .... unpacking ....')
-          
+
         ###Write original SLC to file
         fid = open(self.output, 'wb')
         pix = np.arange(self.product.numberOfSamples)
+
+        if self.noiseAzimuthLUT is not None:
+            noise_azimuth_lut_indices, noise_azimuth_lut_values = self.noiseAzimuthLUT
 
         for ii in range(self.product.numberOfLines//100 + 1):
             ymin = int(ii*100)
@@ -752,25 +797,31 @@ class Sentinel1(Component):
                 break
 
             lin = np.arange(ymin,ymax)
-            ####Read in one line of data
+            ####Read in one block of data
             data = 1.0 * band.ReadAsArray(0, ymin, self.product.numberOfSamples, ymax-ymin)
 
             lut = self.betaLUT(lin,pix,grid=True)
-	    
+
             if noiseFactor != 0.0:
-                noise = self.noiseLUT(lin,pix,grid=True)
+                noise = self.noiseRangeLUT(lin)
+                if self.noiseAzimuthLUT is not None:
+                    block_azimuth_noise = np.zeros_like(noise)
+                    for l_i, line in enumerate(lin):
+                        interpolator = interp1d(noise_azimuth_lut_indices[line], noise_azimuth_lut_values[line], kind='previous', fill_value="extrapolate")
+                        block_azimuth_noise[l_i] = interpolator(np.arange(self.product.numberOfSamples))
+                    noise *= block_azimuth_noise
             else:
                 noise = 0.0
 
 
             #outdata = data
-            outdata = data*data/(lut*lut) + noiseFactor * noise/(lut*lut)
+            outdata = np.clip(data*data/(lut*lut) + noiseFactor * noise/(lut*lut), 0, None)
             #outdata = 10 * np.log10(outdata)
 
             outdata.astype(np.float32).tofile(fid)
 
         fid.close()
-               
+
 
         ####Render ISCE XML
         slcImage = isceobj.createImage()
@@ -782,7 +833,7 @@ class Sentinel1(Component):
         slcImage.setLength(self.product.numberOfLines)
         slcImage.renderHdr()
         slcImage.renderVRT()
-        self.product.image = slcImage 
+        self.product.image = slcImage
 
         band = None
         src = None
@@ -808,12 +859,12 @@ class Sentinel1(Component):
 
         for ii, child in enumerate(node.getchildren()):
             t0 = self.convertToDateTime(child.find('azimuthTime').text)
-           
+
             lines.append( (t0-self.product.sensingStart).total_seconds()/self.product.azimuthTimeInterval)
 
-            
+
             pp =  [float(x) for x in child.find('grsrCoefficients').text.split()]
-    
+
             meangr = float( child.find('gr0').text)
             if meangr !=0 :
                 raise Exception('Ground range image does not start at zero coordinate')
@@ -826,7 +877,7 @@ class Sentinel1(Component):
         if lines[0] > 0:
             lines.insert(0, 0.)
             pp = data[0]
-            data.insert(0,pp) 
+            data.insert(0,pp)
 
         ####If polynomial ends before last line
         if lines[-1] < (self.product.numberOfLines-1):
@@ -844,7 +895,7 @@ class Sentinel1(Component):
             col = data[:,ii]
             LUT.append(interp1d(lines, col, bounds_error=False, assume_sorted=True))
 
-            
+
         self.gr2srLUT = LUT
 
         ###Write original SLC to file
@@ -885,4 +936,4 @@ class Sentinel1(Component):
         slcImage.setLength(self.product.numberOfLines)
         slcImage.renderHdr()
         slcImage.renderVRT()
-        self.product.slantRangeImage = slcImage 
+        self.product.slantRangeImage = slcImage
