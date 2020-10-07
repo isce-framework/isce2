@@ -192,6 +192,14 @@ GEOCODE_LIST = Application.Parameter(
      doc = "List of products to geocode."
                                       )
 
+APPLY_THERMAL_NOISE_CORRECTION = Application.Parameter(
+        'apply_thermal_noise_correction',
+        public_name='apply thermal noise correction',
+        default=False,
+        type=bool,
+        mandatory=False,
+        doc = 'Flag to apply thermal noise correction. Currently only available for Sentinel-1.')
+
 
 #Facility declarations
 REFERENCE = Application.Facility(
@@ -244,7 +252,8 @@ class GRDSAR(Application):
                       PICKLE_LOAD_DIR,
                       RENDERER,
                       POLARIZATIONS,
-                      GEOCODE_LIST)
+                      GEOCODE_LIST,
+                      APPLY_THERMAL_NOISE_CORRECTION)
 
     facility_list = (REFERENCE,
                      DEM_STITCHER,

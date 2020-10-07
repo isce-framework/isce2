@@ -42,7 +42,7 @@ def runPreprocessor(self):
         frame.product.endingSlantRange = r0max
 
         try:
-            reference = extract_slc(frame, slantRange=(not slantRangeExtracted))
+            reference = extract_slc(frame, slantRange=(not slantRangeExtracted), removeNoise=self.apply_thermal_noise_correction)
             success=True
             if not slantRangeExtracted:
                 r0min = frame.product.startingSlantRange
@@ -72,10 +72,10 @@ def runPreprocessor(self):
     catalog.printToLog(logger, "runPreprocessor")
     self._grd.procDoc.addAllFromCatalog(catalog)
 
-def extract_slc(sensor, slantRange=False):
+def extract_slc(sensor, slantRange=False, removeNoise=False):
 #    sensor.configure()
     sensor.parse()
-    sensor.extractImage()
+    sensor.extractImage(removeNoise=removeNoise)
    
     if slantRange:
         sensor.extractSlantRange()
