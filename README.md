@@ -681,6 +681,7 @@ The inputs are Sentinel GRD zipfiles
         <property name="epsg id">32618</property>
         <property name="geocode spacing">100</property>
         <property name="geocode interpolation method">bilinear</property>
+        <property name="apply thermal noise correction">True</property>
         <component name="reference">
         <property name="safe">$dir$/rtcApp/data/S1A_IW_GRDH_1SDV_20181221T225104_20181221T225129_025130_02C664_B46C.zip</property>
         <property name="orbit directory">$dir$/orbits</property>
