@@ -75,6 +75,7 @@ class config(object):
         self.f.write('reference : ' + self.outDir + '\n')
         self.f.write('dem : ' + self.dem + '\n')
         self.f.write('geom_referenceDir : ' + self.geom_referenceDir + '\n')
+        self.f.write('numProcess : ' + str(self.numProcess) + '\n')
         self.f.write('##########################' + '\n')
 
     def geo2rdr(self,function):
@@ -315,6 +316,7 @@ class run(object):
         configObj.outDir = os.path.join(self.work_dir, 'reference')
         configObj.geom_referenceDir = os.path.join(self.work_dir, 'geom_reference')
         configObj.dem = os.path.join(self.work_dir, configObj.dem)
+        configObj.numProcess = self.numProcess
         configObj.Sentinel1_TOPS('[Function-1]')
         configObj.topo('[Function-2]')
         configObj.finalize()
@@ -940,8 +942,9 @@ class sentinelSLC(object):
            print ("downloading precise or restituted orbits ...")
 
            restitutedOrbitDir = os.path.join(workDir ,'orbits/' + self.date)
-           if os.path.exists(restitutedOrbitDir):
-              orbitFile = glob.glob(os.path.join(restitutedOrbitDir,'*.EOF'))[0]
+           orbitFiles = glob.glob(os.path.join(restitutedOrbitDir,'*.EOF'))
+           if len(orbitFiles) > 0:
+              orbitFile = orbitFiles[0]
 
               #fields = orbitFile.split('_')
               fields = os.path.basename(orbitFile).split('_')
@@ -954,7 +957,7 @@ class sentinelSLC(object):
 
            #if not os.path.exists(restitutedOrbitDir):
            else:
-              os.makedirs(restitutedOrbitDir)
+              os.makedirs(restitutedOrbitDir, exist_ok=True)
 
               cmd = 'fetchOrbit.py -i ' + self.safe_file + ' -o ' + restitutedOrbitDir
               print(cmd)
