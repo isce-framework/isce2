@@ -7,6 +7,7 @@ import logging
 import isceobj
 import copy
 import os
+import inspect
 logger = logging.getLogger('isce.grdsar.runPreprocessor')
 
 def runPreprocessor(self):
@@ -75,7 +76,12 @@ def runPreprocessor(self):
 def extract_slc(sensor, slantRange=False, removeNoise=False):
 #    sensor.configure()
     sensor.parse()
-    sensor.extractImage(removeNoise=removeNoise)
+    sensor_extractImage_spec = inspect.getfullargspec(sensor.extractImage)
+    if "removeNoise" in sensor_extractImage_spec.args or "removeNoise" in sensor_extractImage_spec.kwonlyargs:
+        sensor.extractImage(removeNoise=removeNoise)
+    else:
+        print('Noise removal requested, but sensor does not support noise removal.')
+        sensor.extractImage()
    
     if slantRange:
         sensor.extractSlantRange()
