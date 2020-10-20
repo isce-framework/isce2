@@ -102,6 +102,17 @@ if __name__ == '__main__':
     #load reference track
     referenceTrack = loadTrack(dateDirs[dateIndexReference], dates[dateIndexReference])
 
+    dateSecondaryFirst = None
+    for idate in range(ndate):
+        if idate == dateIndexReference:
+            continue
+        if dateSecondary != []:
+            if dates[idate] not in dateSecondary:
+                continue
+        dateSecondaryFirst = dates[idate]
+        break
+    if dateSecondaryFirst is None:
+        raise Exception('no secondary date is to be processed\n')
 
     #set number of matching points
     numberOfOffsetsRangeUsed = [[None for j in range(nswath)] for i in range(nframe)]
@@ -130,11 +141,17 @@ if __name__ == '__main__':
                 numberAzimuthLooks=100
 
                 #compute land ratio using topo module
-                latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+
+                latFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lat.rdr')
+                lonFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lon.rdr')
+                hgtFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'hgt.rdr')
+                losFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'los.rdr')
+                wbdRadarFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'wbd.rdr')
 
                 topo(referenceSwath, referenceTrack, demFile, latFile, lonFile, hgtFile, losFile=losFile, 
                     incFile=None, mskFile=None, 
@@ -204,13 +221,23 @@ if __name__ == '__main__':
                 #compute geometrical offsets
                 if (wbdFile is not None) and (demFile is not None) and (numberOfOffsetsRangeUsed[i][j] == 0) and (numberOfOffsetsAzimuthUsed[i][j] == 0):
                     #compute geomtricla offsets
-                    latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    rgOffsetFile = 'rg_offset_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    azOffsetFile = 'az_offset_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                    wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # rgOffsetFile = 'rg_offset_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # azOffsetFile = 'az_offset_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                    # wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+
+                    latFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lat.rdr')
+                    lonFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lon.rdr')
+                    hgtFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'hgt.rdr')
+                    losFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'los.rdr')
+                    #put them in current date directory
+                    rgOffsetFile = os.path.join(idir, dates[idate], frameDir, swathDir, 'rg_offset.rdr')
+                    azOffsetFile = os.path.join(idir, dates[idate], frameDir, swathDir, 'az_offset.rdr')
+                    wbdRadarFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'wbd.rdr')
+
                     geo2rdr(secondarySwath, secondaryTrack, latFile, lonFile, hgtFile, rgOffsetFile, azOffsetFile, numberRangeLooks=numberRangeLooks, numberAzimuthLooks=numberAzimuthLooks, multilookTimeOffset=False)
                     reformatGeometricalOffset(rgOffsetFile, azOffsetFile, os.path.join(secondaryDir, 'cull.off'), rangeStep=numberRangeLooks, azimuthStep=numberAzimuthLooks, maximumNumberOfOffsets=2000)
 
@@ -351,11 +378,17 @@ if __name__ == '__main__':
             swathDir = 's{}'.format(swathNumber)
 
             if (wbdFile is not None) and (demFile is not None):
-                latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
-                wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # latFile = 'lat_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # lonFile = 'lon_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # hgtFile = 'hgt_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # losFile = 'los_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+                # wbdRadarFile = 'wbd_f{}_{}_s{}.rdr'.format(i+1, frameNumber, swathNumber)
+
+                latFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lat.rdr')
+                lonFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'lon.rdr')
+                hgtFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'hgt.rdr')
+                losFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'los.rdr')
+                wbdRadarFile = os.path.join(idir, dateSecondaryFirst, frameDir, swathDir, 'wbd.rdr')
 
                 os.remove(latFile)
                 os.remove(latFile+'.vrt')
