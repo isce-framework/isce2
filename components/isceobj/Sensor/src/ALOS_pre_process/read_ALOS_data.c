@@ -33,6 +33,13 @@
  * 07/17/08     reformatted; added functions      RJM                      *
  ***************************************************************************/
 
+/********************************************************************************
+This program has been upgraded to handle the ALOS-1 PRF change issue.
+
+Cunren Liang, 12-December-2019
+California Institute of Technology, Pasadena, CA
+*********************************************************************************/
+
 /*
 the data header information is read into the structure dfd
 the line prefix information is read into sdr
@@ -47,7 +54,8 @@ SC_clock_start SC_clock_stop
 
 #include "image_sio.h"
 #include "lib_functions.h"
-
+#define ZERO_VALUE (char)(63 + rand() % 2)
+#define clip127(A) (((A) > 127) ? 127 : (((A) < 0) ? 0 : A))
 #define znew   (int) (z=36969*(z&65535)+(z>>16))
 typedef unsigned long UL;
  static UL z=362436069, t[256];
@@ -61,21 +69,24 @@ void swap_ALOS_data_info(struct sardata_info *sdr);
 long read_sardata_info(FILE *, struct PRM *, int *, int *);
 void print_params(struct PRM *prm);
 int assign_sardata_params(struct PRM *, int, int *, int *);
-int check_shift(struct PRM *, int *, int *, int *, int);
+int check_shift(struct PRM *, int *, int *, int *, int, int);
 int set_file_position(FILE *, long *, int);
 int reset_params(struct PRM *prm, long *, int *, int *);
 int fill_shift_data(int, int, int, int, int, char *, char *, FILE *);
 int handle_prf_change(struct PRM *, FILE *, long *, int); 
+void change_dynamic_range(char *data, long length);
 
 struct 	sardata_record r1;
 struct	sardata_descriptor dfd;
 struct	sardata_info sdr;
 
-long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte_offset) {
+long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte_offset, struct resamp_info *rspi, int nPRF) {
 
 	char 	*data, *shift_data;
         int 	record_length0;		/* length of record read at start of file */
 	int	record_length1;		/* length of record read in file 	*/
+	int start_sdr_rec_len = 0; /* sdr record length for fisrt record */
+	int slant_range_old = 0;   /* slant range of previous record */
 	int	line_suffix_size;	/* number of bytes after data 		*/
 	int	data_length;		/* bytes of data			*/
         int 	n, m, ishift, shift, shift0, npatch_max;
@@ -86,6 +97,13 @@ long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte
 	settable(12345);
 
 	if (debug) fprintf(stderr,".... reading header \n");
+
+    //here we still get sdr from the first data line no matter whether prf changes. 
+    //this sdr is used to initialize record_length0 in assign_sardata_params, which 
+    //is used at line 152 to check if record_length changed.
+    //I think we should get sdr from first prf-change data line for the output of prf-change file.
+    //Cunren Liang. 02-DEC-2019
+
 
 	/* read header information */
 	read_sardata_info(imagefile, prm, &header_size, &line_prefix_size);
@@ -111,7 +129,7 @@ long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte
 
 	shift0 = 0;
 	n = 1;
-	m = 0;
+	m = 2;//first line sequence_number
 
 	/* read the rest of the file */
 	while ( (fread((void *) &sdr,sizeof(struct sardata_info), 1, imagefile)) == 1 ) {
@@ -120,10 +138,29 @@ long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte
 		/* checks for little endian/ big endian */
 		if (swap) swap_ALOS_data_info(&sdr);
 
-		/* if this is partway through the file due to prf change, reset sequence, PRF, and near_range */
-		if ((*byte_offset > 0)  && (n == 2)) reset_params(prm, byte_offset, &n, &m);
 
-          	if (sdr.sequence_number != n) printf(" missing line: n, seq# %d %d \n", n, sdr.sequence_number);
+        if (n == 2)
+        	rspi->frame_counter_start[nPRF] = sdr.frame_counter;
+
+
+
+		/* if this is partway through the file due to prf change, reset sequence,
+		 * PRF, and near_range */
+		if (n == 2)
+			start_sdr_rec_len = sdr.record_length;
+
+		if ((*byte_offset > 0) && (n == 2))
+			reset_params(prm, byte_offset, &n, &m);
+
+		if (sdr.record_length != start_sdr_rec_len) {
+			printf(" ***** warning sdr.record_length error %d \n", sdr.record_length);
+			sdr.record_length = start_sdr_rec_len;
+			sdr.PRF = prm->prf;
+			sdr.slant_range = slant_range_old;
+		}
+		if (sdr.sequence_number != n)
+			printf(" missing line: n, seq# %d %d \n", n, sdr.sequence_number);
+
 
 		/* check for changes in record_length and PRF */
           	record_length1 = sdr.record_length - line_prefix_size;
@@ -132,11 +169,13 @@ long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte
 		/* if prf changes, close file and set byte_offset */
           	if ((sdr.PRF) != prm->prf) {
 			handle_prf_change(prm, imagefile, byte_offset, n); 
+			n-=1;
              		break;
           		}
+          	rspi->frame_counter_end[nPRF] = sdr.frame_counter;
 
 		/* check shift to see if it varies from beginning or from command line value */
-		check_shift(prm, &shift, &ishift, &shift0, record_length1);
+		check_shift(prm, &shift, &ishift, &shift0, record_length1, 0);
 		
 		if ((verbose) && (n/2000.0 == n/2000)) {
 			fprintf(stderr," Working on line %d prf %f record length %d slant_range %d \n"
@@ -147,33 +186,52 @@ long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte
           	if ( fread ((char *) data, record_length1, (size_t) 1, imagefile) != 1 ) break;
 
 		data_length = record_length1;
+		slant_range_old = sdr.slant_range;
 
 		/* write line header to output data  */
-                /* PSA turning off headers
-          	fwrite((void *) &sdr, line_prefix_size, 1, outfile); */
+		//header is not written to output
+        //fwrite((void *) &sdr, line_prefix_size, 1, outfile);
 
 		/* write data */
 	  	if (shift == 0) {
+	  		change_dynamic_range(data, data_length);
 			fwrite((char *) data, data_length, 1, outfile); 
 			/* if data is shifted, fill in with data values of NULL_DATA at start or end*/
 			} else if (shift != 0) {
 			fill_shift_data(shift, ishift, data_length, line_suffix_size, record_length1, data, shift_data, outfile); 
 			}
 		}
+
+    //we are not writing out line prefix data, need to correct these parameters
+	//as they are used in doppler computation.
+    prm->first_sample = 0;
+    prm->bytes_per_line -= line_prefix_size;
+    prm->good_bytes -= line_prefix_size;
       
 	/* calculate end time and fix prf */
 	prm->prf = 0.001*prm->prf;
 
+    //this is the sdr of the first prf-change data line, should seek back to get last sdr to be used here.
 	prm->SC_clock_stop =  get_clock(sdr, tbias);
 
 	/* m is non-zero only in the event of a prf change */
-	prm->num_lines = n - m - 1;
+	//not correct if PRF changes, so I updated it here.
+	prm->num_lines = n - m + 1;
 
 	/* calculate the maximum number of patches and use that if the default is set to 1000 */
         npatch_max = (int)((1.0*n)/(1.0*prm->num_valid_az));
 	if(npatch_max < prm->num_patches) prm->num_patches = npatch_max;
 
 	if (prm->num_lines == 0) prm->num_lines = 1;
+
+    prm->xmi = 63.5;
+    prm->xmq = 63.5;
+
+	rspi->prf[nPRF] = prm->prf;
+	rspi->SC_clock_start[nPRF] = prm->SC_clock_start;
+	rspi->num_lines[nPRF] = prm->num_lines;
+	rspi->num_bins[nPRF] = prm->bytes_per_line/(2*sizeof(char));
+
 
 	if (verbose) print_params(prm); 
 
@@ -293,7 +351,7 @@ double get_clock();
 	return(EXIT_SUCCESS);
 }
 /***************************************************************************/
-int check_shift(struct PRM *prm, int *shift, int *ishift, int *shift0, int record_length1)
+int check_shift(struct PRM *prm, int *shift, int *ishift, int *shift0, int record_length1, int ALOS_format)
 {
         *shift = 2*floor(0.5 + (sdr.slant_range - prm->near_range)/(0.5*SOL/prm->fs));
         *ishift = abs(*shift);
@@ -304,7 +362,13 @@ int check_shift(struct PRM *prm, int *shift, int *ishift, int *shift0, int recor
           	}
 
           if(*shift != *shift0) {
-	  	printf(" near_range, shift = %d %d \n", sdr.slant_range, *shift);
+
+	    	if(ALOS_format==0)
+	    	printf(" near_range, shift = %d %d , at frame_counter: %d, line number: %d\n", sdr.slant_range, *shift, sdr.frame_counter, sdr.sequence_number-1);
+            if(ALOS_format==1)
+	    	printf(" near_range, shift = %d %d\n", sdr.slant_range, *shift);
+
+
             	*shift0 = *shift;
 	  	}
 
@@ -324,21 +388,21 @@ int set_file_position(FILE *imagefile, long *byte_offset, int header_size)
 	return(EXIT_SUCCESS);
 }
 /***************************************************************************/
-int reset_params(struct PRM *prm, long *byte_offset, int *n, int *m)
-{
-double get_clock();
+int reset_params(struct PRM *prm, long *byte_offset, int *n, int *m) {
+	double get_clock();
 
 	prm->SC_clock_start =  get_clock(sdr, tbias);
 	prm->prf = sdr.PRF;
-	prm->near_range = sdr.slant_range;
+	//comment out so that all data files with different prfs can be aligned at the same starting range
+	//prm->near_range = sdr.slant_range;
 	*n = sdr.sequence_number;
 	*m = *n;
 	*byte_offset = 0;
 	if (verbose) {
-		 fprintf(stderr," new parameters: \n sequence number %d \n PRF  %f\n near_range  %lf\n", 
-				*n, 0.001*prm->prf,prm->near_range);
-		}
-	return(EXIT_SUCCESS);
+		fprintf(stderr, " new parameters: \n sequence number %d \n PRF  %f\n near_range  %lf\n", *n, 0.001 * prm->prf,
+		        prm->near_range);
+	}
+	return (EXIT_SUCCESS);
 }
 /***************************************************************************/
 int fill_shift_data(int shift, int ishift, int data_length, 
@@ -359,6 +423,7 @@ int	k;
           	}
 
 	/* write the shifted data out */
+    change_dynamic_range(shift_data, data_length);
         fwrite((char *) shift_data, data_length, 1, outfile);
 
 	return(EXIT_SUCCESS);
@@ -366,7 +431,7 @@ int	k;
 /***************************************************************************/
 int handle_prf_change(struct PRM *prm, FILE *imagefile, long *byte_offset, int n) 
 {
-	prm->num_lines = n;
+	//prm->num_lines = n;
 
 	/* skip back to beginning of the line */
 	fseek(imagefile, -1*sizeof(struct sardata_info), SEEK_CUR);
@@ -375,9 +440,34 @@ int handle_prf_change(struct PRM *prm, FILE *imagefile, long *byte_offset, int n
 	*byte_offset = ftell(imagefile);
 
 	/* tell the world */
-	printf(" *** PRF changed from %lf to  %lf  at line %d (byte %ld)\n", (0.001*prm->prf),(0.001*sdr.PRF), n, *byte_offset);
-        printf(" end: PRF changed from %lf to  %lf  at line %d \n", (0.001*prm->prf),(0.001*sdr.PRF), n);
+	printf(" *** PRF changed from %lf to  %lf  at line %d (byte %ld)\n", (0.001*prm->prf),(0.001*sdr.PRF), n-1, *byte_offset);
+    //    printf(" end: PRF changed from %lf to  %lf  at line %d \n", (0.001*prm->prf),(0.001*sdr.PRF), n);
 
 	return(EXIT_SUCCESS);
 }
 /***************************************************************************/
+
+
+void change_dynamic_range(char *data, long length){
+
+  long i;
+  
+  for(i = 0; i < length; i++)
+  	//THIS SHOULD NOT AFFECT DOPPLER COMPUTATION (SUCH AS IN calc_dop.c), BECAUSE
+  	// 1. IQ BIAS IS REMOVED BEFORE COMPUTATION OF DOPPLER.
+  	// 2. 2.0 WILL BE CANCELLED OUT IN atan2f().
+  	// 3. actual computation results also verified this (even if there is a difference, it is about 0.* Hz)
+  	//data[i] = (unsigned char)clip127(rintf(2. * (data[i] - 15.5) + 63.5));
+    data[i] = (unsigned char)clip127(rintf(2.0 * (data[i] - 15.5)  + ZERO_VALUE));
+
+}
+
+
+
+
+
+
+
+
+
+

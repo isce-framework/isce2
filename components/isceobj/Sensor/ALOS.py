@@ -25,7 +25,12 @@
 # Author: Walter Szeliga
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+#********************************************************************************
+#This program has been upgraded to handle the ALOS-1 PRF change issue.
+#
+#Cunren Liang, 12-December-2019
+#California Institute of Technology, Pasadena, CA
+#********************************************************************************
 
 
 import os
@@ -114,8 +119,8 @@ class ALOS(Sensor):
                          complex(-6.297074e-3,8.026685e-3),
                          complex(7.217117e-1,-2.367683e-2))
 
-    constants = Constants(iBias=15.5,
-                          qBias=15.5,
+    constants = Constants(iBias=63.5,
+                          qBias=63.5,
                           pointingDirection=-1,
                           antennaLength=8.9)
 
@@ -499,7 +504,7 @@ class ALOS(Sensor):
                 outputNow = self.output + appendStr
                 if not (self._resampleFlag == ''):
                     filein = self.output + '__tmp__'
-                    self.imageFile.extractImage(filein)
+                    self.imageFile.extractImage(filein, i) #image number start with 0
                     self.populateMetadata()
                     objResample = None
                     if(self._resampleFlag == 'single2dual'):
@@ -513,7 +518,7 @@ class ALOS(Sensor):
                     objResample.updateFrame(self.frame)
                     os.remove(filein)
                 else:
-                    self.imageFile.extractImage(outputNow)
+                    self.imageFile.extractImage(outputNow, i) #image number start with 0
                     self.populateMetadata()
                 width = self.frame.getImage().getWidth()
 #                self.readOrbitPulse(self._leaderFile,outputNow,width)
@@ -721,7 +726,7 @@ class ImageFile(object):
 
         return None
 
-    def extractImage(self,output=None):
+    def extractImage(self,output=None, image_i=0):
         """For now, call a wrapped version of ALOS_pre_process"""
         productLevel = float(self.parent.leaderFile.sceneHeaderRecord.metadata[
             'Product level code'])
@@ -731,13 +736,13 @@ class ImageFile(object):
         elif productLevel == 1.1:
             self.extractSLC(output)
         elif productLevel == 1.0:
-            self.extractRaw(output)
+            self.extractRaw(output, image_i) #image number start with 0
         else:
             raise ValueError(productLevel)
         return None
 
     @use_api
-    def extractRaw(self,output=None):
+    def extractRaw(self,output=None, image_i=0):
         #if (self.numberOfSarChannels == 1):
         #    print "Single Pol Data Found"
         #    self.extractSinglePolImage(output=output)
@@ -748,15 +753,16 @@ class ImageFile(object):
         if self.parent.leaderFile.sceneHeaderRecord.metadata[
             'Processing facility identifier'] == 'ERSDAC':
             prmDict = alos.alose_Py(self.parent._leaderFile,
-                self.parent._imageFile, output)
+                self.parent._imageFile, output, image_i) #image number start with 0
         else:
             prmDict = alos.alos_Py(self.parent._leaderFile,
-                self.parent._imageFile, output)
+                self.parent._imageFile, output, image_i) #image number start with 0
             pass
         
         # updated 07/24/2012
         self.width = prmDict['NUMBER_BYTES_PER_LINE'] - 2 * prmDict['FIRST_SAMPLE']
-        self.length = self.imageFDR.metadata['Number of lines per data set']
+        #self.length = self.imageFDR.metadata['Number of lines per data set']
+        self.length = prmDict['NUMBER_LINES']
         self.prefix = self.imageFDR.metadata[
                     'Number of bytes of prefix data per record']
         self.suffix = self.imageFDR.metadata[

@@ -25,7 +25,8 @@
 // Author: Giangi Sacco
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+//program updated to handle PRF change issue of ALOS-1
+//Cunren Liang, December 2019
 
 
 #include <Python.h>
@@ -197,10 +198,10 @@ PyObject * ALOS_fbs2fbd_C(PyObject* self, PyObject* args)
         n4 = nffti/4;
         for(i=0; i<n4;i++)
         {
-            cout[i].r = cin[i].r;
-            cout[i].i = cin[i].i;
-            cout[i+n4].r = cin[i+3*n4].r;
-            cout[i+n4].i = cin[i+3*n4].i;
+            cout[i].r = 0.5*cin[i].r;
+            cout[i].i = 0.5*cin[i].i;
+            cout[i+n4].r = 0.5*cin[i+3*n4].r;
+            cout[i+n4].i = 0.5*cin[i+3*n4].i;
         }
 
         /*****Inverse FFT*****/
@@ -219,8 +220,8 @@ PyObject * ALOS_fbs2fbd_C(PyObject* self, PyObject* args)
             i = j + r.first_sample;
 
             /* increase dynamic range by 2 and set the mean value to 63.5 */
-            rtest = rintf(2.*cout[j].r+63.5);
-            itest = rintf(2.*cout[j].i+63.5);
+            rtest = rintf(cout[j].r+r.xmi);
+            itest = rintf(cout[j].i+r.xmq);
 
             /* sometimes the range can exceed 0-127 so
                clip the numbers to be in the correct range */
