@@ -15,6 +15,10 @@ logger = logging.getLogger('isce.alos2insar.runIonFilt')
 def runIonFilt(self):
     '''compute and filter ionospheric phase
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -110,6 +114,7 @@ def runIonFilt(self):
     ############################################################
     # STEP 2. filter ionospheric phase
     ############################################################
+    import scipy.signal as ss
 
     #################################################
     #SET PARAMETERS HERE
@@ -117,22 +122,36 @@ def runIonFilt(self):
     fit = self.fitIon
     filt = self.filtIon
     fitAdaptive = self.fitAdaptiveIon
+    filtSecondary = self.filtSecondaryIon
     if (fit == False) and (filt == False):
         raise Exception('either fit ionosphere or filt ionosphere should be True when doing ionospheric correction\n')
 
     #filtering window size
     size_max = self.filteringWinsizeMaxIon
     size_min = self.filteringWinsizeMinIon
+    size_secondary = self.filteringWinsizeSecondaryIon
     if size_min > size_max:
         print('\n\nWARNING: minimum window size for filtering ionosphere phase {} > maximum window size {}'.format(size_min, size_max))
         print('         re-setting maximum window size to {}\n\n'.format(size_min))
         size_max = size_min
+    if size_secondary % 2 != 1:
+        size_secondary += 1
+        print('window size of secondary filtering of ionosphere phase should be odd, window size changed to {}'.format(size_secondary))
 
     #coherence threshold for fitting a polynomial
     corThresholdFit = 0.25
 
     #ionospheric phase standard deviation after filtering
-    std_out0 = 0.1
+    if self.filterStdIon is not None:
+        std_out0 = self.filterStdIon
+    else:
+        if referenceTrack.operationMode == secondaryTrack.operationMode:
+            from isceobj.Alos2Proc.Alos2ProcPublic import modeProcParDict
+            std_out0 = modeProcParDict['ALOS-2'][referenceTrack.operationMode]['filterStdIon']
+        else:
+            from isceobj.Alos2Proc.Alos2ProcPublic import filterStdPolyIon
+            std_out0 = np.polyval(filterStdPolyIon, referenceTrack.frames[0].swaths[0].rangeBandwidth/(1e6))
+    #std_out0 = 0.1
     #################################################
 
     print('\nfiltering ionosphere')
@@ -271,6 +290,12 @@ def runIonFilt(self):
     #filter the rest of the ionosphere
     if filt:
         (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive)
+        if filtSecondary:
+            print('applying secondary filtering with window size {}'.format(size_secondary))
+            g2d = gaussian(size_secondary, size_secondary/2.0, scale=1.0)
+            scale = ss.fftconvolve((ion_filt!=0), g2d, mode='same')
+            ion_filt = (ion_filt!=0) * ss.fftconvolve(ion_filt, g2d, mode='same') / (scale + (scale==0))
+    catalog.addItem('standard deviation of filtered ionospheric phase', std_out0, 'runIonFilt')
 
     #get final results
     if (fit == True) and (filt == True):
@@ -291,114 +316,7 @@ def runIonFilt(self):
         window_size_out.astype(np.float32).tofile(windowsizefiltfile)
         create_xml(windowsizefiltfile, width, length, 'float')
 
-
-    ############################################################
-    # STEP 3. resample ionospheric phase
-    ############################################################
-    from contrib.alos2proc_f.alos2proc_f import rect
-    from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
-    from scipy.interpolate import interp1d
-    import shutil
-
-    #################################################
-    #SET PARAMETERS HERE
-    #interpolation method
-    interpolationMethod = 1
-    #################################################
-
-    print('\ninterpolate ionosphere')
-
-    ml3 = '_{}rlks_{}alks'.format(self._insar.numberRangeLooks1*self._insar.numberRangeLooks2, 
-                              self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooks2)
-
-    ionfiltfile = 'filt_ion'+ml2+'.ion'
-    #ionrectfile = 'filt_ion'+ml3+'.ion'
-    ionrectfile = self._insar.multilookIon
-
-    img = isceobj.createImage()
-    img.load(ionfiltfile + '.xml')
-    width2 = img.width
-    length2 = img.length
-
-    img = isceobj.createImage()
-    img.load(os.path.join('../../', ionDir['insar'], self._insar.multilookDifferentialInterferogram) + '.xml')
-    width3 = img.width
-    length3 = img.length
-
-    #number of range looks output
-    nrlo = self._insar.numberRangeLooks1*self._insar.numberRangeLooks2
-    #number of range looks input
-    nrli = self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon
-    #number of azimuth looks output
-    nalo = self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooks2
-    #number of azimuth looks input
-    nali = self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon
-
-    if (self._insar.numberRangeLooks2 != self._insar.numberRangeLooksIon) or \
-       (self._insar.numberAzimuthLooks2 != self._insar.numberAzimuthLooksIon):
-        #this should be faster using fortran
-        if interpolationMethod == 0:
-            rect(ionfiltfile, ionrectfile,
-                width2,length2,
-                width3,length3,
-                nrlo/nrli, 0.0,
-                0.0, nalo/nali,
-                (nrlo-nrli)/(2.0*nrli),
-                (nalo-nali)/(2.0*nali),
-                'REAL','Bilinear')
-        #finer, but slower method
-        else:
-            ionfilt = np.fromfile(ionfiltfile, dtype=np.float32).reshape(length2, width2)
-            index2 = np.linspace(0, width2-1, num=width2, endpoint=True)
-            index3 = np.linspace(0, width3-1, num=width3, endpoint=True) * nrlo/nrli + (nrlo-nrli)/(2.0*nrli)
-            ionrect = np.zeros((length3, width3), dtype=np.float32)
-            for i in range(length2):
-                f = interp1d(index2, ionfilt[i,:], kind='cubic', fill_value="extrapolate")
-                ionrect[i, :] = f(index3)
-            
-            index2 = np.linspace(0, length2-1, num=length2, endpoint=True)
-            index3 = np.linspace(0, length3-1, num=length3, endpoint=True) * nalo/nali + (nalo-nali)/(2.0*nali)
-            for j in range(width3):
-                f = interp1d(index2, ionrect[0:length2, j], kind='cubic', fill_value="extrapolate")
-                ionrect[:, j] = f(index3)
-            ionrect.astype(np.float32).tofile(ionrectfile)
-            del ionrect
-        create_xml(ionrectfile, width3, length3, 'float')
-
-        os.rename(ionrectfile, os.path.join('../../insar', ionrectfile))
-        os.rename(ionrectfile+'.vrt', os.path.join('../../insar', ionrectfile)+'.vrt')
-        os.rename(ionrectfile+'.xml', os.path.join('../../insar', ionrectfile)+'.xml')
-        os.chdir('../../insar')
-    else:
-        shutil.copyfile(ionfiltfile, os.path.join('../../insar', ionrectfile))
-        os.chdir('../../insar')
-        create_xml(ionrectfile, width3, length3, 'float')
-    #now we are in 'insar'
-
-
-    ############################################################
-    # STEP 4. correct interferogram
-    ############################################################
-    from isceobj.Alos2Proc.Alos2ProcPublic import renameFile
-    from isceobj.Alos2Proc.Alos2ProcPublic import runCmd
-
-    if self.applyIon:
-        print('\ncorrect interferogram')
-        if os.path.isfile(self._insar.multilookDifferentialInterferogramOriginal):
-            print('original interferogram: {} is already here, do not rename: {}'.format(self._insar.multilookDifferentialInterferogramOriginal, self._insar.multilookDifferentialInterferogram))
-        else:
-            print('renaming {} to {}'.format(self._insar.multilookDifferentialInterferogram, self._insar.multilookDifferentialInterferogramOriginal))
-            renameFile(self._insar.multilookDifferentialInterferogram, self._insar.multilookDifferentialInterferogramOriginal)
-
-        cmd = "imageMath.py -e='a*exp(-1.0*J*b)' --a={} --b={} -s BIP -t cfloat -o {}".format(
-            self._insar.multilookDifferentialInterferogramOriginal,
-            self._insar.multilookIon,
-            self._insar.multilookDifferentialInterferogram)
-        runCmd(cmd)
-    else:
-        print('\nionospheric phase estimation finished, but correction of interfeorgram not requested')
-
-    os.chdir('../')
+    os.chdir('../../')
 
     catalog.printToLog(logger, "runIonFilt")
     self._insar.procDoc.addAllFromCatalog(catalog)

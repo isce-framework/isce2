@@ -74,6 +74,7 @@ def createUnwrap2Stage(other, do_unwrap_2stage = None, unwrapperName = None):
 
 
 createPreprocessor = _factory("runPreprocessor")
+createBaseline = _factory("runBaseline")
 createDownloadDem = _factory("runDownloadDem")
 createPrepareSlc = _factory("runPrepareSlc")
 createSlcOffset = _factory("runSlcOffset")
@@ -92,6 +93,7 @@ createCoherence = _factory("runCoherence")
 createIonSubband = _factory("runIonSubband")
 createIonUwrap = _factory("runIonUwrap")
 createIonFilt = _factory("runIonFilt")
+createIonCorrect = _factory("runIonCorrect")
 createFilt = _factory("runFilt")
 createUnwrapSnaphu = _factory("runUnwrapSnaphu")
 createGeocode = _factory("runGeocode")

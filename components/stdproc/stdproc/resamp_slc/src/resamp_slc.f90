@@ -213,7 +213,9 @@
                  cycle
                endif
 
-               r_dop = evalPoly2d_f(dopplerPoly, r_at, r_rt)
+               !r_dop = evalPoly2d_f(dopplerPoly, r_at, r_rt)
+               ! doppler should be computed using secondary's coordinate. Cunren Liang, 12-AUG-2020
+               r_dop = evalPoly2d_f(dopplerPoly, r_at+r_ao, r_rt+r_ro)
 
                !!!!!!Data chip without the carriers
                do jj=1,sincone

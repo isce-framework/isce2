@@ -321,6 +321,22 @@ SWATH_PHASE_DIFF_SNAP_ION = Application.Parameter('swathPhaseDiffSnapIon',
                                 container = list,
                                 doc = 'swath phase difference snap to fixed values')
 
+SWATH_PHASE_DIFF_LOWER_ION = Application.Parameter('swathPhaseDiffLowerIon',
+                                public_name = 'swath phase difference of lower band',
+                                default = None,
+                                type = float,
+                                mandatory = False,
+                                container = list,
+                                doc = 'swath phase difference of lower band')
+
+SWATH_PHASE_DIFF_UPPER_ION = Application.Parameter('swathPhaseDiffUpperIon',
+                                public_name = 'swath phase difference of upper band',
+                                default = None,
+                                type = float,
+                                mandatory = False,
+                                container = list,
+                                doc = 'swath phase difference of upper band')
+
 FIT_ION = Application.Parameter('fitIon',
                                 public_name = 'apply polynomial fit before filtering ionosphere phase',
                                 default = True,
@@ -342,6 +358,13 @@ FIT_ADAPTIVE_ION = Application.Parameter('fitAdaptiveIon',
                                 mandatory = False,
                                 doc = 'apply polynomial fit in adaptive filtering window')
 
+FILT_SECONDARY_ION = Application.Parameter('filtSecondaryIon',
+                                public_name = 'whether do secondary filtering of ionosphere phase',
+                                default = True,
+                                type = bool,
+                                mandatory = False,
+                                doc = 'whether do secondary filtering of ionosphere phase')
+
 FILTERING_WINSIZE_MAX_ION = Application.Parameter('filteringWinsizeMaxIon',
                                 public_name='maximum window size for filtering ionosphere phase',
                                 default=301,
@@ -355,6 +378,20 @@ FILTERING_WINSIZE_MIN_ION = Application.Parameter('filteringWinsizeMinIon',
                                 type=int,
                                 mandatory=False,
                                 doc='minimum window size for filtering ionosphere phase')
+
+FILTERING_WINSIZE_SECONDARY_ION = Application.Parameter('filteringWinsizeSecondaryIon',
+                                public_name='window size of secondary filtering of ionosphere phase',
+                                default=5,
+                                type=int,
+                                mandatory=False,
+                                doc='window size of secondary filtering of ionosphere phase')
+
+FILTER_STD_ION = Application.Parameter('filterStdIon',
+                                public_name = 'standard deviation of ionosphere phase after filtering',
+                                default = None,
+                                type=float,
+                                mandatory = False,
+                                doc = 'standard deviation of ionosphere phase after filtering')
 
 FILTER_SUBBAND_INT = Application.Parameter('filterSubbandInt',
                                 public_name = 'filter subband interferogram',
@@ -566,11 +603,16 @@ class Alos2burstInSAR(Application):
                         NUMBER_AZIMUTH_LOOKS_ION,
                         MASKED_AREAS_ION,
                         SWATH_PHASE_DIFF_SNAP_ION,
+                        SWATH_PHASE_DIFF_LOWER_ION,
+                        SWATH_PHASE_DIFF_UPPER_ION,
                         FIT_ION,
                         FILT_ION,
                         FIT_ADAPTIVE_ION,
+                        FILT_SECONDARY_ION,
                         FILTERING_WINSIZE_MAX_ION,
                         FILTERING_WINSIZE_MIN_ION,
+                        FILTERING_WINSIZE_SECONDARY_ION,
+                        FILTER_STD_ION,
                         FILTER_SUBBAND_INT,
                         FILTER_STRENGTH_SUBBAND_INT,
                         FILTER_WINSIZE_SUBBAND_INT,
@@ -704,6 +746,7 @@ class Alos2burstInSAR(Application):
     ## Add instance attribute RunWrapper functions, which emulate methods.
     def _add_methods(self):
         self.runPreprocessor = Alos2burstProc.createPreprocessor(self)
+        self.runBaseline = Alos2burstProc.createBaseline(self)
         self.runExtractBurst = Alos2burstProc.createExtractBurst(self)
         self.runDownloadDem = Alos2burstProc.createDownloadDem(self)
         self.runCoregGeom = Alos2burstProc.createCoregGeom(self)
@@ -723,6 +766,7 @@ class Alos2burstInSAR(Application):
         self.runIonSubband = Alos2burstProc.createIonSubband(self)
         self.runIonUwrap = Alos2burstProc.createIonUwrap(self)
         self.runIonFilt = Alos2burstProc.createIonFilt(self)
+        self.runIonCorrect = Alos2burstProc.createIonCorrect(self)
         self.runFilt = Alos2burstProc.createFilt(self)
         self.runUnwrapSnaphu = Alos2burstProc.createUnwrapSnaphu(self)
         self.runGeocode = Alos2burstProc.createGeocode(self)
@@ -746,6 +790,12 @@ class Alos2burstInSAR(Application):
         self.step('preprocess', func=self.runPreprocessor,
                   doc=(
                 """Preprocess the reference and secondary sensor data to raw images"""
+                )
+                  )
+
+        self.step('baseline', func=self.runBaseline,
+                  doc=(
+                """compute baseline, burst synchronization etc"""
                 )
                   )
 
@@ -863,6 +913,12 @@ class Alos2burstInSAR(Application):
                 )
                   )
 
+        self.step('ion_correct', func=self.runIonCorrect,
+                  doc=(
+                """resample ionospheric phase and ionospheric correction"""
+                )
+                  )
+
         self.step('filt', func=self.runFilt,
                   doc=(
                 """filter interferogram"""
@@ -916,6 +972,8 @@ class Alos2burstInSAR(Application):
         # Run a preprocessor for the two sets of frames
         self.runPreprocessor()
 
+        self.runBaseline()
+
         self.runExtractBurst()
 
         self.runDownloadDem()
@@ -953,6 +1011,8 @@ class Alos2burstInSAR(Application):
         self.runIonUwrap()
 
         self.runIonFilt()
+
+        self.runIonCorrect()
 
         self.runFilt()
 

@@ -19,12 +19,23 @@ logger = logging.getLogger('isce.alos2insar.runUnwrapSnaphu')
 def runUnwrapSnaphu(self):
     '''unwrap filtered interferogram
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
     referenceTrack = self._insar.loadTrack(reference=True)
     #secondaryTrack = self._insar.loadTrack(reference=False)
 
+    unwrapSnaphu(self, referenceTrack)
+
+    catalog.printToLog(logger, "runUnwrapSnaphu")
+    self._insar.procDoc.addAllFromCatalog(catalog)
+
+
+def unwrapSnaphu(self, referenceTrack):
     insarDir = 'insar'
     os.makedirs(insarDir, exist_ok=True)
     os.chdir(insarDir)
@@ -70,21 +81,20 @@ def runUnwrapSnaphu(self):
         wbdImage.load(self._insar.multilookWbdOut+'.xml')
         width = wbdImage.width
         length = wbdImage.length
-        if not os.path.exists(self._insar.multilookWbdOut):
-            catalog.addItem('warning message', 'requested masking interferogram with water body, but water body does not exist', 'runUnwrapSnaphu')
-        else:
-            wbd = np.fromfile(self._insar.multilookWbdOut, dtype=np.int8).reshape(length, width)
-            unw=np.memmap(self._insar.unwrappedInterferogram, dtype='float32', mode='r+', shape=(length*2, width))
-            (unw[0:length*2:2, :])[np.nonzero(wbd==-1)]=0
-            (unw[1:length*2:2, :])[np.nonzero(wbd==-1)]=0
-            del unw
-            unw=np.memmap(self._insar.unwrappedMaskedInterferogram, dtype='float32', mode='r+', shape=(length*2, width))
-            (unw[0:length*2:2, :])[np.nonzero(wbd==-1)]=0
-            (unw[1:length*2:2, :])[np.nonzero(wbd==-1)]=0
-            del unw, wbd
+        #if not os.path.exists(self._insar.multilookWbdOut):
+        #    catalog.addItem('warning message', 'requested masking interferogram with water body, but water body does not exist', 'runUnwrapSnaphu')
+        #else:
+        wbd = np.fromfile(self._insar.multilookWbdOut, dtype=np.int8).reshape(length, width)
+        unw=np.memmap(self._insar.unwrappedInterferogram, dtype='float32', mode='r+', shape=(length*2, width))
+        (unw[0:length*2:2, :])[np.nonzero(wbd==-1)]=0
+        (unw[1:length*2:2, :])[np.nonzero(wbd==-1)]=0
+        del unw
+        unw=np.memmap(self._insar.unwrappedMaskedInterferogram, dtype='float32', mode='r+', shape=(length*2, width))
+        (unw[0:length*2:2, :])[np.nonzero(wbd==-1)]=0
+        (unw[1:length*2:2, :])[np.nonzero(wbd==-1)]=0
+        del unw, wbd
 
     os.chdir('../')
 
-    catalog.printToLog(logger, "runUnwrapSnaphu")
-    self._insar.procDoc.addAllFromCatalog(catalog)
+
 

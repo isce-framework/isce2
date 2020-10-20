@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<stack>
+  <component name="stackinsar">
+
+    <!--=========================================================================================
+    Set the following mandatory parameters to process data
+    ==========================================================================================-->
+
+    <property name="data directory">../data/saf_d169</property>
+
+    <property name="dem for coregistration">../data/saf_d169_dem/dem_1_arcsec/demLat_N35_N44_Lon_W126_W118.dem.wgs84</property>
+    <property name="dem for geocoding">../data/saf_d169_dem/dem_3_arcsec/demLat_N35_N44_Lon_W126_W118.dem.wgs84</property>
+    <property name="water body">../data/saf_d169_dem/wbd_1_arcsec/swbdLat_N35_N44_Lon_W126_W118.wbd</property>
+
+    <property name="reference date of the stack">150408</property>
+
+    <!--=========================================================================================
+    See also comments of parameters "number of range looks ion" and "number of azimuth looks ion"
+    below to set a smaller number of looks to avoid phase aliasing in some areas (such as edges of 
+    Tibetan Plateau, where there might be strong tropospheric variations due to large height
+    differences).
+    ==========================================================================================-->
+
+
+
+<!--=====================================================================================================
+                                    instructions for ALOS-2 stack processor
+
+This is the input file of ALOS-2 stack processor. Below are all parameters users can set. 
+Instructions on how to set these parameters are also provided. Parameter default values are shown in the 
+brackets. Remove the first four characters and the last three characters in a parameter line to set a 
+parameter value.
+
+For the techinques and algorithms implemented in the software, refer to:
+
+1. ScanSAR or multi-mode InSAR processing
+C. Liang and E. J. Fielding, "Interferometry with ALOS-2 full-aperture ScanSAR data," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2739-2750, May 2017.
+
+2. Ionospheric correction, burst-by-burst ScanSAR processing, and burst-mode spectral diversity (SD) or 
+multi-aperture InSAR (MAI) processing
+C. Liang and E. J. Fielding, "Measuring azimuth deformation with L-band ALOS-2 ScanSAR interferometry," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2725-2738, May 2017.
+
+3. Ionospheric correction
+C. Liang, Z. Liu, E. J. Fielding, and R. Bürgmann, "InSAR time series analysis of L-band wide-swath SAR 
+data acquired by ALOS-2," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-4506, Aug. 2018.
+======================================================================================================-->
+
+    <!--=========================================================================================
+    Directory of unpacked ALOS-2 data containing data of all dates. Data of each date is in an
+    individual folder named YYMMDD, which is the acquistion date of the data and can be found in
+    ALOS-2 image or leader files (e.g. LED-ALOS2041062800-150225-WBDR1.1__D, 150225 is YYMMDD)
+    ==========================================================================================-->
+    <!--<property name="data directory">None</property>-->
+
+
+    <!--=========================================================================================
+    This is a list of frames, e.g., ['0680', '0690']. Here is how you can find frame number. Below 
+    is a JAXA SLC product
+    0000168233_001001_ALOS2183010690-171012.zip
+    After you unpack the JAXA SLC product, you will find an image file like:
+    IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                     ^^^^
+    The number 0685 (indicated by ^) is the frame number. DON'T use the frame number in the zip
+    file name, as it may be incorrect (like the above example).
+
+    If all dates have equal number of frames and the frames meet the following one-to-one 
+    correspondence, there is no need to set frames.
+
+      Date1 Folder       Date2 Folder       Date3 Folder
+       Frame ****   ...   Frame ****   ...   Frame ****
+       Frame ****   ...   Frame ****   ...   Frame ****
+       Frame ****   ...   Frame ****   ...   Frame ****
+       Frame ****   ...   Frame ****   ...   Frame ****
+    ==========================================================================================-->
+    <!--<property name="frames">None</property>-->
+    <!--<property name="polarization">HH</property>-->
+    <!--<property name="starting swath">None</property>-->
+    <!--<property name="ending swath">None</property>-->
+
+
+    <!--=========================================================================================
+    Here is how you can download a DEM and water body.
+    #3 arcsec for geocoding
+    mkdir dem_3_arcsec
+    cd dem_3_arcsec
+    dem.py -a stitch -b 29 37 125 133 -k -s 3 -c -f -u http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11
+    fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f
+    rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
+    cd ../
+
+    #1 arcsec for creating differential interferogram
+    mkdir dem_1_arcsec
+    cd dem_1_arcsec
+    dem.py -a stitch -b 29 37 125 133 -k -s 1 -c -f -u http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11
+    fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f
+    rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
+    cd ../
+
+    #water body
+    #do correct missing water body tiles problem here!!! check usage of wbd.py for more details,
+    #or simply follow the commands below
+    mkdir wbd_1_arcsec
+    cd wbd_1_arcsec
+    wbd.py 29 37 125 133
+    fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f
+    cd ../
+    ==========================================================================================-->
+    <!--<property name="dem for coregistration">None</property>-->
+    <!--<property name="dem for geocoding">None</property>-->
+    <!--<property name="water body">None</property>-->
+
+
+    <!--=========================================================================================
+    It must be set, and should be the same throughout all processings! Format must be YYMMDD.
+    ==========================================================================================-->
+    <!--<property name="reference date of the stack">None</property>-->
+
+    <!--=========================================================================================
+    In the processing, all swaths of all frames will be resampled to the same sampling size of a
+    particular swath, whose swath and frame numbers can be set here. If not set, first swath of
+    first frame is used.
+    ==========================================================================================-->
+    <!--<property name="grid frame">None</property>-->
+    <!--<property name="grid swath">None</property>-->
+
+
+    <!--=========================================================================================
+    Number of subsequent dates to pair up with a date.
+    ==========================================================================================-->
+    <!--<property name="number of subsequent dates">4</property>-->
+
+    <!--<property name="pair time span minimum in years">None</property>-->
+    <!--<property name="pair time span maximum in years">None</property>-->
+
+
+    <!--=========================================================================================
+    The following parameters are lists. Date format must be YYMMDD. Pair format must be 
+    FIRST_DATE(YYMMDD)-SECOND_DATE(YYMMDD). An example input of pairs to be included or excluded:
+    ['150225-150408', '150225-150520']
+    ==========================================================================================-->
+    <!--<property name="dates to be included">None</property>-->
+    <!--<property name="pairs to be included">None</property>-->
+    <!--<property name="dates to be excluded">None</property>-->
+    <!--<property name="pairs to be excluded">None</property>-->
+
+
+    <!--=========================================================================================
+    Date in least squares estimation of ionospheric phase whose ionospheric phase is assumed to 
+    be zero. Format must be YYMMDD. By default, first date of dates envolved in estimating
+    ionosphere is used.
+    ==========================================================================================-->
+    <!--<property name="reference date of the stack for estimating ionosphere">None</property>-->
+
+
+    <!--=========================================================================================
+    The following parameters are the same as those above, but are for pairs for ionospheric 
+    estimation. Formats are also same.
+    ==========================================================================================-->
+    <!--<property name="number of subsequent dates for estimating ionosphere">4</property>-->
+    <!--<property name="pair time span minimum in years for estimating ionosphere">None</property>-->
+    <!--<property name="pair time span maximum in years for estimating ionosphere">None</property>-->
+    <!--<property name="dates to be included for estimating ionosphere">None</property>-->
+    <!--<property name="pairs to be included for estimating ionosphere">None</property>-->
+    <!--<property name="dates to be excluded for estimating ionosphere">None</property>-->
+    <!--<property name="pairs to be excluded for estimating ionosphere">None</property>-->
+
+
+    <!--=========================================================================================
+    Whether reprocess already processed dates or pairs.
+    ==========================================================================================-->
+    <!--<property name="reprocess already processed dates">False</property>-->
+    <!--<property name="reprocess already processed pairs">False</property>-->
+    <!--<property name="reprocess already processed pairs for estimating ionosphere">False</property>-->
+
+
+    <!--=========================================================================================
+    Data processing directories.
+    ==========================================================================================-->
+    <!--<property name="dates processing directory">dates</property>-->
+    <!--<property name="dates resampled directory">dates_resampled</property>-->
+    <!--<property name="pairs processing directory">pairs</property>-->
+    <!--<property name="baseline directory">baseline</property>-->
+    <!--<property name="dates directory for ionosphere">dates_ion</property>-->
+    <!--<property name="pairs processing directory for estimating ionosphere">pairs_ion</property>-->
+
+
+    <!--=========================================================================================
+    The following InSAR processing parameters are exactly the same as those in alos2App.py.
+    ==========================================================================================-->
+    <!--<property name="use virtual file">True</property>-->
+    <!--<property name="use GPU">False</property>-->
+
+
+    <!--=========================================================================================
+    This is for determining the number of offsets to be estimated between reference and secondary SLCs.
+    for areas where no water body data available, turn this off, otherwise the program will use 
+    geometrical offset, which is not accuate enough. If it still does not work, set 
+    "number of range offsets for slc matching" and "number of azimuth offsets for slc matching"
+    ==========================================================================================-->
+    <!--<property name="use water body to dertermine number of matching offsets">True</property>-->
+
+    <!--=========================================================================================
+    These are 2-D lists, with frame as the first dimension and swath as the second dimension. 
+    For example, if you want to process two frames and three swaths, you can specify one of 
+    these parameters as:
+    [[20, 30, 20],[15, 20, 20]]
+    ==========================================================================================-->
+    <!--<property name="number of range offsets for slc matching">None</property>-->
+    <!--<property name="number of azimuth offsets for slc matching">None</property>-->
+
+
+<!--============================================================================================================================================
+Instructions on number of looks used by the software
+The software first takes number of range/azimuth looks 1, and then take any other number of range/azimuth looks (2, sim and ion).
+
+Here are the purposes of these number of looks. Usually there is no need to set number of range/azimuth looks sim, so it is not explained here.
+
+number of range/azimuth looks 1:     save space, remove speckle noise, equalize sample size, match original resolution (full-aperture)
+number of range/azimuth looks 2:     make interferogram not too small or large
+number of range/azimuth looks ion:   make interferogram for ionosphere estimation not too small or large, facilitate ionosphere filtering
+
+total number of looks of InSAR processing is:       number of range/azimuth looks 1 * number of range/azimuth looks 2
+total number of looks in ionosphere estimation is:  number of range/azimuth looks 1 * number of range/azimuth looks ion
+total number of looks in radar/DEM matching is:     number of range/azimuth looks 1 * number of range/azimuth looks sim
+
+Below is the default number of looks used by the software. REMEMBER, NORMALLY YOU ONLY NEED TO CHANGE number of range/azimuth looks 2!!!
+
+============================================================================================================================================
+ Operation Mode | Mode (AUIG2) | Mode (in file name) | look1 (r*a) | look2 (r*a) |  total insar (r*a) |  look_ion (r*a) | total ion (r*a)
+============================================================================================================================================
+   spotlight    |     SPT      | SBS                 |     2*4     |     4*4     |        8*16        |      16*16      |      32*64
+============================================================================================================================================
+   stripmap     |     SM1      | UBS, UBD            |     2*3     |     4*4     |        8*12        |      32*32      |      64*96
+                |     SM2      | HBS, HBD, HBQ       |     2*4     |     4*4     |        8*16        |      16*16      |      32*64
+                |     SM3      | FBS, FBD, FBQ       |     2*4     |     4*4     |        8*16        |      16*16      |      32*64
+============================================================================================================================================
+   ScanSAR      |     WD1      | WBS, WBD            |     1*14    |     5*2     |        5*28        |      80*32      |      80*448
+   ScanSAR      |     WD1      | WWS, WWD            |     2*14    |     5*2     |       10*28        |      80*32      |     160*448
+                |     WD2      | VBS, VBD            |     1*14    |     5*2     |        5*28        |      80*32      |      80*448
+============================================================================================================================================
+
+To find the acquisition mode code, check the unpacked ALOS-2 product. For example, in the following
+file name
+
+IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                             ^^^
+FBD (indicated by ^) is the acquisition mode code.
+=============================================================================================================================================-->
+
+    <!--=========================================================================================
+    These are the numbers of looks to be taken when forming the interferogram
+    ==========================================================================================-->
+    <!--<property name="number of range looks 1">None</property>-->
+    <!--<property name="number of azimuth looks 1">None</property>-->
+
+    <!--=========================================================================================
+    These are the numbers of looks to be taken after taking the numbers of range/azimuth looks 1
+    ==========================================================================================-->
+    <!--<property name="number of range looks 2">None</property>-->
+    <!--<property name="number of azimuth looks 2">None</property>-->
+
+
+    <!--=========================================================================================
+    These are the numbers of looks to be taken after taking the numbers of range/azimuth looks 1.
+    This is for matching the radar image and DEM
+    ==========================================================================================-->
+    <!--<property name="number of range looks sim">None</property>-->
+    <!--<property name="number of azimuth looks sim">None</property>-->
+
+
+    <!--<property name="do matching when computing adjacent swath offset">True</property>-->
+    <!--<property name="do matching when computing adjacent frame offset">True</property>-->
+
+
+    <!--=========================================================================================
+    These are interferogram filtering parameters
+    ==========================================================================================-->
+    <!--<property name="interferogram filter strength">0.3</property>-->
+    <!--<property name="interferogram filter window size">32</property>-->
+    <!--<property name="interferogram filter step size">4</property>-->
+    <!--<property name="remove magnitude before filtering">True</property>-->
+
+
+    <!--=========================================================================================
+    water body mask starting step: None, filt, unwrap
+    ==========================================================================================-->
+    <!--<property name="water body mask starting step">unwrap</property>-->
+
+
+    <!--=========================================================================================
+    This is a four-element list [s, n, w, e], e.g. [26.24, 30.04, 33.45, 37.79].
+    ==========================================================================================-->
+    <!--<property name="geocode bounding box">None</property>-->
+
+    <!--=========================================================================================
+    geocode interpolation method: sinc, bilinear, bicubic, nearest
+    ==========================================================================================-->
+    <!--<property name="geocode interpolation method">None</property>-->
+
+
+    <!--=========================================================================================
+    These parameters are for ionospheric corrections
+    ==========================================================================================-->
+    <!--<property name="do ionospheric phase estimation">True</property>-->
+    <!--<property name="apply ionospheric phase correction">True</property>-->
+
+    <!--=========================================================================================
+    These are the numbers of looks to be taken after taking the numbers of range/azimuth looks 1.
+    This is for ionospheric correction.
+    Use a larger number of looks results in smaller image size, which saves time in filtering in
+    ionosphere estimation. However, a larger number of looks may also lead to phase aliasing in
+    the resulting inteferograms and therefore lead to phase unwrapping errors, which causes
+    significant errors in ionosphere estimation.
+    If the area has strong troposhere or phase variations (normally in areas with large height 
+    differences such as edges of Tibetan Plateau), a smaller number of looks should be used to
+    avoid phase aliasing after taking looks. E.g. 1/2 of the default number of range/azimuth looks 
+    ion that can be found in the annotation of parameter 'number of range looks 1'.
+    ==========================================================================================-->
+    <!--<property name="number of range looks ion">None</property>-->
+    <!--<property name="number of azimuth looks ion">None</property>-->
+
+    <!--=========================================================================================
+    seperated islands or areas usually affect ionosphere estimation and it's better to mask them
+    out. check ion/ion_cal/lower_40rlks_224alks.int (here number of looks 40 and 224 depends on 
+    your particular case) for areas to be masked out.
+    The parameter is a 2-D list. Each element in the 2-D list is a four-element list: [firstLine,
+    lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the
+    four elements is specified as -1, the program will use firstLine/lastLine/firstColumn/
+    lastColumn instead. For exmple, if you want to mask the following two areas out, you can
+    specify a 2-D list like:
+    [[100, 200, 100, 200],[1000, 1200, 500, 600]]
+    ==========================================================================================-->
+    <!--<property name="areas masked out in ionospheric phase estimation">None</property>-->
+
+    <!--=========================================================================================
+    a 2-D list. e.g. if you are processing two ScanSAR frames, each with five swaths, and you do
+    not want phase difference of swath 1 and 2 in frame 2 snap to fixed values, the parameter can be specified
+    as:
+    [[True, True, True, True], [False, True, True, True]]
+    ==========================================================================================-->
+    <!--<property name="swath phase difference snap to fixed values">None</property>-->
+
+    <!--=========================================================================================
+    a 2-D list. e.g. if you are processing two ScanSAR frames, each with five swaths, and you want
+    to use a phase difference value 0.21 (rad) for swath 1 and 2 in frame 2, the parameter can be 
+    specified as:
+    [[None, None, None, None], [0.21, None, None, None]]
+    This parameter has highest priority in determing phase difference between swaths.
+    ==========================================================================================-->
+    <!--<property name="swath phase difference of lower band">None</property>-->
+    <!--<property name="swath phase difference of upper band">None</property>-->
+
+    <!--<property name="apply polynomial fit before filtering ionosphere phase">True</property>-->
+    <!--<property name="whether filtering ionosphere phase">True</property>-->
+    <!--<property name="apply polynomial fit in adaptive filtering window">True</property>-->
+    <!--<property name="whether do secondary filtering of ionosphere phase">True</property>-->
+    <!--<property name="maximum window size for filtering ionosphere phase">301</property>-->
+    <!--<property name="minimum window size for filtering ionosphere phase">11</property>-->
+    <!--<property name="window size of secondary filtering of ionosphere phase">5</property>-->
+
+    <!--=========================================================================================
+    Normally no need to set this parameter, it will be automatically determined.
+    ==========================================================================================-->
+    <!--<property name="standard deviation of ionosphere phase after filtering">None</property>-->
+
+    <!--=========================================================================================
+    parameters for filtering subband interferograms used for ionospheric phase estimation
+    ==========================================================================================-->
+    <!--<property name="filter subband interferogram">False</property>-->
+    <!--<property name="subband interferogram filter strength">0.3</property>-->
+    <!--<property name="subband interferogram filter window size">32</property>-->
+    <!--<property name="subband interferogram filter step size">4</property>-->
+    <!--<property name="remove magnitude before filtering subband interferogram">True</property>-->
+
+  </component>
+</stack>

@@ -17,6 +17,10 @@ logger = logging.getLogger('isce.alos2insar.runFrameMosaic')
 def runFrameMosaic(self):
     '''mosaic frames
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -193,90 +197,107 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
         if i == 0:
             rinfs[i] = inf
         else:
-            infImg = isceobj.createImage()
-            infImg.load(inf+'.xml')
-            rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
-            azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
+            #no need to resample
+            if (abs(rangeOffsets2[i] - round(rangeOffsets2[i])) < 0.0001) and (abs(azimuthOffsets2[i] - round(azimuthOffsets2[i])) < 0.0001):
+                if os.path.isfile(rinfs[i]):
+                    os.remove(rinfs[i])
+                os.symlink(inf, rinfs[i])
+                #all of the following use of rangeOffsets2/azimuthOffsets2 is inside int(), we do the following in case it is like
+                #4.99999999999...
+                rangeOffsets2[i] = round(rangeOffsets2[i])
+                azimuthOffsets2[i] = round(azimuthOffsets2[i])
 
-            if resamplingMethod == 0:
-                rect_with_looks(inf,
-                                rinfs[i],
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Bilinear')
-                if infImg.getImageType() == 'amp':
-                    create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
-                else:
-                    create_xml(rinfs[i], infImg.width, infImg.length, 'int')
-
-            elif resamplingMethod == 1:
-                #decompose amplitude and phase
-                phaseFile = 'phase'
-                amplitudeFile = 'amplitude'
-                data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
-                phase = np.exp(np.complex64(1j) * np.angle(data))
-                phase[np.nonzero(data==0)] = 0
-                phase.astype(np.complex64).tofile(phaseFile)
-                amplitude = np.absolute(data)
-                amplitude.astype(np.float32).tofile(amplitudeFile)
-
-                #resampling
-                phaseRectFile = 'phaseRect'
-                amplitudeRectFile = 'amplitudeRect'
-                rect_with_looks(phaseFile,
-                                phaseRectFile,
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Sinc')
-                rect_with_looks(amplitudeFile,
-                                amplitudeRectFile,
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'REAL',
-                                'Bilinear')
-
-                #recombine amplitude and phase
-                phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(infImg.length, infImg.width)
-                amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(infImg.length, infImg.width)
-                (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
-
-                #tidy up
-                os.remove(phaseFile)
-                os.remove(amplitudeFile)
-                os.remove(phaseRectFile)
-                os.remove(amplitudeRectFile)
+                infImg = isceobj.createImage()
+                infImg.load(inf+'.xml')
                 if infImg.getImageType() == 'amp':
                     create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
                 else:
                     create_xml(rinfs[i], infImg.width, infImg.length, 'int')
             else:
-                resamp(inf,
-                       rinfs[i],
-                       'fake',
-                       'fake',
-                       infImg.width, infImg.length,
-                       frames[i].swaths[0].prf,
-                       frames[i].swaths[0].dopplerVsPixel,
-                       [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                       [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-                create_xml(rinfs[i], infImg.width, infImg.length, 'slc')
+                infImg = isceobj.createImage()
+                infImg.load(inf+'.xml')
+                rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
+                azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
+
+                if resamplingMethod == 0:
+                    rect_with_looks(inf,
+                                    rinfs[i],
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Bilinear')
+                    if infImg.getImageType() == 'amp':
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
+                    else:
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'int')
+
+                elif resamplingMethod == 1:
+                    #decompose amplitude and phase
+                    phaseFile = 'phase'
+                    amplitudeFile = 'amplitude'
+                    data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
+                    phase = np.exp(np.complex64(1j) * np.angle(data))
+                    phase[np.nonzero(data==0)] = 0
+                    phase.astype(np.complex64).tofile(phaseFile)
+                    amplitude = np.absolute(data)
+                    amplitude.astype(np.float32).tofile(amplitudeFile)
+
+                    #resampling
+                    phaseRectFile = 'phaseRect'
+                    amplitudeRectFile = 'amplitudeRect'
+                    rect_with_looks(phaseFile,
+                                    phaseRectFile,
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Sinc')
+                    rect_with_looks(amplitudeFile,
+                                    amplitudeRectFile,
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'REAL',
+                                    'Bilinear')
+
+                    #recombine amplitude and phase
+                    phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(infImg.length, infImg.width)
+                    amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(infImg.length, infImg.width)
+                    (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
+
+                    #tidy up
+                    os.remove(phaseFile)
+                    os.remove(amplitudeFile)
+                    os.remove(phaseRectFile)
+                    os.remove(amplitudeRectFile)
+                    if infImg.getImageType() == 'amp':
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
+                    else:
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'int')
+                else:
+                    resamp(inf,
+                           rinfs[i],
+                           'fake',
+                           'fake',
+                           infImg.width, infImg.length,
+                           frames[i].swaths[0].prf,
+                           frames[i].swaths[0].dopplerVsPixel,
+                           [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                           [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+                    create_xml(rinfs[i], infImg.width, infImg.length, 'slc')
 
     #determine output width and length
     #actually no need to calculate in azimuth direction

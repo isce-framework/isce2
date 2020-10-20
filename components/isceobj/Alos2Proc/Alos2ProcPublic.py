@@ -91,7 +91,7 @@ def create_xml(fileName, width, length, fileType):
     #image.finalizeImage()
 
 
-def multilook_v1(data, nalks, nrlks):
+def multilook_v1(data, nalks, nrlks, mean=True):
     '''
     doing multiple looking
     ATTENSION: original array changed after running this function
@@ -106,10 +106,13 @@ def multilook_v1(data, nalks, nrlks):
     for i in range(1, nrlks):
         data[0:length2*nalks:nalks, 0:width2*nrlks:nrlks] += data[0:length2*nalks:nalks, i:width2*nrlks:nrlks]
 
-    return data[0:length2*nalks:nalks, 0:width2*nrlks:nrlks] / nrlks / nalks
+    if mean:
+        return data[0:length2*nalks:nalks, 0:width2*nrlks:nrlks] / nrlks / nalks
+    else:
+        return data[0:length2*nalks:nalks, 0:width2*nrlks:nrlks]
 
 
-def multilook(data, nalks, nrlks):
+def multilook(data, nalks, nrlks, mean=True):
     '''
     doing multiple looking
     '''
@@ -125,7 +128,10 @@ def multilook(data, nalks, nrlks):
     for i in range(1, nrlks):
         data2[:, 0:width2*nrlks:nrlks] += data2[:, i:width2*nrlks:nrlks]
 
-    return data2[:, 0:width2*nrlks:nrlks] / nrlks / nalks
+    if mean:
+        return data2[:, 0:width2*nrlks:nrlks] / nrlks / nalks
+    else:
+        return data2[:, 0:width2*nrlks:nrlks]
 
 
 def cal_coherence_1(inf, win=5):
@@ -281,9 +287,9 @@ def reformatGeometricalOffset(rangeOffsetFile, azimuthOffsetFile, reformatedOffs
 
             offsetsPlain = offsetsPlain + "{:8d} {:10.3f} {:8d} {:12.3f} {:11.5f} {:11.6f} {:11.6f} {:11.6f}\n".format(
                 int(j*rangeStep+1),
-                float(rgoff[i][j]),
+                float(rgoff[i][j])*rangeStep,
                 int(i*azimuthStep+1),
-                float(azoff[i][j]),
+                float(azoff[i][j])*azimuthStep,
                 float(22.00015),
                 float(0.000273),
                 float(0.002126),
@@ -749,7 +755,7 @@ def snaphuUnwrap(track, t, wrapName, corName, unwrapName, nrlks, nalks, costMode
     return
 
 
-def snaphuUnwrapOriginal(wrapName, corName, ampName, unwrapName, costMode = 's', initMethod = 'mcf'):
+def snaphuUnwrapOriginal(wrapName, corName, ampName, unwrapName, costMode = 's', initMethod = 'mcf', snaphuConfFile = 'snaphu.conf'):
     '''
     unwrap interferogram using original snaphu program
     '''
@@ -762,7 +768,7 @@ def snaphuUnwrapOriginal(wrapName, corName, ampName, unwrapName, costMode = 's',
     length = corImg.length
 
     #specify coherence file format in configure file
-    snaphuConfFile = 'snaphu.conf'
+    #snaphuConfFile = 'snaphu.conf'
     if corImg.bands == 1:
         snaphuConf = '''CORRFILEFORMAT        FLOAT_DATA
 CONNCOMPFILE        {}
@@ -809,7 +815,7 @@ MAXNCOMPS       20'''.format(unwrapName+'.conncomp')
     return
 
 
-def getBboxGeo(track):
+def getBboxGeo(track, useTrackOnly=False, numberOfSamples=1, numberOfLines=1, numberRangeLooks=1, numberAzimuthLooks=1):
     '''
     get bounding box in geo-coordinate
     '''
@@ -817,7 +823,15 @@ def getBboxGeo(track):
 
     pointingDirection = {'right': -1, 'left' :1}
 
-    bboxRdr = getBboxRdr(track)
+    if useTrackOnly:
+        import datetime
+        rangeMin = track.startingRange + (numberRangeLooks-1.0)/2.0*track.rangePixelSize
+        rangeMax = rangeMin + (numberOfSamples-1) * numberRangeLooks * track.rangePixelSize
+        azimuthTimeMin = track.sensingStart + datetime.timedelta(seconds=(numberAzimuthLooks-1.0)/2.0*track.azimuthLineInterval)
+        azimuthTimeMax = azimuthTimeMin + datetime.timedelta(seconds=(numberOfLines-1) * numberAzimuthLooks * track.azimuthLineInterval)
+        bboxRdr = [rangeMin, rangeMax, azimuthTimeMin, azimuthTimeMax]
+    else:
+        bboxRdr = getBboxRdr(track)
 
     rangeMin = bboxRdr[0]
     rangeMax = bboxRdr[1]
@@ -1254,8 +1268,199 @@ def snap(inputValue, fixedValues, snapThreshold):
     return (outputValue, snapped)
 
 
+modeProcParDict = {
+                   'ALOS-2': {
+                              #All SPT (SBS) modes are the same
+                              'SBS': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
 
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
 
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.015
+                                     },
+                               #All SM1 (UBS, UBD) modes are the same
+                              'UBS': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 3,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 32,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.015
+                                     },
+                              'UBD': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 3,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 32,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.015
+                                     },
+                               #All SM2 (HBS, HBD, HBQ) modes are the same
+                              'HBS': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.035
+                                     },
+                              'HBD': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.035
+                                     },
+                              'HBQ': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.035
+                                     },
+                               #All SM3 (FBS, FBD, FBQ) modes are the same
+                              'FBS': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.075
+                                     },
+                              'FBD': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.075
+                                     },
+                              'FBQ': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 4,
+
+                                      'numberRangeLooks2': 4,
+                                      'numberAzimuthLooks2': 4,
+
+                                      'numberRangeLooksIon': 16,
+                                      'numberAzimuthLooksIon': 16,
+
+                                      'filterStdIon': 0.075
+                                     },
+                               #All WD1 (WBS, WBD) modes are the same
+                              'WBS': {
+                                      'numberRangeLooks1': 1,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.1
+                                     },
+                              'WBD': {
+                                      'numberRangeLooks1': 1,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.1
+                                     },
+                               #All WD1 (WWS, WWD) modes are the same
+                              'WWS': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.075
+                                     },
+                              'WWD': {
+                                      'numberRangeLooks1': 2,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.075
+                                     },
+                               #All WD2 (VBS, VBD) modes are the same
+                              'VBS': {
+                                      'numberRangeLooks1': 1,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.1
+                                     },
+                              'VBD': {
+                                      'numberRangeLooks1': 1,
+                                      'numberAzimuthLooks1': 14,
+
+                                      'numberRangeLooks2': 5,
+                                      'numberAzimuthLooks2': 2,
+
+                                      'numberRangeLooksIon': 80,
+                                      'numberAzimuthLooksIon': 32,
+
+                                      'filterStdIon': 0.1
+                                     }
+                             }
+                  }
+import numpy as np
+filterStdPolyIon = np.array([ 2.31536879e-05, -3.41687763e-03,  1.39904121e-01])
 
 
 

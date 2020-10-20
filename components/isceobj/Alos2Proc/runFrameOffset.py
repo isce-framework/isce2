@@ -13,6 +13,10 @@ logger = logging.getLogger('isce.alos2insar.runFrameOffset')
 def runFrameOffset(self):
     '''estimate frame offsets.
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

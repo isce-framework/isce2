@@ -13,8 +13,12 @@ from isceobj.Alos2Proc.Alos2ProcPublic import runCmd
 logger = logging.getLogger('isce.alos2insar.runCoherence')
 
 def runCoherence(self):
-    '''Extract images.
+    '''estimate coherence
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

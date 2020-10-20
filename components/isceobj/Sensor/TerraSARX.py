@@ -136,6 +136,17 @@ class TerraSARX(Sensor):
         self.populateMetadata()
         fp.close()
 
+    def grab_from_xml(self, path):
+        try:
+            res = self._xml_root.find(path).text
+        except:
+            raise Exception('Tag= %s not found'%(path))
+
+        if res is None:
+            raise Exception('Tag = %s not found'%(path))
+
+        return res
+
     def populateMetadata(self):
         """
             Populate our Metadata objects

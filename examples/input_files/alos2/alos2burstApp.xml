@@ -160,6 +160,33 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     <!--<property name="number of azimuth offsets for slc matching">None</property>-->
 
 
+<!--============================================================================================================================================
+Instructions on number of looks used by the software
+In alos2burstApp.py, number of range/azimuth looks 1 is always 1. Usually there is no need to set number of range/azimuth looks sim 
+(automatically set).
+
+total number of looks of InSAR processing is:       number of range/azimuth looks 1 * number of range/azimuth looks 2
+total number of looks in ionosphere estimation is:  number of range/azimuth looks 1 * number of range/azimuth looks ion
+total number of looks in radar/DEM matching is:     number of range/azimuth looks 1 * number of range/azimuth looks sim
+total number of looks of SD processing is:          number of range/azimuth looks 1 * number of range/azimuth looks sd
+
+Below is the default number of looks used by the software. REMEMBER, NORMALLY YOU ONLY NEED TO CHANGE number of range/azimuth looks 2
+AND number of range/azimuth looks sd!!!
+
+==================================================================================================================
+ Operation Mode | Mode (AUIG2) | Mode (in file name) | look1 (r*a) | look2 (r*a) | look_ion (r*a) | look_sd (r*a)  
+==================================================================================================================
+   ScanSAR      |     WD1      | WBS, WBD, WWS, WWD  |     1*1     |     7*2     |     42*12      |      14*4
+==================================================================================================================
+
+To find the acquisition mode code, check the unpacked ALOS-2 product. For example, in the following
+file name
+
+IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                             ^^^
+FBD (indicated by ^) is the acquisition mode code.
+=============================================================================================================================================-->
+
     <!--=========================================================================================
     These are the numbers of looks to be taken when forming the interferogram.
     these two parameters are always 1, not to be set by users
@@ -227,7 +254,17 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
     <!--=========================================================================================
     These are the numbers of looks to be taken after taking the numbers of range/azimuth looks 1.
-    This is for ionospheric correction
+    This is for ionospheric correction.
+    Use a larger number of looks results in smaller image size, which saves time in filtering in
+    ionosphere estimation. However, a larger number of looks may also lead to phase aliasing in
+    the resulting inteferograms and therefore lead to phase unwrapping errors, which causes
+    significant errors in ionosphere estimation.
+    Below are the default number of looks used by the software
+    number of range looks ion,    spotlightModes: 16, stripmapModes: 16, scansarModes: 40
+    number of azimuth looks ion,  spotlightModes: 16, stripmapModes: 16, scansarModes: 16
+    If the area does not have strong troposhere or phase variations (normally in areas with large
+    height differences such as edges of Tibetan Plateau), a larger number of looks can be used,
+    e.g. double the default numbers of range/azimuth looks.
     ==========================================================================================-->
     <!--<property name="number of range looks ion">None</property>-->
     <!--<property name="number of azimuth looks ion">None</property>-->
@@ -253,11 +290,28 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     ==========================================================================================-->
     <!--<property name="swath phase difference snap to fixed values">None</property>-->
 
+    <!--=========================================================================================
+    a 2-D list. e.g. if you are processing two ScanSAR frames, each with five swaths, and you want
+    to use a phase difference value 0.21 (rad) for swath 1 and 2 in frame 2, the parameter can be 
+    specified as:
+    [[None, None, None, None], [0.21, None, None, None]]
+    This parameter has highest priority in determing phase difference between swaths.
+    ==========================================================================================-->
+    <!--<property name="swath phase difference of lower band">None</property>-->
+    <!--<property name="swath phase difference of upper band">None</property>-->
+
     <!--<property name="apply polynomial fit before filtering ionosphere phase">True</property>-->
     <!--<property name="whether filtering ionosphere phase">True</property>-->
     <!--<property name="apply polynomial fit in adaptive filtering window">True</property>-->
+    <!--<property name="whether do secondary filtering of ionosphere phase">True</property>-->
     <!--<property name="maximum window size for filtering ionosphere phase">301</property>-->
     <!--<property name="minimum window size for filtering ionosphere phase">11</property>-->
+    <!--<property name="window size of secondary filtering of ionosphere phase">5</property>-->
+
+    <!--=========================================================================================
+    Normally no need to set this parameter, it will be automatically determined.
+    ==========================================================================================-->
+    <!--<property name="standard deviation of ionosphere phase after filtering">None</property>-->
 
     <!--=========================================================================================
     parameters for filtering subband interferograms used for ionospheric phase estimation

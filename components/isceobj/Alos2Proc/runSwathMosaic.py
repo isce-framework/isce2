@@ -17,6 +17,10 @@ logger = logging.getLogger('isce.alos2insar.runSwathMosaic')
 def runSwathMosaic(self):
     '''mosaic subswaths
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -211,8 +215,10 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
             rectWidth.append( int(swaths[i].numberOfSamples / numberOfRangeLooks) )
             rectLength.append( int(swaths[i].numberOfLines / numberOfAzimuthLooks) )
         else:
-            rectWidth.append( int(1.0 / rangeScale[i] * int(swaths[i].numberOfSamples / numberOfRangeLooks)) )
-            rectLength.append( int(1.0 / azimuthScale[i] * int(swaths[i].numberOfLines / numberOfAzimuthLooks)) )
+            rectWidth.append( round(1.0 / rangeScale[i] * int(swaths[i].numberOfSamples / numberOfRangeLooks)) )
+            rectLength.append( round(1.0 / azimuthScale[i] * int(swaths[i].numberOfLines / numberOfAzimuthLooks)) )
+            #rectWidth.append( int(1.0 / rangeScale[i] * int(swaths[i].numberOfSamples / numberOfRangeLooks)) )
+            #rectLength.append( int(1.0 / azimuthScale[i] * int(swaths[i].numberOfLines / numberOfAzimuthLooks)) )
 
     #convert original offset to offset for images with looks
     #use list instead of np.array to make it consistent with the rest of the code
@@ -239,71 +245,80 @@ def swathMosaic(frame, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
                 os.remove(rinfs[i])
             os.symlink(inf, rinfs[i])
         else:
-            infImg = isceobj.createImage()
-            infImg.load(inf+'.xml')
-            rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
-            azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
+            #no need to resample
+            if (abs(rangeOffsets2[i] - round(rangeOffsets2[i])) < 0.0001) and (abs(azimuthOffsets2[i] - round(azimuthOffsets2[i])) < 0.0001):
+                if os.path.isfile(rinfs[i]):
+                    os.remove(rinfs[i])
+                os.symlink(inf, rinfs[i])
+                #all of the following use of rangeOffsets2/azimuthOffsets2 is inside int(), we do the following in case it is like
+                #4.99999999999...
+                rangeOffsets2[i] = round(rangeOffsets2[i])
+                azimuthOffsets2[i] = round(azimuthOffsets2[i])
+            else:
+                infImg = isceobj.createImage()
+                infImg.load(inf+'.xml')
+                rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
+                azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
 
+                if resamplingMethod == 0:
+                    rect_with_looks(inf,
+                                    rinfs[i],
+                                    infImg.width, infImg.length,
+                                    rectWidth[i], rectLength[i],
+                                    rangeScale[i], 0.0,
+                                    0.0,azimuthScale[i],
+                                    rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Bilinear')
+                elif resamplingMethod == 1:
+                    #decompose amplitude and phase
+                    phaseFile = 'phase'
+                    amplitudeFile = 'amplitude'
+                    data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
+                    phase = np.exp(np.complex64(1j) * np.angle(data))
+                    phase[np.nonzero(data==0)] = 0
+                    phase.astype(np.complex64).tofile(phaseFile)
+                    amplitude = np.absolute(data)
+                    amplitude.astype(np.float32).tofile(amplitudeFile)
 
-            if resamplingMethod == 0:
-                rect_with_looks(inf,
-                                rinfs[i],
-                                infImg.width, infImg.length,
-                                rectWidth[i], rectLength[i],
-                                rangeScale[i], 0.0,
-                                0.0,azimuthScale[i],
-                                rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Bilinear')
-            elif resamplingMethod == 1:
-                #decompose amplitude and phase
-                phaseFile = 'phase'
-                amplitudeFile = 'amplitude'
-                data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
-                phase = np.exp(np.complex64(1j) * np.angle(data))
-                phase[np.nonzero(data==0)] = 0
-                phase.astype(np.complex64).tofile(phaseFile)
-                amplitude = np.absolute(data)
-                amplitude.astype(np.float32).tofile(amplitudeFile)
+                    #resampling
+                    phaseRectFile = 'phaseRect'
+                    amplitudeRectFile = 'amplitudeRect'
+                    rect_with_looks(phaseFile,
+                                    phaseRectFile,
+                                    infImg.width, infImg.length,
+                                    rectWidth[i], rectLength[i],
+                                    rangeScale[i], 0.0,
+                                    0.0,azimuthScale[i],
+                                    rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Sinc')
+                    rect_with_looks(amplitudeFile,
+                                    amplitudeRectFile,
+                                    infImg.width, infImg.length,
+                                    rectWidth[i], rectLength[i],
+                                    rangeScale[i], 0.0,
+                                    0.0,azimuthScale[i],
+                                    rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
+                                    1,1,
+                                    1,1,
+                                    'REAL',
+                                    'Bilinear')
 
-                #resampling
-                phaseRectFile = 'phaseRect'
-                amplitudeRectFile = 'amplitudeRect'
-                rect_with_looks(phaseFile,
-                                phaseRectFile,
-                                infImg.width, infImg.length,
-                                rectWidth[i], rectLength[i],
-                                rangeScale[i], 0.0,
-                                0.0,azimuthScale[i],
-                                rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Sinc')
-                rect_with_looks(amplitudeFile,
-                                amplitudeRectFile,
-                                infImg.width, infImg.length,
-                                rectWidth[i], rectLength[i],
-                                rangeScale[i], 0.0,
-                                0.0,azimuthScale[i],
-                                rangeOffsets2Frac * rangeScale[i], azimuthOffsets2Frac * azimuthScale[i],
-                                1,1,
-                                1,1,
-                                'REAL',
-                                'Bilinear')
+                    #recombine amplitude and phase
+                    phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(rectLength[i], rectWidth[i])
+                    amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(rectLength[i], rectWidth[i])
+                    (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
 
-                #recombine amplitude and phase
-                phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(rectLength[i], rectWidth[i])
-                amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(rectLength[i], rectWidth[i])
-                (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
-
-                #tidy up
-                os.remove(phaseFile)
-                os.remove(amplitudeFile)
-                os.remove(phaseRectFile)
-                os.remove(amplitudeRectFile)
+                    #tidy up
+                    os.remove(phaseFile)
+                    os.remove(amplitudeFile)
+                    os.remove(phaseRectFile)
+                    os.remove(amplitudeRectFile)
 
 
     #determine output width and length

@@ -4,6 +4,7 @@
 #
 
 import os
+import shutil
 import logging
 import datetime
 import numpy as np
@@ -15,6 +16,10 @@ logger = logging.getLogger('isce.alos2insar.runIonUwrap')
 def runIonUwrap(self):
     '''unwrap subband interferograms
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -24,7 +29,17 @@ def runIonUwrap(self):
         return
 
     referenceTrack = self._insar.loadTrack(reference=True)
-    secondaryTrack = self._insar.loadTrack(reference=False)
+    #secondaryTrack = self._insar.loadTrack(reference=False)
+
+    ionUwrap(self, referenceTrack)
+
+    os.chdir('../../')
+    catalog.printToLog(logger, "runIonUwrap")
+    self._insar.procDoc.addAllFromCatalog(catalog)
+
+
+def ionUwrap(self, referenceTrack, latLonDir=None):
+
     wbdFile = os.path.abspath(self._insar.wbd)
 
     from isceobj.Alos2Proc.runIonSubband import defineIonDir
@@ -73,8 +88,14 @@ def runIonUwrap(self):
 
         #water body
         if k == 0:
-            look(os.path.join(fullbandDir, self._insar.latitude), 'lat'+ml2+'.lat', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
-            look(os.path.join(fullbandDir, self._insar.longitude), 'lon'+ml2+'.lon', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
+            if latLonDir is None:
+                latFile = os.path.join(fullbandDir, self._insar.latitude)
+                lonFile = os.path.join(fullbandDir, self._insar.longitude)
+            else:
+                latFile = os.path.join('../../', latLonDir, self._insar.latitude)
+                lonFile = os.path.join('../../', latLonDir, self._insar.longitude)
+            look(latFile, 'lat'+ml2+'.lat', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
+            look(lonFile, 'lon'+ml2+'.lon', width, self._insar.numberRangeLooksIon, self._insar.numberAzimuthLooksIon, 3, 0, 1)
             create_xml('lat'+ml2+'.lat', width2, length2, 'double')
             create_xml('lon'+ml2+'.lon', width2, length2, 'double')
             waterBodyRadar('lat'+ml2+'.lat', 'lon'+ml2+'.lon', wbdFile, 'wbd'+ml2+'.wbd')
@@ -132,8 +153,9 @@ def runIonUwrap(self):
     from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
     from mroipac.icu.Icu import Icu
 
-    if self.filterSubbandInt:
-        for k in range(2):
+    for k in range(2):
+        #1. filtering subband interferogram
+        if self.filterSubbandInt:
             toBeFiltered = 'tmp.int'
             if self.removeMagnitudeBeforeFilteringSubbandInt:
                 cmd = "imageMath.py -e='a/(abs(a)+(a==0))' --a={} -o {} -t cfloat -s BSQ".format(subbandPrefix[k]+ml2+'.int', toBeFiltered)
@@ -156,45 +178,50 @@ def runIonUwrap(self):
             os.remove(toBeFiltered + '.vrt')
             os.remove(toBeFiltered + '.xml')
 
-            #create phase sigma for phase unwrapping
-            #recreate filtered image
-            filtImage = isceobj.createIntImage()
-            filtImage.load('filt_'+subbandPrefix[k]+ml2+'.int' + '.xml')
-            filtImage.setAccessMode('read')
-            filtImage.createImage()
+            toBeUsedInPhsig = 'filt_'+subbandPrefix[k]+ml2+'.int'
+        else:
+            toBeUsedInPhsig = subbandPrefix[k]+ml2+'.int'
 
-            #amplitude image
-            ampImage = isceobj.createAmpImage()
-            ampImage.load(subbandPrefix[k]+ml2+'.amp' + '.xml')
-            ampImage.setAccessMode('read')
-            ampImage.createImage()
+        #2. create phase sigma for phase unwrapping
+        #recreate filtered image
+        filtImage = isceobj.createIntImage()
+        filtImage.load(toBeUsedInPhsig + '.xml')
+        filtImage.setAccessMode('read')
+        filtImage.createImage()
 
-            #phase sigma correlation image
-            phsigImage = isceobj.createImage()
-            phsigImage.setFilename(subbandPrefix[k]+ml2+'.phsig')
-            phsigImage.setWidth(width)
-            phsigImage.dataType='FLOAT'
-            phsigImage.bands = 1
-            phsigImage.setImageType('cor')
-            phsigImage.setAccessMode('write')
-            phsigImage.createImage()
+        #amplitude image
+        ampImage = isceobj.createAmpImage()
+        ampImage.load(subbandPrefix[k]+ml2+'.amp' + '.xml')
+        ampImage.setAccessMode('read')
+        ampImage.createImage()
 
-            icu = Icu(name='insarapp_filter_icu')
-            icu.configure()
-            icu.unwrappingFlag = False
-            icu.icu(intImage = filtImage, ampImage=ampImage, phsigImage=phsigImage)
+        #phase sigma correlation image
+        phsigImage = isceobj.createImage()
+        phsigImage.setFilename(subbandPrefix[k]+ml2+'.phsig')
+        phsigImage.setWidth(filtImage.width)
+        phsigImage.dataType='FLOAT'
+        phsigImage.bands = 1
+        phsigImage.setImageType('cor')
+        phsigImage.setAccessMode('write')
+        phsigImage.createImage()
 
-            phsigImage.renderHdr()
+        icu = Icu(name='insarapp_filter_icu')
+        icu.configure()
+        icu.unwrappingFlag = False
+        icu.icu(intImage = filtImage, ampImage=ampImage, phsigImage=phsigImage)
 
-            filtImage.finalizeImage()
-            ampImage.finalizeImage()
-            phsigImage.finalizeImage()
+        phsigImage.renderHdr()
+
+        filtImage.finalizeImage()
+        ampImage.finalizeImage()
+        phsigImage.finalizeImage()
 
 
     ############################################################
     # STEP 4. phase unwrapping
     ############################################################
     from isceobj.Alos2Proc.Alos2ProcPublic import snaphuUnwrap
+    from isceobj.Alos2Proc.Alos2ProcPublic import snaphuUnwrapOriginal
 
     for k in range(2):
         tmid = referenceTrack.sensingStart + datetime.timedelta(seconds=(self._insar.numberAzimuthLooks1-1.0)/2.0*referenceTrack.azimuthLineInterval+
@@ -207,16 +234,24 @@ def runIonUwrap(self):
             toBeUnwrapped = subbandPrefix[k]+ml2+'.int'
             coherenceFile = 'diff'+ml2+'.cor'
 
-        snaphuUnwrap(referenceTrack, tmid, 
-            toBeUnwrapped, 
-            coherenceFile, 
-            subbandPrefix[k]+ml2+'.unw', 
-            self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon, 
-            self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon, 
-            costMode = 'SMOOTH',initMethod = 'MCF', defomax = 2, initOnly = True)
-
-
-    os.chdir('../../')
-    catalog.printToLog(logger, "runIonUwrap")
-    self._insar.procDoc.addAllFromCatalog(catalog)
+        #if shutil.which('snaphu') != None:
+        #do not use original snaphu now
+        if False:
+            print('\noriginal snaphu program found')
+            print('unwrap {} using original snaphu, rather than that in ISCE'.format(toBeUnwrapped))
+            snaphuUnwrapOriginal(toBeUnwrapped, 
+                subbandPrefix[k]+ml2+'.phsig', 
+                subbandPrefix[k]+ml2+'.amp', 
+                subbandPrefix[k]+ml2+'.unw', 
+                costMode = 's', 
+                initMethod = 'mcf',
+                snaphuConfFile = '{}_snaphu.conf'.format(subbandPrefix[k]))
+        else:
+            snaphuUnwrap(referenceTrack, tmid, 
+                toBeUnwrapped, 
+                coherenceFile, 
+                subbandPrefix[k]+ml2+'.unw', 
+                self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon, 
+                self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon, 
+                costMode = 'SMOOTH',initMethod = 'MCF', defomax = 2, initOnly = True)
 

@@ -74,6 +74,7 @@ def createUnwrap2Stage(other, do_unwrap_2stage = None, unwrapperName = None):
 
 
 createPreprocessor = _factory("runPreprocessor")
+createBaseline = _factory("runBaseline", path = "isceobj.Alos2Proc.")
 createExtractBurst = _factory("runExtractBurst")
 createDownloadDem = _factory("runDownloadDem", path = "isceobj.Alos2Proc.")
 createCoregGeom = _factory("runCoregGeom")
@@ -93,6 +94,7 @@ createCoherence = _factory("runCoherence", path = "isceobj.Alos2Proc.")
 createIonSubband = _factory("runIonSubband")
 createIonUwrap = _factory("runIonUwrap", path = "isceobj.Alos2Proc.")
 createIonFilt = _factory("runIonFilt", path = "isceobj.Alos2Proc.")
+createIonCorrect = _factory("runIonCorrect", path = "isceobj.Alos2Proc.")
 createFilt = _factory("runFilt", path = "isceobj.Alos2Proc.")
 createUnwrapSnaphu = _factory("runUnwrapSnaphu", path = "isceobj.Alos2Proc.")
 createGeocode = _factory("runGeocode", path = "isceobj.Alos2Proc.")

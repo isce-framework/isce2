@@ -14,6 +14,10 @@ logger = logging.getLogger('isce.alos2insar.runIonSubband')
 def runIonSubband(self):
     '''create subband interferograms
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -296,30 +300,38 @@ def runIonSubband(self):
             #list of input files
             inputInterferograms = []
             inputAmplitudes = []
-            phaseDiff = [None]
+            #phaseDiff = [None]
+            swathPhaseDiffIon = [self.swathPhaseDiffLowerIon, self.swathPhaseDiffUpperIon]
+            phaseDiff = swathPhaseDiffIon[k]
+            if swathPhaseDiffIon[k] is None:
+                phaseDiff = None
+            else:
+                phaseDiff = swathPhaseDiffIon[k][i]
+                phaseDiff.insert(0, None)
+
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
                 inputInterferograms.append(os.path.join('../', swathDir, self._insar.interferogram))
                 inputAmplitudes.append(os.path.join('../', swathDir, self._insar.amplitude))
 
-                #compute phase needed to be compensated using startingRange
-                if j >= 1:
-                    #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
-                    #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
-                    phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
-                       referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
-                        #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
-                        #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
-                        #it should be OK to do the above.
-                        #see results in neom where it meets the above requirement, but there is still phase diff
-                        #to be less risky, we do not input values here
-                        phaseDiff.append(None)
-                    else:
-                        phaseDiff.append(None)
+                # #compute phase needed to be compensated using startingRange
+                # if j >= 1:
+                #     #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
+                #     #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
+                #     phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                #     phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                #     if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
+                #        referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
+                #         #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
+                #         #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
+                #         #it should be OK to do the above.
+                #         #see results in neom where it meets the above requirement, but there is still phase diff
+                #         #to be less risky, we do not input values here
+                #         phaseDiff.append(None)
+                #     else:
+                #         phaseDiff.append(None)
 
             #note that frame parameters are updated after mosaicking, here no need to update parameters
             #mosaic amplitudes
