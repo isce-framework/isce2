@@ -42,6 +42,7 @@ def setup(self):
     #SECTION 1. PROCESSING CONTROL PARAMETERS
     #1. suggested default values of the parameters
     ionParam.doIon = False
+    ionParam.considerBurstProperties = False
     ionParam.startStep = ionParam.allSteps[0]
     ionParam.endStep = ionParam.allSteps[-1]
 
@@ -77,6 +78,7 @@ def setup(self):
 
     #2. accept the above parameters from topsApp.py
     ionParam.doIon = self.ION_doIon
+    ionParam.considerBurstProperties = self.ION_considerBurstProperties
     ionParam.startStep = self.ION_startStep
     ionParam.endStep = self.ION_endStep
 
@@ -2637,16 +2639,17 @@ def runIon(self):
     if run_step('filt_gaussian', ionParam):
         filt_gaussian(self, ionParam)
 
+    #only do the following steps when considering burst properties
     #ionosphere shift
-    if run_step('ionosphere_shift', ionParam):
+    if run_step('ionosphere_shift', ionParam) and ionParam.considerBurstProperties:
         ionosphere_shift(self, ionParam)
 
     #resample from ionospheric layer to ground layer, get ionosphere for each burst
-    if run_step('ion2grd', ionParam):
+    if run_step('ion2grd', ionParam) and ionParam.considerBurstProperties:
         ion2grd(self, ionParam)
 
     #esd
-    if run_step('esd', ionParam):
+    if run_step('esd', ionParam) and ionParam.considerBurstProperties:
         esd(self, ionParam)
 
     #pure esd without applying ionospheric correction

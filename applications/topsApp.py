@@ -438,6 +438,20 @@ ION_DO_ION = Application.Parameter('ION_doIon',
     mandatory = False,
     doc = '')
 
+ION_APPLY_ION = Application.Parameter('ION_applyIon',
+    public_name = 'apply ionosphere correction',
+    default = False,
+    type = bool,
+    mandatory = False,
+    doc = '')
+
+ION_CONSIDER_BURST_PROPERTIES = Application.Parameter('ION_considerBurstProperties',
+    public_name = 'consider burst properties in ionosphere computation',
+    default = False,
+    type = bool,
+    mandatory = False,
+    doc = '')
+
 ION_START_STEP = Application.Parameter(
     'ION_startStep',
     public_name='start ionosphere step',
@@ -649,6 +663,8 @@ class TopsInSAR(Application):
                       ########################################################
                       #for ionospheric correction
                       ION_DO_ION,
+                      ION_APPLY_ION,
+                      ION_CONSIDER_BURST_PROPERTIES,
                       ION_START_STEP,
                       ION_END_STEP,
                       ION_ION_HEIGHT,
@@ -734,6 +750,9 @@ class TopsInSAR(Application):
         if(self.geocode_list is None):
             #if not provided by the user use the list from InsarProc
             self.geocode_list = self.insar.geocode_list
+            #for ionosphere
+            if 'topophase.ion' not in self.geocode_list:
+                self.geocode_list.append('topophase.ion')
         else:
             #if geocode_list defined here, then give it to InsarProc
             #for consistency between insarApp and InsarProc and warn the user
