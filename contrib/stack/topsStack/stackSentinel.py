@@ -523,7 +523,7 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_di
     if mergeSLC:
         i+=1
         runObj = run()
-        runObj.configure(inps, 'run_{:02d}_merge'.format(i))
+        runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
         runObj.mergeReference(stackReferenceDate, virtual = 'False')
         runObj.mergeSecondarySLC(secondaryDates, virtual = 'False')
         runObj.finalize()
