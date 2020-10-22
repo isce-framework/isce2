@@ -161,7 +161,6 @@ def adjustValidSampleLine_V2(reference, secondary, minAz=0, maxAz=0, minRng=0, m
 
     elif (minAz < 0) and  (maxAz < 0):
             reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8)
             lastValidLine = reference.firstValidLine + secondary.numValidLines  - 8
             if lastValidLine < reference.numberOfLines:
                reference.numValidLines = secondary.numValidLines - 8
