@@ -86,6 +86,14 @@ Python_add_library(alos MODULE
     src/ALOS_pre_process/swap_ALOS_data_info.c
     src/ALOS_pre_process/write_ALOS_prm.c
     src/ALOS_pre_process/readOrbitPulse.f
+    src/ALOS_pre_process/get_sio_struct.c
+    src/ALOS_pre_process/lib_array.c
+    src/ALOS_pre_process/lib_cpx.c
+    src/ALOS_pre_process/lib_file.c
+    src/ALOS_pre_process/lib_func.c
+    src/ALOS_pre_process/put_sio_struct.c
+    src/ALOS_pre_process/resamp.h
+    src/ALOS_pre_process/resamp_azimuth.c
     )
 target_include_directories(alos PUBLIC
     include
