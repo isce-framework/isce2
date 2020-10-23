@@ -13,6 +13,10 @@ from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.Util.Poly2D import Poly2D
 
 
+gdal.UseExceptions()
+
+
+
 def createParser():
     '''
     Command line parser.
@@ -416,6 +420,8 @@ def runMultilook(in_dir, out_dir, alks, rlks, in_ext='.rdr', out_ext='.rdr', met
                 options_str = '-of ENVI -a_nodata 0 -outsize {ox} {oy} -srcwin 0 0 {sx} {sy} '.format(
                     ox=out_wid, oy=out_len, sx=src_wid, sy=src_len)
                 gdal.Translate(out_file, ds, options=options_str)
+                dso = gdal.Open(out_file, gdal.GA_ReadOnly)
+                gdal.Translate(out_file+'.vrt', dso, options=gdal.TranslateOptions(format='VRT'))
 
                 # generate ISCE .xml file
                 if not os.path.isfile(out_file+'.xml'):
