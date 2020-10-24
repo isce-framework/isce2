@@ -362,6 +362,12 @@ def main(iargs=None):
             stack =  ut.loadProduct(os.path.join(inps.stack , 'IW{0}.xml'.format(swath)))
         if inps.isaligned:
             reference = ifg.reference
+
+            # checking inconsistent number of bursts in the secondary acquisitions
+            if reference.numberOfBursts != ifg.numberOfBursts:
+                raise ValueError('{} has different number of bursts ({}) than the reference ({})'.format(
+                    inps.reference, ifg.numberOfBursts, reference.numberOfBursts))
+
         else:
             reference = ifg
 
@@ -376,9 +382,7 @@ def main(iargs=None):
         if inps.stack:
             minStack = stack.bursts[0].burstNumber
             print('Updating the valid region of each burst to the common valid region of the stack')
-        ####Updating the valid region of each burst to the common valid region of the stack
             for ii in range(minBurst, maxBurst + 1):
-
                 ifg.bursts[ii-minBurst].firstValidLine = stack.bursts[ii-minStack].firstValidLine
                 ifg.bursts[ii-minBurst].firstValidSample = stack.bursts[ii-minStack].firstValidSample
                 ifg.bursts[ii-minBurst].numValidLines = stack.bursts[ii-minStack].numValidLines

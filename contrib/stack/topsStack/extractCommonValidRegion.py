@@ -39,6 +39,7 @@ def updateValidRegion(topReference, secondaryPath, swath):
     ####Load relevant products
         #topReference = ut.loadProduct(os.path.join(inps.reference , 'IW{0}.xml'.format(swath)))
 
+    print(secondaryPath)
     topCoreg = ut.loadProduct(os.path.join(secondaryPath , 'IW{0}.xml'.format(swath)))
 
     topIfg = ut.coregSwathSLCProduct()
@@ -67,6 +68,34 @@ def updateValidRegion(topReference, secondaryPath, swath):
 
     return topReference
 
+def dropSecondarysWithDifferentNumberOfBursts(secondaryList, reference, swathList):
+    '''Drop secondary acquisitions that have different number of bursts
+    than the reference acquisition.
+    '''
+    print('checking the number of bursts in coreg_secondarys against the one in reference')
+    secondaryList2Drop = []
+    for swath in swathList:
+        prodReference = ut.loadProduct(os.path.join(reference, 'IW{0}.xml'.format(swath)))
+        numBursts = len(prodReference.bursts)
+
+        for secondary in secondaryList:
+            prodSecondary = ut.loadProduct(os.path.join(secondary, 'IW{0}.xml'.format(swath)))
+            if len(prodSecondary.bursts) != numBursts:
+                msg = 'WARNING: {} has different number of bursts ({}) than the reference {} ({}) for swath {}'.format(
+                    os.path.basename(secondary), len(prodSecondary.bursts),
+                    os.path.basename(reference), numBursts, swath)
+                msg += ' --> exclude it for common region calculation'
+                print(msg)
+                secondaryList2Drop.append(secondary)
+
+    secondaryList2Drop = list(sorted(set(secondaryList2Drop)))
+    if len(secondaryList2Drop) == 0:
+        print('all secondary images have the same number of bursts as the reference')
+
+    secondaryList = list(sorted(set(secondaryList) - set(secondaryList2Drop)))
+
+    return secondaryList
+
 
 def main(iargs=None):
     '''extract common valid overlap region for the stack.
@@ -88,6 +117,8 @@ def main(iargs=None):
     secondaryList = glob.glob(os.path.join(inps.secondary,'2*'))
     secondarySwathList = ut.getSwathList(secondaryList[0]) # assuming all secondarys have the same swaths
     swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
+    # discard secondarys with different number of bursts than the reference
+    secondaryList = dropSecondarysWithDifferentNumberOfBursts(secondaryList, inps.reference, swathList)
 
     for swath in swathList:
         print('******************')

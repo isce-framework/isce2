@@ -262,7 +262,7 @@ class memmap(object):
                 nyy = nbytes//(fsize*nchannels*nxx)
 
                 if (nxx*nyy*fsize*nchannels) != nbytes:
-                    raise ValueError('File size mismatch for %s. Fractional number of lines'(fname))
+                    raise ValueError('File size mismatch for %s. Fractional number of lines'%(fname))
             elif (nxx*nyy*fsize*nchannels) > nbytes:
                     raise ValueError('File size mismatch for %s. Number of bytes expected: %d'%(nbytes))
              
