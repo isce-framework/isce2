@@ -264,14 +264,17 @@ scons install
 ```
 
 For a verbose install run:
+
+```bash
 scons -Q install
+```
 
 The scons command also allows you to explicitly specify the name of the
 SConfigISCE file, which could be used to specify an alternative file for
 (say SConfigISCE\_NEW) which must still be  located in the same
 SCONS\_CONFIG\_DIR, run
 
-```
+```bash
 scons install --setupfile=SConfigISCE_NEW
 ```
 
