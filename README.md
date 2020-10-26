@@ -258,8 +258,10 @@ code uses for importing isce.
 
 #### Install ISCE
 
+```bash
 cd isce
 scons install
+```
 
 For a verbose install run:
 scons -Q install
