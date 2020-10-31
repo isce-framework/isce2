@@ -775,7 +775,7 @@ CONNCOMPFILE        {}
 MAXNCOMPS       20'''.format(unwrapName+'.conncomp')
 
     else:
-        snaphuConf = '''CORRFILEFORMAT        FLOAT_DATA
+        snaphuConf = '''CORRFILEFORMAT        ALT_LINE_DATA
 CONNCOMPFILE        {}
 MAXNCOMPS       20'''.format(unwrapName+'.conncomp')
     with open(snaphuConfFile, 'w') as f:
