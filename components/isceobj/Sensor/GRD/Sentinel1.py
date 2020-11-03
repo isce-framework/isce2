@@ -721,13 +721,17 @@ class Sentinel1(Component):
                 block_azimuth_end = int(child.find('lastAzimuthLine').text)
                 block_line_index = [float(x) for x in linenode.text.split()]
                 block_vector = [float(x) for x in signode.text.split()]
-
                 block_line_range = np.arange(block_azimuth_start, block_azimuth_end + 1)
-                block_vector_interpolator = InterpolatedUnivariateSpline(block_line_index, block_vector, k=1)
 
-                for line in block_line_range:
-                    noise_azimuth_lut_indices[line].extend([block_range_start, block_range_end])
-                    noise_azimuth_lut_values[line].extend([block_vector_interpolator(line)] * 2)
+                if len(block_vector) > 1:
+                    block_vector_interpolator = InterpolatedUnivariateSpline(block_line_index, block_vector, k=1)
+                    for line in block_line_range:
+                        noise_azimuth_lut_indices[line].extend([block_range_start, block_range_end])
+                        noise_azimuth_lut_values[line].extend([block_vector_interpolator(line)] * 2)
+                else:
+                    for line in block_line_range:
+                        noise_azimuth_lut_indices[line].extend([block_range_start, block_range_end])
+                        noise_azimuth_lut_values[line].extend([block_vector[0]] * 2)
 
             self.noiseAzimuthLUT = (noise_azimuth_lut_indices, noise_azimuth_lut_values)
 
