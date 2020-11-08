@@ -106,7 +106,7 @@ def run(imageSlc1, imageSlc2, instrument, offsetField, resampName, azLooks, rgLo
         imageResamp2 = None
 
     if "intamp" in output:
-        logger.info("Will ouput resampled interferogram and amplitude: %s" % sceneid)
+        logger.info("Will output resampled interferogram and amplitude: %s" % sceneid)
         resampAmp = resampName + '.amp'
         resampInt = resampName + '.int'
 
