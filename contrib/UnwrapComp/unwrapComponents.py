@@ -55,7 +55,7 @@ CONN_COMP_FILE = Component.Parameter(
     type=str,
     mandatory=True,
     intent='input',
-    doc='Ouput File Name'
+    doc='Output File Name'
 )
 
 OUT_FILE = Component.Parameter(
