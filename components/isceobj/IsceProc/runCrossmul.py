@@ -76,7 +76,7 @@ def run(imageSlc1, imageSlc2, resampName, azLooks, rgLooks, lines, catalog=None,
     slcWidth = imageSlc1.getWidth()
     intWidth = int(slcWidth / rgLooks)
 
-    logger.info("Will ouput interferogram and amplitude: %s" % sceneid)
+    logger.info("Will output interferogram and amplitude: %s" % sceneid)
     resampAmp = resampName + '.amp'
     resampInt = resampName + '.int'
 
