@@ -89,10 +89,25 @@ ${PATH_ALOSSTACK}/create_cmds.py -stack_par alosStack.xml
 4. Do most of the single date processing. Run
 ./cmd_1.sh
 
-In all command files including cmd_1.sh, note that same commands for processing different dates either
-listed repeatedly or in a loop can run parallelly. The 'resample to a common grid' step in cmd_1.sh is
-a very time consuming step. These commands can of course run parallelly, but note that each command may
-use up to 7G memory.
+In cmd_1.sh and other command files, note that you can split the 'for loop' in each step into a number
+of parallel runs. See command file for details.
+
+Higly recommended parallel processing steps in each command file.
+
+cmd_1.sh:
+estimate SLC offsets
+resample to a common grid (WD1 SLC size may be up to 7.2 G, so each run requires this much memory!)
+
+cmd_2.sh
+form interferograms (does not requires a lot of computation, more parallel runs recommended)
+mosaic interferograms (does not requires a lot of computation, more parallel runs recommended)
+
+cmd_3.sh
+subband interferograms (does not requires a lot of computation, more parallel runs recommended)
+
+cmd_4.sh
+all steps
+
 
 5. InSAR processing before ionosphere correction. Run
 ./cmd_2.sh
