@@ -32,7 +32,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     skipSampleAcrossRaw = 64;
     skipSampleDownRaw = 64;
     rawDataOversamplingFactor = 2;
-    zoomWindowSize = 8;
+    zoomWindowSize = 16;
     oversamplingFactor = 16;
     oversamplingMethod = 0;
 
@@ -54,8 +54,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     referenceStartPixelDown0 = 0;
     referenceStartPixelAcross0 = 0;
 
-    corrRawZoomInHeight = 17; // 8*2+1
-    corrRawZoomInWidth = 17;
+    corrStatWindowSize = 21; // 10*2+1 as in RIOPAC
 
     useMmap = 1; // use mmap
     mmapSizeInGB = 1;
@@ -68,7 +67,19 @@ cuAmpcorParameter::cuAmpcorParameter()
 
 void cuAmpcorParameter::setupParameters()
 {
-    zoomWindowSize *= rawDataOversamplingFactor; //8 * 2
+    // Size to extract the raw correlation surface for snr/cov
+    corrRawZoomInHeight = std::min(corrStatWindowSize, 2*halfSearchRangeDownRaw+1);
+    corrRawZoomInWidth = std::min(corrStatWindowSize, 2*halfSearchRangeAcrossRaw+1);
+
+    // Size to extract the resampled correlation surface for oversampling
+    // users should use 16 for zoomWindowSize, no need to multiply by 2
+    // zoomWindowSize *= rawDataOversamplingFactor; //8 * 2
+    // to check the search range
+    int corrSurfaceActualSize =
+        std::min(halfSearchRangeAcrossRaw, halfSearchRangeDownRaw)*
+        2*rawDataOversamplingFactor;
+    zoomWindowSize = std::min(zoomWindowSize, corrSurfaceActualSize);
+
     halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor); // 8*2/(2*2) = 4
 
     windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //

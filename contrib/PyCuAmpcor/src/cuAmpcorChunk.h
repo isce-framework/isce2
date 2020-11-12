@@ -31,10 +31,6 @@ private:
 	cuArrays<float> *snrImage;
 	cuArrays<float3> *covImage;
 
-	// added for test
-    cuArrays<int> *intImage1;
-    cuArrays<float> *floatImage1;
-
     // gpu buffer
 	cuArrays<float2> * c_referenceChunkRaw, * c_secondaryChunkRaw;
 	cuArrays<float> * r_referenceChunkRaw, * r_secondaryChunkRaw;
@@ -61,6 +57,7 @@ private:
 	cuArrays<int2> *offsetInit;
 	cuArrays<int2> *offsetZoomIn;
 	cuArrays<float2> *offsetFinal;
+	cuArrays<int2> *maxLocShift; //record the maxloc from the extract center
     cuArrays<float> *corrMaxValue;
 
 
@@ -85,7 +82,7 @@ public:
 	void setIndex(int idxDown_, int idxAcross_);
 
 	cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_, cuArrays<float2> *offsetImage_,
-	            cuArrays<float> *snrImage_, cuArrays<float3> *covImage_, cuArrays<int> *intImage1_, cuArrays<float> *floatImage1_, cudaStream_t stream_);
+	            cuArrays<float> *snrImage_, cuArrays<float3> *covImage_, cudaStream_t stream_);
 
 
     void loadReferenceChunk();

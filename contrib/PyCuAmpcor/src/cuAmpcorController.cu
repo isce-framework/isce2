@@ -27,13 +27,13 @@ void cuAmpcorController::runAmpcor() {
     cuArrays<float3> *covImage, *covImageRun;
 
     // For debugging.
-    cuArrays<int> *intImage1;
-    cuArrays<float> *floatImage1;
+    // cuArrays<int> *corrValidCountImage;
+    // cuArrays<float> *corrSumImage;
 
     int nWindowsDownRun = param->numberChunkDown * param->numberWindowDownInChunk;
     int nWindowsAcrossRun = param->numberChunkAcross * param->numberWindowAcrossInChunk;
 
-    std::cout << "Debug " << nWindowsDownRun << " " << param->numberWindowDown << "\n";
+    //std::cout << "The number of windows to be processed (might be bigger) " << nWindowsDownRun << " x " << param->numberWindowDown << "\n";
 
     offsetImageRun = new cuArrays<float2>(nWindowsDownRun, nWindowsAcrossRun);
     offsetImageRun->allocate();
@@ -43,14 +43,6 @@ void cuAmpcorController::runAmpcor() {
 
     covImageRun = new cuArrays<float3>(nWindowsDownRun, nWindowsAcrossRun);
     covImageRun->allocate();
-
-    // intImage 1 and floatImage 1 are added for debugging issues
-
-    intImage1 = new cuArrays<int>(nWindowsDownRun, nWindowsAcrossRun);
-    intImage1->allocate();
-
-    floatImage1 = new cuArrays<float>(nWindowsDownRun, nWindowsAcrossRun);
-    floatImage1->allocate();
 
     // Offsetfields.
     offsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
@@ -69,7 +61,8 @@ void cuAmpcorController::runAmpcor() {
     for(int ist=0; ist<param->nStreams; ist++)
     {
         cudaStreamCreate(&streams[ist]);
-        chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage, offsetImageRun, snrImageRun, covImageRun, intImage1, floatImage1, streams[ist]);
+        chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage, offsetImageRun, snrImageRun, covImageRun,
+            streams[ist]);
 
     }
 
@@ -106,9 +99,6 @@ void cuAmpcorController::runAmpcor() {
     snrImage->outputToFile(param->snrImageName, streams[0]);
     covImage->outputToFile(param->covImageName, streams[0]);
 
-    // Output debugging arrays.
-    intImage1->outputToFile("intImage1", streams[0]);
-    floatImage1->outputToFile("floatImage1", streams[0]);
 
     outputGrossOffsets();
 
@@ -116,9 +106,6 @@ void cuAmpcorController::runAmpcor() {
     delete offsetImage;
     delete snrImage;
     delete covImage;
-
-    delete intImage1;
-    delete floatImage1;
 
     delete offsetImageRun;
     delete snrImageRun;

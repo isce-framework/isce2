@@ -14,8 +14,8 @@ from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
 
 
 EXAMPLE = '''example
-  cuDenseOffsets.py -m ./merged/SLC/20151120/20151120.slc.full -s ./merged/SLC/20151214/20151214.slc.full
-      --referencexml ./reference/IW1.xml --outprefix ./merged/offsets/20151120_20151214/offset
+  cuDenseOffsets.py -r ./merged/SLC/20151120/20151120.slc.full -s ./merged/SLC/20151214/20151214.slc.full
+      --outprefix ./merged/offsets/20151120_20151214/offset
       --ww 256 --wh 256 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --sw 8 --sh 8 --gpuid 2
 '''
 
@@ -29,76 +29,95 @@ def createParser():
     parser = argparse.ArgumentParser(description='Generate offset field between two Sentinel slc',
                                      formatter_class=argparse.RawTextHelpFormatter,
                                      epilog=EXAMPLE)
-    parser.add_argument('-m','--reference', type=str, dest='reference', required=True,
+
+    # input/output
+    parser.add_argument('-r','--reference', type=str, dest='reference', required=True,
                         help='Reference image')
     parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
                         help='Secondary image')
-    parser.add_argument('-l', '--lat',type=str, dest='lat', required=False,
-                        help='Latitude')
-    parser.add_argument('-L', '--lon',type=str, dest='lon', required=False,
-                        help='Longitude')
-    parser.add_argument('--los',type=str, dest='los', required=False,
-                        help='Line of Sight')
-    parser.add_argument('-x', '--referencexml',type=str, dest='referencexml', required=False,
-                        help='Reference Image XML File')
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
                         help='Output prefix, default: offset.')
     parser.add_argument('--os','--outsuffix', type=str, dest='outsuffix', default='',
                         help='Output suffix, default:.')
+
+    # window size settings
     parser.add_argument('--ww', type=int, dest='winwidth', default=64,
                         help='Window width (default: %(default)s).')
     parser.add_argument('--wh', type=int, dest='winhgt', default=64,
                         help='Window height (default: %(default)s).')
-
-    parser.add_argument('--sw', type=int, dest='srcwidth', default=20, choices=range(8, 33),
-                        help='Search window width (default: %(default)s).')
-    parser.add_argument('--sh', type=int, dest='srchgt', default=20, choices=range(8, 33),
-                        help='Search window height (default: %(default)s).')
-    parser.add_argument('--mm', type=int, dest='margin', default=50,
-                        help='Margin (default: %(default)s).')
-
+    parser.add_argument('--sw', type=int, dest='srcwidth', default=20,
+                        help='Half search range along width, (default: %(default)s, recommend: 4-32).')
+    parser.add_argument('--sh', type=int, dest='srchgt', default=20,
+                        help='Half search range along height (default: %(default)s, recommend: 4-32).')
     parser.add_argument('--kw', type=int, dest='skipwidth', default=64,
                         help='Skip across (default: %(default)s).')
     parser.add_argument('--kh', type=int, dest='skiphgt', default=64,
                         help='Skip down (default: %(default)s).')
 
+    # determine the number of windows
+    # either specify the starting pixel and the number of windows,
+    # or by setting them to -1, let the script to compute these parameters
+    parser.add_argument('--mm', type=int, dest='margin', default=0,
+                        help='Margin (default: %(default)s).')
+    parser.add_argument('--nwa', type=int, dest='numWinAcross', default=-1,
+                        help='Number of window across (default: %(default)s to be auto-determined).')
+    parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
+                        help='Number of window down (default: %(default)s).')
+    parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=-1,
+                        help='Starting Pixel across of the reference image(default: %(default)s to be determined by margin and search range).')
+    parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=-1,
+                        help='Starting Pixel down of the reference image (default: %(default)s).')
+
+    # cross-correlation algorithm
+    parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
+                        help='cross-correlation algorithm (0 = frequency domain, 1 = time domain) (default: %(default)s).')
     parser.add_argument('--raw-osf','--raw-over-samp-factor', type=int, dest='raw_oversample',
                         default=2, choices=range(2,5),
-                        help='raw data oversampling factor (default: %(default)s).')
+                        help='anti-aliasing oversampling factor, equivalent to i_ovs in RIOPAC (default: %(default)s).')
+    parser.add_argument('--drmp', '--deramp', dest='deramp', type=int, default=0,
+                        help='deramp method (0: mag for TOPS, 1:complex with linear ramp) (default: %(default)s).')
 
+    # gross offset
     gross = parser.add_argument_group('Initial gross offset')
     gross.add_argument('-g','--gross', type=int, dest='gross', default=0,
-                       help='Use gross offset or not')
+                       help='Use varying gross offset or not')
     gross.add_argument('--aa', type=int, dest='azshift', default=0,
                        help='Gross azimuth offset (default: %(default)s).')
     gross.add_argument('--rr', type=int, dest='rgshift', default=0,
                        help='Gross range offset (default: %(default)s).')
+    gross.add_argument('--gf', '--gross-file', type=str, dest='gross_offset_file',
+                       help='Varying gross offset input file')
 
     corr = parser.add_argument_group('Correlation surface')
-    corr.add_argument('--corr-win-size', type=int, dest='corr_win_size', default=-1,
-                      help='Zoom-in window size of the correlation surface for oversampling (default: %(default)s).')
+    corr.add_argument('--corr-stat-size', type=int, dest='corr_stat_win_size', default=21,
+                      help='Zoom-in window size of the correlation surface for statistics(snr/variance) (default: %(default)s).')
+    corr.add_argument('--corr-srch-size', type=int, dest='corr_srch_size', default=4,
+                      help='(half) Zoom-in window size of the correlation surface for oversampling, ' \
+                      'equivalent to i_srcp in RIOPAC (default: %(default)s).')
     corr.add_argument('--corr-osf', '--oo', '--corr-over-samp-factor', type=int, dest='corr_oversample', default=32,
                       help = 'Oversampling factor of the zoom-in correlation surface (default: %(default)s).')
+    corr.add_argument('--corr-osm', '--corr-over-samp-method', type=int, dest='corr_oversamplemethod', default=0,
+                      help = 'Oversampling method for the correlation surface 0=fft, 1=sinc (default: %(default)s).')
 
-    parser.add_argument('--nwa', type=int, dest='numWinAcross', default=-1,
-                        help='Number of window across (default: %(default)s).')
-    parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
-                        help='Number of window down (default: %(default)s).')
+    # gpu settings
+    proc = parser.add_argument_group('Processing parameters')
+    proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=-1,
+                        help='GPU ID (default: %(default)s to auto decide).')
+    proc.add_argument('--nstreams', dest='nstreams', type=int, default=2,
+                        help='Number of cuda streams (default: %(default)s).')
+    proc.add_argument('--usemmap', dest='usemmap', type=int, default=1,
+                        help='Whether to use memory map for loading image files (default: %(default)s).')
+    proc.add_argument('--mmapsize', dest='mmapsize', type=int, default=8,
+                        help='The memory map buffer size in GB (default: %(default)s).')
+    proc.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=10,
+                        help='Number of window across in a chunk/batch (default: %(default)s).')
+    proc.add_argument('--nwdc', type=int, dest='numWinDownInChunk', default=1,
+                        help='Number of window down in a chunk/batch (default: %(default)s).')
 
-    parser.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=1,
-                        help='Number of window across in chunk (default: %(default)s).')
-    parser.add_argument('--nwdc', type=int, dest='numWinDownInChunk', default=1,
-                        help='Number of window down in chunk (default: %(default)s).')
-    parser.add_argument('-r', '--redo', dest='redo', action='store_true',
+    proc.add_argument('--redo', dest='redo', action='store_true',
                         help='To redo by force (ignore the existing offset fields).')
-
-    parser.add_argument('--drmp', '--deramp', dest='deramp', type=int, default=0,
-                        help='deramp method (0: mag, 1: complex) (default: %(default)s).')
-
-    parser.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=-1,
-                        help='GPU ID (default: %(default)s).')
 
     return parser
 
@@ -108,9 +127,13 @@ def cmdLineParse(iargs = None):
     inps =  parser.parse_args(args=iargs)
 
     # check oversampled window size
-    if (inps.winwidth + 2 * inps.srcwidth) * inps.raw_oversample > 1024:
-        msg = 'input oversampled window size in the across/range direction '
-        msg += 'exceeds the current implementaion limit of 1024!'
+    if (inps.winwidth + 2 * inps.srcwidth ) * inps.raw_oversample > 1024:
+        msg = 'The oversampled window width, ' \
+              'as computed by (winwidth+2*srcwidth)*raw_oversample, ' \
+              'exceeds the current implementation limit of 1,024. ' \
+              f'Please reduce winwidth: {inps.winwidth}, ' \
+              f'srcwidth: {inps.srcwidth}, ' \
+              f'or raw_oversample: {inps.raw_oversample}.'
         raise ValueError(msg)
 
     return inps
@@ -136,11 +159,12 @@ def estimateOffsetField(reference, secondary, inps=None):
     width = sar.getWidth()
     length = sar.getLength()
 
+    # create a PyCuAmpcor instance
     objOffset = PyCuAmpcor()
 
-    objOffset.algorithm = 0
-    objOffset.deviceID = inps.gpuid  # -1:let system find the best GPU
-    objOffset.nStreams = 2 #cudaStreams
+    objOffset.algorithm = inps.algorithm
+    objOffset.deviceID = inps.gpuid
+    objOffset.nStreams = inps.nstreams #cudaStreams
     objOffset.derampMethod = inps.deramp
     print('deramp method (0 for magnitude, 1 for complex): ', objOffset.derampMethod)
 
@@ -155,49 +179,52 @@ def estimateOffsetField(reference, secondary, inps=None):
     print("image length:",length)
     print("image width:",width)
 
-    objOffset.numberWindowDown = (length-2*inps.margin-2*inps.srchgt-inps.winhgt)//inps.skiphgt
-    objOffset.numberWindowAcross = (width-2*inps.margin-2*inps.srcwidth-inps.winwidth)//inps.skipwidth
+    # if using gross offset, adjust the margin
+    margin = max(inps.margin, abs(inps.azshift), abs(inps.rgshift))
 
-    if (inps.numWinDown != -1):
-        objOffset.numberWindowDown = inps.numWinDown
-    if (inps.numWinAcross != -1):
-        objOffset.numberWindowAcross = inps.numWinAcross
-    print("offset field length: ",objOffset.numberWindowDown)
-    print("offset field width: ",objOffset.numberWindowAcross)
+    # determine the number of windows down and across
+    # that's also the size of the output offset field
+    objOffset.numberWindowDown = inps.numWinDown if inps.numWinDown > 0 \
+        else (length-2*margin-2*inps.srchgt-inps.winhgt)//inps.skiphgt
+    objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
+        else (width-2*margin-2*inps.srcwidth-inps.winwidth)//inps.skipwidth
+    print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
 
     # window size
     objOffset.windowSizeHeight = inps.winhgt
     objOffset.windowSizeWidth = inps.winwidth
-    print('cross correlation window size: {} by {}'.format(objOffset.windowSizeHeight, objOffset.windowSizeWidth))
+    print('window size for cross-correlation: {} by {}'.format(objOffset.windowSizeHeight, objOffset.windowSizeWidth))
 
     # search range
     objOffset.halfSearchRangeDown = inps.srchgt
     objOffset.halfSearchRangeAcross = inps.srcwidth
-    print('half search range: {} by {}'.format(inps.srchgt, inps.srcwidth))
+    print('initial search range: {} by {}'.format(inps.srchgt, inps.srcwidth))
 
     # starting pixel
+    objOffset.referenceStartPixelDownStatic = inps.startpixeldw if inps.startpixeldw != -1 \
+        else margin + objOffset.halfSearchRangeDown    # use margin + halfSearchRange instead
+    objOffset.referenceStartPixelAcrossStatic = inps.startpixelac if inps.startpixelac != -1 \
+        else margin + objOffset.halfSearchRangeAcross
 
-    objOffset.referenceStartPixelDownStatic = inps.margin
-    objOffset.referenceStartPixelAcrossStatic = inps.margin
- 
+    print('the first pixel in reference image is: ({}, {})'.format(
+        objOffset.referenceStartPixelDownStatic, objOffset.referenceStartPixelAcrossStatic))
+
     # skip size
-    
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
     print('search step: {} by {}'.format(inps.skiphgt, inps.skipwidth))
 
     # oversample raw data (SLC)
     objOffset.rawDataOversamplingFactor = inps.raw_oversample
-    print('raw data oversampling factor:', inps.raw_oversample)
 
     # correlation surface
-    if inps.corr_win_size == -1:
-        corr_win_size_orig = min(inps.srchgt, inps.srcwidth) * inps.raw_oversample + 1
-        inps.corr_win_size = np.power(2, int(np.log2(corr_win_size_orig)))
-        objOffset.corrSurfaceZoomInWindow = inps.corr_win_size
-        print('correlation surface zoom-in window size:', inps.corr_win_size)
+    objOffset.corrStatWindowSize = inps.corr_stat_win_size
 
-    objOffset.corrSufaceOverSamplingMethod = 0
+    corr_win_size = 2*inps.corr_srch_size*inps.raw_oversample
+    objOffset.corrSurfaceZoomInWindow = corr_win_size
+    print('correlation surface zoom-in window size:', corr_win_size)
+
+    objOffset.corrSurfaceOverSamplingMethod = inps.corr_oversamplemethod
     objOffset.corrSurfaceOverSamplingFactor = inps.corr_oversample
     print('correlation surface oversampling factor:', inps.corr_oversample)
 
@@ -211,37 +238,38 @@ def estimateOffsetField(reference, secondary, inps=None):
     print("snr: ",objOffset.snrImageName)
     print("cov: ",objOffset.covImageName)
 
-    offsetImageName = objOffset.offsetImageName.decode('utf8')
-    grossOffsetImageName = objOffset.grossOffsetImageName.decode('utf8')
-    snrImageName = objOffset.snrImageName.decode('utf8')
-    covImageName = objOffset.covImageName.decode('utf8')
+    offsetImageName = objOffset.offsetImageName
+    grossOffsetImageName = objOffset.grossOffsetImageName
+    snrImageName = objOffset.snrImageName
+    covImageName = objOffset.covImageName
 
-    print(offsetImageName)
-    print(inps.redo)
     if os.path.exists(offsetImageName) and not inps.redo:
-        print('offsetfield file exists')
+        print('offsetfield file {} exists while the redo flag is {}.'.format(offsetImageName, inps.redo))
         return 0
 
     # generic control
     objOffset.numberWindowDownInChunk = inps.numWinDownInChunk
     objOffset.numberWindowAcrossInChunk = inps.numWinAcrossInChunk
-    objOffset.useMmap = 0
-    objOffset.mmapSize = 8
+    objOffset.useMmap = inps.usemmap
+    objOffset.mmapSize = inps.mmapsize
+
+    # setup and check parameters
     objOffset.setupParams()
 
     ## Set Gross Offset ###
-    if inps.gross == 0:
-        print("Set constant grossOffset")
-        print("By default, the gross offsets are zero")
-        print("You can override the default values here")
-        objOffset.setConstantGrossOffset(0, 0)
+    if inps.gross == 0: # use static grossOffset
+        print('Set constant grossOffset ({}, {})'.format(inps.azshift, inps.rgshift))
+        objOffset.setConstantGrossOffset(inps.azshift, inps.rgshift)
 
-    else:
-        print("Set varying grossOffset")
-        print("By default, the gross offsets are zero")
-        print("You can override the default grossDown and grossAcross arrays here")
-        objOffset.setVaryingGrossOffset(np.zeros(shape=grossDown.shape,dtype=np.int32),
-                                        np.zeros(shape=grossAcross.shape,dtype=np.int32))
+    else: # use varying offset
+        print("Set varying grossOffset from file {}".format(inps.gross_offset_file))
+        grossOffset = np.fromfile(inps.gross_offset_file, dtype=np.int32)
+        numberWindows = objOffset.numberWindowDown*objOffset.numberWindowAcross
+        if grossOffset.size != 2*numberWindows :
+            print('The input gross offsets do not match the number of windows {} by {} in int32 type'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
+            return 0;
+        grossOffset.reshape(numberWindows, 2)
+        objOffset.setVaryingGrossOffset(grossOffset[:,0], grossOffset[:,1])
 
     # check
     objOffset.checkPixelInImageRange()

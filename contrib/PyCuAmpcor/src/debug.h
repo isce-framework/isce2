@@ -1,17 +1,17 @@
 #ifndef __DEBUG_H
 #define __DEBUG_H
 
-#pragma once
-
 #include <iostream>
 #include <assert.h>
+#include <stdio.h>
 
-#define _DEBUG_ 1
+#ifndef NDEBUG
+#define CUAMPCOR_DEBUG
+#define debugmsg(msg) fprintf(stderr, msg)
+#else
+#define debugmsg(msg)
+#endif //NDEBUG
 
 #define CUDA_ERROR_CHECK
 
-#define debugmsg(msg) if(_DEBUG_) fprintf(stderr, msg)
-
-//__CUDA_ARCH__
-
-#endif 
+#endif //__DEBUG_H

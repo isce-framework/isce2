@@ -43,10 +43,12 @@ cdef extern from "cuAmpcorParameter.h":
         int skipSampleDownRaw    			## Skip size between neighboring windows in Down direction (original size)
         int skipSampleAcrossRaw  			## Skip size between neighboring windows in across direction (original size)
 
+        int corrStatWindowSize                   ## Size of the raw correlation surface extracted for statistics
+
         ## Zoom in region near location of max correlation
         int zoomWindowSize       			## Zoom-in window size in correlation surface (same for down and across directions)
         int oversamplingFactor   			## Oversampling factor for interpolating correlation surface
-        int oversamplingMethod
+        int oversamplingMethod              ## Correlation surface oversampling method 0=fft, 1=sinc
 
         float thresholdSNR       			## Threshold of Signal noise ratio to remove noisy data
 
@@ -217,6 +219,13 @@ cdef class PyCuAmpcor(object):
     def rawDataOversamplingFactor(self, int a):
         self.c_cuAmpcor.param.rawDataOversamplingFactor = a
     @property
+    def corrStatWindowSize(self):
+        """Size of correlation surface extracted for statistics"""
+        return self.c_cuAmpcor.param.corrStatWindowSize
+    @corrStatWindowSize.setter
+    def corrStatWindowSize(self, int a):
+        self.c_cuAmpcor.param.corrStatWindowSize = a
+    @property
     def corrSurfaceZoomInWindow(self):
         """Zoom-In Window Size for correlation surface"""
         return self.c_cuAmpcor.param.zoomWindowSize
@@ -231,11 +240,11 @@ cdef class PyCuAmpcor(object):
     def corrSurfaceOverSamplingFactor(self, int a):
         self.c_cuAmpcor.param.oversamplingFactor = a
     @property
-    def corrSufaceOverSamplingMethod(self):
+    def corrSurfaceOverSamplingMethod(self):
         """Oversampling method for correlation surface(0=fft,1=sinc)"""
         return self.c_cuAmpcor.param.oversamplingMethod
-    @corrSufaceOverSamplingMethod.setter
-    def corrSufaceOverSamplingMethod(self, int a):
+    @corrSurfaceOverSamplingMethod.setter
+    def corrSurfaceOverSamplingMethod(self, int a):
         self.c_cuAmpcor.param.oversamplingMethod = a
     @property
     def referenceImageName(self):
@@ -322,27 +331,27 @@ cdef class PyCuAmpcor(object):
     ## gross offets
     @property
     def grossOffsetImageName(self):
-        return self.c_cuAmpcor.param.grossOffsetImageName
+        return self.c_cuAmpcor.param.grossOffsetImageName.decode("utf-8")
     @grossOffsetImageName.setter
     def grossOffsetImageName(self, str a):
         self.c_cuAmpcor.param.grossOffsetImageName = <string> a.encode()
     @property
     def offsetImageName(self):
-        return self.c_cuAmpcor.param.offsetImageName
+        return self.c_cuAmpcor.param.offsetImageName.decode("utf-8")
     @offsetImageName.setter
     def offsetImageName(self, str a):
         self.c_cuAmpcor.param.offsetImageName = <string> a.encode()
 
     @property
     def snrImageName(self):
-        return self.c_cuAmpcor.param.snrImageName
+        return self.c_cuAmpcor.param.snrImageName.decode("utf-8")
     @snrImageName.setter
     def snrImageName(self, str a):
         self.c_cuAmpcor.param.snrImageName = <string> a.encode()
 
     @property
     def covImageName(self):
-        return self.c_cuAmpcor.param.covImageName
+        return self.c_cuAmpcor.param.covImageName.decode("utf-8")
     @covImageName.setter
     def covImageName(self, str a):
         self.c_cuAmpcor.param.covImageName = <string> a.encode()

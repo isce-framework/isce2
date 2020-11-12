@@ -1,6 +1,6 @@
 /**
  * cudaError.h
- * Purpose: check various errors in cuda/cufft/cublas calls
+ * Purpose: check various errors in cuda/cufft calls
  * Lijun Zhu
  * Last modified 09/07/2017
 **/
@@ -65,7 +65,6 @@ inline void __getLastCudaError(const char *errorMessage, const char *file, const
 // This will output the proper CUDA error strings in the event that a CUDA host call returns an error
 #define checkCudaErrors(val)  check ( (val), #val, __FILE__, __LINE__ )
 #define cufft_Error(val)     check ( (val), #val, __FILE__, __LINE__ )
-#define cublas_Error(val)    check ( (val), #val, __FILE__, __LINE__ )
 #define getLastCudaError(var)   __getLastCudaError (var, __FILE__, __LINE__)
 
 #endif //__CUDAERROR_CUH

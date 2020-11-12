@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <assert.h>
-#include <cublas_v2.h>
 #include "cudaError.h"
 #include <errno.h>
 #include <unistd.h>
@@ -107,11 +106,6 @@ void GDALImage::loadToDevice(void *dArray, size_t h_offset, size_t w_offset, siz
     char * startPtr = (char *)_memPtr ;
     startPtr += tileStartOffset;
 
-    // @note
-    // We assume down/across directions as rows/cols. Therefore, SLC mmap and device array are both row major.
-    // cuBlas assumes both source and target arrays are column major.
-    // To use cublasSetMatrix, we need to switch w_tile/h_tile for rows/cols
-    // checkCudaErrors(cublasSetMatrixAsync(w_tile, h_tile, sizeof(float2), startPtr, width, dArray, w_tile, stream));
     if (_useMmap)
         checkCudaErrors(cudaMemcpy2DAsync(dArray, w_tile*_pixelSize, startPtr, _width*_pixelSize,
                                       w_tile*_pixelSize, h_tile, cudaMemcpyHostToDevice,stream));

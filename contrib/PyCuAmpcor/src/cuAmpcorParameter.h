@@ -50,7 +50,8 @@ public:
     int searchWindowSizeHeightRawZoomIn;
     int searchWindowSizeWidthRawZoomIn;
 
-    int corrRawZoomInHeight;  // window to estimate snr
+    int corrStatWindowSize;     /// window to estimate snr
+    int corrRawZoomInHeight;
     int corrRawZoomInWidth;
 
     // chip or window size after oversampling

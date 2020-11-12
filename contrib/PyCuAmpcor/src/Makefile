@@ -1,12 +1,13 @@
 PROJECT = CUAMPCOR
 
-LDFLAGS =  -lcuda -lcudart -lcufft -lcublas
+LDFLAGS =  -lcuda -lcudart -lcufft -lgdal
 CXXFLAGS = -std=c++11 -fpermissive -fPIC -shared
 NVCCFLAGS = -std=c++11 -ccbin g++ -m64 \
     -gencode arch=compute_35,code=sm_35 \
 	-gencode arch=compute_60,code=sm_60 \
     -Xcompiler -fPIC -shared -Wno-deprecated-gpu-targets \
-    -ftz=false -prec-div=true -prec-sqrt=true
+    -ftz=false -prec-div=true -prec-sqrt=true \
+    -I/usr/include/gdal
 
 CXX=g++
 NVCC=nvcc

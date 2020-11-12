@@ -277,9 +277,6 @@ void cpuDerampMethod3(cuArrays<float2> *imagesD, cudaStream_t stream)
             }         
         }
         //phaseDiffY /=  height*(width-1);
-        
-       
-        
          if (complexAbs(phaseDiffY) < 1.e-5) {
             phaseY = 0.0;
         }
@@ -331,14 +328,17 @@ void cpuDerampMethod3(cuArrays<float2> *imagesD, cudaStream_t stream)
         
 void cuDeramp(int method, cuArrays<float2> *images, cudaStream_t stream)
 {
+    // methods 2-3 are for test purposes only, removed for release
+    // note method 0 is designed for TOPSAR: not only deramping is skipped,
+    //    the amplitude is taken before oversampling
     switch(method) {
-    case 3:
-        cpuDerampMethod3(images, stream);    
+    //case 3:
+    //    cpuDerampMethod3(images, stream);
     case 1:
         cuDerampMethod1(images, stream);
         break;
-    case 2:
-        cuDerampMethod2(images, stream);
+    //case 2:
+    //    cuDerampMethod2(images, stream);
         break;
     default:
         break;
