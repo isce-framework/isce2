@@ -371,7 +371,7 @@ def cmdLineParse():
             help = 'secondary filtering window size. default: 5')
     parser.add_argument('-filter_std_ion', dest='filter_std_ion', type=float, default=None,
             help = 'standard deviation after ionosphere filtering. default: None, automatically set by the program')
-    parser.add_argument('-masked_areas', dest='masked_areas', type=float, nargs='+', action='append', default=None,
+    parser.add_argument('-masked_areas', dest='masked_areas', type=int, nargs='+', action='append', default=None,
             help='This is a 2-d list. Each element in the 2-D list is a four-element list: [firstLine, lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the four elements is specified with -1, the program will use firstLine/lastLine/firstColumn/lastColumn instead. e.g. two areas masked out: -masked_areas 10 20 10 20 -masked_areas 110 120 110 120')
 
     if len(sys.argv) <= 1:
