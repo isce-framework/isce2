@@ -30,6 +30,9 @@ def cmdLineParse():
             help = 'output directory for estimated ionospheric phase of each date')
     parser.add_argument('-pairs', dest='pairs', type=str, nargs='+', default=None,
             help = 'a number of pairs seperated by blanks. format: YYMMDD-YYMMDD YYMMDD-YYMMDD YYMMDD-YYMMDD... This argument has highest priority. When provided, only process these pairs')
+    parser.add_argument('-wbd_msk', dest='wbd_msk', action='store_true',
+            help='apply water body mask in the output image')
+
     # parser.add_argument('-nrlks', dest='nrlks', type=int, default=1,
     #         help = 'number of range looks 1 * number of range looks ion. default: 1')
     # parser.add_argument('-nalks', dest='nalks', type=int, default=1,
@@ -53,6 +56,7 @@ if __name__ == '__main__':
     idir = inps.idir
     odir = inps.odir
     pairsUser = inps.pairs
+    wbdMsk = inps.wbd_msk
     #######################################################
 
     if shutil.which('montage') is None:
@@ -87,11 +91,17 @@ if __name__ == '__main__':
         ion = glob.glob(os.path.join(idir, ipair, 'ion', 'ion_cal', 'filt_ion_*rlks_*alks.ion'))[0]
         diff = glob.glob(os.path.join(idir, ipair, 'ion', 'ion_cal', 'diff_{}_*rlks_*alks.int'.format(ipair)))[0]
 
-        runCmd('mdx {} -s {} -c8pha -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793 -P -workdir {}'.format(diffOriginal, width, odir))
+        if wbdMsk:
+            wbd = glob.glob(os.path.join(idir, ipair, 'ion', 'ion_cal', 'wbd_*rlks_*alks.wbd'))[0]
+            wbdArguments = ' {} -s {} -i1 -cmap grey -percent 100'.format(wbd, width)
+        else:
+            wbdArguments = ''
+
+        runCmd('mdx {} -s {} -c8pha -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793{} -P -workdir {}'.format(diffOriginal, width, wbdArguments, odir))
         runCmd('mv {} {}'.format(os.path.join(odir, 'out.ppm'), os.path.join(odir, 'out1.ppm')))
-        runCmd('mdx {} -s {} -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793 -P -workdir {}'.format(ion, width, odir))
+        runCmd('mdx {} -s {} -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793{} -P -workdir {}'.format(ion, width, wbdArguments, odir))
         runCmd('mv {} {}'.format(os.path.join(odir, 'out.ppm'), os.path.join(odir, 'out2.ppm')))
-        runCmd('mdx {} -s {} -c8pha -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793 -P -workdir {}'.format(diff, width, odir))
+        runCmd('mdx {} -s {} -c8pha -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793{} -P -workdir {}'.format(diff, width, wbdArguments, odir))
         runCmd('mv {} {}'.format(os.path.join(odir, 'out.ppm'), os.path.join(odir, 'out3.ppm')))
         runCmd("montage -pointsize {} -label 'original' {} -label 'ionosphere' {} -label 'corrected' {} -geometry +{} -compress LZW{} {}.tif".format(
             int((ratio*width)/111*18+0.5),
