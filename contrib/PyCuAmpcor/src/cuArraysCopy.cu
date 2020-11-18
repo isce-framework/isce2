@@ -1,22 +1,18 @@
-/* imagecopy.cu
- * various utitilies for copying images in device memory
+/**
+ * @file cuArraysCopy.cu
+ * @brief Utilities for copying/converting images to different format
  *
- * Lijun Zhu @ Seismo Lab, Caltech
- * v1.0 Jan 2017
+ * All methods are declared in cuAmpcorUtil.h
  */
 
+
+// dependencies
 #include "cuArrays.h"
 #include "cudaUtil.h"
 #include "cudaError.h"
 #include "float2.h"
 
-/*
-inline __device__ float cuAbs(float2 a)
-{
-	return sqrtf(a.x*a.x+a.y*a.y);
-}*/
-
-// copy a chunk into a batch of chips for a given stride
+// cuda kernel for cuArraysCopyToBatch
 __global__ void cuArraysCopyToBatch_kernel(const float2 *imageIn, const int inNX, const int inNY,
     float2 *imageOut, const int outNX, const int outNY,
     const int nImagesX, const int nImagesY,
@@ -33,6 +29,8 @@ __global__ void cuArraysCopyToBatch_kernel(const float2 *imageIn, const int inNX
 	imageOut[idxOut] = imageIn[idxIn];
 }
 
+// copy a chunk into a batch of chips for a given stride
+// used to extract chips from a raw image
 void cuArraysCopyToBatch(cuArrays<float2> *image1, cuArrays<float2> *image2,
 	int strideH, int strideW, cudaStream_t stream)
 {
@@ -46,7 +44,6 @@ void cuArraysCopyToBatch(cuArrays<float2> *image1, cuArrays<float2> *image2,
 		strideH, strideW);
 	getLastCudaError("cuArraysCopyToBatch_kernel");
 }
-
 
 // copy a chunk into a batch of chips for a set of offsets (varying strides), from complex to complex
 __global__ void cuArraysCopyToBatchWithOffset_kernel(const float2 *imageIn, const int inNY,
@@ -69,7 +66,6 @@ void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int lda1, cuA
 	const int nthreads = 16;
 	dim3 blockSize(nthreads, nthreads, 1);
 	dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
-    //fprintf(stderr, "copy tile to batch, %d %d\n", lda1, image2->count);
 	cuArraysCopyToBatchWithOffset_kernel<<<gridSize,blockSize, 0 , stream>>> (
 		image1->devData, lda1,
 		image2->devData, image2->height, image2->width, image2->count,
@@ -97,7 +93,6 @@ void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int lda1, 
 	const int nthreads = 16;
 	dim3 blockSize(nthreads, nthreads, 1);
 	dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
-    //fprintf(stderr, "copy tile to batch, %d %d\n", lda1, image2->count);
 	cuArraysCopyToBatchAbsWithOffset_kernel<<<gridSize,blockSize, 0 , stream>>> (
 		image1->devData, lda1,
 		image2->devData, image2->height, image2->width, image2->count,
@@ -125,7 +120,6 @@ void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int lda1, c
 	const int nthreads = 16;
 	dim3 blockSize(nthreads, nthreads, 1);
 	dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
-    //fprintf(stderr, "copy tile to batch, %d %d\n", lda1, image2->count);
 	cuArraysCopyToBatchWithOffsetR2C_kernel<<<gridSize,blockSize, 0 , stream>>> (
 		image1->devData, lda1,
 		image2->devData, image2->height, image2->width, image2->count,
@@ -133,7 +127,7 @@ void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int lda1, c
 	getLastCudaError("cuArraysCopyToBatchWithOffsetR2C_kernel");
 }
 
-//copy a chunk into a series of chips
+//copy a chunk into a series of chips, from complex to real
 __global__ void cuArraysCopyC2R_kernel(const float2 *imageIn, const int inNX, const int inNY,
     float *imageOut, const int outNX, const int outNY,
     const int nImagesX, const int nImagesY,
@@ -148,10 +142,8 @@ __global__ void cuArraysCopyC2R_kernel(const float2 *imageIn, const int inNX, co
 	int idxImageY = idxImage%nImagesY;
 	int idxIn = (idxImageX*strideX+outx)*inNY + idxImageY*strideY+outy;
 	imageOut[idxOut] = complexAbs(imageIn[idxIn])*factor;
-	//printf( "%d\n", idxOut);
 }
 
-//tested
 void cuArraysCopyC2R(cuArrays<float2> *image1, cuArrays<float> *image2,
 	int strideH, int strideW, cudaStream_t stream)
 {
@@ -167,6 +159,7 @@ void cuArraysCopyC2R(cuArrays<float2> *image1, cuArrays<float> *image2,
 	getLastCudaError("cuda Error: cuArraysCopyC2R_kernel");
 }
 
+//copy a chunk into a series of chips, from complex to real, with varying strides
 __global__ void cuArraysCopyExtractVaryingOffset(const float *imageIn, const int inNX, const int inNY,
      float *imageOut, const int outNX, const int outNY, const int nImages,
      const int2 *offsets)
@@ -183,10 +176,11 @@ __global__ void cuArraysCopyExtractVaryingOffset(const float *imageIn, const int
 	}
 }
 
-/* copy a tile of images to another image, with starting pixels offsets
- * param[in] imageIn inut images
- * param[out] imageOut output images of dimension nImages*outNX*outNY
- */
+///
+/// Copy a tile of images to another image, with starting pixels offsets
+/// @param[in] imageIn inut images
+/// param[out] imageOut output images of dimension nImages*outNX*outNY
+///
 void cuArraysCopyExtract(cuArrays<float> *imagesIn, cuArrays<float> *imagesOut, cuArrays<int2> *offsets, cudaStream_t stream)
 {
 	//assert(imagesIn->height >= imagesOut && inNY >= outNY);
@@ -215,6 +209,10 @@ __global__ void cuArraysCopyExtractVaryingOffset_C2C(const float2 *imageIn, cons
 	}
 }
 
+/**
+ * copy/extract complex images from a large size to a smaller size from the location (offsetX, offsetY)
+ * offset is varying for each image
+ */
 void cuArraysCopyExtract(cuArrays<float2> *imagesIn, cuArrays<float2> *imagesOut, cuArrays<int2> *offsets, cudaStream_t stream)
 {
 	//assert(imagesIn->height >= imagesOut && inNY >= outNY);
@@ -266,9 +264,10 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const float *imageIn, const
     }
 }
 
-/* copy a tile of images to another image, with starting pixels offsets accouting for boundary
- * param[in] imageIn inut images
- * param[out] imageOut output images of dimension nImages*outNX*outNY
+/**
+ * copy a tile of images to another image, with starting pixels offsets accouting for boundary
+ * @param[in] imageIn inut images
+ * @param[out] imageOut output images of dimension nImages*outNX*outNY
  */
 void cuArraysCopyExtractCorr(cuArrays<float> *imagesIn, cuArrays<float> *imagesOut, cuArrays<int> *imagesValid, cuArrays<int2> *maxloc, cudaStream_t stream)
 {
@@ -335,7 +334,9 @@ __global__ void cuArraysCopyExtract_C2C_FixedOffset(const float2 *imageIn, const
 	}
 }
 
-
+/**
+ * copy/extract complex images from a large size to a smaller size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyExtract(cuArrays<float2> *imagesIn, cuArrays<float2> *imagesOut, int2 offset, cudaStream_t stream)
 {
 	//assert(imagesIn->height >= imagesOut && inNY >= outNY);
@@ -368,16 +369,15 @@ __global__ void cuArraysCopyExtract_C2C_FixedOffset(const float3 *imageIn, const
 	}
 }
 
-
+/**
+ * copy/extract float3 images from a large size to a smaller size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyExtract(cuArrays<float3> *imagesIn, cuArrays<float3> *imagesOut, int2 offset, cudaStream_t stream)
 {
 	//assert(imagesIn->height >= imagesOut && inNY >= outNY);
 	const int nthreads = NTHREADS2D;
 	dim3 threadsperblock(nthreads, nthreads,1);
 	dim3 blockspergrid(IDIVUP(imagesOut->height,nthreads), IDIVUP(imagesOut->width,nthreads), imagesOut->count);
-    //std::cout << "debug copyExtract" << imagesOut->width << imagesOut->height << "\n";
-    //imagesIn->debuginfo(stream);
-    //imagesOut->debuginfo(stream);
 	cuArraysCopyExtract_C2C_FixedOffset<<<blockspergrid, threadsperblock,0, stream>>>
         (imagesIn->devData, imagesIn->height, imagesIn->width,
 	    imagesOut->devData, imagesOut->height, imagesOut->width, imagesOut->count, offset.x, offset.y);
@@ -402,8 +402,10 @@ __global__ void cuArraysCopyExtract_C2R_FixedOffset(const float2 *imageIn, const
 	}
 }
 
-
-
+/**
+ * copy/extract complex images from a large size to float images (by taking real parts)
+ * with a smaller size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyExtract(cuArrays<float2> *imagesIn, cuArrays<float> *imagesOut, int2 offset, cudaStream_t stream)
 {
 	//assert(imagesIn->height >= imagesOut && inNY >= outNY);
@@ -429,7 +431,9 @@ __global__ void cuArraysCopyInsert_kernel(const float2* imageIn, const int inNX,
 	}
 }
 
-
+/**
+ * copy/insert complex images from a smaller size to a larger size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyInsert(cuArrays<float2> *imageIn, cuArrays<float2> *imageOut, int offsetX, int offsetY, cudaStream_t stream)
 {
 	const int nthreads = 16;
@@ -453,6 +457,9 @@ __global__ void cuArraysCopyInsert_kernel(const float3* imageIn, const int inNX,
 	}
 }
 
+/**
+ * copy/insert float3 images from a smaller size to a larger size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyInsert(cuArrays<float3> *imageIn, cuArrays<float3> *imageOut, int offsetX, int offsetY, cudaStream_t stream)
 {
 	const int nthreads = 16;
@@ -477,7 +484,9 @@ __global__ void cuArraysCopyInsert_kernel(const float* imageIn, const int inNX, 
 	}
 }
 
-
+/**
+ * copy/insert real images from a smaller size to a larger size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyInsert(cuArrays<float> *imageIn, cuArrays<float> *imageOut, int offsetX, int offsetY, cudaStream_t stream)
 {
 	const int nthreads = 16;
@@ -488,7 +497,7 @@ void cuArraysCopyInsert(cuArrays<float> *imageIn, cuArrays<float> *imageOut, int
 	getLastCudaError("cuArraysCopyInsert Float error");
 }
 
-//
+
 
 __global__ void cuArraysCopyInsert_kernel(const int* imageIn, const int inNX, const int inNY,
    int* imageOut, const int outNY, const int offsetX, const int offsetY)
@@ -502,7 +511,9 @@ __global__ void cuArraysCopyInsert_kernel(const int* imageIn, const int inNX, co
 	}
 }
 
-
+/**
+ * copy/insert int images from a smaller size to a larger size from the location (offsetX, offsetY)
+ */
 void cuArraysCopyInsert(cuArrays<int> *imageIn, cuArrays<int> *imageOut, int offsetX, int offsetY, cudaStream_t stream)
 {
 	const int nthreads = 16;
@@ -511,38 +522,6 @@ void cuArraysCopyInsert(cuArrays<int> *imageIn, cuArrays<int> *imageOut, int off
 	cuArraysCopyInsert_kernel<<<blockspergrid, threadsperblock,0, stream>>>(imageIn->devData, imageIn->height, imageIn->width,
 	       imageOut->devData,  imageOut->width, offsetX, offsetY);
 	getLastCudaError("cuArraysCopyInsert Integer error");
-}
-//
-
-
-__global__ void cuArraysCopyInversePadded_kernel(float *imageIn, int inNX, int inNY, int sizeIn,
-    float *imageOut, int outNX, int outNY, int sizeOut, int nImages)
-{
-	int outx = threadIdx.x + blockDim.x*blockIdx.x;
-	int outy = threadIdx.y + blockDim.y*blockIdx.y;
-
-	if(outx < outNX && outy < outNY)
-	{
-		int idxImage = blockIdx.z;
-		int idxOut = IDX2R(outx, outy, outNY)+idxImage*sizeOut;
-		if(outx < inNX && outy <inNY) {
-			int idxIn = IDX2R(inNX-outx-1, inNY-outy-1, inNY)+idxImage*sizeIn;
-			imageOut[idxOut] = imageIn[idxIn];
-		}
-		else
-		{	imageOut[idxOut] = 0.0f; }
-	}
-}
-
-void cuArraysCopyInversePadded(cuArrays<float> *imageIn, cuArrays<float> *imageOut,cudaStream_t stream)
-{
-	const int nthreads = 16;
-	int nImages = imageIn->count;
-	dim3 blockSize(nthreads, nthreads,1);
-	dim3 gridSize(IDIVUP(imageOut->height,nthreads), IDIVUP(imageOut->width,nthreads), nImages);
-	cuArraysCopyInversePadded_kernel<<<gridSize, blockSize, 0, stream>>>(imageIn->devData, imageIn->height, imageIn->width, imageIn->size,
-	   imageOut->devData, imageOut->height, imageOut->width, imageOut->size, nImages);
-	 getLastCudaError("cuArraysCopyInversePadded error");
 }
 
 
@@ -565,6 +544,9 @@ __global__ void cuArraysCopyPadded_R2R_kernel(float *imageIn, int inNX, int inNY
 	}
 }
 
+/**
+ * copy real images from a smaller size to a larger size while padding 0 for extra elements
+ */
 void cuArraysCopyPadded(cuArrays<float> *imageIn, cuArrays<float> *imageOut,cudaStream_t stream)
 {
 	const int nthreads = 16;
@@ -596,7 +578,9 @@ __global__ void cuArraysCopyPadded_C2C_kernel(float2 *imageIn, int inNX, int inN
 	}
 }
 
-
+/**
+ * copy complex images from a smaller size to a larger size while padding 0 for extra elements
+ */
 void cuArraysCopyPadded(cuArrays<float2> *imageIn, cuArrays<float2> *imageOut,cudaStream_t stream)
 {
 	const int nthreads = NTHREADS2D;
@@ -609,6 +593,7 @@ void cuArraysCopyPadded(cuArrays<float2> *imageIn, cuArrays<float2> *imageOut,cu
 	 getLastCudaError("cuArraysCopyInversePadded error");
 }
 
+// kernel for cuArraysCopyPadded
 __global__ void cuArraysCopyPadded_R2C_kernel(float *imageIn, int inNX, int inNY, int sizeIn,
     float2 *imageOut, int outNX, int outNY, int sizeOut, int nImages)
 {
@@ -629,7 +614,9 @@ __global__ void cuArraysCopyPadded_R2C_kernel(float *imageIn, int inNX, int inNY
 	}
 }
 
-
+/**
+ * copy real images to complex images (imaginary part=0) with larger size (pad 0 for extra elements)
+ */
 void cuArraysCopyPadded(cuArrays<float> *imageIn, cuArrays<float2> *imageOut,cudaStream_t stream)
 {
 	const int nthreads = NTHREADS2D;
@@ -642,7 +629,7 @@ void cuArraysCopyPadded(cuArrays<float> *imageIn, cuArrays<float2> *imageOut,cud
 	 getLastCudaError("cuArraysCopyPadded error");
 }
 
-
+// cuda kernel for setting a constant value
 __global__ void cuArraysSetConstant_kernel(float *image, int size, float value)
 {
 	int idx = threadIdx.x + blockDim.x*blockIdx.x;
@@ -653,6 +640,10 @@ __global__ void cuArraysSetConstant_kernel(float *image, int size, float value)
 	}
 }
 
+/**
+ * Set real images to a constant value
+ * @note use setZero if value=0 because cudaMemset is faster
+ */
 void cuArraysSetConstant(cuArrays<float> *imageIn, float value, cudaStream_t stream)
 {
 	const int nthreads = 256;
@@ -662,3 +653,68 @@ void cuArraysSetConstant(cuArrays<float> *imageIn, float value, cudaStream_t str
         (imageIn->devData, imageIn->size, value);
 	 getLastCudaError("cuArraysCopyPadded error");
 }
+
+
+// convert float to float2(complex)
+__global__ void cuArraysR2C_kernel(float *image1, float2 *image2, int size)
+{
+	int idx =  threadIdx.x + blockDim.x*blockIdx.x;
+	if(idx < size)
+	{
+		image2[idx].x = image1[idx];
+		image2[idx].y =  0.0f;
+	}
+}
+
+/**
+ * Convert real images to complex images (set imaginary parts to 0)
+ */
+void cuArraysR2C(cuArrays<float> *image1, cuArrays<float2> *image2, cudaStream_t stream)
+{
+	int size = image1->getSize();
+	cuArraysR2C_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);
+	getLastCudaError("cuArraysR2C");
+}
+
+
+// take real part of float2 to float
+__global__ void cuArraysC2R_kernel(float2 *image1, float *image2, int size)
+{
+	int idx =  threadIdx.x + blockDim.x*blockIdx.x;
+	if(idx < size)
+	{
+		image2[idx] = image1[idx].x;
+	}
+}
+
+/**
+ * Take real parts of complex images
+ */
+void cuArraysC2R(cuArrays<float2> *image1, cuArrays<float> *image2, cudaStream_t stream)
+{
+	int size = image1->getSize();
+	cuArraysC2R_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);
+	getLastCudaError("cuArraysC2R");
+}
+
+// cuda kernel for cuArraysAbs
+__global__ void cuArraysAbs_kernel(float2 *image1, float *image2, int size)
+{
+	int idx =  threadIdx.x + blockDim.x*blockIdx.x;
+	if(idx < size)
+	{
+		image2[idx] = complexAbs(image1[idx]);
+	}
+}
+
+/**
+ * Obtain abs (amplitudes) of complex images
+ */
+void cuArraysAbs(cuArrays<float2> *image1, cuArrays<float> *image2, cudaStream_t stream)
+{
+	int size = image1->getSize();
+	cuArraysAbs_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);
+	getLastCudaError("cuArraysAbs_kernel");
+}
+
+// end of file

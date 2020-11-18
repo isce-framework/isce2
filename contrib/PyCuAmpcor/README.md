@@ -10,13 +10,13 @@
 
 ## 1. Introduction
 
-Ampcor (Amplitude cross correlation) in InSAR processing offers an estimate of spatial displacements (offsets) with the feature tracking (also called as speckle tracking or pixel tracking) method. The offsets are in dimensions of a pixel or sub-pixel (with additional oversampling).
+Ampcor (Amplitude cross correlation) in InSAR processing offers an estimate of spatial displacements (offsets) with the feature tracking method (also called as speckle tracking or pixel tracking). The offsets are in dimensions of a pixel or sub-pixel (with additional oversampling).
 
 In practice, we
 
   * choose a rectangle window, $R(x,y)$, from the reference image, serving as the template,
 
- * choose a series of windows of the same size, $S(x+u, y+v)$, from the search image around the same location but offsetted by $(u,v)$;
+ * choose a series of windows of the same size, $S(x+u, y+v)$, from the search image; the search windows are shifted in location by $(u,v)$;
 
   * perform cross-correlation between the search windows with the reference window, to obtain the normalized correlation surface $c(u,v)$;
 
@@ -24,13 +24,13 @@ In practice, we
 
 A detailed formulation can be found, e.g., by J. P. Lewis with [the frequency domain approach](http://scribblethink.org/Work/nvisionInterface/nip.html).
 
-PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in RIOPAC. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of PyCuAmpcor, as well as its differences to ROIPAC.
+PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in RIOPAC. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of PyCuAmpcor, as well as their differences.
 
 ## 2. Installation
 
 ### 2.1 Installation with ISCE2
 
-PyCuAmpcor is included in [ISCE2](https://github.com/isce-framework/isce2), and can be compiled/installed by CMake or Scons, together with ISCE2. An installation guide can be found at [isce-framework](https://github.com/isce-framework/isce2#building-isce).
+PyCuAmpcor is included in [ISCE2](https://github.com/isce-framework/isce2), and can be compiled/installed by CMake or SCons, together with ISCE2. An installation guide can be found at [isce-framework](https://github.com/isce-framework/isce2#building-isce).
 
 Some special notices for PyCuAmpcor:
 
@@ -41,10 +41,13 @@ Some special notices for PyCuAmpcor:
     * CMake, use the Release build type *-DCMAKE_BUILD_TYPE=Release*
     * SCons, it is disabled by default with the -DNDEBUG flag in SConscript
 
-* PyCuAmpcor requires GPUs with CUDA support and compute-capabilities >=2.0. You may (must in some cases, e.g., sm_35 with CUDA) specify the targeted compute capability by
+* PyCuAmpcor requires CUDA-Enabled GPUs with compute capabilities >=2.0. You may  specify the targeted architecture by
 
-   * CMake, add the flag *-DCMAKE_CUDA_FLAGS="-arch=sm_60"*, sm_35 for K40/80, sm_60 for P100, sm_70 for V100.
-   * SCons, modify the *scons_tools/cuda.py* file by adding *-arch=sm_60* to *env['ENABLESHAREDNVCCFLAG']*.
+    * CMake, add the flag *-DCMAKE_CUDA_FLAGS="-arch=sm_60"*, sm_35 for K40/80, sm_60 for P100, sm_70 for V100.
+
+    * SCons, modify the *scons_tools/cuda.py* file by adding *-arch=sm_60* to *env['ENABLESHAREDNVCCFLAG']*.
+    
+  Note that if the *-arch* option is not specified, CUDA 10 uses sm_30 as default while CUDA 11 uses sm_52 as default. GPU architectures with lower compute capabilities will not run the compiled code properly.  
 
 ### 2.2 Standalone Installation
 
@@ -103,14 +106,17 @@ rm $outprefix$outsuffix*
 cuDenseOffsets.py --reference $reference --secondary $secondary --ww $ww --wh $wh --sw $sw --sh $sh --mm $mm --kw $kw --kh $kh --gross $gross --rr $rgshift --aa $azshift --oo $oo --deramp $deramp --outprefix $outprefix --outsuffix $outsuffix --gpuid $gpuid  --usemmap $usemmap --mmapsize $mmapsize --nwac $nwac --nwdc $nwdc 
  ```
 
-In the above script, the computation starts from the (mm+sh, mm+sw) pixel in the reference image, take a series of template windows of size (wh, ww) with a skip (sh, sw), cross-correlate with the corresponding windows in the secondary image, and iterate till the end of the images. The output offset fields are stored in *outprefix+outputsuffix+'bip'*, which is in BIP format, i.e., each pixel has two bands of float32 data, (offsetDown, offsetAcross). The total number of pixels is given by the total number of windows (numberWindowDown, numberWindowAcross), which is computed by the script and also saved to the xml file.
+Note that in PyCuAmpcor, the following names for directions are equivalent:
+* row, height, down, azimuth, along the track.
+* column, width, across, range, along the sight.
+
+In the above script, the computation starts from the (mm+sh, mm+sw) pixel in the reference image, take a series of template windows of size (wh, ww) with a skip (sh, sw), cross-correlate with the corresponding windows in the secondary image, and iterate till the end of the images. The output offset fields are stored in *outprefix+outputsuffix+'.bip'*, which is in BIP format, i.e., each pixel has two bands of float32 data, (offsetDown, offsetAcross). The total number of pixels is given by the total number of windows (numberWindowDown, numberWindowAcross), which is computed by the script and also saved to the xml file.
 
 If you are interested in a particular region instead of the whole image, you may specify the location of the starting pixel (in reference image) and the number of windows desired by adding
 
 ```
 --startpixelac $startPixelAcross --startpixeldw $startPixelDown --nwa $numberOfWindowsAcross --nwd $numberOfWindowsDown
 ```
-This option is also helpful for debugging.
 
 PyCuAmpcor supports two types of gross offset fields,
 * static (--gross=0), i.e., a constant shift between reference and secondary images. The static gross offsets can be passed by *--rr $rgshift --aa $azshift*. Note that the margin as well as the starting pixel may be adjusted.
@@ -178,18 +184,15 @@ objOffset.runAmpcor()
 
 PyCuAmpcor now uses exclusively the GDAL driver to read images, only single-precision binary data are supported. (Image heights/widths are still required as inputs; they are mainly for dimension checking.  We will update later to read them with the GDAL driver). Multi-band is not currently supported, but can be added if desired.
 
-The offset output is arranged in BIP format, with each pixel (azimuth offset, range offset). In addition to a static gross offset (i.e., a constant for all search windows), PyCuAmpcor supports varying gross offsets as inputs (e.g., for glaciers, users can compute the gross offsets with the velocity model for different locations and use them as inputs for PyCuAmpcor. See 2.1 for details.
+The offset output is arranged in BIP format, with each pixel (azimuth offset, range offset). In addition to a static gross offset (i.e., a constant for all search windows), PyCuAmpcor supports varying gross offsets as inputs (e.g., for glaciers, users can compute the gross offsets with the velocity model for different locations and use them as inputs for PyCuAmpcor.
 
-The offsetImage only ouputs the (dense) offset values computed from the cross-correlations. Users need to add offsetImage and grossOffsetImage to obtain the total offsets.
-
+The offsetImage only outputs the (dense) offset values computed from the cross-correlations. Users need to add offsetImage and grossOffsetImage to obtain the total offsets.
 
 The dimension/direction names used in PyCuAmpcor are:
 * the inner-most dimension x(i): row, height, down, azimuth, along the track.
 * the outer-most dimension y(j): column, width, across, range, along the sight.
-* C/C++/Python use row-major indexing: a[i][j] -> a[i*WIDTH+j]
-* FORTRAN/BLAS/CUBLAS use column-major indexing: a[i][j]->a[i+j*LENGTH]
 
-Note that ampcor.F in general uses y for rows and x for columns which is opposite to PyCuAmpcor.
+Note that ampcor.F and GDAL in general use y for rows and x for columns.
 
 Note also PyCuAmpcor parameters refer to the names used by the PyCuAmpcor Python class. They may be different from those used in C/C++/CUDA, or the cuDenseOffsets.py args.
 
@@ -245,7 +248,7 @@ and the number of windows may be computed along lines as
    objOffset.numberWindowDown = (referenceImageHeight-2*margin-2*halfSearchRangeDown-windowSizeHeight) // skipSampleDown
 ```
 
-If there is a gross offset, you may also need to subtract that when computing the number of windows.
+If there is a gross offset, you may also need to subtract it when computing the number of windows.
 
 The output offset fields will be of size (numberWindowDown, numberWindowAcross). The total number of windows numberWindows = numberWindowDown\*numberWindowAcross.
 
@@ -269,7 +272,7 @@ With a constant gross offset, call
 
 to set the starting pixels of all reference and secondary windows.
 
-The starting pixel for the seconday window will be (referenceStartPixelDownStatic-halfSearchRangeDown+grossOffsetDown, referenceStartPixelAcrossStatic-halfSearchRangeAcross+grossOffsetAcross).
+The starting pixel for the secondary window will be (referenceStartPixelDownStatic-halfSearchRangeDown+grossOffsetDown, referenceStartPixelAcrossStatic-halfSearchRangeAcross+grossOffsetAcross).
 
 For cases you choose a varying grossOffset, you may use two numpy arrays to pass the information to PyCuAmpcor, e.g.,
 
@@ -336,12 +339,12 @@ This step provides an initial estimate of the offset, usually with a large searc
 **Difference to ROIPAC**
 
 * RIOPAC only offers the time-domain algorithm. The frequency-domain algorithm is faster and is set as default in PyCuAmpcor.
-* RIOPAC proceeds from here only for windows with *good* match. To maintain parallelism, PyCuAmpcor proceeds anyway while leaving the *filtering* to users in post processing.
+* RIOPAC proceeds from here only for windows with *good* match, or with high coherence. To maintain parallelism, PyCuAmpcor proceeds anyway while leaving the *filtering* to users in post processing.
 
 
 ### 5.3 Extract a smaller window from the secondary window for oversampling
 
-* From the secondary window, we extract a smaller window of size (windowSizeHeightRaw+2\*halfZoomWindowSizeRaw, windowSizeWidthRaw+2\*halfZoomWindowSizeRaw) with the center determined by the peak position. If the peak postion, e.g., along height, is OffsetInit (taking values in \[0, 2\*halfSearchRangeDownRaw\]), the starting position to extract will be OffsetInit+halfSearchRangeDownRaw-halfZoomWindowSizeRaw.
+* From the secondary window, we extract a smaller window of size (windowSizeHeightRaw+2\*halfZoomWindowSizeRaw, windowSizeWidthRaw+2\*halfZoomWindowSizeRaw) with the center determined by the peak position. If the peak position, e.g., along height, is OffsetInit (taking values in \[0, 2\*halfSearchRangeDownRaw\]), the starting position to extract will be OffsetInit+halfSearchRangeDownRaw-halfZoomWindowSizeRaw.
 
 **Parameters**
 
@@ -356,8 +359,8 @@ RIOPAC extracts the secondary window centering at the correlation surface peak. 
 
 ### 5.4 Oversampling reference and (extracted) secondary windows
 
-* oversample both the reference and the (extracted) secondary windows by a factor of 2, which is to avoid aliasing in the complex multiplication of the SAR images. The oversampling is performed with FFT (zero padding), same as in RIOPAC.
-* A deramping procedure is in general required for complex signals before oversampling, to shift the band center to 0. The procedure is only designed to remove a linear phase ramp. It doesn't work for InSAR TOPS mode, whose ramp goes quadratic. Instead, the amplitudes are taken before oversampling.
+* Oversample both the reference and the (extracted) secondary windows by a factor of 2, which is to avoid aliasing in the complex multiplication of the SAR images. The oversampling is performed with FFT (zero padding), same as in RIOPAC.
+* A deramping procedure is in general required for complex signals before oversampling, to shift the band center to 0. The procedure is only designed to remove a linear phase ramp. It doesn't work for TOPSAR, whose ramp goes quadratic. Instead, the amplitudes are taken before oversampling.
 * the amplitudes (real) are then taken for each pixel of the complex signals in reference and secondary windows.
 
 **Parameters**
@@ -410,33 +413,4 @@ Note that this offset does not include the pre-defined gross offset. Users need 
 
 **Difference to ROIPAC**
 
-RIOPAC by default uses the sinc interpolator (one needs to change the FORTRAN code to use FFT). There is no differnce with the sinc interpolator, while for FFT, RIOPAC always enlarges the window to a power of 2.
-
-
-## 6. Additional Notes
-
-### 6.1 Sinc Oversampler
-
-The since oversampler/interpolator may be selected to oversample the correlation surface with *--corr-osm=1* in *cuDenseOffsets.py*, or *objOffset.corrSurfaceOverSamplingMethod=1*.
-
-The sinc interpolating formula is defined as
-
- $$x(t) = \sum_{n=-\infty}^{\infty} x_n f( \Omega_c t-n )$$
-
-
-with $f(x) = \text{sinc}(x)$ or a complex filter such as the sinc(x) convoluted with Hamming Window used in ampcor.
-
-```
-   parameter(MAXDECFACTOR=4096) ! maximum lags in interpolation kernels
-   r_fintp(0:MAXINTLGH) ! interpolation kernel values  
-   i_decfactor = 4096 ! Range migration decimation Factor 
-   parameter (MAXINTKERLGH=256) !maximum interpolation kernel length 
-   MAXINTLGH=MAXINTKERLGH*MAXDECFACTOR ! maximum interpolation kernel array size 
-   i_weight = 1 
-   r_pedestal = 0.0 
-   r_beta = .75 
-   r_relfiltlen = 6.0 
-   r_fintp(0:MAXINTLGH)       
-```
-
-Note that these parameters are hardwired; you need to change the source code to change these parameters.
+RIOPAC by default uses the sinc interpolator (the FFT method is included but one needs to change the FORTRAN code to switch). For since interpolator, there is no difference in implementations. For FFT, RIOPAC always enlarges the window to a size in power of 2.

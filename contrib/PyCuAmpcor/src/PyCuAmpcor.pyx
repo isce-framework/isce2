@@ -1,6 +1,7 @@
 #
 # PYX file to control Python module interface to underlying CUDA-Ampcor code
 #
+
 from libcpp.string cimport string
 import numpy as np
 cimport numpy as np
@@ -9,23 +10,21 @@ cimport numpy as np
 cdef extern from "cudaUtil.h":
     int gpuDeviceInit(int)
     void gpuDeviceList()
-    int gpuGetMaxGflopsDeviceId()
 
 def listGPU():
     gpuDeviceList()
 
-def findGPU():
-    return gpuGetMaxGflopsDeviceId()
-
 def setGPU(int id):
     return gpuDeviceInit(id)
 
+def version():
+    return "2.0.0"
 
 cdef extern from "cuAmpcorParameter.h":
     cdef cppclass cuAmpcorParameter:
         cuAmpcorParameter() except +
         int algorithm      					## Cross-correlation algorithm: 0=freq domain 1=time domain
-        int deviceID       					## Targeted GPU device ID: use -1 to auto select
+        int deviceID       					## Targeted GPU device ID
         int nStreams       					## Number of streams to asynchonize data transfers and compute kernels
         int derampMethod   					## Method for deramping 0=None, 1=average, 2=phase gradient
 
@@ -449,7 +448,7 @@ cdef class PyCuAmpcor(object):
         self.c_cuAmpcor.runAmpcor()
 
 
-
+# end of file
 
 
 

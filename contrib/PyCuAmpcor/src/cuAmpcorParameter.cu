@@ -1,5 +1,5 @@
 /**
- * cuAmpcorParameter.cu
+ * @file cuAmpcorParameter.cu
  * Input parameters for ampcor
  */
 
@@ -100,10 +100,6 @@ void cuAmpcorParameter::setupParameters()
         exit(EXIT_FAILURE);
     }
 
-    // modified 02/12/2018 to include one more chunk
-    // e.g. numberWindowDownInChunk=102, numberWindowDown=10, results in numberChunkDown=11
-    // the last chunk will include 2 windows, numberWindowDownInChunkRun = 2.
-
     numberChunkDown = IDIVUP(numberWindowDown, numberWindowDownInChunk);
     numberChunkAcross = IDIVUP(numberWindowAcross, numberWindowAcrossInChunk);
     numberChunks = numberChunkDown*numberChunkAcross;
@@ -168,6 +164,7 @@ void cuAmpcorParameter::setStartPixels(int *mStartD, int *mStartA, int *gOffsetD
     setChunkStartPixels();
 }
 
+/// set starting pixels for each window with a varying gross offset
 void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int *gOffsetD, int *gOffsetA)
 {
     for(int row=0; row<numberWindowDown; row++)
@@ -186,9 +183,9 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int *gOffsetD, 
     setChunkStartPixels();
 }
 
+/// set starting pixels for each window with a constant gross offset
 void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int gOffsetD, int gOffsetA)
 {
-    //fprintf(stderr, "set start pixels %d %d %d %d\n", mStartD, mStartA, gOffsetD, gOffsetA);
     for(int row=0; row<numberWindowDown; row++)
     {
 		for(int col = 0; col < numberWindowAcross; col++)
@@ -205,6 +202,7 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int gOffsetD, i
     setChunkStartPixels();
 }
 
+/// set starting pixels for each chunk
 void cuAmpcorParameter::setChunkStartPixels()
 {
 
@@ -228,15 +226,13 @@ void cuAmpcorParameter::setChunkStartPixels()
             int sChunkED = 0;
             int sChunkEA = 0;
 
-            // modified 02/12/2018
             int numberWindowDownInChunkRun = numberWindowDownInChunk;
-	    int numberWindowAcrossInChunkRun = numberWindowAcrossInChunk;
-	    // modify the number of windows in last chunk
+	        int numberWindowAcrossInChunkRun = numberWindowAcrossInChunk;
+	        // modify the number of windows in last chunk
             if(ichunk == numberChunkDown -1)
-		numberWindowDownInChunkRun = numberWindowDown - numberWindowDownInChunk*(numberChunkDown -1);
-	    if(jchunk == numberChunkAcross -1)
-		numberWindowAcrossInChunkRun = numberWindowAcross - numberWindowAcrossInChunk*(numberChunkAcross -1);
-
+        		numberWindowDownInChunkRun = numberWindowDown - numberWindowDownInChunk*(numberChunkDown -1);
+	        if(jchunk == numberChunkAcross -1)
+		        numberWindowAcrossInChunkRun = numberWindowAcross - numberWindowAcrossInChunk*(numberChunkAcross -1);
 
             for(int i=0; i<numberWindowDownInChunkRun; i++)
             {
@@ -337,3 +333,4 @@ cuAmpcorParameter::~cuAmpcorParameter()
 {
 	deallocateArrays();
 }
+// end of file

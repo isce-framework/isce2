@@ -13,9 +13,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 
     // load reference image chunk
     loadReferenceChunk();
-
-    //std::cout << "load reference chunk ok\n";
-
+    // take amplitudes
     cuArraysAbs(c_referenceBatchRaw, r_referenceBatchRaw, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -24,6 +22,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     r_referenceBatchRaw->outputToFile("r_referenceBatchRaw", stream);
 #endif
 
+    // compute and subtract mean values (for normalized)
     cuArraysSubtractMean(r_referenceBatchRaw, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -33,6 +32,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 
     // load secondary image chunk
     loadSecondaryChunk();
+    // take amplitudes
     cuArraysAbs(c_secondaryBatchRaw, r_secondaryBatchRaw, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -41,9 +41,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     r_secondaryBatchRaw->outputToFile("r_secondaryBatchRaw", stream);
 #endif
 
-    //std::cout << "load secondary chunk ok\n";
-
-    //cross correlation for none-oversampled data
+    //cross correlation for un-oversampled data
     if(param->algorithm == 0) {
         cuCorrFreqDomain->execute(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw);
     } else {
@@ -51,10 +49,11 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     }
 
 #ifdef CUAMPCOR_DEBUG
-    // dump the unrenormalized correlation surface
+    // dump the un-normalized correlation surface
     r_corrBatchRaw->outputToFile("r_corrBatchRawUnNorm", stream);
 #endif
 
+    // normalize the correlation surface
     cuCorrNormalize(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -64,15 +63,11 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 
     // find the maximum location of none-oversampled correlation
     // 41 x 41, if halfsearchrange=20
-    //cuArraysMaxloc2D(r_corrBatchRaw, offsetInit, stream);
     cuArraysMaxloc2D(r_corrBatchRaw, offsetInit, r_maxval, stream);
 
     // Estimation of statistics
-    // Author: Minyan Zhong
     // Extraction of correlation surface around the peak
     cuArraysCopyExtractCorr(r_corrBatchRaw, r_corrBatchRawZoomIn, i_corrBatchZoomInValid, offsetInit, stream);
-
-    //cudaDeviceSynchronize();
 
     // Summation of correlation and data point values
     cuArraysSumCorr(r_corrBatchRawZoomIn, i_corrBatchZoomInValid, r_corrBatchSum, i_corrBatchValidCount, stream);
@@ -80,7 +75,6 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 #ifdef CUAMPCOR_DEBUG
     i_corrBatchZoomInValid->outputToFile("i_corrBatchZoomInValid", stream);
     r_corrBatchSum->outputToFile("r_corrBatchSum", stream);
-    // snr and cov will be outputted anyway
 #endif
 
     // SNR
@@ -90,20 +84,13 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuEstimateVariance(r_corrBatchRaw, offsetInit, r_maxval, r_covValue, stream);
 
 #ifdef CUAMPCOR_DEBUG
-    // debug: output the intermediate results
-
-    // std::cout << "Offset from first search:\n";
-    // offsetInit->debuginfo(stream);
-    // dump the results
     offsetInit->outputToFile("i_offsetInit", stream);
     r_maxval->outputToFile("r_maxval", stream);
     r_corrBatchRawZoomIn->outputToFile("r_corrBatchRawStatZoomIn", stream);
     i_corrBatchZoomInValid->outputToFile("i_corrBatchStatZoomInValid", stream);
-    //r_snr, r_cov will be always saved to files
 #endif
 
     // Using the approximate estimation to adjust secondary image (half search window size becomes only 4 pixels)
-    // offsetInit->debuginfo(stream);
     // determine the starting pixel to extract secondary images around the max location
     cuDetermineSecondaryExtractOffset(offsetInit,
         maxLocShift,
@@ -114,17 +101,14 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
         stream);
 
 #ifdef CUAMPCOR_DEBUG
-    // std::cout << "max location adjusted if close to boundary\n";
-    // offsetInit->debuginfo(stream);
-    // std::cout << "and the shift of the center\n";
-    // maxLocShift->debuginfo(stream);
     offsetInit->outputToFile("i_offsetInitAdjusted", stream);
     maxLocShift->outputToFile("i_maxLocShift", stream);
 #endif
 
     // oversample reference
-    // (deramping now included in oversampler)
+    // (deramping included in oversampler)
     referenceBatchOverSampler->execute(c_referenceBatchRaw, c_referenceBatchOverSampled, param->derampMethod);
+    // take amplitudes
     cuArraysAbs(c_referenceBatchOverSampled, r_referenceBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -133,7 +117,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     r_referenceBatchOverSampled->outputToFile("r_referenceBatchOverSampled", stream);
 #endif
 
-    // subtrace the mean value
+    // compute and subtract the mean value
     cuArraysSubtractMean(r_referenceBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -144,6 +128,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // extract secondary and oversample
     cuArraysCopyExtract(c_secondaryBatchRaw, c_secondaryBatchZoomIn, offsetInit, stream);
     secondaryBatchOverSampler->execute(c_secondaryBatchZoomIn, c_secondaryBatchOverSampled, param->derampMethod);
+    // take amplitudes
     cuArraysAbs(c_secondaryBatchOverSampled, r_secondaryBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -171,19 +156,14 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuCorrNormalize(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn, stream);
 
 #ifdef CUAMPCOR_DEBUG
-    //std::cout << "debug correlation oversample\n";
-    //std::cout << r_referenceBatchOverSampled->height << " " << r_referenceBatchOverSampled->width << "\n";
-    //std::cout << r_secondaryBatchOverSampled->height << " " << r_secondaryBatchOverSampled->width << "\n";
-    //std::cout << r_corrBatchZoomIn->height << " " << r_corrBatchZoomIn->width << "\n";
     // dump the oversampled correlation surface (normalized)
     r_corrBatchZoomIn->outputToFile("r_corrBatchZoomIn", stream);
 #endif
 
-    // remove the last row and col to get even sequences (for sinc oversampler)
+    // remove the last row and col to get even sequences
     cuArraysCopyExtract(r_corrBatchZoomIn, r_corrBatchZoomInAdjust, make_int2(0,0), stream);
 
 #ifdef CUAMPCOR_DEBUG
-    //std::cout << "debug oversampling " << r_corrBatchZoomInAdjust << " " << r_corrBatchZoomInOverSampled << "\n";
     // dump the adjusted correlation Surface
     r_corrBatchZoomInAdjust->outputToFile("r_corrBatchZoomInAdjust", stream);
 #endif
@@ -219,28 +199,19 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuSubPixelOffset(offsetInit, offsetZoomIn, offsetFinal,
         param->oversamplingFactor, param->rawDataOversamplingFactor,
         param->halfSearchRangeDownRaw, param->halfSearchRangeAcrossRaw,
-        param->halfZoomWindowSizeRaw, param->halfZoomWindowSizeRaw,
         stream);
 
-// #ifdef CUAMPCOR_DEBUG
-    // std::cout << "Offsets: Oversampled and Final)\n";
-    // offsetZoomIn->debuginfo(stream);
-    // offsetFinal->debuginfo(stream);
-// #endif
-
-    // Do insertion.
-    // Offsetfields.
+    // Insert the chunk results to final images
     cuArraysCopyInsert(offsetFinal, offsetImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
-
-    // Old: save max correlation coefficients.
-    //cuArraysCopyInsert(corrMaxValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
-    // New: save SNR
+    // snr
     cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
-
     // Variance.
     cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    // all done
+
 }
 
+/// set chunk index
 void cuAmpcorChunk::setIndex(int idxDown_, int idxAcross_)
 {
     idxChunkDown = idxDown_;
@@ -260,13 +231,11 @@ void cuAmpcorChunk::setIndex(int idxDown_, int idxAcross_)
 	else {
 		nWindowsAcross = param->numberWindowAcrossInChunk;
 	}
-	//std::cout << "DEBUG setIndex" << idxChunk << " " << nWindowsDown << " " << nWindowsAcross << "\n";
-
 }
 
 /// obtain the starting pixels for each chip
-/// @param[in] oStartPixel
-///
+/// @param[in] oStartPixel start pixel locations for all chips
+/// @param[out] rstartPixel  start pixel locations for chips within the chunk
 void cuAmpcorChunk::getRelativeOffset(int *rStartPixel, const int *oStartPixel, int diff)
 {
     for(int i=0; i<param->numberWindowDownInChunk; ++i) {
@@ -279,7 +248,6 @@ void cuAmpcorChunk::getRelativeOffset(int *rStartPixel, const int *oStartPixel, 
             int idxInAll = (iDown+idxChunkDown*param->numberWindowDownInChunk)*param->numberWindowAcross
 				+ idxChunkAcross*param->numberWindowAcrossInChunk+iAcross;
             rStartPixel[idxInChunk] = oStartPixel[idxInAll] - diff;
-            //fprintf(stderr, "relative offset %d %d %d %d\n", i, j, rStartPixel[idxInChunk], diff);
         }
     }
 }
@@ -314,7 +282,6 @@ void cuAmpcorChunk::loadReferenceChunk()
 
         // load the data from cpu
         referenceImage->loadToDevice((void *)c_referenceChunkRaw->devData, startD, startA, height, width, stream);
-        //std::cout << "debug load reference: " << startD << " " <<  startA << " " <<  height << " "  << width << "\n";
 
         //copy the chunk to a batch format (nImages, height, width)
         // if derampMethod = 0 (no deramp), take amplitudes; otherwise, copy complex data
@@ -399,6 +366,7 @@ void cuAmpcorChunk::loadSecondaryChunk()
     }
 }
 
+/// constructor
 cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
     cuArrays<float2> *offsetImage_, cuArrays<float> *snrImage_, cuArrays<float3> *covImage_,
     cudaStream_t stream_)
@@ -412,14 +380,6 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     covImage = covImage_;
 
     stream = stream_;
-
-    // std::cout << "debug Chunk creator " << param->maxReferenceChunkHeight << " " << param->maxReferenceChunkWidth << "\n";
-    // try allocate/deallocate on the fly to save gpu memory 07/09/19
-    // c_referenceChunkRaw = new cuArrays<float2> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
-    // c_referenceChunkRaw->allocate();
-
-    // c_secondaryChunkRaw = new cuArrays<float2> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
-    // c_secondaryChunkRaw->allocate();
 
     ChunkOffsetDown = new cuArrays<int> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     ChunkOffsetDown->allocate();
@@ -527,10 +487,6 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 
 
     // new arrays due to snr estimation
-    // std::cout<< "corrRawZoomInHeight: " << param->corrRawZoomInHeight << "\n";
-    // std::cout<< "corrRawZoomInWidth: " << param->corrRawZoomInWidth << "\n";
-    std::cout << "Size of corr_surface used for statistics: " << param->corrRawZoomInHeight << " x " << param->corrRawZoomInWidth << "\n";
-
     r_corrBatchRawZoomIn = new cuArrays<float> (
 			param->corrRawZoomInHeight,
 			param->corrRawZoomInWidth,
@@ -599,33 +555,11 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 #ifdef CUAMPCOR_DEBUG
     std::cout << "all objects in chunk are created ...\n";
 #endif
-
 }
+
+// destructor
 cuAmpcorChunk::~cuAmpcorChunk()
 {
-    /*
-    delete referenceChunkRaw;
-    delete secondaryChunkRaw;
-    delete ChunkOffsetDown;
-    delete ChunkOffsetAcross;
-    delete referenceBatchRaw;
-    delete secondaryBatchRaw;
-    delete referenceChunkOverSampled;
-    delete secondaryChunkOverSampled;
-    delete referenceChunkOverSampler;
-    delete secondaryChunkOverSampler;
-    delete referenceChunk;
-    delete secondaryChunk;
-    delete corrChunk;
-    delete offsetInit;
-    delete zoomInOffset;
-    delete offsetFinal;
-    delete corrChunkZoomIn;
-    delete corrChunkZoomInOverSampled;
-    delete corrOverSampler;
-    delete corrSincOverSampler;
-    delete corrMaxValue;
-    if(param->algorithm == 0)
-        delete cuCorrFreqDomain;
-    */
 }
+
+// end of file

@@ -1,61 +1,65 @@
-// -*- c++ -*-
 /**
- * \brief Class for an image described GDAL vrt
+ * @file GDALImage.h
+ * @brief Interface with GDAL vrt driver
  *
- * only complex (pixelOffset=8) or real(pixelOffset=4) images are supported, such as SLC and single-precision TIFF
+ * To read image file with the GDAL vrt driver, including SLC, GeoTIFF images
+ * @warning Only single precision images are supported: complex(pixelOffset=8) or real(pixelOffset=4).
+ * @warning Only single band file is currently supported.
  */
 
+// code guard
 #ifndef __GDALIMAGE_H
 #define __GDALIMAGE_H
 
+// dependencies
 #include <string>
 #include <gdal_priv.h>
 #include <cpl_conv.h>
 
-class GDALImage{
 
+class GDALImage{
 public:
+    // specify the types
     using size_t = std::size_t;
 
 private:
-    size_t _fileSize;
-    int _height;
-    int _width;
+    int _height;      ///< image height
+    int _width;       ///< image width
 
-    // buffer pointer
-    void * _memPtr = NULL;
+    void * _memPtr = NULL; ///< pointer to buffer
 
-    int _pixelSize; //in bytes
+    int _pixelSize; ///< pixel size in bytes
 
-    int _isComplex;
+    int _isComplex; ///< whether the image is complex
 
-    size_t _bufferSize;
-    int _useMmap;
+    size_t _bufferSize; ///< buffer size
+    int _useMmap;   ///< whether to use memory map
 
+    // GDAL temporary objects
     GDALDataType _dataType;
     CPLVirtualMem * _poBandVirtualMem = NULL;
     GDALDataset * _poDataset = NULL;
     GDALRasterBand * _poBand = NULL;
 
 public:
+    //disable default constructor
     GDALImage() = delete;
+    // constructor
     GDALImage(std::string fn, int band=1, int cacheSizeInGB=0, int useMmap=1);
+    // destructor
+    ~GDALImage();
 
+    // get class properties
     void * getmemPtr()
     {
         return(_memPtr);
     }
 
-    size_t getFileSize()
-    {
-        return (_fileSize);
-    }
-
-    size_t getHeight() {
+    int getHeight() {
         return (_height);
     }
 
-    size_t getWidth()
+    int getWidth()
     {
         return (_width);
     }
@@ -70,9 +74,10 @@ public:
         return _isComplex;
     }
 
+    // load data from cpu buffer to gpu
     void loadToDevice(void *dArray, size_t h_offset, size_t w_offset, size_t h_tile, size_t w_tile, cudaStream_t stream);
-    ~GDALImage();
 
 };
 
 #endif //__GDALIMAGE_H
+// end of file

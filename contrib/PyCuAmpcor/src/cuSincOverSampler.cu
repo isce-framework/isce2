@@ -1,34 +1,40 @@
-/*
- * cuSincOverSampler.cu
+/**
+ * @file cuSincOverSampler.cu
+ * @brief Implementation for cuSinOversampler class
+ *
  */
-#include "cuArrays.h"
+
+// my declaration
 #include "cuSincOverSampler.h"
+
+// dependencies
 #include "cuArrays.h"
 #include "cudaUtil.h"
 #include "cudaError.h"
 #include "cuAmpcorUtil.h"
 
+/**
+ * cuSincOverSamplerR2R constructor
+ * @param i_covs oversampling factor
+ * @param stream cuda stream
+ */
 cuSincOverSamplerR2R::cuSincOverSamplerR2R(const int i_covs_, cudaStream_t stream_)
  : i_covs(i_covs_)
 {
-    setStream(stream_);
+    stream = stream_;
     i_intplength = int(r_relfiltlen/r_beta+0.5f);
     i_filtercoef = i_intplength*i_decfactor;
     checkCudaErrors(cudaMalloc((void **)&r_filter, (i_filtercoef+1)*sizeof(float)));
     cuSetupSincKernel();
 }
 
-void cuSincOverSamplerR2R::setStream(cudaStream_t stream_)
-{
-    stream = stream_;
-}
-
+/// destructor
 cuSincOverSamplerR2R::~cuSincOverSamplerR2R()
 {
     checkCudaErrors(cudaFree(r_filter));
 }
 
-
+// cuda kernel for cuSetupSincKernel
 __global__ void cuSetupSincKernel_kernel(float *r_filter_, const int i_filtercoef_,
     const float r_soff_, const float r_wgthgt_, const int i_weight_,
     const float r_soff_inverse_, const float r_beta_, const float r_decfactor_inverse_)
@@ -53,7 +59,9 @@ __global__ void cuSetupSincKernel_kernel(float *r_filter_, const int i_filtercoe
     }
 }
 
-
+/**
+ * Set up the sinc interpolation kernel (coefficient)
+ */
 void cuSincOverSamplerR2R::cuSetupSincKernel()
 {
     const int nthreads = 128;
@@ -71,6 +79,8 @@ void cuSincOverSamplerR2R::cuSetupSincKernel()
     getLastCudaError("cuSetupSincKernel_kernel");
 }
 
+
+// cuda kernel for cuSincOverSamplerR2R::execute
 __global__ void cuSincInterpolation_kernel(const int nImages,
     const float * imagesIn, const int inNX, const int inNY,
     float * imagesOut, const int outNX, const int outNY,
@@ -83,7 +93,7 @@ __global__ void cuSincInterpolation_kernel(const int nImages,
     // get the xy threads for output image pixel indices
     int idxX = threadIdx.x + blockDim.x*blockIdx.x;
     int idxY = threadIdx.y + blockDim.y*blockIdx.y;
-    // cuda: to make sure extra allocated threads do nothing
+    // cuda: to make sure extra allocated threads doing nothing
     if(idxImage >=nImages || idxX >= i_int_size || idxY >= i_int_size) return;
     // decide the center shift
     int2 shift = centerShift[idxImage];
@@ -144,12 +154,19 @@ __global__ void cuSincInterpolation_kernel(const int nImages,
         }
     }
     imagesOut[idxOut] = intpData/r_sincwgt;
-    //printf("test int kernel %d %d %f %f %f\n", outx, outy, intpData, r_sincwgt, imagesOut[idxOut]);
 }
 
+/**
+ * Execute sinc interpolation
+ * @param[in] imagesIn input images
+ * @param[out] imagesOut output images
+ * @param[in] centerShift the shift of interpolation center
+ * @param[in] rawOversamplingFactor the multiplier of the centerShift
+ * @note rawOversamplingFactor is for the centerShift, not the signal oversampling factor
+ */
 
 void cuSincOverSamplerR2R::execute(cuArrays<float> *imagesIn, cuArrays<float> *imagesOut,
-    cuArrays<int2> *centerShift, int oversamplingFactor)
+    cuArrays<int2> *centerShift, int rawOversamplingFactor)
 {
     const int nImages = imagesIn->count;
     const int inNX = imagesIn->height;
@@ -172,7 +189,7 @@ void cuSincOverSamplerR2R::execute(cuArrays<float> *imagesIn, cuArrays<float> *i
     cuSincInterpolation_kernel<<<blockspergrid, threadsperblock, 0, stream>>>(nImages,
         imagesIn->devData, inNX, inNY,
         imagesOut->devData, outNX, outNY,
-        centerShift->devData, oversamplingFactor,
+        centerShift->devData, rawOversamplingFactor,
         r_filter, i_covs, i_decfactor, i_intplength, i_int_startX, i_int_startY, i_int_size);
     getLastCudaError("cuSincInterpolation_kernel");
 }

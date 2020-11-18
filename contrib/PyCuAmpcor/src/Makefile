@@ -1,8 +1,8 @@
 PROJECT = CUAMPCOR
 
 LDFLAGS =  -lcuda -lcudart -lcufft -lgdal
-CXXFLAGS = -std=c++11 -fpermissive -fPIC -shared
-NVCCFLAGS = -std=c++11 -ccbin g++ -m64 \
+CXXFLAGS = -std=c++11 -fpermissive -DNDEBUG -fPIC -shared
+NVCCFLAGS = -std=c++11 -m64 -DNDEBUG \
     -gencode arch=compute_35,code=sm_35 \
 	-gencode arch=compute_60,code=sm_60 \
     -Xcompiler -fPIC -shared -Wno-deprecated-gpu-targets \
@@ -70,4 +70,4 @@ pyampcor: $(OBJS)
 	rm -f PyCuAmpcor.cpp && python3 setup.py build_ext --inplace
 
 clean:
-	rm -rf *.o *so build *~  PyCuAmpcor.cpp ctest *.dat
+	rm -rf *.o *so build *~  PyCuAmpcor.cpp *.dat
