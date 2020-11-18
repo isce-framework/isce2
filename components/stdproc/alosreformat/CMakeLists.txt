@@ -1,6 +1,7 @@
 isce2_add_staticlib(alosLib
     ALOS_lib/src/cfft1d.c
     ALOS_lib/src/find_fft_length.c
+    ALOS_lib/src/image_sio.c
     ALOS_lib/src/utils.c
     ALOS_lib/src/ALOS_ldr_orbit.c
     ALOS_lib/src/calc_dop.c
