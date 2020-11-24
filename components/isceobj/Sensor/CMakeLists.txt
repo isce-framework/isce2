@@ -67,7 +67,7 @@ Python_add_library(alos MODULE
     src/ALOS_pre_process/data_ALOS.h
     src/ALOS_pre_process/data_ALOSE.h
     src/ALOS_pre_process/hermite_c.c
-    src/ALOS_pre_process/image_sio.h
+    src/ALOS_pre_process/image_sio.c
     src/ALOS_pre_process/init_from_PRM.c
     src/ALOS_pre_process/interpolate_ALOS_orbit.c
     src/ALOS_pre_process/null_sio_struct.c

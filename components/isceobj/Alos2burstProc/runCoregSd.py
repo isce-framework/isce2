@@ -183,7 +183,7 @@ def spectralDiversity(referenceSwath, interferogramDir, interferogramPrefix, out
     #get spectral diversity inteferogram
     offset_sd=[]
     for i in range(1, nls):
-        print('ouput spectral diversity inteferogram %d' % i)
+        print('output spectral diversity inteferogram %d' % i)
         #original spectral diversity inteferogram
         sd = inf[:,:,0] * np.conj(inf[:,:,i])
 

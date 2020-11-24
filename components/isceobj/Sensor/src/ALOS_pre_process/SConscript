@@ -13,7 +13,8 @@ sourceFiles = ['ALOSE_orbits_utils.c','ALOS_ldr_orbit.c','ALOS_pre_process.c','c
                'swap_ALOS_data_info.c','utils.c','write_ALOS_prm.c',
                'readOrbitPulse.f','readOrbitPulseState.f',
                'readOrbitPulseSetState.f','image_sio.c',
-               'lib_array.c', 'lib_cpx.c', 'lib_file.c', 
+               ]
+sourceFiles += ['lib_array.c', 'lib_cpx.c', 'lib_file.c', 
                'lib_func.c', 'resamp_azimuth.c']
 lib = envSensorSrc1.Library(target = 'alos', source = sourceFiles)
 envSensorSrc1.Install(install,lib)

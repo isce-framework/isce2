@@ -69,9 +69,9 @@ int fill_shift_data(int, int, int, int, int, char *, char *, FILE *);
 int handle_prf_change(struct PRM *, FILE *, long *, int); 
 void change_dynamic_range(char *data, long length);
 
-struct 	sardata_record r1;
-struct	sardata_descriptor dfd;
-struct	sardata_info sdr;
+static struct sardata_record r1;
+static struct sardata_descriptor dfd;
+static struct sardata_info sdr;
 
 long read_ALOS_data (FILE *imagefile, FILE *outfile, struct PRM *prm, long *byte_offset, struct resamp_info *rspi, int nPRF) {
 
