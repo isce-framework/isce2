@@ -1,8 +1,3 @@
-#
-# Author: Cunren Liang
-# Copyright 2015-present, NASA-JPL/Caltech
-#
-
 import os
 import logging
 import numpy as np
