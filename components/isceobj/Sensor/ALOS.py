@@ -25,13 +25,6 @@
 # Author: Walter Szeliga
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#********************************************************************************
-#This program has been upgraded to handle the ALOS-1 PRF change issue.
-#
-#Cunren Liang, 12-December-2019
-#California Institute of Technology, Pasadena, CA
-#********************************************************************************
-
 
 import os
 import datetime
