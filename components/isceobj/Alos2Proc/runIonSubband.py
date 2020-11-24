@@ -314,24 +314,25 @@ def runIonSubband(self):
                 inputInterferograms.append(os.path.join('../', swathDir, self._insar.interferogram))
                 inputAmplitudes.append(os.path.join('../', swathDir, self._insar.amplitude))
 
-                # #compute phase needed to be compensated using startingRange
-                # if j >= 1:
-                #     #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
-                #     #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
-                #     phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                #     phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                #     if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
-                #        referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
-                #         #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
-                #         #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
-                #         #it should be OK to do the above.
-                #         #see results in neom where it meets the above requirement, but there is still phase diff
-                #         #to be less risky, we do not input values here
-                #         phaseDiff.append(None)
-                #     else:
-                #         phaseDiff.append(None)
+                if False:
+                    #compute phase needed to be compensated using startingRange
+                    if j >= 1:
+                        #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
+                        #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
+                        phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                          -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                        phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                                          -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                        if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
+                           referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
+                            #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
+                            #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
+                            #it should be OK to do the above.
+                            #see results in neom where it meets the above requirement, but there is still phase diff
+                            #to be less risky, we do not input values here
+                            phaseDiff.append(None)
+                        else:
+                            phaseDiff.append(None)
 
             #note that frame parameters are updated after mosaicking, here no need to update parameters
             #mosaic amplitudes
@@ -341,15 +342,16 @@ def runIonSubband(self):
             #These are for ALOS-2, may need to change for ALOS-4!
             phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.179664007520499, 2.6766909968024932, 3.130810857]
 
-            #if (referenceTrack.frames[i].processingSoftwareVersion == '2.025' and secondaryTrack.frames[i].processingSoftwareVersion == '2.023') or \
-            #   (referenceTrack.frames[i].processingSoftwareVersion == '2.023' and secondaryTrack.frames[i].processingSoftwareVersion == '2.025'):
-                
-            #    #               changed value                number of samples to estimate new value            new values estimate area
-            #    ###########################################################################################################################
-            #    #  2.6766909968024932-->2.6581660335779866                    1808694                               d169-f2850, north CA
-            #    #  2.179664007520499 -->2.204125866652153                      131120                               d169-f2850, north CA
-                
-            #    phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.204125866652153, 2.6581660335779866, 3.130810857]
+            if False:
+                if (referenceTrack.frames[i].processingSoftwareVersion == '2.025' and secondaryTrack.frames[i].processingSoftwareVersion == '2.023') or \
+                   (referenceTrack.frames[i].processingSoftwareVersion == '2.023' and secondaryTrack.frames[i].processingSoftwareVersion == '2.025'):
+                    
+                    #               changed value                number of samples to estimate new value            new values estimate area
+                    ###########################################################################################################################
+                    #  2.6766909968024932-->2.6581660335779866                    1808694                               d169-f2850, north CA
+                    #  2.179664007520499 -->2.204125866652153                      131120                               d169-f2850, north CA
+                    
+                    phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.204125866652153, 2.6581660335779866, 3.130810857]
 
             snapThreshold = 0.2
 
