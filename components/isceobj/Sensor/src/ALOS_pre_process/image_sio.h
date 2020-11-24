@@ -1,6 +1,3 @@
-//program updated to handle PRF change issue of ALOS-1
-//Cunren Liang, December 2019
-
 /* taken from soi.h */
 #include <stdio.h>
 #include <stdlib.h>

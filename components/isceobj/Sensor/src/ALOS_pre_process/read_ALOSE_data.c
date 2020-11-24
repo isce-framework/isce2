@@ -25,9 +25,6 @@
 /********************************************************************************
 This program has been upgraded to handle the ALOS-1 PRF change issue.
 BUT HAS NOT BEEN TESTED YET!!!
-
-Cunren Liang, 12-December-2019
-California Institute of Technology, Pasadena, CA
 *********************************************************************************/
 
 /*

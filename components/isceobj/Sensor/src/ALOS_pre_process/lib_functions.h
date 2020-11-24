@@ -1,6 +1,3 @@
-//program updated to handle PRF change issue of ALOS-1
-//Cunren Liang, December 2019
-
 /* include files to define sarleader structure */
 #include "data_ALOS.h"
 #include "data_ALOSE.h"

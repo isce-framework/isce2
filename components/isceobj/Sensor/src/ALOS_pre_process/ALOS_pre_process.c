@@ -17,13 +17,6 @@
  * added write_roi
  * *****************************************************************************/
 
-/********************************************************************************
-This program has been upgraded to handle the ALOS-1 PRF change issue.
-
-Cunren Liang, 12-December-2019
-California Institute of Technology, Pasadena, CA
-*********************************************************************************/
-
 
 #include "alosglobals.h"
 #include"image_sio.h"

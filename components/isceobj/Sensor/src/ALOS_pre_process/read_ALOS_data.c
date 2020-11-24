@@ -33,13 +33,6 @@
  * 07/17/08     reformatted; added functions      RJM                      *
  ***************************************************************************/
 
-/********************************************************************************
-This program has been upgraded to handle the ALOS-1 PRF change issue.
-
-Cunren Liang, 12-December-2019
-California Institute of Technology, Pasadena, CA
-*********************************************************************************/
-
 /*
 the data header information is read into the structure dfd
 the line prefix information is read into sdr

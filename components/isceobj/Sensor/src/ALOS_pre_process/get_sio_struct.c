@@ -6,8 +6,6 @@
 */
 /*--------------------------------------------------------------------*/
 
-//program updated to handle PRF change issue of ALOS-1
-//Cunren Liang, December 2019
 
 #include "image_sio.h"
 #include "lib_functions.h"

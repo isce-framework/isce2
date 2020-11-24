@@ -1,6 +1,3 @@
-//program updated to handle PRF change issue of ALOS-1
-//Cunren Liang, December 2019
-
 #ifndef _COMPLEX_H
 #define _COMPLEX_H
 

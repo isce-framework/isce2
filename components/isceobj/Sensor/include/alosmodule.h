@@ -25,10 +25,6 @@
 // Author: Giangi Sacco
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-//program updated to handle PRF change issue of ALOS-1
-//Cunren Liang, December 2019
-
-
 #ifndef alosmodule_h
 #define alosmodue_h
 
