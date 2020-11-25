@@ -11,9 +11,9 @@
 // cuda kernel for cuCorrTimeDomain
 template<const int nthreads, const int NPT>
 __global__ void cuArraysCorrTime_kernel(
-	const int nImages,
-	const float *templateIn, const int templateNX, const int templateNY, const int templateSize,
-	const float *imageIn, const int imageNX, const int imageNY, const int imageSize,
+    const int nImages,
+    const float *templateIn, const int templateNX, const int templateNY, const int templateSize,
+    const float *imageIn, const int imageNX, const int imageNY, const int imageSize,
     float *resultOut, const int resultNX, const int resultNY, const int resultSize)
 {
     __shared__ float shmem[nthreads*(1+NPT)];
@@ -99,9 +99,9 @@ __global__ void cuArraysCorrTime_kernel(
  * @param[in] stream cudaStream
  */
 void cuCorrTimeDomain(cuArrays<float> *templates,
-			   cuArrays<float> *images,
-			   cuArrays<float> *results,
-			   cudaStream_t stream)
+               cuArrays<float> *images,
+               cuArrays<float> *results,
+               cudaStream_t stream)
 {
     /* compute correlation matrix */
     const int nImages = images->count;
@@ -112,73 +112,73 @@ void cuCorrTimeDomain(cuArrays<float> *templates,
     const dim3 grid(nImages, (results->width-1)/NPT+1, 1);
     if      (imageNY <=   64) {
         cuArraysCorrTime_kernel<  64,NPT><<<grid,  64, 0, stream>>>(nImages,
-    		templates->devData, templates->height, templates->width, templates->size,
-	    	images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  128)  {
         cuArraysCorrTime_kernel< 128,NPT><<<grid, 128, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  192) {
         cuArraysCorrTime_kernel< 192,NPT><<<grid, 192, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  256) {
         cuArraysCorrTime_kernel< 256,NPT><<<grid, 256, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  384) {
         cuArraysCorrTime_kernel< 384,NPT><<<grid, 384, 0, stream>>>(nImages,
-    		templates->devData, templates->height, templates->width, templates->size,
-	    	images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		  	getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+            getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  512) {
         cuArraysCorrTime_kernel< 512,NPT><<<grid, 512, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  640) {
         cuArraysCorrTime_kernel< 640,NPT><<<grid, 640, 0, stream>>>(nImages,
-    		templates->devData, templates->height, templates->width, templates->size,
-	    	images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  768) {
         cuArraysCorrTime_kernel< 768,NPT><<<grid, 768, 0, stream>>>(nImages,
-	    	templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <=  896) {
         cuArraysCorrTime_kernel< 896,NPT><<<grid, 896, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else if (imageNY <= 1024) {
         cuArraysCorrTime_kernel<1024,NPT><<<grid,1024, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size);
-		getLastCudaError("cuArraysCorrTime error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size);
+        getLastCudaError("cuArraysCorrTime error");
     }
     else {
         fprintf(stderr, "The (oversampled) window size along the across direction %d should be smaller than 1024.\n", imageNY);

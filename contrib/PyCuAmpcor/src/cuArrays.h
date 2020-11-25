@@ -26,46 +26,46 @@ class cuArrays{
 
 public:
     int height; ///< x, row, down, length, azimuth, along the track
-    int width;  // y, col, across, range, along the sight 
+    int width;  // y, col, across, range, along the sight
     int size;   // one image size, height*width
     int countW; // number of images along width direction
     int countH; // number of images along height direction
     int count;  // countW*countH, number of images
-    T* devData; // pointer to data in device (gpu) memory 
+    T* devData; // pointer to data in device (gpu) memory
     T* hostData; // pointer to data in host (cpu) memory
-    
+
     bool is_allocated; // whether the data is allocated in device memory
     bool is_allocatedHost; // whether the data is allocated in host memory
 
     // default constructor, empty
-    cuArrays() : width(0), height(0), size(0), countW(0), countH(0), count(0), 
-        is_allocated(0), is_allocatedHost(0), 
+    cuArrays() : width(0), height(0), size(0), countW(0), countH(0), count(0),
+        is_allocated(0), is_allocatedHost(0),
         devData(0), hostData(0) {}
-        
+
     // constructor for single image
     cuArrays(size_t h, size_t w) : width(w), height(h), countH(1), countW(1), count(1),
-        is_allocated(0), is_allocatedHost(0), 
+        is_allocated(0), is_allocatedHost(0),
         devData(0), hostData(0)
     {
         size = w*h;
     }
-		
+
     // constructor for multiple images with a total count
     cuArrays(size_t h, size_t w, size_t n) : width(w), height(h), countH(1), countW(n), count(n),
-        is_allocated(0), is_allocatedHost(0), 
-        devData(0), hostData(0) 
+        is_allocated(0), is_allocatedHost(0),
+        devData(0), hostData(0)
     {
         size = w*h;
     }
 
-	// constructor for multiple images with (countH, countW)
+    // constructor for multiple images with (countH, countW)
     cuArrays(size_t h, size_t w, size_t ch, size_t cw) : width(w), height(h), countW(cw), countH(ch),
-        is_allocated(0), is_allocatedHost(0), 
-        devData(0), hostData(0) 
+        is_allocated(0), is_allocatedHost(0),
+        devData(0), hostData(0)
     {
         size = w*h;
         count = countH*countW;
-    }		
+    }
 
     // memory allocation
     void allocate();
@@ -77,7 +77,7 @@ public:
     void copyToHost(cudaStream_t stream);
     void copyToDevice(cudaStream_t stream);
 
-	// get the total size
+    // get the total size
     size_t getSize()
     {
         return size*count;
@@ -90,7 +90,7 @@ public:
     }
 
     // destructor
-    ~cuArrays() 
+    ~cuArrays()
     {
         if(is_allocated)
             deallocate();

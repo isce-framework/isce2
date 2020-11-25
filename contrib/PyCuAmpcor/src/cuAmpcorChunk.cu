@@ -216,21 +216,21 @@ void cuAmpcorChunk::setIndex(int idxDown_, int idxAcross_)
 {
     idxChunkDown = idxDown_;
     idxChunkAcross = idxAcross_;
-	idxChunk = idxChunkAcross + idxChunkDown*param->numberChunkAcross;
+    idxChunk = idxChunkAcross + idxChunkDown*param->numberChunkAcross;
 
     if(idxChunkDown == param->numberChunkDown -1) {
-		nWindowsDown = param->numberWindowDown - param->numberWindowDownInChunk*(param->numberChunkDown -1);
-	}
-	else {
-		nWindowsDown = param->numberWindowDownInChunk;
-	}
+        nWindowsDown = param->numberWindowDown - param->numberWindowDownInChunk*(param->numberChunkDown -1);
+    }
+    else {
+        nWindowsDown = param->numberWindowDownInChunk;
+    }
 
-	if(idxChunkAcross == param->numberChunkAcross -1) {
-		nWindowsAcross = param->numberWindowAcross - param->numberWindowAcrossInChunk*(param->numberChunkAcross -1);
-	}
-	else {
-		nWindowsAcross = param->numberWindowAcrossInChunk;
-	}
+    if(idxChunkAcross == param->numberChunkAcross -1) {
+        nWindowsAcross = param->numberWindowAcross - param->numberWindowAcrossInChunk*(param->numberChunkAcross -1);
+    }
+    else {
+        nWindowsAcross = param->numberWindowAcrossInChunk;
+    }
 }
 
 /// obtain the starting pixels for each chip
@@ -239,14 +239,14 @@ void cuAmpcorChunk::setIndex(int idxDown_, int idxAcross_)
 void cuAmpcorChunk::getRelativeOffset(int *rStartPixel, const int *oStartPixel, int diff)
 {
     for(int i=0; i<param->numberWindowDownInChunk; ++i) {
-		int iDown = i;
-		if(i>=nWindowsDown) iDown = nWindowsDown-1;
+        int iDown = i;
+        if(i>=nWindowsDown) iDown = nWindowsDown-1;
         for(int j=0; j<param->numberWindowAcrossInChunk; ++j){
-			int iAcross = j;
-			if(j>=nWindowsAcross) iAcross = nWindowsAcross-1;
+            int iAcross = j;
+            if(j>=nWindowsAcross) iAcross = nWindowsAcross-1;
             int idxInChunk = iDown*param->numberWindowAcrossInChunk+iAcross;
             int idxInAll = (iDown+idxChunkDown*param->numberWindowDownInChunk)*param->numberWindowAcross
-				+ idxChunkAcross*param->numberWindowAcrossInChunk+iAcross;
+                + idxChunkAcross*param->numberWindowAcrossInChunk+iAcross;
             rStartPixel[idxInChunk] = oStartPixel[idxInAll] - diff;
         }
     }
@@ -414,23 +414,23 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     c_secondaryBatchZoomIn->allocate();
 
     c_referenceBatchOverSampled = new cuArrays<float2> (
-			param->windowSizeHeight, param->windowSizeWidth,
-			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+            param->windowSizeHeight, param->windowSizeWidth,
+            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_referenceBatchOverSampled->allocate();
 
     c_secondaryBatchOverSampled = new cuArrays<float2> (
-			param->searchWindowSizeHeight, param->searchWindowSizeWidth,
-			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+            param->searchWindowSizeHeight, param->searchWindowSizeWidth,
+            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_secondaryBatchOverSampled->allocate();
 
     r_referenceBatchOverSampled = new cuArrays<float> (
-			param->windowSizeHeight, param->windowSizeWidth,
-			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+            param->windowSizeHeight, param->windowSizeWidth,
+            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_referenceBatchOverSampled->allocate();
 
     r_secondaryBatchOverSampled = new cuArrays<float> (
-			param->searchWindowSizeHeight, param->searchWindowSizeWidth,
-			param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+            param->searchWindowSizeHeight, param->searchWindowSizeWidth,
+            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_secondaryBatchOverSampled->allocate();
 
     referenceBatchOverSampler = new cuOverSamplerC2C(
@@ -442,24 +442,24 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
             c_secondaryBatchOverSampled->height, c_secondaryBatchOverSampled->width, c_secondaryBatchRaw->count, stream);
 
     r_corrBatchRaw = new cuArrays<float> (
-			param->searchWindowSizeHeightRaw-param->windowSizeHeightRaw+1,
-			param->searchWindowSizeWidthRaw-param->windowSizeWidthRaw+1,
-			param->numberWindowDownInChunk,
-			param->numberWindowAcrossInChunk);
+            param->searchWindowSizeHeightRaw-param->windowSizeHeightRaw+1,
+            param->searchWindowSizeWidthRaw-param->windowSizeWidthRaw+1,
+            param->numberWindowDownInChunk,
+            param->numberWindowAcrossInChunk);
     r_corrBatchRaw->allocate();
 
     r_corrBatchZoomIn = new cuArrays<float> (
-			param->searchWindowSizeHeight - param->windowSizeHeight+1,
-			param->searchWindowSizeWidth - param->windowSizeWidth+1,
-			param->numberWindowDownInChunk,
-			param->numberWindowAcrossInChunk);
+            param->searchWindowSizeHeight - param->windowSizeHeight+1,
+            param->searchWindowSizeWidth - param->windowSizeWidth+1,
+            param->numberWindowDownInChunk,
+            param->numberWindowAcrossInChunk);
     r_corrBatchZoomIn->allocate();
 
     r_corrBatchZoomInAdjust = new cuArrays<float> (
-			param->searchWindowSizeHeight - param->windowSizeHeight,
-			param->searchWindowSizeWidth - param->windowSizeWidth,
-			param->numberWindowDownInChunk,
-			param->numberWindowAcrossInChunk);
+            param->searchWindowSizeHeight - param->windowSizeHeight,
+            param->searchWindowSizeWidth - param->windowSizeWidth,
+            param->numberWindowDownInChunk,
+            param->numberWindowAcrossInChunk);
     r_corrBatchZoomInAdjust->allocate();
 
 
@@ -488,17 +488,17 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 
     // new arrays due to snr estimation
     r_corrBatchRawZoomIn = new cuArrays<float> (
-			param->corrRawZoomInHeight,
-			param->corrRawZoomInWidth,
-			param->numberWindowDownInChunk,
-			param->numberWindowAcrossInChunk);
+            param->corrRawZoomInHeight,
+            param->corrRawZoomInWidth,
+            param->numberWindowDownInChunk,
+            param->numberWindowAcrossInChunk);
     r_corrBatchRawZoomIn->allocate();
 
     i_corrBatchZoomInValid = new cuArrays<int> (
-			param->corrRawZoomInHeight,
-			param->corrRawZoomInWidth,
-			param->numberWindowDownInChunk,
-			param->numberWindowAcrossInChunk);
+            param->corrRawZoomInHeight,
+            param->corrRawZoomInWidth,
+            param->numberWindowDownInChunk,
+            param->numberWindowAcrossInChunk);
     i_corrBatchZoomInValid->allocate();
 
 
@@ -535,11 +535,11 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     }
     else {
         corrOverSampler= new cuOverSamplerR2R(param->zoomWindowSize, param->zoomWindowSize,
-			(param->zoomWindowSize)*param->oversamplingFactor,
-		    (param->zoomWindowSize)*param->oversamplingFactor,
-		    param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
-		    stream);
-	}
+            (param->zoomWindowSize)*param->oversamplingFactor,
+            (param->zoomWindowSize)*param->oversamplingFactor,
+            param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
+            stream);
+    }
     if(param->algorithm == 0) {
         cuCorrFreqDomain = new cuFreqCorrelator(
             param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,

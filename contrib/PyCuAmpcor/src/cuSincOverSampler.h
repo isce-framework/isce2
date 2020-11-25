@@ -61,6 +61,3 @@ class cuSincOverSamplerR2R
 
 #endif // _CUSINCOVERSAMPLER_H
 // end of file
-
-
-

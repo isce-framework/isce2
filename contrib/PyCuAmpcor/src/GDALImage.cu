@@ -63,17 +63,17 @@ GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useM
         if(cacheSizeInGB > 0)
             papszOptions = CSLSetNameValue( papszOptions,
                 "CACHE_SIZE",
-		        std::to_string(_bufferSize).c_str());
+                std::to_string(_bufferSize).c_str());
 
         // space between two lines
-	    GIntBig pnLineSpace;
+        GIntBig pnLineSpace;
         // set up the virtual mem buffer
         _poBandVirtualMem =  GDALGetVirtualMemAuto(
             static_cast<GDALRasterBandH>(_poBand),
-		    GF_Read,
-		    &_pixelSize,
-		    &pnLineSpace,
-		    papszOptions);
+            GF_Read,
+            &_pixelSize,
+            &pnLineSpace,
+            papszOptions);
         if(!_poBandVirtualMem)
             throw;
 

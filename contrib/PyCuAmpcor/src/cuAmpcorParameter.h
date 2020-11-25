@@ -44,7 +44,7 @@ public:
 
     int halfSearchRangeDownRaw;   ///< (searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
     int halfSearchRangeAcrossRaw;    ///< (searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
-   	// search range is (-halfSearchRangeRaw, halfSearchRangeRaw)
+    // search range is (-halfSearchRangeRaw, halfSearchRangeRaw)
 
     int searchWindowSizeHeightRawZoomIn; ///< search window height used for zoom in
     int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
@@ -141,9 +141,9 @@ public:
 
 
     // Three methods to set reference/secondary starting pixels and gross offsets from input reference start pixel(s) and gross offset(s)
-	// 1 (int *, int *, int *, int *): varying reference start pixels and gross offsets
-	// 2 (int, int, int *, int *): fixed reference start pixel (first window) and varying gross offsets
-	// 3 (int, int, int, int): fixed reference start pixel(first window) and fixed gross offsets
+    // 1 (int *, int *, int *, int *): varying reference start pixels and gross offsets
+    // 2 (int, int, int *, int *): fixed reference start pixel (first window) and varying gross offsets
+    // 3 (int, int, int, int): fixed reference start pixel(first window) and fixed gross offsets
     void setStartPixels(int*, int*, int*, int*);
     void setStartPixels(int, int, int*, int*);
     void setStartPixels(int, int, int, int);

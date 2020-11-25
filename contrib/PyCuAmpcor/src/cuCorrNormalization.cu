@@ -86,12 +86,12 @@ __global__ void cuArraysMean_kernel(float *images, float *image_sum, int imageSi
  */
 void cuArraysMeanValue(cuArrays<float> *images, cuArrays<float> *mean, cudaStream_t stream)
 {
-	const dim3 grid(images->count, 1, 1);
-	const int imageSize = images->width*images->height;
-	const float invSize = 1.0f/imageSize;
+    const dim3 grid(images->count, 1, 1);
+    const int imageSize = images->width*images->height;
+    const float invSize = 1.0f/imageSize;
 
-	cuArraysMean_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, mean->devData, imageSize, invSize, images->count);
-	getLastCudaError("cuArraysMeanValue kernel error\n");
+    cuArraysMean_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, mean->devData, imageSize, invSize, images->count);
+    getLastCudaError("cuArraysMeanValue kernel error\n");
 }
 
 // cuda kernel to compute and subtracts mean value from the images
@@ -130,12 +130,12 @@ __global__ void cuArraysSubtractMean_kernel(float *images, int imageSize, float 
  */
 void cuArraysSubtractMean(cuArrays<float> *images, cudaStream_t stream)
 {
-	const dim3 grid(images->count, 1, 1);
-	const int imageSize = images->width*images->height;
-	const float invSize = 1.0f/imageSize;
+    const dim3 grid(images->count, 1, 1);
+    const int imageSize = images->width*images->height;
+    const float invSize = 1.0f/imageSize;
 
-	cuArraysSubtractMean_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, imageSize, invSize, images->count);
-	getLastCudaError("cuArraysSubtractMean kernel error\n");
+    cuArraysSubtractMean_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, imageSize, invSize, images->count);
+    getLastCudaError("cuArraysSubtractMean kernel error\n");
 }
 
 
@@ -229,7 +229,7 @@ __device__ float2 partialSums(const float v, volatile float* shmem, const int st
 // cuda kernel for cuCorrNormalize
 template<const int Nthreads2>
 __global__ void cuCorrNormalize_kernel(
-	int nImages,
+    int nImages,
     const float *templateIn, int templateNX, int templateNY, int templateSize,
     const float *imageIn, int imageNX, int imageNY, int imageSize,
     float *resultOut, int resultNX, int resultNY, int resultSize,
@@ -325,50 +325,50 @@ __global__ void cuCorrNormalize_kernel(
  */
 void cuCorrNormalize(cuArrays<float> *templates, cuArrays<float> *images, cuArrays<float> *results, cudaStream_t stream)
 {
-	const int nImages = images->count;
-	const int imageNY = images->width;
-	const dim3 grid(1, 1, nImages);
-	const float invTemplateSize = 1.0f/templates->size;
+    const int nImages = images->count;
+    const int imageNY = images->width;
+    const dim3 grid(1, 1, nImages);
+    const float invTemplateSize = 1.0f/templates->size;
 
-	if      (imageNY <=   64) {
-	    cuCorrNormalize_kernel< 6><<<grid,  64, 0, stream>>>(nImages,
-    		templates->devData, templates->height, templates->width, templates->size,
-	    	images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size,
-		    invTemplateSize);
-		getLastCudaError("cuCorrNormalize kernel error");
+    if      (imageNY <=   64) {
+        cuCorrNormalize_kernel< 6><<<grid,  64, 0, stream>>>(nImages,
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size,
+            invTemplateSize);
+        getLastCudaError("cuCorrNormalize kernel error");
     }
     else if (imageNY <=  128) {
         cuCorrNormalize_kernel< 7><<<grid, 128, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size,
-		    invTemplateSize);
-		getLastCudaError("cuCorrNormalize kernel error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size,
+            invTemplateSize);
+        getLastCudaError("cuCorrNormalize kernel error");
     }
     else if (imageNY <=  256) {
         cuCorrNormalize_kernel< 8><<<grid, 256, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size,
-		    invTemplateSize);
-		getLastCudaError("cuCorrNormalize kernel error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size,
+            invTemplateSize);
+        getLastCudaError("cuCorrNormalize kernel error");
     }
     else if (imageNY <=  512) {
         cuCorrNormalize_kernel< 9><<<grid, 512, 0, stream>>>(nImages,
-    		templates->devData, templates->height, templates->width, templates->size,
-	    	images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size,
-		    invTemplateSize);
-		getLastCudaError("cuCorrNormalize kernel error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size,
+            invTemplateSize);
+        getLastCudaError("cuCorrNormalize kernel error");
     }
     else if (imageNY <= 1024) {
         cuCorrNormalize_kernel<10><<<grid,1024, 0, stream>>>(nImages,
-		    templates->devData, templates->height, templates->width, templates->size,
-		    images->devData, images->height, images->width, images->size,
-		    results->devData, results->height, results->width, results->size,
-		    invTemplateSize);
-		getLastCudaError("cuCorrNormalize kernel error");
+            templates->devData, templates->height, templates->width, templates->size,
+            images->devData, images->height, images->width, images->size,
+            results->devData, results->height, results->width, results->size,
+            invTemplateSize);
+        getLastCudaError("cuCorrNormalize kernel error");
     }
     else
     {

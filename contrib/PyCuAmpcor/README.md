@@ -46,8 +46,8 @@ Some special notices for PyCuAmpcor:
     * CMake, add the flag *-DCMAKE_CUDA_FLAGS="-arch=sm_60"*, sm_35 for K40/80, sm_60 for P100, sm_70 for V100.
 
     * SCons, modify the *scons_tools/cuda.py* file by adding *-arch=sm_60* to *env['ENABLESHAREDNVCCFLAG']*.
-    
-  Note that if the *-arch* option is not specified, CUDA 10 uses sm_30 as default while CUDA 11 uses sm_52 as default. GPU architectures with lower compute capabilities will not run the compiled code properly.  
+
+  Note that if the *-arch* option is not specified, CUDA 10 uses sm_30 as default while CUDA 11 uses sm_52 as default. GPU architectures with lower compute capabilities will not run the compiled code properly.
 
 ### 2.2 Standalone Installation
 

@@ -19,7 +19,7 @@
 #include "cuAmpcorParameter.h"
 
 class cuAmpcorController {
-public:    
+public:
     cuAmpcorParameter *param;  ///< the parameter set
     // constructor
     cuAmpcorController();

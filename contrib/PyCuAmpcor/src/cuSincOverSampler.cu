@@ -195,6 +195,3 @@ void cuSincOverSamplerR2R::execute(cuArrays<float> *imagesIn, cuArrays<float> *i
 }
 
 // end of file
-
-
-

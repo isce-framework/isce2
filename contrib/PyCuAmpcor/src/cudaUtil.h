@@ -1,7 +1,7 @@
-/** 
+/**
  * @file cudaUtil.h
  * @brief Various cuda related parameters and utilities
- * 
+ *
  * Some routines are adapted from Nvidia CUDA samples/common/inc/help_cuda.h
  * Copyright 1993-2013 NVIDIA Corporation.  All rights reserved.
  *
@@ -16,12 +16,12 @@
 // for 2D FFT
 #define NRANK 2
 
-//typical choices of number of threads in a block 
+//typical choices of number of threads in a block
 // for processing 1D and 2D arrays
 #define NTHREADS 512  //
 #define NTHREADS2D 16 //
 
-#define WARPSIZE 32       
+#define WARPSIZE 32
 #define MAXTHREADS 1024  //2048 for newer GPUs
 
 #ifdef __FERMI__ //2.0: M2090
@@ -29,11 +29,11 @@
 #define MAXBLOCKS2 65535 //y,z
 #else //2.0 and above : K40, ...
 #define MAXBLOCKS 4294967295 //x
-#define MAXBLOCKS2 65535  //y,z 
-#endif  
+#define MAXBLOCKS2 65535  //y,z
+#endif
 
-#define IDX2R(i,j,NJ) (((i)*(NJ))+(j))  //row-major order                                                                       
-#define IDX2C(i,j,NI) (((j)*(NI))+(i))  //col-major order    
+#define IDX2R(i,j,NJ) (((i)*(NJ))+(j))  //row-major order
+#define IDX2C(i,j,NI) (((j)*(NI))+(i))  //col-major order
 
 #define IDIVUP(i,j) ((i+j-1)/j)
 
@@ -76,7 +76,7 @@ inline int gpuDeviceInit(int devID)
 
     if (devID < 0 || devID > device_count-1)
     {
-		fprintf(stderr, "gpuDeviceInit() Device %d is not a valid GPU device. \n", devID);
+        fprintf(stderr, "gpuDeviceInit() Device %d is not a valid GPU device. \n", devID);
         exit(EXIT_FAILURE);
     }
 
@@ -86,21 +86,21 @@ inline int gpuDeviceInit(int devID)
     return devID;
 }
 
-// This function lists all available GPUs 
+// This function lists all available GPUs
 inline void gpuDeviceList()
 {
     int device_count = 0;
     int current_device = 0;
     cudaDeviceProp deviceProp;
     checkCudaErrors(cudaGetDeviceCount(&device_count));
-    
+
     fprintf(stderr, "Detecting all CUDA devices ...\n");
     if (device_count == 0)
     {
         fprintf(stderr, "CUDA error: no devices supporting CUDA.\n");
         exit(EXIT_FAILURE);
     }
-    
+
     while (current_device < device_count)
     {
         checkCudaErrors(cudaGetDeviceProperties(&deviceProp, current_device));
@@ -111,7 +111,7 @@ inline void gpuDeviceList()
         else if (deviceProp.major < 1)
         {
             fprintf(stderr, "CUDA Device [%d]: \"%s\" is not available: device does not support CUDA \n", current_device, deviceProp.name);
-        }    
+        }
         else {
             fprintf(stderr, "CUDA Device [%d]: \"%s\" is available.\n", current_device, deviceProp.name);
         }

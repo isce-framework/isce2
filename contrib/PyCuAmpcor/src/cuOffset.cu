@@ -11,10 +11,10 @@
 inline static __device__ void maxPairReduce(volatile float* maxval, volatile int* maxloc,
       size_t gid, size_t strideid)
 {
-	if(maxval[gid] < maxval[strideid]) {
-		maxval[gid] = maxval[strideid];
-		maxloc[gid] = maxloc[strideid];
-	}
+    if(maxval[gid] < maxval[strideid]) {
+        maxval[gid] = maxval[strideid];
+        maxloc[gid] = maxloc[strideid];
+    }
 }
 
 // max reduction kernel
@@ -25,21 +25,21 @@ __device__ void max_reduction(const float* const images,
     volatile float* shval,
     volatile int* shloc)
 {
-	int tid = threadIdx.x;
+    int tid = threadIdx.x;
     shval[tid] = -FLT_MAX;
-	int imageStart = blockIdx.x*imageSize;
-	int imagePixel;
+    int imageStart = blockIdx.x*imageSize;
+    int imagePixel;
 
     // reduction for intra-block elements
-	// i.e., for elements with i, i+BLOCKSIZE, i+2*BLOCKSIZE ...
-	for(int gid = tid; gid < imageSize; gid+=blockDim.x)
-	{
-		imagePixel = imageStart+gid;
-		if(shval[tid] < images[imagePixel]) {
-			shval[tid] = images[imagePixel];
-			shloc[tid] = gid;
-		}
-	}
+    // i.e., for elements with i, i+BLOCKSIZE, i+2*BLOCKSIZE ...
+    for(int gid = tid; gid < imageSize; gid+=blockDim.x)
+    {
+        imagePixel = imageStart+gid;
+        if(shval[tid] < images[imagePixel]) {
+            shval[tid] = images[imagePixel];
+            shloc[tid] = gid;
+        }
+    }
     __syncthreads();
 
     // reduction within a block
@@ -50,12 +50,12 @@ __device__ void max_reduction(const float* const images,
     // reduction within a warp
     if (tid < 32)
     {
-		maxPairReduce(shval, shloc, tid, tid + 32);
-		maxPairReduce(shval, shloc, tid, tid + 16);
-		maxPairReduce(shval, shloc, tid, tid +  8);
-		maxPairReduce(shval, shloc, tid, tid +  4);
-		maxPairReduce(shval, shloc, tid, tid +  2);
-		maxPairReduce(shval, shloc, tid, tid +  1);
+        maxPairReduce(shval, shloc, tid, tid + 32);
+        maxPairReduce(shval, shloc, tid, tid + 16);
+        maxPairReduce(shval, shloc, tid, tid +  8);
+        maxPairReduce(shval, shloc, tid, tid +  4);
+        maxPairReduce(shval, shloc, tid, tid +  2);
+        maxPairReduce(shval, shloc, tid, tid +  1);
     }
     __syncthreads();
 }
@@ -226,16 +226,16 @@ __global__ void cudaKernel_determineSecondaryExtractOffset(int2 * maxLoc, int2 *
     const size_t nImages, int xOldRange, int yOldRange, int xNewRange, int yNewRange)
 {
     int imageIndex = threadIdx.x + blockDim.x *blockIdx.x; //image index
-	if (imageIndex < nImages)
-	{
-	    // get the starting pixel (stored back to maxloc) and shift
+    if (imageIndex < nImages)
+    {
+        // get the starting pixel (stored back to maxloc) and shift
         int2 result = dev_adjustOffset(xOldRange, xNewRange, maxLoc[imageIndex].x);
         maxLoc[imageIndex].x = result.x;
         shift[imageIndex].x = result.y;
         result = dev_adjustOffset(yOldRange, yNewRange, maxLoc[imageIndex].y);
         maxLoc[imageIndex].y = result.x;
         shift[imageIndex].y = result.y;
-	}
+    }
 }
 
 /**
@@ -250,10 +250,10 @@ __global__ void cudaKernel_determineSecondaryExtractOffset(int2 * maxLoc, int2 *
 void cuDetermineSecondaryExtractOffset(cuArrays<int2> *maxLoc, cuArrays<int2> *maxLocShift,
     int xOldRange, int yOldRange, int xNewRange, int yNewRange, cudaStream_t stream)
 {
-	int threadsperblock=NTHREADS;
-	int blockspergrid=IDIVUP(maxLoc->size, threadsperblock);
-	cudaKernel_determineSecondaryExtractOffset<<<blockspergrid, threadsperblock, 0, stream>>>
-	    (maxLoc->devData, maxLocShift->devData, maxLoc->size, xOldRange, yOldRange, xNewRange, yNewRange);
+    int threadsperblock=NTHREADS;
+    int blockspergrid=IDIVUP(maxLoc->size, threadsperblock);
+    cudaKernel_determineSecondaryExtractOffset<<<blockspergrid, threadsperblock, 0, stream>>>
+        (maxLoc->devData, maxLocShift->devData, maxLoc->size, xOldRange, yOldRange, xNewRange, yNewRange);
 }
 
 // end of file

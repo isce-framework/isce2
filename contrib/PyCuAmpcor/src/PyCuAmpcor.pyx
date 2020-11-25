@@ -23,95 +23,97 @@ def version():
 cdef extern from "cuAmpcorParameter.h":
     cdef cppclass cuAmpcorParameter:
         cuAmpcorParameter() except +
-        int algorithm      					## Cross-correlation algorithm: 0=freq domain 1=time domain
-        int deviceID       					## Targeted GPU device ID
-        int nStreams       					## Number of streams to asynchonize data transfers and compute kernels
-        int derampMethod   					## Method for deramping 0=None, 1=average, 2=phase gradient
+        int algorithm                       ## Cross-correlation algorithm: 0=freq domain 1=time domain
+        int deviceID                        ## Targeted GPU device ID
+        int nStreams                        ## Number of streams to asynchonize data transfers and compute kernels
+        int derampMethod                    ## Method for deramping 0=None, 1=average, 2=phase gradient
 
         ## chip or window size for raw data
-        int windowSizeHeightRaw         	## Template window height (original size)
-        int windowSizeWidthRaw          	## Template window width (original size)
-        int searchWindowSizeHeightRaw   	## Search window height (original size)
-        int searchWindowSizeWidthRaw    	## Search window width (orignal size)
-        int halfSearchRangeDownRaw    		##(searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
-        int halfSearchRangeAcrossRaw     	##(searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
+        int windowSizeHeightRaw             ## Template window height (original size)
+        int windowSizeWidthRaw              ## Template window width (original size)
+        int searchWindowSizeHeightRaw       ## Search window height (original size)
+        int searchWindowSizeWidthRaw        ## Search window width (orignal size)
+        int halfSearchRangeDownRaw    	    ##(searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
+        int halfSearchRangeAcrossRaw        ##(searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
         ## chip or window size after oversampling
-        int rawDataOversamplingFactor   	## Raw data overampling factor (from original size to oversampled size)
+        int rawDataOversamplingFactor       ## Raw data overampling factor (from original size to oversampled size)
 
         ## strides between chips/windows
-        int skipSampleDownRaw    			## Skip size between neighboring windows in Down direction (original size)
-        int skipSampleAcrossRaw  			## Skip size between neighboring windows in across direction (original size)
+        int skipSampleDownRaw               ## Skip size between neighboring windows in Down direction (original size)
+        int skipSampleAcrossRaw             ## Skip size between neighboring windows in across direction (original size)
 
-        int corrStatWindowSize                   ## Size of the raw correlation surface extracted for statistics
+        int corrStatWindowSize              ## Size of the raw correlation surface extracted for statistics
 
         ## Zoom in region near location of max correlation
-        int zoomWindowSize       			## Zoom-in window size in correlation surface (same for down and across directions)
-        int oversamplingFactor   			## Oversampling factor for interpolating correlation surface
+        int zoomWindowSize                  ## Zoom-in window size in correlation surface (same for down and across directions)
+        int oversamplingFactor              ## Oversampling factor for interpolating correlation surface
         int oversamplingMethod              ## Correlation surface oversampling method 0=fft, 1=sinc
 
-        float thresholdSNR       			## Threshold of Signal noise ratio to remove noisy data
+        float thresholdSNR                  ## Threshold of Signal noise ratio to remove noisy data
 
         ##reference image
-        string referenceImageName     			## reference SLC image name
-        int imageDataType1              	## reference image data type, 2=cfloat=complex=float2 1=float
-        int referenceImageHeight           	## reference image height
-        int referenceImageWidth            	## reference image width
+        string referenceImageName           ## reference SLC image name
+        int imageDataType1                  ## reference image data type, 2=cfloat=complex=float2 1=float
+        int referenceImageHeight            ## reference image height
+        int referenceImageWidth             ## reference image width
 
         ##secondary image
-        string secondaryImageName      			## secondary SLC image name
-        int imageDataType2              	## secondary image data type, 2=cfloat=complex=float2 1=float
-        int secondaryImageHeight            	## secondary image height
-        int secondaryImageWidth            		## secondary image width
+        string secondaryImageName           ## secondary SLC image name
+        int imageDataType2                  ## secondary image data type, 2=cfloat=complex=float2 1=float
+        int secondaryImageHeight            ## secondary image height
+        int secondaryImageWidth            	## secondary image width
 
         int useMmap                         ## whether to use mmap
         int mmapSizeInGB                    ## mmap buffer size in unit of Gigabytes (if not mmmap, the buffer size)
 
         ## total number of chips/windows
-        int numberWindowDown            	## number of total windows (down)
-        int numberWindowAcross          	## number of total windows (across)
-        int numberWindows  					## numberWindowDown*numberWindowAcross
+        int numberWindowDown                ## number of total windows (down)
+        int numberWindowAcross              ## number of total windows (across)
+        int numberWindows	                ## numberWindowDown*numberWindowAcross
 
         ## number of chips/windows in a batch/chunk
-        int numberWindowDownInChunk     	## number of windows processed in a chunk (down)
-        int numberWindowAcrossInChunk   	## number of windows processed in a chunk (across)
-        int numberWindowsInChunk  			## numberWindowDownInChunk*numberWindowAcrossInChunk
-        int numberChunkDown             	## number of chunks (down)
-        int numberChunkAcross           	## number of chunks (across)
+        int numberWindowDownInChunk         ## number of windows processed in a chunk (down)
+        int numberWindowAcrossInChunk       ## number of windows processed in a chunk (across)
+        int numberWindowsInChunk            ## numberWindowDownInChunk*numberWindowAcrossInChunk
+        int numberChunkDown                 ## number of chunks (down)
+        int numberChunkAcross               ## number of chunks (across)
         int numberChunks
 
-        int *referenceStartPixelDown   		## reference starting pixels for each window (down)
-        int *referenceStartPixelAcross 		## reference starting pixels for each window (across)
-        int *secondaryStartPixelDown    		## secondary starting pixels for each window (down)
-        int *secondaryStartPixelAcross  		## secondary starting pixels for each window (across)
-        int *grossOffsetDown 				## Gross offsets between reference and secondary windows (down) : secondaryStartPixel - referenceStartPixel
-        int *grossOffsetAcross      		## Gross offsets between reference and secondary windows (across)
-        int grossOffsetDown0				## constant gross offset (down)
-        int grossOffsetAcross0				## constant gross offset (across)
-        int referenceStartPixelDown0           ## the first pixel of reference image (down), be adjusted with margins and gross offset
-        int referenceStartPixelAcross0         ## the first pixel of reference image (across)
-        int *referenceChunkStartPixelDown 		## array of starting pixels for all reference chunks (down)
-        int *referenceChunkStartPixelAcross 	## array of starting pixels for all reference chunks (across)
-        int *secondaryChunkStartPixelDown 		## array of starting pixels for all secondary chunks (down)
-        int *secondaryChunkStartPixelAcross 	## array of starting pixels for all secondary chunks (across)
-        int *referenceChunkHeight 				## array of heights of all reference chunks, required when loading chunk to GPU
-        int *referenceChunkWidth 				## array of width of all reference chunks
-        int *secondaryChunkHeight 				## array of width of all reference chunks
-        int *secondaryChunkWidth 				## array of width of all secondary chunks
-        int maxReferenceChunkHeight 			## max height for all reference/secondary chunks, determine the size of reading cache in GPU
-        int maxReferenceChunkWidth 			## max width for all reference chunks, determine the size of reading cache in GPU
-        int maxSecondaryChunkHeight
-        int maxSecondaryChunkWidth
+        int *referenceStartPixelDown   	    ## reference starting pixels for each window (down)
+        int *referenceStartPixelAcross 	    ## reference starting pixels for each window (across)
+        int *secondaryStartPixelDown        ## secondary starting pixels for each window (down)
+        int *secondaryStartPixelAcross      ## secondary starting pixels for each window (across)
+        int *grossOffsetDown                ## Gross offsets between reference and secondary windows (down) : secondaryStartPixel - referenceStartPixel
+        int *grossOffsetAcross              ## Gross offsets between reference and secondary windows (across)
+        int grossOffsetDown0                ## constant gross offset (down)
+        int grossOffsetAcross0              ## constant gross offset (across)
+        int referenceStartPixelDown0        ## the first pixel of reference image (down), be adjusted with margins and gross offset
+        int referenceStartPixelAcross0      ## the first pixel of reference image (across)
+        int *referenceChunkStartPixelDown   ## array of starting pixels for all reference chunks (down)
+        int *referenceChunkStartPixelAcross ## array of starting pixels for all reference chunks (across)
+        int *secondaryChunkStartPixelDown   ## array of starting pixels for all secondary chunks (down)
+        int *secondaryChunkStartPixelAcross ## array of starting pixels for all secondary chunks (across)
+        int *referenceChunkHeight           ## array of heights of all reference chunks, required when loading chunk to GPU
+        int *referenceChunkWidth            ## array of width of all reference chunks
+        int *secondaryChunkHeight           ## array of width of all reference chunks
+        int *secondaryChunkWidth            ## array of width of all secondary chunks
+        int maxReferenceChunkHeight         ## max height for all reference chunks, determine the size of reading cache in GPU
+        int maxReferenceChunkWidth          ## max width for all reference chunks, determine the size of reading cache in GPU
+        int maxSecondaryChunkHeight         ## max height for secondary chunk
+        int maxSecondaryChunkWidth          ## max width for secondary chunk
 
-        string grossOffsetImageName
-        string offsetImageName     ## Output Offset fields filename
-        string snrImageName        ## Output SNR filename
-        string covImageName        ## Output COV filename
-        void setStartPixels(int*, int*, int*, int*)
-        void setStartPixels(int, int, int*, int*)
-        void setStartPixels(int, int, int, int)
-        void checkPixelInImageRange()  ## check whether
+        string grossOffsetImageName         ## Output Gross Offset fields filename
+        string offsetImageName              ## Output Offset fields filename
+        string snrImageName                 ## Output SNR filename
+        string covImageName                 ## Output COV filename
 
-        void setupParameters()      ## Process other parameters after Python Inpu
+        ## set start pixels for reference/secondary windows
+        void setStartPixels(int*, int*, int*, int*)  ## varying locations for reference and secondary
+        void setStartPixels(int, int, int*, int*)    ## first window location for reference, varying for secondary
+        void setStartPixels(int, int, int, int)      ## first window locations for reference and secondary
+
+        void checkPixelInImageRange()       ## check whether all windows are within image range
+        void setupParameters()              ## Process other parameters after Python Inpu
 
 cdef extern from "cuAmpcorController.h":
     cdef cppclass cuAmpcorController:
@@ -326,8 +328,7 @@ cdef class PyCuAmpcor(object):
     def numberChunks(self):
         return  self.c_cuAmpcor.param.numberChunks
 
-
-    ## gross offets
+    ## gross offset
     @property
     def grossOffsetImageName(self):
         return self.c_cuAmpcor.param.grossOffsetImageName.decode("utf-8")
@@ -449,7 +450,3 @@ cdef class PyCuAmpcor(object):
 
 
 # end of file
-
-
-
-
