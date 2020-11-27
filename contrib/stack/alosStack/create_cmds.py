@@ -1110,6 +1110,9 @@ done'''.format(extraCommands       = parallelCommands,
 
         #estimate ionospheric phase for each date
         cmd += header('estimate ionospheric phase for each date')
+        cmd += "#check the ionospheric phase estimation results in folder 'fig_ion', and find out the bad pairs.\n"
+        cmd += '#these pairs should be excluded from this step by specifying parameter -exc_pair. For example:\n'
+        cmd += '#-exc_pair 150401-150624 150401-150722\n\n'
         cmd += '#MUST re-run all the following commands, each time after running this command!!!\n'
         cmd += '#uncomment to run this command\n'
         cmd += '#'
