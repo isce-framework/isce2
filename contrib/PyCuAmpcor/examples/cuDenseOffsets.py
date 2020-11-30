@@ -268,8 +268,14 @@ def estimateOffsetField(reference, secondary, inps=None):
         if grossOffset.size != 2*numberWindows :
             print('The input gross offsets do not match the number of windows {} by {} in int32 type'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
             return 0;
-        grossOffset.reshape(numberWindows, 2)
-        objOffset.setVaryingGrossOffset(grossOffset[:,0], grossOffset[:,1])
+        grossOffset = grossOffset.reshape(numberWindows, 2)
+        grossAzimuthOffset = grossOffset[:, 0]
+        grossRangeOffset = grossOffset[:, 1]
+        # enforce C-contiguous flag
+        grossAzimuthOffset = grossAzimuthOffset.copy(order='C')
+        grossRangeOffset = grossRangeOffset.copy(order='C')
+        # set varying gross offset
+        objOffset.setVaryingGrossOffset(grossAzimuthOffset, grossRangeOffset)
 
     # check
     objOffset.checkPixelInImageRange()
