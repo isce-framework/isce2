@@ -588,7 +588,7 @@ if __name__ == '__main__':
         if len(swathPhaseDiffSnapIon) != nframe:
             raise Exception('please specify each frame for parameter: -snap')
         for i in range(nframe):
-            if len(snapSwath[i]) != (nswath-1):
+            if len(swathPhaseDiffSnapIon[i]) != (nswath-1):
                raise Exception('please specify correct number of swaths for parameter: -snap')
 
     if swathPhaseDiffLowerIon is not None:
