@@ -103,8 +103,8 @@ def createParser():
 
     # gpu settings
     proc = parser.add_argument_group('Processing parameters')
-    proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=-1,
-                        help='GPU ID (default: %(default)s to auto decide).')
+    proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=0,
+                        help='GPU ID (default: %(default)).')
     proc.add_argument('--nstreams', dest='nstreams', type=int, default=2,
                         help='Number of cuda streams (default: %(default)s).')
     proc.add_argument('--usemmap', dest='usemmap', type=int, default=1,
