@@ -11,6 +11,9 @@ import datetime
 import time
 import numpy as np
 
+import geopandas as gpd
+from shapely.geometry import Point, Polygon
+
 # suppress matplotlib DEBUG message
 from matplotlib.path import Path as Path
 import logging
@@ -196,6 +199,26 @@ def cmdLineParse(iargs = None):
     return inps
 
 
+def generate_geopolygon(bbox):
+    """generate geopandas GeoDataFrame Polygon"""
+    # convert pnts to geopandas format
+    # the order of pnts is conter-clockwise, starting from the lower ldft corner
+    # the order for Point is lon,lat
+    p1 = Point(bbox[0][0], bbox[0][1])
+    p2 = Point(bbox[1][0], bbox[1][1])
+    p3 = Point(bbox[2][0], bbox[2][1])
+    p4 = Point(bbox[3][0], bbox[3][1])
+
+    np1 = (p1.coords.xy[0][0], p1.coords.xy[1][0])
+    np2 = (p2.coords.xy[0][0], p2.coords.xy[1][0])
+    np3 = (p3.coords.xy[0][0], p3.coords.xy[1][0])
+    np4 = (p4.coords.xy[0][0], p4.coords.xy[1][0])
+
+    bb_polygon = Polygon([np1, np2, np3, np4])
+    bb_geopolygon = gpd.GeoDataFrame(gpd.GeoSeries(bb_polygon), columns=['geometry'])
+
+    return bb_geopolygon
+
 ####################################
 def get_dates(inps):
     # Given the SLC directory This function extracts the acquisition dates
@@ -251,7 +274,8 @@ def get_dates(inps):
     f = open('SAFE_files.txt','w')
     safe_count=0
     safe_dict={}
-    bbox_poly = [[bbox[0],bbox[2]],[bbox[0],bbox[3]],[bbox[1],bbox[3]],[bbox[1],bbox[2]]]
+    bbox_poly = np.array([[bbox[2],bbox[0]],[bbox[3],bbox[0]],[bbox[3],bbox[1]],[bbox[2],bbox[1]]])
+
     for safe in SAFE_files:
         safeObj=sentinelSLC(safe)
         safeObj.get_dates()
@@ -268,45 +292,23 @@ def get_dates(inps):
             reject_SAFE=True
             pnts = safeObj.getkmlQUAD(safe)
 
-            # looping over the corners, keep the SAF is one of the corners is within the BBOX
-            lats = []
-            lons = []
+            # process pnts to use generate_geopolygon function
+            pnts_bbox = np.empty((4,2))
+            count = 0
             for pnt in pnts:
-                lon = float(pnt.split(',')[0])
-                lat = float(pnt.split(',')[1])
+                pnts_bbox[count, 0] = float(pnt.split(',')[0]) # longitude
+                pnts_bbox[count, 1] = float(pnt.split(',')[1]) # latitude
+                count += 1
+            pnts_polygon = generate_geopolygon(pnts_bbox)
+            bbox_polygon = generate_geopolygon(bbox_poly)
 
-                # keep track of all the corners to see of the product is larger than the bbox
-                lats.append(lat)
-                lons.append(lon)
+            # judge whether these two polygon intersect with each other
+            overlap_flag = gpd.overlay(pnts_polygon, bbox_polygon, how='intersection')
 
-
-
-
-#                bbox = SNWE
-#                polygon = bbox[0] bbox[2]       SW
-#                          bbox[0] bbox[3]       SE
-#                          bbox[1] bbox[3]       NE
-#                          bbox[1] bbox[2]       NW
-
-                poly = Path(bbox_poly)
-                point = (lat,lon)
-                in_bbox = poly.contains_point(point)
-
-
-                # product corner falls within BBOX (SNWE)
-                if in_bbox:
-                    reject_SAFE=False
-
-
-            # If the product is till being rejected, check if the BBOX corners fall within the frame
-            if reject_SAFE:
-                for point in bbox_poly:
-                    frame = [[a,b] for a,b in zip(lats,lons)]
-                    poly = Path(frame)
-                    in_frame = poly.contains_point(point)
-                    if in_frame:
-                        reject_SAFE=False
-
+            if overlap_flag.empty:
+                reject_SAFE = True
+            else:
+                reject_SAFE = False
 
         if not reject_SAFE:
             if safeObj.date  not in safe_dict.keys() and safeObj.date  not in excludeList:
