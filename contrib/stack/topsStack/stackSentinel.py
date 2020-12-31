@@ -11,8 +11,6 @@ import datetime
 import time
 import numpy as np
 
-import geopandas as gpd
-from shapely.geometry import Point, Polygon
 
 # suppress matplotlib DEBUG message
 from matplotlib.path import Path as Path
@@ -201,6 +199,10 @@ def cmdLineParse(iargs = None):
 
 def generate_geopolygon(bbox):
     """generate geopandas GeoDataFrame Polygon"""
+    
+    import geopandas as gpd
+    from shapely.geometry import Point, Polygon
+    
     # convert pnts to geopandas format
     # the order of pnts is conter-clockwise, starting from the lower ldft corner
     # the order for Point is lon,lat
