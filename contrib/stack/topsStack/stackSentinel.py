@@ -11,7 +11,6 @@ import datetime
 import time
 import numpy as np
 
-
 # suppress matplotlib DEBUG message
 from matplotlib.path import Path as Path
 import logging
@@ -198,12 +197,10 @@ def cmdLineParse(iargs = None):
 
 
 def generate_geopolygon(bbox):
-    """generate geopandas GeoDataFrame Polygon"""
-    
-    import geopandas as gpd
+    """generate shapely Polygon"""
     from shapely.geometry import Point, Polygon
     
-    # convert pnts to geopandas format
+    # convert pnts to shapely polygon format
     # the order of pnts is conter-clockwise, starting from the lower ldft corner
     # the order for Point is lon,lat
     p1 = Point(bbox[0][0], bbox[0][1])
@@ -217,9 +214,8 @@ def generate_geopolygon(bbox):
     np4 = (p4.coords.xy[0][0], p4.coords.xy[1][0])
 
     bb_polygon = Polygon([np1, np2, np3, np4])
-    bb_geopolygon = gpd.GeoDataFrame(gpd.GeoSeries(bb_polygon), columns=['geometry'])
 
-    return bb_geopolygon
+    return bb_polygon
 
 ####################################
 def get_dates(inps):
@@ -305,12 +301,11 @@ def get_dates(inps):
             bbox_polygon = generate_geopolygon(bbox_poly)
 
             # judge whether these two polygon intersect with each other
-            overlap_flag = gpd.overlay(pnts_polygon, bbox_polygon, how='intersection')
-
-            if overlap_flag.empty:
-                reject_SAFE = True
-            else:
+            overlap_flag = pnts_polygon.intersects(bbox_polygon)
+            if overlap_flag:
                 reject_SAFE = False
+            else:
+                reject_SAFE = True
 
         if not reject_SAFE:
             if safeObj.date  not in safe_dict.keys() and safeObj.date  not in excludeList:
