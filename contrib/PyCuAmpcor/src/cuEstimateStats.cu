@@ -46,7 +46,7 @@ void cuEstimateSnr(cuArrays<float> *corrSum, cuArrays<int> *corrValidCount, cuAr
 }
 
 // cuda kernel for cuEstimateVariance
-__global__ void cudaKernel_estimateVar(const float* corrBatchRaw, const int NX, const int NY,
+__global__ void cudaKernel_estimateVar(const int winSize, const float* corrBatchRaw, const int NX, const int NY,
     const int2* maxloc, const float* maxval, float3* covValue, const int size)
 {
 
@@ -78,13 +78,11 @@ __global__ void cudaKernel_estimateVar(const float* corrBatchRaw, const int NX, 
         int idx21 = offset + (px + 1) * NY + py    ;
         int idx22 = offset + (px + 1) * NY + py + 1;
 
-        float dxx = - ( corrBatchRaw[idx21] + corrBatchRaw[idx01] - 2*corrBatchRaw[idx11] ) * 0.5;
-        float dyy = - ( corrBatchRaw[idx12] + corrBatchRaw[idx10] - 2*corrBatchRaw[idx11] ) * 0.5;
-        float dxy = - ( corrBatchRaw[idx22] + corrBatchRaw[idx00] - corrBatchRaw[idx20] - corrBatchRaw[idx02] ) *0.25;
+        float dxx = - ( corrBatchRaw[idx21] + corrBatchRaw[idx01] - 2*corrBatchRaw[idx11] ) * 1.0;
+        float dyy = - ( corrBatchRaw[idx12] + corrBatchRaw[idx10] - 2*corrBatchRaw[idx11] ) * 1.0;
+        float dxy = ( corrBatchRaw[idx22] + corrBatchRaw[idx00] - corrBatchRaw[idx20] - corrBatchRaw[idx02] ) *0.25;
 
         float n2 = fmaxf(1 - peak, 0.0);
-
-        int winSize = NX*NY;
 
         dxx = dxx * winSize;
         dyy = dyy * winSize;
@@ -113,18 +111,19 @@ __global__ void cudaKernel_estimateVar(const float* corrBatchRaw, const int NX, 
 
 /**
  * Estimate the variance of the correlation surface
+ * @param[in] winSize size of reference chip
  * @param[in] corrBatchRaw correlation surface
  * @param[in] maxloc maximum location
  * @param[in] maxval maximum value
  * @param[out] covValue variance value
  * @param[in] stream cuda stream
  */
-void cuEstimateVariance(cuArrays<float> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<float> *maxval, cuArrays<float3> *covValue, cudaStream_t stream)
+void cuEstimateVariance(int winSize, cuArrays<float> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<float> *maxval, cuArrays<float3> *covValue, cudaStream_t stream)
 {
     int size = corrBatchRaw->count;
     // One dimensional launching parameters to loop over every correlation surface.
     cudaKernel_estimateVar<<< IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
-        (corrBatchRaw->devData, corrBatchRaw->height, corrBatchRaw->width, maxloc->devData, maxval->devData, covValue->devData, size);
+        (winSize, corrBatchRaw->devData, corrBatchRaw->height, corrBatchRaw->width, maxloc->devData, maxval->devData, covValue->devData, size);
     getLastCudaError("cudaKernel_estimateVar error\n");
 }
 //end of file

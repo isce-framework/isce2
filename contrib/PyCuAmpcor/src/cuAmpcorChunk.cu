@@ -65,29 +65,31 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // 41 x 41, if halfsearchrange=20
     cuArraysMaxloc2D(r_corrBatchRaw, offsetInit, r_maxval, stream);
 
-    // Estimation of statistics
-    // Extraction of correlation surface around the peak
+    // estimate variance
+    cuEstimateVariance(r_referenceBatchRaw->size, r_corrBatchRaw, offsetInit, r_maxval, r_covValue, stream);
+
+    // estimate SNR
+    // step1: extraction of correlation surface around the peak
     cuArraysCopyExtractCorr(r_corrBatchRaw, r_corrBatchRawZoomIn, i_corrBatchZoomInValid, offsetInit, stream);
 
-    // Summation of correlation and data point values
+    // step2: summation of correlation and data point values
     cuArraysSumCorr(r_corrBatchRawZoomIn, i_corrBatchZoomInValid, r_corrBatchSum, i_corrBatchValidCount, stream);
 
 #ifdef CUAMPCOR_DEBUG
+    r_maxval->outputToFile("r_maxval", stream);
+    r_corrBatchRawZoomIn->outputToFile("r_corrBatchRawStatZoomIn", stream);
     i_corrBatchZoomInValid->outputToFile("i_corrBatchZoomInValid", stream);
     r_corrBatchSum->outputToFile("r_corrBatchSum", stream);
+    i_corrBatchValidCount->outputToFile("i_corrBatchValidCount", stream);
 #endif
 
-    // SNR
+    // step3: divide the peak value by the mean of surrounding values
     cuEstimateSnr(r_corrBatchSum, i_corrBatchValidCount, r_maxval, r_snrValue, stream);
-
-    // Variance
-    cuEstimateVariance(r_corrBatchRaw, offsetInit, r_maxval, r_covValue, stream);
 
 #ifdef CUAMPCOR_DEBUG
     offsetInit->outputToFile("i_offsetInit", stream);
-    r_maxval->outputToFile("r_maxval", stream);
-    r_corrBatchRawZoomIn->outputToFile("r_corrBatchRawStatZoomIn", stream);
-    i_corrBatchZoomInValid->outputToFile("i_corrBatchStatZoomInValid", stream);
+    r_snrValue->outputToFile("r_snrValue", stream);
+    r_covValue->outputToFile("r_covValue", stream);
 #endif
 
     // Using the approximate estimation to adjust secondary image (half search window size becomes only 4 pixels)
