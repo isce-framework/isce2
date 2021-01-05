@@ -345,41 +345,66 @@ class DenseAmpcor(Component):
         yMargin = 2*self.searchWindowSizeHeight + self.windowSizeHeight
 
         #####Set image limits for search
-        offAc = max(self.margin,-coarseAcross)+xMargin
-        if offAc % self.skipSampleAcross != 0:
-            leftlim = offAc
-            offAc = self.skipSampleAcross*(1 + int(offAc/self.skipSampleAcross)) - self.pixLocOffAc
-            while offAc < leftlim:
-                offAc += self.skipSampleAcross
+        # limit_setting_option = 0 is the default and conventional way of setting limits
+        # limit_setting_option = 1 is a simpler way of setting limits which is used in the driver of GPU ampcor (PyCuAmpcor)
+        limit_setting_option = 0
+        if limit_setting_option == 0:
+            offAc = max(self.margin,-coarseAcross)+xMargin
+            if offAc % self.skipSampleAcross != 0:
+                leftlim = offAc
+                offAc = self.skipSampleAcross*(1 + int(offAc/self.skipSampleAcross)) - self.pixLocOffAc
+                while offAc < leftlim:
+                    offAc += self.skipSampleAcross
+    
+            offDn = max(self.margin,-coarseDown)+yMargin
+            if offDn % self.skipSampleDown != 0:
+                toplim = offDn
+                offDn = self.skipSampleDown*(1 + int(offDn/self.skipSampleDown)) - self.pixLocOffDn
+                while offDn < toplim:
+                    offDn += self.skipSampleDown
+    
+            offAcmax = int(coarseAcross + ((self.rangeSpacing1/self.rangeSpacing2)-1)*self.lineLength1)
+            lastAc = int(min(self.lineLength1, self.lineLength2-offAcmax) - xMargin -1 - self.margin) 
+    
+            offDnmax = int(coarseDown + ((self.prf2/self.prf1)-1)*self.fileLength1)
+            lastDn = int(min(self.fileLength1, self.fileLength2-offDnmax)  - yMargin -1 - self.margin) 
 
-        offDn = max(self.margin,-coarseDown)+yMargin
-        if offDn % self.skipSampleDown != 0:
-            toplim = offDn
-            offDn = self.skipSampleDown*(1 + int(offDn/self.skipSampleDown)) - self.pixLocOffDn
-            while offDn < toplim:
-                offDn += self.skipSampleDown
+ 
+            self.gridLocAcross = range(offAc + self.pixLocOffAc, lastAc - self.pixLocOffAc, self.skipSampleAcross)
+            self.gridLocDown = range(offDn + self.pixLocOffDn, lastDn - self.pixLocOffDn, self.skipSampleDown)
 
-        offAcmax = int(coarseAcross + ((self.rangeSpacing1/self.rangeSpacing2)-1)*self.lineLength1)
-        lastAc = int(min(self.lineLength1, self.lineLength2-offAcmax) - xMargin -1 - self.margin) 
+            startAc, endAc = offAc, self.gridLocAcross[-1] - self.pixLocOffAc
+            self.numLocationAcross = int((endAc-startAc)/self.skipSampleAcross + 1)
+            self.numLocationDown = len(self.gridLocDown)
 
-        offDnmax = int(coarseDown + ((self.prf2/self.prf1)-1)*self.fileLength1)
-        lastDn = int(min(self.fileLength1, self.fileLength2-offDnmax)  - yMargin -1 - self.margin) 
+            self.offsetCols, self.offsetLines = self.numLocationAcross, self.numLocationDown
 
+        elif limit_setting_option == 1:
+            width = self.lineLength1
+            length = self.fileLength1
 
-        self.gridLocAcross = range(offAc + self.pixLocOffAc, lastAc - self.pixLocOffAc, self.skipSampleAcross)
-        self.gridLocDown = range(offDn + self.pixLocOffDn, lastDn - self.pixLocOffDn, self.skipSampleDown)
+            # determine the max number of windows
+            self.numberWindowAcross = (width - 2*self.margin - xMargin)//self.skipSampleAcross
+            self.numberWindowDown = (length - 2*self.margin - yMargin)//self.skipSampleDown
 
-        startAc, endAc = offAc, self.gridLocAcross[-1] - self.pixLocOffAc
-        self.numLocationAcross = int((endAc-startAc)/self.skipSampleAcross + 1)
-        self.numLocationDown = len(self.gridLocDown)
+            # deterimine the location of windows
+            self.gridLocAcross = self.margin + self.skipSampleAcross * np.arange(self.numberWindowAcross) + self.pixLocOffAc
+            self.gridLocDown = self.margin + self.skipSampleDown * np.arange(self.numberWindowDown) + self.pixLocOffDn
 
-        self.offsetCols, self.offsetLines = self.numLocationAcross, self.numLocationDown
+            startAc = self.gridLocAcross[0] - self.pixLocOffAc
+            endAc = self.gridLocAcross[-1] - self.pixLocOffAc
+
+            self.offsetCols, self.offsetLines = self.numLocationAcross, self.numLocationDown
+
+            self.numLocationAcross = self.numberWindowAcross
+            self.numLocationDown = self.numberWindowDown
+        else:
+            raise Exception("limit_setting_option must be 0 or 1")
 
         print('Pixels: ', self.lineLength1, self.lineLength2)
         print('Lines: ', self.fileLength1, self.fileLength2)
         print('Wins : ', self.windowSizeWidth, self.windowSizeHeight)
         print('Srch: ', self.searchWindowSizeWidth, self.searchWindowSizeHeight)
-
 
         #####Create shared memory objects
         numlen = self.numLocationAcross * self.numLocationDown
@@ -415,13 +440,19 @@ class DenseAmpcor(Component):
             iend = istart + proc_num_grid
 
             # Compute corresponding global line/down indices
-            proc_loc_down = self.gridLocDown[istart:iend]
-            startDown, endDown = proc_loc_down[0], proc_loc_down[-1]
+            proc_loc_down = np.asarray(self.gridLocDown[istart:iend])
+
+            # Get start and end down
+            startDown, endDown = proc_loc_down[0] - self.pixLocOffDn, proc_loc_down[-1] - self.pixLocOffDn
+
             numDown = int((endDown - startDown)//self.skipSampleDown + 1)
 
             # Get flattened grid indices
             firstind = flat_indices[istart:iend,:].ravel()[0]
             lastind = flat_indices[istart:iend,:].ravel()[-1]
+
+            print('startAc', 'endAc', 'startDown', 'endDown')
+            print(startAc, endAc, startDown, endDown)
 
             print(ofmt % (thrd, firstind, lastind, startAc, endAc, startDown, endDown))
 
@@ -462,6 +493,7 @@ class DenseAmpcor(Component):
         objAmpcor.setImageDataType1(self.imageDataType1)
         objAmpcor.setImageDataType2(self.imageDataType2)
 
+        # Setting the limits
         objAmpcor.setFirstSampleAcross(firstAc)
         objAmpcor.setLastSampleAcross(lastAc)
         objAmpcor.setNumberLocationAcross(numAc)
@@ -469,6 +501,7 @@ class DenseAmpcor(Component):
         objAmpcor.setFirstSampleDown(firstDn)
         objAmpcor.setLastSampleDown(lastDn)
         objAmpcor.setNumberLocationDown(numDn)
+        ##
 
         objAmpcor.setAcrossGrossOffset(self.acrossGrossOffset)
         objAmpcor.setDownGrossOffset(self.downGrossOffset)
@@ -644,8 +677,13 @@ class DenseAmpcor(Component):
         if self._stdWriter is None:
             self._stdWriter = create_writer("log", "", True, filename="denseampcor.log")
 
+        # start from the limit of secondary window
         self.pixLocOffAc = self.windowSizeWidth//2 + self.searchWindowSizeWidth - 1
         self.pixLocOffDn = self.windowSizeHeight//2 + self.searchWindowSizeHeight - 1
+
+        # start from the limit of reference window
+        self.centerOffsetWidth = self.windowSizeWidth//2 - 1
+        self.centerOffsetHgt = self.windowSizeHeight//2 - 1
 
     def setImageDataType1(self, var):
         self.imageDataType1 = str(var)
