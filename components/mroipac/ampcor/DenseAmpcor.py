@@ -345,9 +345,12 @@ class DenseAmpcor(Component):
         yMargin = 2*self.searchWindowSizeHeight + self.windowSizeHeight
 
         #####Set image limits for search
-        # limit_setting_option = 0 is the default and conventional way of setting limits
-        # limit_setting_option = 1 is a simpler way of setting limits which is used in the driver of GPU ampcor (PyCuAmpcor)
+        # limit_setting_option = 0 is the default and conventional logic of setting limits
+        # limit_setting_option = 1 is a simpler logic of setting limits 
+        # which is used in the driver (cuDenseOffsets.py) of GPU ampcor (PyCuAmpcor) (Add by Minyan Zhong)
+
         limit_setting_option = 0
+
         if limit_setting_option == 0:
             offAc = max(self.margin,-coarseAcross)+xMargin
             if offAc % self.skipSampleAcross != 0:
@@ -384,20 +387,17 @@ class DenseAmpcor(Component):
             length = self.fileLength1
 
             # determine the max number of windows
-            self.numberWindowAcross = (width - 2*self.margin - xMargin)//self.skipSampleAcross
-            self.numberWindowDown = (length - 2*self.margin - yMargin)//self.skipSampleDown
+            self.numLocationAcross = (width - 2*self.margin - xMargin)//self.skipSampleAcross
+            self.numLocationDown = (length - 2*self.margin - yMargin)//self.skipSampleDown
 
             # deterimine the location of windows
-            self.gridLocAcross = self.margin + self.skipSampleAcross * np.arange(self.numberWindowAcross) + self.pixLocOffAc
-            self.gridLocDown = self.margin + self.skipSampleDown * np.arange(self.numberWindowDown) + self.pixLocOffDn
+            self.gridLocAcross = self.margin + self.skipSampleAcross * np.arange(self.numLocationAcross) + self.pixLocOffAc
+            self.gridLocDown = self.margin + self.skipSampleDown * np.arange(self.numLocationDown) + self.pixLocOffDn
 
             startAc = self.gridLocAcross[0] - self.pixLocOffAc
             endAc = self.gridLocAcross[-1] - self.pixLocOffAc
 
             self.offsetCols, self.offsetLines = self.numLocationAcross, self.numLocationDown
-
-            self.numLocationAcross = self.numberWindowAcross
-            self.numLocationDown = self.numberWindowDown
         else:
             raise Exception("limit_setting_option must be 0 or 1")
 
