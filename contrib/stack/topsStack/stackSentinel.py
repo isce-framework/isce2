@@ -203,19 +203,22 @@ def generate_geopolygon(bbox):
     # convert pnts to shapely polygon format
     # the order of pnts is conter-clockwise, starting from the lower ldft corner
     # the order for Point is lon,lat
-    p1 = Point(bbox[0][0], bbox[0][1])
-    p2 = Point(bbox[1][0], bbox[1][1])
-    p3 = Point(bbox[2][0], bbox[2][1])
-    p4 = Point(bbox[3][0], bbox[3][1])
+    points = [Point(bbox[i][0], bbox[i][1]) for i in range(4)]
 
-    np1 = (p1.coords.xy[0][0], p1.coords.xy[1][0])
-    np2 = (p2.coords.xy[0][0], p2.coords.xy[1][0])
-    np3 = (p3.coords.xy[0][0], p3.coords.xy[1][0])
-    np4 = (p4.coords.xy[0][0], p4.coords.xy[1][0])
+    return Polygon([(p.coords.xy[0][0], p.coords.xy[1][0]) for p in points])
+    #p1 = Point(bbox[0][0], bbox[0][1])
+    #p2 = Point(bbox[1][0], bbox[1][1])
+    #p3 = Point(bbox[2][0], bbox[2][1])
+    #p4 = Point(bbox[3][0], bbox[3][1])
 
-    bb_polygon = Polygon([np1, np2, np3, np4])
+    #np1 = (p1.coords.xy[0][0], p1.coords.xy[1][0])
+    #np2 = (p2.coords.xy[0][0], p2.coords.xy[1][0])
+    #np3 = (p3.coords.xy[0][0], p3.coords.xy[1][0])
+    #np4 = (p4.coords.xy[0][0], p4.coords.xy[1][0])
 
-    return bb_polygon
+    #bb_polygon = Polygon([np1, np2, np3, np4])
+
+    #return bb_polygon
 
 ####################################
 def get_dates(inps):
