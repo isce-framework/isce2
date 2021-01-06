@@ -1,5 +1,5 @@
 /**
- * cuAmpcorParameter.cu
+ * @file cuAmpcorParameter.cu
  * Input parameters for ampcor
  */
 
@@ -32,7 +32,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     skipSampleAcrossRaw = 64;
     skipSampleDownRaw = 64;
     rawDataOversamplingFactor = 2;
-    zoomWindowSize = 8;
+    zoomWindowSize = 16;
     oversamplingFactor = 16;
     oversamplingMethod = 0;
 
@@ -54,8 +54,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     referenceStartPixelDown0 = 0;
     referenceStartPixelAcross0 = 0;
 
-    corrRawZoomInHeight = 17; // 8*2+1
-    corrRawZoomInWidth = 17;
+    corrStatWindowSize = 21; // 10*2+1 as in RIOPAC
 
     useMmap = 1; // use mmap
     mmapSizeInGB = 1;
@@ -68,7 +67,19 @@ cuAmpcorParameter::cuAmpcorParameter()
 
 void cuAmpcorParameter::setupParameters()
 {
-    zoomWindowSize *= rawDataOversamplingFactor; //8 * 2
+    // Size to extract the raw correlation surface for snr/cov
+    corrRawZoomInHeight = std::min(corrStatWindowSize, 2*halfSearchRangeDownRaw+1);
+    corrRawZoomInWidth = std::min(corrStatWindowSize, 2*halfSearchRangeAcrossRaw+1);
+
+    // Size to extract the resampled correlation surface for oversampling
+    // users should use 16 for zoomWindowSize, no need to multiply by 2
+    // zoomWindowSize *= rawDataOversamplingFactor; //8 * 2
+    // to check the search range
+    int corrSurfaceActualSize =
+        std::min(halfSearchRangeAcrossRaw, halfSearchRangeDownRaw)*
+        2*rawDataOversamplingFactor;
+    zoomWindowSize = std::min(zoomWindowSize, corrSurfaceActualSize);
+
     halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor); // 8*2/(2*2) = 4
 
     windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //
@@ -88,10 +99,6 @@ void cuAmpcorParameter::setupParameters()
         fprintf(stderr, "Incorrect number of windows! (%d, %d)\n", numberWindowDown, numberWindowAcross);
         exit(EXIT_FAILURE);
     }
-
-    // modified 02/12/2018 to include one more chunk
-    // e.g. numberWindowDownInChunk=102, numberWindowDown=10, results in numberChunkDown=11
-    // the last chunk will include 2 windows, numberWindowDownInChunkRun = 2.
 
     numberChunkDown = IDIVUP(numberWindowDown, numberWindowDownInChunk);
     numberChunkAcross = IDIVUP(numberWindowAcross, numberWindowAcrossInChunk);
@@ -147,53 +154,55 @@ void cuAmpcorParameter::setStartPixels(int *mStartD, int *mStartA, int *gOffsetD
 {
     for(int i=0; i<numberWindows; i++)
     {
-		referenceStartPixelDown[i] = mStartD[i];
-		grossOffsetDown[i] = gOffsetD[i];
-		secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-		referenceStartPixelAcross[i] = mStartA[i];
-		grossOffsetAcross[i] = gOffsetA[i];
-		secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+        referenceStartPixelDown[i] = mStartD[i];
+        grossOffsetDown[i] = gOffsetD[i];
+        secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
+        referenceStartPixelAcross[i] = mStartA[i];
+        grossOffsetAcross[i] = gOffsetA[i];
+        secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
     }
     setChunkStartPixels();
 }
 
+/// set starting pixels for each window with a varying gross offset
 void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int *gOffsetD, int *gOffsetA)
 {
     for(int row=0; row<numberWindowDown; row++)
     {
-		for(int col = 0; col < numberWindowAcross; col++)
-		{
-			int i = row*numberWindowAcross + col;
-			referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
-			grossOffsetDown[i] = gOffsetD[i];
-			secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-			referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
-			grossOffsetAcross[i] = gOffsetA[i];
-			secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
-		}
+        for(int col = 0; col < numberWindowAcross; col++)
+        {
+            int i = row*numberWindowAcross + col;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            grossOffsetDown[i] = gOffsetD[i];
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            grossOffsetAcross[i] = gOffsetA[i];
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+        }
     }
     setChunkStartPixels();
 }
 
+/// set starting pixels for each window with a constant gross offset
 void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int gOffsetD, int gOffsetA)
 {
-    //fprintf(stderr, "set start pixels %d %d %d %d\n", mStartD, mStartA, gOffsetD, gOffsetA);
     for(int row=0; row<numberWindowDown; row++)
     {
-		for(int col = 0; col < numberWindowAcross; col++)
-		{
-			int i = row*numberWindowAcross + col;
-			referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
-			grossOffsetDown[i] = gOffsetD;
-			secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-			referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
-			grossOffsetAcross[i] = gOffsetA;
-			secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
-		}
+        for(int col = 0; col < numberWindowAcross; col++)
+        {
+            int i = row*numberWindowAcross + col;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            grossOffsetDown[i] = gOffsetD;
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            grossOffsetAcross[i] = gOffsetA;
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+        }
     }
     setChunkStartPixels();
 }
 
+/// set starting pixels for each chunk
 void cuAmpcorParameter::setChunkStartPixels()
 {
 
@@ -217,15 +226,13 @@ void cuAmpcorParameter::setChunkStartPixels()
             int sChunkED = 0;
             int sChunkEA = 0;
 
-            // modified 02/12/2018
             int numberWindowDownInChunkRun = numberWindowDownInChunk;
-	    int numberWindowAcrossInChunkRun = numberWindowAcrossInChunk;
-	    // modify the number of windows in last chunk
+            int numberWindowAcrossInChunkRun = numberWindowAcrossInChunk;
+            // modify the number of windows in last chunk
             if(ichunk == numberChunkDown -1)
-		numberWindowDownInChunkRun = numberWindowDown - numberWindowDownInChunk*(numberChunkDown -1);
-	    if(jchunk == numberChunkAcross -1)
-		numberWindowAcrossInChunkRun = numberWindowAcross - numberWindowAcrossInChunk*(numberChunkAcross -1);
-
+                numberWindowDownInChunkRun = numberWindowDown - numberWindowDownInChunk*(numberChunkDown -1);
+            if(jchunk == numberChunkAcross -1)
+                numberWindowAcrossInChunkRun = numberWindowAcross - numberWindowAcrossInChunk*(numberChunkAcross -1);
 
             for(int i=0; i<numberWindowDownInChunkRun; i++)
             {
@@ -265,64 +272,65 @@ void cuAmpcorParameter::setChunkStartPixels()
 /// check whether reference and secondary windows are within the image range
 void cuAmpcorParameter::checkPixelInImageRange()
 {
-	int endPixel;
-	for(int row=0; row<numberWindowDown; row++)
+    int endPixel;
+    for(int row=0; row<numberWindowDown; row++)
     {
-		for(int col = 0; col < numberWindowAcross; col++)
-		{
-			int i = row*numberWindowAcross + col;
-			if(referenceStartPixelDown[i] <0)
-			{
-				fprintf(stderr, "Reference Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, referenceStartPixelDown[i]);
-				exit(EXIT_FAILURE); //or raise range error
-			}
-			if(referenceStartPixelAcross[i] <0)
-			{
-				fprintf(stderr, "Reference Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, referenceStartPixelAcross[i]);
-				exit(EXIT_FAILURE);
-			}
-			endPixel = referenceStartPixelDown[i] + windowSizeHeightRaw;
-			if(endPixel >= referenceImageHeight)
-			{
-				fprintf(stderr, "Reference Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
-				exit(EXIT_FAILURE);
-			}
-			endPixel = referenceStartPixelAcross[i] + windowSizeWidthRaw;
-			if(endPixel >= referenceImageWidth)
-			{
-				fprintf(stderr, "Reference Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
-				exit(EXIT_FAILURE);
-			}
-			//secondary
-			if(secondaryStartPixelDown[i] <0)
-			{
-				fprintf(stderr, "Secondary Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelDown[i]);
-				exit(EXIT_FAILURE);
-			}
-			if(secondaryStartPixelAcross[i] <0)
-			{
-				fprintf(stderr, "Secondary Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelAcross[i]);
-				exit(EXIT_FAILURE);
-			}
-			endPixel = secondaryStartPixelDown[i] + searchWindowSizeHeightRaw;
-			if(endPixel >= secondaryImageHeight)
-			{
-				fprintf(stderr, "Secondary Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
-				exit(EXIT_FAILURE);
-			}
-			endPixel = secondaryStartPixelAcross[i] + searchWindowSizeWidthRaw;
-			if(endPixel >= secondaryImageWidth)
-			{
-				fprintf(stderr, "Secondary Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
-				exit(EXIT_FAILURE);
-			}
+        for(int col = 0; col < numberWindowAcross; col++)
+        {
+            int i = row*numberWindowAcross + col;
+            if(referenceStartPixelDown[i] <0)
+            {
+                fprintf(stderr, "Reference Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, referenceStartPixelDown[i]);
+                exit(EXIT_FAILURE); //or raise range error
+            }
+            if(referenceStartPixelAcross[i] <0)
+            {
+                fprintf(stderr, "Reference Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, referenceStartPixelAcross[i]);
+                exit(EXIT_FAILURE);
+            }
+            endPixel = referenceStartPixelDown[i] + windowSizeHeightRaw;
+            if(endPixel >= referenceImageHeight)
+            {
+                fprintf(stderr, "Reference Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
+                exit(EXIT_FAILURE);
+            }
+            endPixel = referenceStartPixelAcross[i] + windowSizeWidthRaw;
+            if(endPixel >= referenceImageWidth)
+            {
+                fprintf(stderr, "Reference Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
+                exit(EXIT_FAILURE);
+            }
+            //secondary
+            if(secondaryStartPixelDown[i] <0)
+            {
+                fprintf(stderr, "Secondary Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelDown[i]);
+                exit(EXIT_FAILURE);
+            }
+            if(secondaryStartPixelAcross[i] <0)
+            {
+                fprintf(stderr, "Secondary Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelAcross[i]);
+                exit(EXIT_FAILURE);
+            }
+            endPixel = secondaryStartPixelDown[i] + searchWindowSizeHeightRaw;
+            if(endPixel >= secondaryImageHeight)
+            {
+                fprintf(stderr, "Secondary Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
+                exit(EXIT_FAILURE);
+            }
+            endPixel = secondaryStartPixelAcross[i] + searchWindowSizeWidthRaw;
+            if(endPixel >= secondaryImageWidth)
+            {
+                fprintf(stderr, "Secondary Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
+                exit(EXIT_FAILURE);
+            }
 
-		}
+        }
     }
 }
 
 
 cuAmpcorParameter::~cuAmpcorParameter()
 {
-	deallocateArrays();
+    deallocateArrays();
 }
+// end of file

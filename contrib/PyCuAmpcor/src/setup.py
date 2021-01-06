@@ -1,5 +1,5 @@
 #
-# Implementation: python setup_cuAmpcor.py build_ext --inplace
+# Implementation: python setup.py build_ext --inplace
 # Generates PyCuAmpcor.xxx.so (where xxx is just some local sys-arch information).
 # Note you need to run your makefile *FIRST* to generate the cuAmpcor.o object.
 #
@@ -11,6 +11,7 @@ from Cython.Build import cythonize
 import numpy
 
 setup(  name = 'PyCuAmpcor',
+        version = '2.0.0',
         ext_modules = cythonize(Extension(
         "PyCuAmpcor",
         sources=['PyCuAmpcor.pyx'],
@@ -22,6 +23,6 @@ setup(  name = 'PyCuAmpcor',
                        'cuSincOverSampler.o', 'cuDeramp.o','cuAmpcorController.o','cuEstimateStats.o'],
         extra_link_args=['-L/usr/local/cuda/lib64',
                         '-L/usr/lib64/nvidia',
-                        '-lcuda','-lcudart','-lcufft','-lcublas','-lgdal'], # REPLACE FIRST PATH WITH YOUR PATH TO YOUR CUDA LIBRARIES
+                        '-lcuda','-lcudart','-lcufft','-lgdal'], # REPLACE FIRST PATH WITH YOUR PATH TO YOUR CUDA LIBRARIES
         language='c++'
     )))

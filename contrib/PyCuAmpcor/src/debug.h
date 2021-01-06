@@ -1,17 +1,22 @@
-#ifndef __DEBUG_H
-#define __DEBUG_H
+/**
+ * @file debug.h
+ * @brief Define flags to control the debugging
+ *
+ * CUAMPCOR_DEBUG is used to output debugging information and intermediate results,
+ *    disabled when NDEBUG macro is defined.
+ * CUDA_ERROR_CHECK is always enabled, to check CUDA routine errors
+ *
+ */
 
-#pragma once
+// code guard
+#ifndef __CUAMPCOR_DEBUG_H
+#define __CUAMPCOR_DEBUG_H
 
-#include <iostream>
-#include <assert.h>
-
-#define _DEBUG_ 1
+#ifndef NDEBUG
+#define CUAMPCOR_DEBUG
+#endif //NDEBUG
 
 #define CUDA_ERROR_CHECK
 
-#define debugmsg(msg) if(_DEBUG_) fprintf(stderr, msg)
-
-//__CUDA_ARCH__
-
-#endif 
+#endif //__CUAMPCOR_DEBUG_H
+//end of file
