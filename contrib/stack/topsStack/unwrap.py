@@ -38,7 +38,7 @@ from isceobj.Constants import SPEED_OF_LIGHT
 import argparse
 import os
 import pickle
-import gdal
+from osgeo import gdal
 import numpy as np
 #import shelve
 import s1a_isce_utils as ut

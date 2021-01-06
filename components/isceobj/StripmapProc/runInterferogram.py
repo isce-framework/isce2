@@ -9,7 +9,7 @@ import logging
 from components.stdproc.stdproc import crossmul
 from iscesys.ImageUtil.ImageUtil import ImageUtil as IU
 import os
-import gdal
+from osgeo import gdal
 import numpy as np
 
 logger = logging.getLogger('isce.insar.runInterferogram')

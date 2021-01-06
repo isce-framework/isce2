@@ -7,7 +7,7 @@ import argparse
 import isce
 import isceobj
 import os
-import gdal
+from osgeo import gdal
 import xml.etree.ElementTree as ET
 
 def createParser():

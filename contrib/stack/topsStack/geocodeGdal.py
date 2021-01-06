@@ -7,7 +7,7 @@ import argparse
 import isce
 import isceobj
 import os
-import gdal
+from osgeo import gdal
 import numpy as np
 import xml.etree.ElementTree as ET
 

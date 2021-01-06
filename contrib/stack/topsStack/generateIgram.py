@@ -13,7 +13,7 @@ import copy
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct 
 from mroipac.correlation.correlation import Correlation
 import s1a_isce_utils as ut
-import gdal
+from osgeo import gdal
 
 
 def createParser():
