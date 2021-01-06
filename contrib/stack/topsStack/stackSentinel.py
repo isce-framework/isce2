@@ -11,12 +11,6 @@ import datetime
 import time
 import numpy as np
 
-# suppress matplotlib DEBUG message
-from matplotlib.path import Path as Path
-import logging
-mpl_logger = logging.getLogger('matplotlib')
-mpl_logger.setLevel(logging.WARNING)
-
 import isce
 import isceobj
 from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
