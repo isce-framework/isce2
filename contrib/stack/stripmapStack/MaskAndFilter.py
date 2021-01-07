@@ -9,8 +9,8 @@ import argparse
 import numpy as np
 from scipy import ndimage
 import matplotlib.pyplot as plt
-import gdal
-from gdalconst import GA_ReadOnly
+from osgeo import gdal
+from osgeo.gdalconst import GA_ReadOnly
 
 # suppress the DEBUG message
 import logging

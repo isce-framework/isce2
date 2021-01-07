@@ -7,7 +7,7 @@ import argparse
 import isce
 import isceobj
 import os
-import gdal
+from osgeo import gdal
 import matplotlib as mpl;  #mpl.use('Agg')
 import matplotlib.pyplot as plt
 from pykml.factory import KML_ElementMaker as KML

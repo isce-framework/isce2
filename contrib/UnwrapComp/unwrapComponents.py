@@ -7,7 +7,7 @@ import isce
 import isceobj
 from imageMath import IML
 from osgeo import gdal
-from gdalconst import *
+from osgeo.gdalconst import *
 
 import logging
 import scipy.spatial as SS

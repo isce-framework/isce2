@@ -6,7 +6,7 @@ import shelve
 import datetime
 import shutil
 import numpy as np
-import gdal
+from osgeo import gdal
 import isce
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT

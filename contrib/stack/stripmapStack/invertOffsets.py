@@ -15,7 +15,7 @@ from isceobj.Util.Poly2D import Poly2D
 import h5py
 from insarPair import insarPair
 from insarStack import insarStack
-import gdal
+from osgeo import gdal
 
 
 #################################################################

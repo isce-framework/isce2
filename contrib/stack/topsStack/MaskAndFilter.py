@@ -9,8 +9,8 @@ import argparse
 import os   
 import isce
 import isceobj
-import gdal
-from gdalconst import GA_ReadOnly
+from osgeo import gdal
+from osgeo.gdalconst import GA_ReadOnly
 from scipy import ndimage
 
 

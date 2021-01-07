@@ -6,7 +6,7 @@ import os
 import argparse
 import glob
 import numpy as np
-import gdal
+from osgeo import gdal
 import isce
 import isceobj
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct

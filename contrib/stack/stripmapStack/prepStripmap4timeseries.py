@@ -8,8 +8,8 @@ import os
 import glob
 import isce
 import isceobj
-import gdal
-from gdalconst import GA_ReadOnly
+from osgeo import gdal
+from osgeo.gdalconst import GA_ReadOnly
 #import s1a_isce_utils as ut
 from isceobj.Planet.Planet import Planet
 import shelve

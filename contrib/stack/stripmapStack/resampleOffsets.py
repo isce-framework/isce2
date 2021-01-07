@@ -7,9 +7,8 @@ import os
 import isce
 import isceobj
 import shelve
-import gdal
-import osr
-from gdalconst import GA_ReadOnly
+from osgeo import gdal, osr
+from osgeo.gdalconst import GA_ReadOnly
 from scipy import ndimage
 
 
