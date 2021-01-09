@@ -424,8 +424,7 @@ class GRDSAR(Application):
         self.step('normalize', func=self.runNormalize)
 
         # Geocode
-        self.step('geocode', func=self.runGeocode,
-                args=(self.geocode_list, self.geocode_bbox))
+        self.step('geocode', func=self.runGeocode)
 
         return None
 
