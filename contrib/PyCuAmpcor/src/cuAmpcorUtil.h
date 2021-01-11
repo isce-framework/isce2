@@ -91,7 +91,7 @@ void cuArraysSumCorr(cuArrays<float> *images, cuArrays<int> *imagesValid, cuArra
 void cuEstimateSnr(cuArrays<float> *corrSum, cuArrays<int> *corrValidCount, cuArrays<float> *maxval, cuArrays<float> *snrValue, cudaStream_t stream);
 
 // implemented in cuEstimateStats.cu
-void cuEstimateVariance(int winSize, cuArrays<float> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<float> *maxval, cuArrays<float3> *covValue, cudaStream_t stream);
+void cuEstimateVariance(cuArrays<float> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<float> *maxval, int templateSize, cuArrays<float3> *covValue, cudaStream_t stream);
 
 #endif
 

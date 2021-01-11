@@ -66,7 +66,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuArraysMaxloc2D(r_corrBatchRaw, offsetInit, r_maxval, stream);
 
     // estimate variance
-    cuEstimateVariance(r_referenceBatchRaw->size, r_corrBatchRaw, offsetInit, r_maxval, r_covValue, stream);
+    cuEstimateVariance(r_corrBatchRaw, offsetInit, r_maxval, r_referenceBatchRaw->size, r_covValue, stream);
 
     // estimate SNR
     // step1: extraction of correlation surface around the peak
