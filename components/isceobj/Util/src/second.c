@@ -1,8 +1,8 @@
-#include	<unistd.h>
-#include	<sys/time.h>
-#include	<sys/times.h>
-#include	<sys/resource.h>
-#include    <stdio.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/resource.h>
+#include <stdio.h>
 
 #if defined(NEEDS_F77_TRANSLATION)
 

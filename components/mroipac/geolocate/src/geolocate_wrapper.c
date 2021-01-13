@@ -1,5 +1,3 @@
-
-//
 void geolocate_(double *, double *, double *, double *, int *, double *, double *, double *, double *, double *);
 
 // A wrapper for the Fortran geolocation code
