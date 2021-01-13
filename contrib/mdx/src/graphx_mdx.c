@@ -41,6 +41,7 @@ here insofar as such code may exist in this Software.
 #include <Xm/DrawnB.h>
 #include <Xm/ScrolledW.h>
 #include <Xm/Label.h>
+#include <Xm/ScrollBar.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>    /* for popup window only */
 
