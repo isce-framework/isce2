@@ -242,6 +242,7 @@ class config(object):
         self.f.write('defomax : ' + self.defoMax + '\n')
         self.f.write('rlks : ' + self.rangeLooks + '\n')
         self.f.write('alks : ' + self.azimuthLooks + '\n')
+        self.f.write('numProcess : ' + self.numProcess + '\n')
 
     def denseOffset(self, function):
         self.f.write('###################################'+'\n')
@@ -450,9 +451,11 @@ class run(object):
             safe_dict[date].slc_overlap = os.path.join(self.work_dir , 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
         safe_dict[self.reference_date].slc_overlap = os.path.join(self.work_dir , 'reference')
+        line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
+            line_cnt += 1
             interferogramDir = os.path.join(self.work_dir, 'coarse_interferograms/'+reference+'_'+secondary)
             configName = os.path.join(self.config_path ,'config_misreg_'+reference+'_'+secondary)
             configObj = config(configName)
@@ -479,8 +482,11 @@ class run(object):
             configObj.rangeMisreg('[Function-4]')
             configObj.finalize()
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
             ########################
+            if self.numProcess > 1 and line_cnt == self.numProcess:
+                self.runf.write('wait\n\n')
+                line_cnt = 0
 
 
 
@@ -499,7 +505,9 @@ class run(object):
         for date in dateList:
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
+        line_cnt = 0
         for pair in pairs:
+            line_cnt += 1
             reference = pair[0]
             secondary = pair[1]
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
@@ -516,15 +524,20 @@ class run(object):
             configObj.finalize()
             del configObj
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+            if self.numProcess > 1 and line_cnt == self.numProcess:
+                self.runf.write('wait\n\n')
+                line_cnt = 0
 
     def igram_mergeBurst(self, dateList, safe_dict, pairs):
         for date in dateList:
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
+        line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
+            line_cnt += 1
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
             configName = os.path.join(self.config_path ,'config_merge_igram_' + reference + '_' + secondary)
@@ -545,7 +558,10 @@ class run(object):
             configObj.finalize()
             del configObj
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+            if self.numProcess > 1 and line_cnt == self.numProcess:
+                self.runf.write('wait\n\n')
+                line_cnt = 0
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
 
@@ -676,7 +692,9 @@ class run(object):
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
 
     def unwrap(self, pairs):
+        line_cnt = 0
         for pair in pairs:
+            line_cnt += 1
             reference = pair[0]
             secondary = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
@@ -693,7 +711,11 @@ class run(object):
             configObj.unwMethod = self.unwMethod
             configObj.unwrap('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+            if self.numProcess > 1 and line_cnt == self.numProcess:
+                self.runf.write('wait\n\n')
+                line_cnt = 0
+
 
     def denseOffsets(self, pairs):
 
