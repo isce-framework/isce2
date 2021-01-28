@@ -484,7 +484,7 @@ class run(object):
 
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
             ########################
-            if self.numProcess > 1 and line_cnt == self.numProcess:
+            if line_cnt == self.numProcess:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
 
@@ -525,7 +525,7 @@ class run(object):
             del configObj
 
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if self.numProcess > 1 and line_cnt == self.numProcess:
+            if line_cnt == self.numProcess:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
 
@@ -559,7 +559,7 @@ class run(object):
             del configObj
 
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if self.numProcess > 1 and line_cnt == self.numProcess:
+            if line_cnt == self.numProcess:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
 
@@ -712,7 +712,7 @@ class run(object):
             configObj.unwrap('[Function-1]')
             configObj.finalize()
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if self.numProcess > 1 and line_cnt == self.numProcess:
+            if line_cnt == self.numProcess:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
 
