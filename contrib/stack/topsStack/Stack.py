@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+  #!/usr/bin/env python3
 ########################
 #Author: Heresh Fattahi
 
@@ -12,6 +12,19 @@ noMCF = 'False'
 defoMax = '2'
 maxNodes = 72
 
+
+
+def writeBash(self, configName, line_cnt):
+  # dispassionate list of commands for single process
+  if self.numProcess == 1:
+    self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+  # aggregate background commands between wait blocks for speed gains
+  elif self.numProcess > 1:
+    self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+    if line_cnt == self.numProcess:
+      self.runf.write('wait\n\n')
+      line_cnt = 0
+  return line_cnt
 
 class config(object):
     """
@@ -482,11 +495,8 @@ class run(object):
             configObj.rangeMisreg('[Function-4]')
             configObj.finalize()
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+            line_cnt = writeBash(self, configName, line_cnt)
             ########################
-            if line_cnt == self.numProcess:
-                self.runf.write('wait\n\n')
-                line_cnt = 0
 
 
 
@@ -524,10 +534,7 @@ class run(object):
             configObj.finalize()
             del configObj
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt == self.numProcess:
-                self.runf.write('wait\n\n')
-                line_cnt = 0
+            line_cnt = writeBash(self, configName, line_cnt)
 
     def igram_mergeBurst(self, dateList, safe_dict, pairs):
         for date in dateList:
@@ -558,10 +565,7 @@ class run(object):
             configObj.finalize()
             del configObj
 
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt == self.numProcess:
-                self.runf.write('wait\n\n')
-                line_cnt = 0
+            line_cnt = writeBash(self, configName, line_cnt)
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
 
@@ -711,10 +715,9 @@ class run(object):
             configObj.unwMethod = self.unwMethod
             configObj.unwrap('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt == self.numProcess:
-                self.runf.write('wait\n\n')
-                line_cnt = 0
+
+            line_cnt = writeBash(self, configName, line_cnt)
+
 
 
     def denseOffsets(self, pairs):
@@ -733,7 +736,6 @@ class run(object):
             configObj.finalize()
             del configObj
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
-
 
     def finalize(self):
         self.runf.close()
@@ -987,8 +989,6 @@ class sentinelSLC(object):
               orbitFile = glob.glob(os.path.join(restitutedOrbitDir,'*.EOF'))
               self.orbit =  orbitFile[0]
               self.orbitType = 'restituted'
-
-
 
 # an example for writing job files when using clusters
 
