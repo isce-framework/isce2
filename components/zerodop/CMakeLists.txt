@@ -11,6 +11,8 @@ if(CMAKE_CUDA_COMPILER)
     endif()
 
     add_subdirectory(GPUgeo2rdr)
+    add_subdirectory(GPUresampslc)
+    add_subdirectory(GPUtopozero)
 endif()
 
 InstallSameDir(__init__.py)
