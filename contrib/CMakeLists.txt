@@ -13,7 +13,7 @@ add_subdirectory(alos2proc)
 add_subdirectory(alos2proc_f)
 add_subdirectory(rfi)
 add_subdirectory(mdx)
-
+add_subdirectory(UnwrapComp)
 InstallSameDir(
     __init__.py
     )
