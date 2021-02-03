@@ -2,8 +2,8 @@
 # Heresh Fattahi
 
 import os
-import gdal
-from gdalconst import GA_ReadOnly
+from osgeo import gdal
+from osgeo.gdalconst import GA_ReadOnly
 import numpy as np
 from lxml import objectify
 

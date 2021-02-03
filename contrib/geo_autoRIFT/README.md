@@ -3,9 +3,9 @@
 
 
 [![Language](https://img.shields.io/badge/python-3.6%2B-blue.svg)](https://www.python.org/)
-[![Latest version](https://img.shields.io/badge/latest%20version-v1.0.7-yellowgreen.svg)](https://github.com/leiyangleon/autoRIFT/releases)
+[![Latest version](https://img.shields.io/badge/latest%20version-v1.0.8-yellowgreen.svg)](https://github.com/leiyangleon/autoRIFT/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/leiyangleon/autoRIFT/blob/master/LICENSE)
-[![Citation](https://img.shields.io/badge/DOI-10.5281/zenodo.4025445-blue)](https://doi.org/10.5281/zenodo.4025445)
+[![Citation](https://img.shields.io/badge/DOI-10.5281/zenodo.4211013-blue)](https://doi.org/10.5281/zenodo.4211013)
 
 
 
@@ -22,7 +22,7 @@ Copyright (C) 2019 California Institute of Technology.  Government Sponsorship A
 
 Link: https://github.com/leiyangleon/autoRIFT
 
-Citation: https://doi.org/10.5281/zenodo.4025445
+Citation: https://doi.org/10.5281/zenodo.4211013
 
 
 ## 1. Authors
@@ -58,6 +58,7 @@ This effort was funded by the NASA MEaSUREs program in contribution to the Inter
 * the current version can be installed with the ISCE software (that supports both Cartesian and radar coordinates) or as a standalone Python module (Cartesian coordinates only)
 * when used in combination with the Geogrid Python module (https://github.com/leiyangleon/Geogrid), autoRIFT can be used for feature tracking between image pair over a grid defined in an arbitrary geographic Cartesian (northing/easting) coordinate projection
 * when the grid is provided in geographic Cartesian (northing/easting) coordinates, outputs are returned in geocoded GeoTIFF image file format with the same EPSG projection code as input search grid
+* **[NEW]** the program now supports fetching optical images (Landsat-8 GeoTIFF and Sentinel-2 COG formats are included) as well as other inputs (e.g. DEM, slope, etc; all in GeoTIFF format) from either local machine or URL links. See the changes on the Geogrid [commands](https://github.com/leiyangleon/Geogrid). When using the autoRIFT commands below, users need to append a url flag: "-urlflag 1" for using URL links and performing coregistration, and "-urlflag 0" (default; can be omitted) for using coregistered files on local machine. 
 
 ## 4. Possible Future Development
 

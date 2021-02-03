@@ -1,28 +1,29 @@
-#include "GDALImage.h"
-#include <iostream>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <cublas_v2.h>
-#include "cudaError.h"
-#include <errno.h>
-#include <unistd.h>
-
-
 /**
- * \brief Constructor
+ * @file  GDALImage.h
+ * @brief Implementations of GDALImage class
  *
- * @param filename a std::string with the raster image file name
  */
 
+// my declaration
+#include "GDALImage.h"
+
+// dependencies
+#include <iostream>
+#include "cudaError.h"
+
+/**
+ * Constructor
+ * @brief Create a GDAL image object
+ * @param filename a std::string with the raster image file name
+ * @param band the band number
+ * @param cacheSizeInGB read buffer size in GigaBytes
+ * @param useMmap whether to use memory map
+ */
 GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useMmap)
    : _useMmap(useMmap)
 {
     // open the file as dataset
-    _poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly );
+    _poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
     // if something is wrong, throw an exception
     // GDAL reports the error message
     if(!_poDataset)
@@ -32,7 +33,7 @@ GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useM
     int count = _poDataset->GetRasterCount();
     if(band > count)
     {
-        std::cout << "The desired band " << band << " is greated than " << count << " bands available";
+        std::cout << "The desired band " << band << " is greater than " << count << " bands available";
         throw;
     }
 
@@ -62,19 +63,17 @@ GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useM
         if(cacheSizeInGB > 0)
             papszOptions = CSLSetNameValue( papszOptions,
                 "CACHE_SIZE",
-		        std::to_string(_bufferSize).c_str());
+                std::to_string(_bufferSize).c_str());
 
         // space between two lines
-	    GIntBig pnLineSpace;
+        GIntBig pnLineSpace;
         // set up the virtual mem buffer
         _poBandVirtualMem =  GDALGetVirtualMemAuto(
             static_cast<GDALRasterBandH>(_poBand),
-		    GF_Read,
-		    &_pixelSize,
-		    &pnLineSpace,
-		    papszOptions);
-
-        // check it
+            GF_Read,
+            &_pixelSize,
+            &pnLineSpace,
+            papszOptions);
         if(!_poBandVirtualMem)
             throw;
 
@@ -84,43 +83,52 @@ GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useM
     else { // use a buffer
         checkCudaErrors(cudaMallocHost((void **)&_memPtr, _bufferSize));
     }
-
     // make sure memPtr is not Null
     if (!_memPtr)
+    {
+        std::cout << "unable to locate the memory buffer\n";
         throw;
-
+    }
     // all done
 }
 
 
-/// load a tile of data h_tile x w_tile from CPU (mmap) to GPU
-/// @param dArray pointer for array in device memory
-/// @param h_offset Down/Height offset
-/// @param w_offset Across/Width offset
-/// @param h_tile Down/Height tile size
-/// @param w_tile Across/Width tile size
-/// @param stream CUDA stream for copying
-void GDALImage::loadToDevice(void *dArray, size_t h_offset, size_t w_offset, size_t h_tile, size_t w_tile, cudaStream_t stream)
+/**
+ * Load a tile of data h_tile x w_tile from CPU to GPU
+ * @param dArray pointer for array in device memory
+ * @param h_offset Down/Height offset
+ * @param w_offset Across/Width offset
+ * @param h_tile Down/Height tile size
+ * @param w_tile Across/Width tile size
+ * @param stream CUDA stream for copying
+ * @note Need to use size_t type to pass the parameters to cudaMemcpy2D correctly
+ */
+void GDALImage::loadToDevice(void *dArray, size_t h_offset, size_t w_offset,
+    size_t h_tile, size_t w_tile, cudaStream_t stream)
 {
+
     size_t tileStartOffset = (h_offset*_width + w_offset)*_pixelSize;
 
     char * startPtr = (char *)_memPtr ;
     startPtr += tileStartOffset;
 
-    // @note
-    // We assume down/across directions as rows/cols. Therefore, SLC mmap and device array are both row major.
-    // cuBlas assumes both source and target arrays are column major.
-    // To use cublasSetMatrix, we need to switch w_tile/h_tile for rows/cols
-    // checkCudaErrors(cublasSetMatrixAsync(w_tile, h_tile, sizeof(float2), startPtr, width, dArray, w_tile, stream));
-    if (_useMmap)
-        checkCudaErrors(cudaMemcpy2DAsync(dArray, w_tile*_pixelSize, startPtr, _width*_pixelSize,
-                                      w_tile*_pixelSize, h_tile, cudaMemcpyHostToDevice,stream));
-    else {
+    if (_useMmap) {
+        // direct copy from memory map buffer to device memory
+        checkCudaErrors(cudaMemcpy2DAsync(dArray, // dst
+            w_tile*_pixelSize,                    // dst pitch
+            startPtr,                             // src
+            _width*_pixelSize,                    // src pitch
+            w_tile*_pixelSize,                    // width in Bytes
+            h_tile,                               // height
+            cudaMemcpyHostToDevice,stream));
+    }
+    else { // use a cpu buffer to load image data to gpu
+
         // get the total tile size in bytes
         size_t tileSize = h_tile*w_tile*_pixelSize;
         // if the size is bigger than existing buffer, reallocate
         if (tileSize > _bufferSize) {
-            // maybe we need to make it to fit the pagesize
+            // TODO: fit the pagesize
             _bufferSize = tileSize;
             checkCudaErrors(cudaFree(_memPtr));
             checkCudaErrors(cudaMallocHost((void **)&_memPtr, _bufferSize));
@@ -132,17 +140,18 @@ void GDALImage::loadToDevice(void *dArray, size_t h_offset, size_t w_offset, siz
             _memPtr, // pData
             w_tile*h_tile, 1, // nBufXSize, nBufYSize
             _dataType, //eBufType
-            0, 0, //nPixelSpace, nLineSpace in pData
-            NULL //psExtraArg extra resampling callback
+            0, 0 //nPixelSpace, nLineSpace in pData
             );
-
         if(err != CE_None)
-            throw;
+            throw; // throw if reading error occurs; message reported by GDAL
+
         // copy from buffer to gpu
         checkCudaErrors(cudaMemcpyAsync(dArray, _memPtr, tileSize, cudaMemcpyHostToDevice, stream));
     }
+    // all done
 }
 
+/// destructor
 GDALImage::~GDALImage()
 {
     // free the virtual memory

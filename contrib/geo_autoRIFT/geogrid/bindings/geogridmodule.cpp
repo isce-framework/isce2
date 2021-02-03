@@ -430,6 +430,19 @@ PyObject* setNodataOut(PyObject *self, PyObject *args)
     return Py_BuildValue("i", 0);
 }
 
+PyObject* setUrlFlag(PyObject *self, PyObject *args)
+{
+    uint64_t ptr;
+    int urlflag;
+    if (!PyArg_ParseTuple(args, "Ki", &ptr, &urlflag))
+    {
+        return NULL;
+    }
+    
+    ((geoGrid*)(ptr))->urlflag = urlflag;
+    return Py_BuildValue("i", 0);
+}
+
 PyObject* setOrbit(PyObject *self, PyObject *args)
 {
     uint64_t ptr, orb;

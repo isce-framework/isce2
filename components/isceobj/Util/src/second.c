@@ -1,7 +1,8 @@
-#include	<unistd.h>
-#include	<sys/time.h>
-#include	<sys/times.h>
-#include	<sys/resource.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <sys/resource.h>
+#include <stdio.h>
 
 #if defined(NEEDS_F77_TRANSLATION)
 
@@ -58,7 +59,7 @@
     return (0.0);							\
   }									\
   return ((double) s_val.tv_sec + 0.000001*s_val.tv_usec - t0);
-  
+
 /* Returns the current value of the wall clock timer.
  * Fortran or C entry point.
  */
@@ -68,7 +69,7 @@ wc_second()
 {
   WC_GUTS;
 }
-  
+
 #define	US_GUTS								\
 									\
   static int	first = 1;						\
@@ -99,7 +100,7 @@ us_second()
 }
 
 /* Returns the current value of the wall clock timer, or
- * user+system timer depending on the valueof tmode: 
+ * user+system timer depending on the valueof tmode:
  * less than zero the wall-clock timer, and greater than zero
  * user+system time.
  * If/when called from C, tmode must be passed by reference.

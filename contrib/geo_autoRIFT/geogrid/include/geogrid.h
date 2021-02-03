@@ -69,6 +69,7 @@ struct geoGrid
     int nPixels;
     int lookSide;
     int nodata_out;
+    int urlflag;
     double incidenceAngle;
 
     //Output file names

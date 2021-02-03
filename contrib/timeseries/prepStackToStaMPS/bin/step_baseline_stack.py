@@ -56,7 +56,7 @@ def baselinegrid(inps):
     """ 
         Basline files are given as grids
     """
-    import gdal 
+    from osgeo import gdal
 
     # parsing the command line inputs
     baseline_dir = inps.baseline_dir

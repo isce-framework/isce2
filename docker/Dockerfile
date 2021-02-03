@@ -16,7 +16,7 @@ RUN set -ex \
  && yum install -y \
       make ruby-devel rpm-build rubygems \
  && gem install ffi -v 1.12.2 \
- && gem install --no-ri --no-rdoc fpm
+ && gem install --no-ri --no-rdoc fpm -v 1.11.0
 
 # install isce requirements
 RUN set -ex \

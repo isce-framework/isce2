@@ -9,7 +9,7 @@ import isce
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np
-import gdal
+from osgeo import gdal
 import shelve
 
 from scipy import ndimage

@@ -16,7 +16,7 @@ import time
 #import matplotlib.pyplot as plt
 from contrib.splitSpectrum import SplitRangeSpectrum as splitSpectrum
 from isceobj.Constants import SPEED_OF_LIGHT
-import gdal
+from osgeo import gdal
 
 
 def createParser():

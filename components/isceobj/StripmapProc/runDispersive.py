@@ -3,7 +3,8 @@
 #
 #
 import logging
-import os,gdal
+import os
+from osgeo import gdal
 import isceobj
 from isceobj.Constants import SPEED_OF_LIGHT
 import numpy as np

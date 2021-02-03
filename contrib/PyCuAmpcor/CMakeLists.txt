@@ -1,7 +1,6 @@
 # Early exit if prereqs not available
 if(NOT TARGET GDAL::GDAL
 OR NOT TARGET Python::NumPy
-OR NOT TARGET CUDA::cublas
 OR NOT TARGET CUDA::cufft
    )
     return()
@@ -14,7 +13,6 @@ cython_add_module(PyCuAmpcor
     src/PyCuAmpcor.pyx
     src/GDALImage.cu
     src/SConscript
-    src/SlcImage.cu
     src/cuAmpcorChunk.cu
     src/cuAmpcorController.cu
     src/cuAmpcorParameter.cu
@@ -35,7 +33,6 @@ target_include_directories(PyCuAmpcor PRIVATE
     )
 target_link_libraries(PyCuAmpcor PRIVATE
     CUDA::cufft
-    CUDA::cublas
     GDAL::GDAL
     Python::NumPy
     )

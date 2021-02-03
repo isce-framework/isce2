@@ -17,3 +17,8 @@ target_link_libraries(GPUgeo2rdr PRIVATE
 if(TARGET OpenMP::OpenMP_CXX)
     target_link_libraries(GPUgeo2rdr PRIVATE OpenMP::OpenMP_CXX)
 endif()
+
+InstallSameDir(
+    GPUgeo2rdr
+    __init__.py
+    )
