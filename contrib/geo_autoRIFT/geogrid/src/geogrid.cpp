@@ -47,6 +47,14 @@ void geoGrid::geogrid()
 
     //For now print inputs that were obtained
     
+    if (urlflag == 1){
+        std::cout << "\nReading input images into memory directly from URL's\n";
+    }
+    else
+    {
+        std::cout << "\nReading input images locally from files\n";
+    }
+    
     std::cout << "\nRadar parameters: \n";
     std::cout << "Range: " << startingRange << "  " << dr << "\n";
     std::cout << "Azimuth: " << sensingStart << "  " << prf << "\n";
@@ -144,7 +152,23 @@ void geoGrid::geogrid()
     GDALDataset* ssmDS = NULL;
 
     double geoTrans[6];
-
+    
+    std::string url ("/vsicurl/");
+    if (urlflag == 1)
+    {
+        demname = url + demname;
+        dhdxname = url + dhdxname;
+        dhdyname = url + dhdyname;
+        vxname = url + vxname;
+        vyname = url + vyname;
+        srxname = url + srxname;
+        sryname = url + sryname;
+        csminxname = url + csminxname;
+        csminyname = url + csminyname;
+        csmaxxname = url + csmaxxname;
+        csmaxyname = url + csmaxyname;
+        ssmname = url + ssmname;
+    }
     demDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(demname.c_str(), GA_ReadOnly));
     if (dhdxname != "")
     {

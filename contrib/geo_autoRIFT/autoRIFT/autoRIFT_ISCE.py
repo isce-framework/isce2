@@ -186,6 +186,13 @@ DATA_TYPE = Component.Parameter('DataType',
          mandatory=False,
          doc = 'Input data type: 0 -> uint8, 1 -> float32')
 
+MULTI_THREAD = Component.Parameter('MultiThread',
+         public_name = 'MULTI_THREAD',
+         default = 0,
+         type = int,
+         mandatory=False,
+         doc = 'Number of Threads; default specified by 0 uses single core and surpasses the multithreading routine')
+
 
 try:
     # Try Autorift within ISCE first
@@ -223,7 +230,8 @@ class autoRIFT_ISCE(autoRIFT, Component):
                       BUFF_DISTANCE_C,
                       COARSE_COR_CUTOFF,
                       OVER_SAMPLE_RATIO,
-                      DATA_TYPE)
+                      DATA_TYPE,
+                      MULTI_THREAD)
     
     
     

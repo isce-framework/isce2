@@ -53,6 +53,7 @@ extern "C"
         PyObject * setOrbit(PyObject *, PyObject *);
         PyObject * setLookSide(PyObject *, PyObject *);
         PyObject * setNodataOut(PyObject *, PyObject *);
+        PyObject * setUrlFlag(PyObject *, PyObject *);
 
         PyObject * setWindowLocationsFilename(PyObject *, PyObject *);
         PyObject * setWindowOffsetsFilename(PyObject *, PyObject *);
@@ -91,6 +92,7 @@ static PyMethodDef geogrid_methods[] =
         {"setOrbit_Py", setOrbit, METH_VARARGS, " "},
         {"setLookSide_Py", setLookSide, METH_VARARGS, " "},
         {"setNodataOut_Py", setNodataOut, METH_VARARGS, " "},
+        {"setUrlFlag_Py", setUrlFlag, METH_VARARGS, " "},
         {"setXLimits_Py", setXLimits, METH_VARARGS, " "},
         {"setYLimits_Py", setYLimits, METH_VARARGS, " "},
         {"setWindowLocationsFilename_Py", setWindowLocationsFilename, METH_VARARGS, " "},
