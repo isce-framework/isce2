@@ -261,16 +261,16 @@ class config(object):
         #self.f.write('wh : 128\n')
 
     def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
-      # dispassionate list of commands for single process
-      if numProcess == 1:
-        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
-      # aggregate background commands between wait blocks for speed gains
-      elif numProcess > 1:
-        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-        if line_cnt == numProcess:
-          self.runf.write('wait\n\n')
-          line_cnt = 0
-      return line_cnt
+        # dispassionate list of commands for single process
+        if numProcess == 1:
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+        # aggregate background commands between wait blocks for speed gains
+        elif numProcess > 1:
+            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+            if line_cnt == numProcess:
+                self.runf.write('wait\n\n')
+                line_cnt = 0
+        return line_cnt
 
     def finalize(self):
         self.f.close()
