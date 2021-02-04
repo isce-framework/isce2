@@ -14,18 +14,6 @@ maxNodes = 72
 
 
 
-def writeBash(self, configName, line_cnt):
-  # dispassionate list of commands for single process
-  if self.numProcess == 1:
-    self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
-  # aggregate background commands between wait blocks for speed gains
-  elif self.numProcess > 1:
-    self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-    if line_cnt == self.numProcess:
-      self.runf.write('wait\n\n')
-      line_cnt = 0
-  return line_cnt
-
 class config(object):
     """
        A class representing the config file
@@ -272,6 +260,18 @@ class config(object):
         #self.f.write('ww : 256\n')
         #self.f.write('wh : 128\n')
 
+    def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
+      # dispassionate list of commands for single process
+      if numProcess == 1:
+        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+      # aggregate background commands between wait blocks for speed gains
+      elif numProcess > 1:
+        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
+        if line_cnt == numProcess:
+          self.runf.write('wait\n\n')
+          line_cnt = 0
+      return line_cnt
+
     def finalize(self):
         self.f.close()
 
@@ -300,6 +300,7 @@ class run(object):
         swath_path = self.work_dir
         os.makedirs(self.config_path, exist_ok=True)
 
+        line_cnt = 0
         for slcdate in acquisitionDates:
             configName = os.path.join(self.config_path,'config_unpack_'+slcdate)
             configObj = config(configName)
@@ -314,8 +315,10 @@ class run(object):
             configObj.Sentinel1_TOPS('[Function-1]')
             configObj.topo('[Function-2]')
             configObj.finalize()
+            
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
 
     def unpackStackReferenceSLC(self, safe_dict):
         swath_path = self.work_dir
@@ -334,11 +337,14 @@ class run(object):
         configObj.Sentinel1_TOPS('[Function-1]')
         configObj.topo('[Function-2]')
         configObj.finalize()
+
+        line_cnt = 1
+        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
         del configObj
-        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
 
     def unpackSecondarysSLC(self,  stackReferenceDate, secondaryList, safe_dict):
 
+        line_cnt = 0
         for secondary in secondaryList:
             configName = os.path.join(self.config_path,'config_secondary_'+secondary)
             outdir = os.path.join(self.work_dir,'secondarys/'+secondary)
@@ -351,11 +357,14 @@ class run(object):
             configObj.outDir = outdir
             configObj.Sentinel1_TOPS('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
 
     def averageBaseline(self, stackReferenceDate, secondaryList):
 
+        line_cnt = 0
         for secondary in secondaryList:
             configName = os.path.join(self.config_path,'config_baseline_'+secondary)
             configObj = config(configName)
@@ -365,10 +374,14 @@ class run(object):
             configObj.baselineFile = os.path.join(self.work_dir,'baselines/' + stackReferenceDate +'_' + secondary + '/' + stackReferenceDate +'_'+ secondary  + '.txt')
             configObj.computeAverageBaseline('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
 
     def gridBaseline(self, stackReferenceDate, secondaryList):
+
+        line_cnt = 0
         for secondary in secondaryList:
             configName = os.path.join(self.config_path,'config_baselinegrid_'+secondary)
             configObj = config(configName)
@@ -378,8 +391,10 @@ class run(object):
             configObj.baselineFile = os.path.join(self.work_dir, 'merged/baselines/' + secondary + '/' + secondary )
             configObj.computeGridBaseline('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
         # also add the reference in itself to be consistent with the SLC dir
         configName = os.path.join(self.config_path,'config_baselinegrid_reference')
         configObj = config(configName)
@@ -389,8 +404,10 @@ class run(object):
         configObj.baselineFile = os.path.join(self.work_dir, 'merged/baselines/' + stackReferenceDate + '/' + stackReferenceDate)
         configObj.computeGridBaseline('[Function-1]')
         configObj.finalize()
+
+        line_cnt = 1
+        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
         del configObj
-        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName+'\n')
 
 
     def extractOverlaps(self):
@@ -400,6 +417,7 @@ class run(object):
 
     def geo2rdr_offset(self, secondaryList, fullBurst='False'):
 
+        line_cnt = 0
         for secondary in secondaryList:
             reference = self.reference_date
             if fullBurst == 'True':
@@ -421,10 +439,14 @@ class run(object):
                 configObj.overlapTrueOrFalse = 'True'
             configObj.geo2rdr('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
 
     def resample_with_carrier(self, secondaryList, fullBurst='False'):
+
+        line_cnt = 0
         for secondary in secondaryList:
             reference = self.reference_date
             if fullBurst == 'True':
@@ -447,13 +469,17 @@ class run(object):
                 configObj.overlapTrueOrFalse = 'True'
             configObj.resamp_withCarrier('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
 
     def pairs_misregistration(self, dateList, safe_dict):
         # generating overlap interferograms, estimate azimuth misregistration for each pair:
         pairs = []
         num_overlap_connections = int(self.num_overlap_connections) + 1
+
         for i in range(len(dateList)-1):
             for j in range(i+1,i+num_overlap_connections):
                 if j<len(dateList):
@@ -464,11 +490,11 @@ class run(object):
             safe_dict[date].slc_overlap = os.path.join(self.work_dir , 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
         safe_dict[self.reference_date].slc_overlap = os.path.join(self.work_dir , 'reference')
+
         line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
-            line_cnt += 1
             interferogramDir = os.path.join(self.work_dir, 'coarse_interferograms/'+reference+'_'+secondary)
             configName = os.path.join(self.config_path ,'config_misreg_'+reference+'_'+secondary)
             configObj = config(configName)
@@ -495,9 +521,10 @@ class run(object):
             configObj.rangeMisreg('[Function-4]')
             configObj.finalize()
 
-            line_cnt = writeBash(self, configName, line_cnt)
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
             ########################
-
 
 
     def timeseries_misregistration(self):
@@ -515,9 +542,9 @@ class run(object):
         for date in dateList:
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
+
         line_cnt = 0
         for pair in pairs:
-            line_cnt += 1
             reference = pair[0]
             secondary = pair[1]
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
@@ -532,19 +559,22 @@ class run(object):
             configObj.overlapTrueOrFalse = 'False'
             configObj.generateIgram('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
             del configObj
 
-            line_cnt = writeBash(self, configName, line_cnt)
+
 
     def igram_mergeBurst(self, dateList, safe_dict, pairs):
         for date in dateList:
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
+
         line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
-            line_cnt += 1
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
             configName = os.path.join(self.config_path ,'config_merge_igram_' + reference + '_' + secondary)
@@ -563,12 +593,14 @@ class run(object):
             configObj.stack = os.path.join(self.work_dir, 'stack')
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
-            del configObj
 
-            line_cnt = writeBash(self, configName, line_cnt)
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
 
+        line_cnt = 0
         for secondary in secondaryList:
             configName = os.path.join(self.config_path,'config_merge_' + secondary)
             configObj = config(configName)
@@ -586,7 +618,11 @@ class run(object):
             configObj.stack = os.path.join(self.work_dir, 'stack')
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
 
     def mergeReference(self, stackReference, virtual='True'):
 
@@ -605,7 +641,10 @@ class run(object):
         configObj.multiLook = 'False'
         configObj.mergeBurst('[Function-1]')
         configObj.finalize()
-        self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
+        line_cnt = 1
+        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        del configObj
 
         geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
         multiookToolDict = {'lat*rdr': 'gdal', 'lon*rdr': 'gdal', 'los*rdr': 'gdal' , 'hgt*rdr':"gdal", 'shadowMask*rdr':"isce",'incLocal*rdr':"gdal"}
@@ -630,10 +669,14 @@ class run(object):
             configObj.stack = os.path.join(self.work_dir, 'stack')
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
 
     def mergeSLC(self, aquisitionDates, virtual='True'):
 
+        line_cnt  = 0
         for slcdate in aquisitionDates:
             configName = os.path.join(self.config_path,'config_merge_' + slcdate)
             configObj = config(configName)
@@ -650,9 +693,14 @@ class run(object):
             configObj.stack = os.path.join(self.work_dir, 'stack')
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+
 
             geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
+            
+            g_line_cnt = 0
             for i in range(len(geometryList)):
                 pattern = geometryList[i]
                 configName = os.path.join(self.config_path,'config_merge_' + slcdate + '_' +pattern.split('*')[0])
@@ -670,10 +718,14 @@ class run(object):
                 configObj.stack = os.path.join(self.work_dir, 'stack')
                 configObj.mergeBurst('[Function-1]')
                 configObj.finalize()
-                self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+                
+                g_line_cnt += 1
+                g_line_cnt = configObj.write_wrapper_config2run_file(configName, g_line_cnt)
+                del configObj
 
     def filter_coherence(self, pairs):
 
+        line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
@@ -693,12 +745,16 @@ class run(object):
             #configObj.filtStrength = str(self.filtStrength)
             configObj.FilterAndCoherence('[Function-1]')
             configObj.finalize()
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
+
 
     def unwrap(self, pairs):
+
         line_cnt = 0
         for pair in pairs:
-            line_cnt += 1
             reference = pair[0]
             secondary = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
@@ -716,12 +772,13 @@ class run(object):
             configObj.unwrap('[Function-1]')
             configObj.finalize()
 
-            line_cnt = writeBash(self, configName, line_cnt)
-
-
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
 
     def denseOffsets(self, pairs):
 
+        line_cnt = 0
         for pair in pairs:
             reference = pair[0]
             secondary = pair[1]
@@ -734,8 +791,10 @@ class run(object):
             configObj.output = os.path.join(self.work_dir , 'merged/dense_offsets/'+reference+'_'+secondary + '/'  + reference+'_'+secondary)
             configObj.denseOffset('[Function-1]')
             configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
-            self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
 
     def finalize(self):
         self.runf.close()
