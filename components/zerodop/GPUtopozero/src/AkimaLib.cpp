@@ -9,14 +9,13 @@
 
 #include <algorithm>
 #include <vector>
-#include <cmath>
+#include <math.h>
 #include <cstdio>
 #include "AkimaLib.h"
 #include "Constants.h"
 using std::max;
 using std::min;
 using std::vector;
-using std::isnan;
 
 bool AkimaLib::aki_almostEqual(double x, double y) {
     bool ret = (abs(x - y) <= AKI_EPS) ? true : false; // Compressed version is a little cleaner
