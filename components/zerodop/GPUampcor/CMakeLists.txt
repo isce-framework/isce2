@@ -11,8 +11,11 @@ cython_add_module(GPUampcor
     src/AmpcorFFT.cpp
     src/AmpcorMethods.cpp
     )
-target_include_directories(GPUampcor PUBLIC
+target_include_directories(GPUampcor PRIVATE
     include
+    )
+target_compile_definitions(GPUampcor PRIVATE
+    GPU_ACC_ENABLED
     )
 target_link_libraries(GPUampcor PRIVATE
     CUDA::cublas

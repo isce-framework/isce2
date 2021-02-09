@@ -8,8 +8,11 @@ cython_add_module(GPUgeo2rdr
     src/Orbit.cpp
     src/Poly1d.cpp
     )
-target_include_directories(GPUgeo2rdr PUBLIC
+target_include_directories(GPUgeo2rdr PRIVATE
     include
+    )
+target_compile_definitions(GPUgeo2rdr PRIVATE
+    GPU_ACC_ENABLED
     )
 target_link_libraries(GPUgeo2rdr PRIVATE
     isce2::DataAccessorLib

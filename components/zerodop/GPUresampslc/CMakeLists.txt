@@ -9,6 +9,9 @@ cython_add_module(GPUresampslc
 target_include_directories(GPUresampslc PRIVATE
     include
     )
+target_compile_definitions(GPUresampslc PRIVATE
+    GPU_ACC_ENABLED
+    )
 target_link_libraries(GPUresampslc PRIVATE
     isce2::DataAccessorLib
     OpenMP::OpenMP_CXX

@@ -16,6 +16,9 @@ cython_add_module(GPUtopozero
 target_include_directories(GPUtopozero PRIVATE
     include
     )
+target_compile_definitions(GPUtopozero PRIVATE
+    GPU_ACC_ENABLED
+    )
 target_link_libraries(GPUtopozero PRIVATE
     isce2::DataAccessorLib
     OpenMP::OpenMP_CXX
