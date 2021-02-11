@@ -333,7 +333,6 @@ class run(object):
         configObj.outDir = os.path.join(self.work_dir, 'reference')
         configObj.geom_referenceDir = os.path.join(self.work_dir, 'geom_reference')
         configObj.dem = os.path.join(self.work_dir, configObj.dem)
-        configObj.numProcess = self.numProcess4topo
         configObj.Sentinel1_TOPS('[Function-1]')
         configObj.topo('[Function-2]')
         configObj.finalize()
