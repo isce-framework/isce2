@@ -190,6 +190,10 @@ def cmdLineParse(iargs = None):
     inps.work_dir = os.path.abspath(inps.work_dir)
     inps.dem = os.path.abspath(inps.dem)
 
+    if any(i in iargs for i in ['--num_proc', '--num_process']) and all(
+            i not in iargs for i in ['--num_proc4topo', '--num_process4topo']):
+        inps.numProcess4topo = inps.numProcess
+
     return inps
 
 
@@ -765,4 +769,4 @@ def main(iargs=None):
 if __name__ == "__main__":
 
   # Main engine
-  main()
+  main(sys.argv[1:])
