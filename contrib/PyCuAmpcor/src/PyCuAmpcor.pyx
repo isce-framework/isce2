@@ -259,12 +259,7 @@ cdef class PyCuAmpcor(object):
     @secondaryImageName.setter
     def secondaryImageName(self, str a):
         self.c_cuAmpcor.param.secondaryImageName = <string> a.encode()
-    @property
-    def referenceImageName(self):
-        return self.c_cuAmpcor.param.referenceImageName
-    @referenceImageName.setter
-    def referenceImageName(self, str a):
-        self.c_cuAmpcor.param.referenceImageName = <string> a.encode()
+
     @property
     def referenceImageHeight(self):
         return self.c_cuAmpcor.param.referenceImageHeight

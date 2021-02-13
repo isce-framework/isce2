@@ -41,7 +41,9 @@ void cuAmpcorController::runAmpcor()
     GDALAllRegister();
     // reference and secondary images; use band=1 as default
     // TODO: selecting band
+    std::cout << "Opening reference image " << param->referenceImageName << "...\n";
     GDALImage *referenceImage = new GDALImage(param->referenceImageName, 1, param->mmapSizeInGB);
+    std::cout << "Opening secondary image " << param->secondaryImageName << "...\n";
     GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
 
     cuArrays<float2> *offsetImage, *offsetImageRun;
@@ -100,9 +102,12 @@ void cuAmpcorController::runAmpcor()
         << nChunksDown << " x " << nChunksAcross  << std::endl;
 
     // iterative over chunks down
+    int message_interval = nChunksDown/10;
     for(int i = 0; i<nChunksDown; i++)
     {
-        std::cout << "Processing chunk (" << i <<", x" << ") out of " << nChunksDown << std::endl;
+        if(i%message_interval == 0)
+            std::cout << "Processing chunks (" << i+1 <<", x) - (" << std::min(nChunksDown, i+message_interval )
+                << ", x) out of " << nChunksDown << std::endl;
         // iterate over chunks across
         for(int j=0; j<nChunksAcross; j+=param->nStreams)
         {

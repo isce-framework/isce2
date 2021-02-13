@@ -3,7 +3,7 @@
 
 /**
  * Run ampcor process for a batch of images (a chunk)
- * @param[in] idxDown_  index oIDIVUP(i,j) ((i+j-1)/j)f the chunk along Down/Azimuth direction
+ * @param[in] idxDown_  index of the chunk along Down/Azimuth direction
  * @param[in] idxAcross_ index of the chunk along Across/Range direction
  */
 void cuAmpcorChunk::run(int idxDown_, int idxAcross_)

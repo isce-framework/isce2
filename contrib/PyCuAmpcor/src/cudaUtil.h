@@ -81,7 +81,7 @@ inline int gpuDeviceInit(int devID)
     }
 
     checkCudaErrors(cudaSetDevice(devID));
-    printf("gpuDeviceInit() Using CUDA Device %d ...\n", devID);
+    printf("Using CUDA Device %d ...\n", devID);
 
     return devID;
 }
