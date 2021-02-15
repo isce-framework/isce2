@@ -144,7 +144,7 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
     if inps.bbox:
         i+=1
         runObj = run()
-        runObj.configure(inps, 'run_' + str(i) + "_crop")
+        runObj.configure(inps, 'run_{:02d}_crop'.format(i))
         config_prefix = "config_crop_"
         runObj.crop(acquisitionDates, config_prefix, native=not inps.zerodop, israw=not inps.nofocus)
         runObj.finalize()
@@ -152,41 +152,41 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_reference")
+    runObj.configure(inps, 'run_{:02d}_reference'.format(i))
     config_prefix = "config_reference_"
     runObj.reference_focus_split_geometry(stackReferenceDate, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_focus_split")
+    runObj.configure(inps, 'run_{:02d}_focus_split'.format(i))
     config_prefix = "config_focus_split"
     runObj.secondarys_focus_split(secondaryDates, config_prefix, split=splitFlag, focus=not inps.nofocus, native=not inps.zerodop)
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_geo2rdr_coarseResamp")
+    runObj.configure(inps, 'run_{:02d}_geo2rdr_coarseResamp'.format(i))
     config_prefix = "config_geo2rdr_coarseResamp_"
     runObj.secondarys_geo2rdr_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, native=(not inps.nofocus) or (not inps.zerodop))
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_refineSecondaryTiming")
+    runObj.configure(inps, 'run_{:02d}_refineSecondaryTiming'.format(i))
     config_prefix = 'config_refineSecondaryTiming_'
     runObj.refineSecondaryTiming_Network(pairs, stackReferenceDate, secondaryDates, config_prefix)
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_invertMisreg")
+    runObj.configure(inps, 'run_{:02d}_invertMisreg'.format(i))
     runObj.invertMisregPoly()
     runObj.finalize()
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_fineResamp")
+    runObj.configure(inps, 'run_{:02d}_fineResamp'.format(i))
     config_prefix = 'config_fineResamp_'
     runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
     runObj.finalize()
@@ -194,33 +194,33 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
     if rubberSheet:
        i+=1
        runObj = run()
-       runObj.configure(inps, 'run_' + str(i) + "_denseOffset")
+       runObj.configure(inps, 'run_{:02d}_denseOffset'.format(i))
        config_prefix = 'config_denseOffset_'
        runObj.denseOffsets_Network(pairs, stackReferenceDate, secondaryDates, config_prefix) 
        runObj.finalize()
 
        i+=1
        runObj = run()
-       runObj.configure(inps, 'run_' + str(i) + "_invertDenseOffsets")
+       runObj.configure(inps, 'run_{:02d}_invertDenseOffsets'.format(i))
        runObj.invertDenseOffsets()
        runObj.finalize()
  
        i+=1
        runObj = run()
-       runObj.configure(inps, 'run_' + str(i) + "_resampleOffset")
+       runObj.configure(inps, 'run_{:02d}_resampleOffset'.format(i))
        config_prefix = 'config_resampOffsets_'
        runObj.resampleOffset(secondaryDates, config_prefix)
        runObj.finalize()
 
        i+=1
        runObj = run()
-       runObj.configure(inps, 'run_' + str(i) + "_replaceOffsets")
+       runObj.configure(inps, 'run_{:02d}_replaceOffsets'.format(i))
        runObj.replaceOffsets(secondaryDates)
        runObj.finalize()
 
        i+=1
        runObj = run()
-       runObj.configure(inps, 'run_' + str(i) + "_fineResamp")
+       runObj.configure(inps, 'run_{:02d}_fineResamp'.format(i))
        config_prefix = 'config_fineResamp_'
        runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
        runObj.finalize()
@@ -229,7 +229,7 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
     i+=1
     config_prefix = 'config_baselinegrid_'
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_grid_baseline")
+    runObj.configure(inps, 'run_{:02d}_grid_baseline'.format(i))
     runObj.gridBaseline(stackReferenceDate, secondaryDates,config_prefix)
     runObj.finalize()
 
@@ -244,7 +244,7 @@ def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDate
     
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_igram")
+    runObj.configure(inps, 'run_{:02d}_igram'.format(i))
     config_prefix = 'config_igram_'
     low_or_high = "/"
     runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)    
@@ -269,7 +269,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_igram")
+    runObj.configure(inps, 'run_{:02d}_igram'.format(i))
     config_prefix = 'config_igram_'
     low_or_high = "/"
     runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
@@ -277,7 +277,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_igramLowBand")
+    runObj.configure(inps, 'run_{:02d}_igramLowBand'.format(i))
     config_prefix = 'config_igramLowBand_'
     low_or_high = "/LowBand/"
     runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
@@ -285,7 +285,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_igramHighBand")
+    runObj.configure(inps, 'run_{:02d}_igramHighBand'.format(i))
     config_prefix = 'config_igramHighBand_'
     low_or_high = "/HighBand/"
     runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
@@ -293,7 +293,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
 
     i+=1
     runObj = run()
-    runObj.configure(inps, 'run_' + str(i) + "_iono")
+    runObj.configure(inps, 'run_{:02d}_iono'.format(i))
     config_prefix = 'config_iono_'
     lowBand = '/LowBand/'
     highBand = '/HighBand/'
