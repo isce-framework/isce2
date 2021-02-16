@@ -4,7 +4,9 @@
  *
  */
 
+// my module dependencies
 #include "cuAmpcorUtil.h"
+// for FLT_MAX
 #include <cfloat>
 
 // find the max between two elements
@@ -254,6 +256,7 @@ void cuDetermineSecondaryExtractOffset(cuArrays<int2> *maxLoc, cuArrays<int2> *m
     int blockspergrid=IDIVUP(maxLoc->size, threadsperblock);
     cudaKernel_determineSecondaryExtractOffset<<<blockspergrid, threadsperblock, 0, stream>>>
         (maxLoc->devData, maxLocShift->devData, maxLoc->size, xOldRange, yOldRange, xNewRange, yNewRange);
+    getLastCudaError("cuDetermineSecondaryExtractOffset");
 }
 
 // end of file

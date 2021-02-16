@@ -170,11 +170,15 @@ def runDenseOffsetsGPU(self):
     m = isceobj.createSlcImage()
     m.load(reference + '.xml')
     m.setAccessMode('READ')
+    # re-create vrt in terms of merged full slc
+    m.renderHdr()
 
     ### Load the secondary object
     s = isceobj.createSlcImage()
     s.load(secondary + '.xml')
     s.setAccessMode('READ')
+    # re-create vrt in terms of merged full slc
+    s.renderHdr()
 
     # get the dimension
     width = m.getWidth()
@@ -243,6 +247,9 @@ def runDenseOffsetsGPU(self):
     objOffset.grossOffsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile + ".gross")
     objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
     objOffset.covImageName = os.path.join(self._insar.mergedDirname, self._insar.covfile)
+
+    # merge gross offset to final offset
+    objOffset.mergeGrossOffset = 1
 
     ### print the settings
     print('\nReference frame: %s' % (mf))

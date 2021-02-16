@@ -129,12 +129,32 @@ void cuAmpcorController::runAmpcor()
     cuArraysCopyExtract(offsetImageRun, offsetImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(snrImageRun, snrImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(covImageRun, covImage, make_int2(0,0), streams[0]);
-    // save outputs to files
-    offsetImage->outputToFile(param->offsetImageName, streams[0]);
+
+    /* save the offsets and gross offsets */
+    // copy the offset to host
+    offsetImage->allocateHost();
+    offsetImage->copyToHost(streams[0]);
+    // construct the gross offset
+    cuArrays<float2> *grossOffsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    grossOffsetImage->allocateHost();
+    for(int i=0; i< param->numberWindows; i++)
+        grossOffsetImage->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
+
+    // check whether to merge gross offset
+    if (param->mergeGrossOffset)
+    {
+        // if merge, add the gross offsets to offset
+        for(int i=0; i< param->numberWindows; i++)
+            offsetImage->hostData[i] += grossOffsetImage->hostData[i];
+    }
+    // output both offset and gross offset
+    offsetImage->outputHostToFile(param->offsetImageName);
+    grossOffsetImage->outputHostToFile(param->grossOffsetImageName);
+    delete grossOffsetImage;
+
+    // save the snr/cov images
     snrImage->outputToFile(param->snrImageName, streams[0]);
     covImage->outputToFile(param->covImageName, streams[0]);
-    // also save the gross offsets
-    outputGrossOffsets();
 
     // Delete arrays.
     delete offsetImage;
@@ -155,19 +175,4 @@ void cuAmpcorController::runAmpcor()
     delete secondaryImage;
 
 }
-
-/**
- * Output gross offset fields
- */
-void cuAmpcorController::outputGrossOffsets()
-{
-    cuArrays<float2> *grossOffsets = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
-    grossOffsets->allocateHost();
-
-    for(int i=0; i< param->numberWindows; i++)
-        grossOffsets->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
-    grossOffsets->outputHostToFile(param->grossOffsetImageName);
-    delete grossOffsets;
-}
-
 // end of file
