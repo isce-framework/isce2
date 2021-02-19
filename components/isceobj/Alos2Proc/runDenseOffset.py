@@ -70,7 +70,7 @@ def runDenseOffset(self):
 
         #get water body mask
         wbd0=np.memmap('wbd.rdr', dtype=np.int8, mode='r', shape=(length0, width0))
-        wbd0=wbd0[0+self._insar.offsetImageTopoffset:length0:self.offsetSkipHeight, 
+        wbd0=wbd0[0+self._insar.offsetImageTopoffset:length0:self.offsetSkipHeight,
                    0+self._insar.offsetImageLeftoffset:width0:self.offsetSkipWidth]
         wbd = np.zeros((length+100, width+100), dtype=np.int8)
         wbd[0:wbd0.shape[0], 0:wbd0.shape[1]]=wbd0
@@ -240,15 +240,11 @@ def runDenseOffsetGPU(self):
     print('dense offset skip width: %d' % (self.offsetSkipWidth))
     print('dense offset skip hight: %d' % (self.offsetSkipHeight))
     print('dense offset covariance surface oversample factor: %d' % (self.offsetCovarianceOversamplingFactor))
-    print('dense offset covariance surface oversample window size: %d\n' % (self.offsetCovarianceOversamplingWindowsize))
 
 
     objOffset = PyCuAmpcor.PyCuAmpcor()
     objOffset.algorithm = 0
-    objOffset.deviceID = -1
-    objOffset.nStreams = 2
-    #original ampcor program in roi_pac uses phase gradient to deramp
-    objOffset.derampMethod = 2
+    objOffset.derampMethod = 1 # 1=linear phase ramp, 0=take mag, 2=skip
     objOffset.referenceImageName = self._insar.referenceSlc
     objOffset.referenceImageHeight = m.length
     objOffset.referenceImageWidth = m.width
@@ -256,56 +252,79 @@ def runDenseOffsetGPU(self):
     objOffset.secondaryImageHeight = s.length
     objOffset.secondaryImageWidth = s.width
     objOffset.offsetImageName = self._insar.denseOffset
+    objOffset.grossOffsetImageName = self._insar.denseOffset + ".gross"
     objOffset.snrImageName = self._insar.denseOffsetSnr
+    objOffset.covImageName = self._insar.denseOffsetCov
 
     objOffset.windowSizeWidth = self.offsetWindowWidth
     objOffset.windowSizeHeight = self.offsetWindowHeight
-    #objOffset.halfSearchRangeAcross = int(self.offsetSearchWindowWidth / 2 + 0.5)
-    #objOffset.halfSearchRangeDown = int(self.offsetSearchWindowHeight / 2 + 0.5)
+
     objOffset.halfSearchRangeAcross = self.offsetSearchWindowWidth
     objOffset.halfSearchRangeDown = self.offsetSearchWindowHeight
+
     objOffset.skipSampleDown = self.offsetSkipHeight
     objOffset.skipSampleAcross = self.offsetSkipWidth
+
     #Oversampling method for correlation surface(0=fft,1=sinc)
-    objOffset.corrSufaceOverSamplingMethod = 0
+    objOffset.corrSurfaceOverSamplingMethod = 0
     objOffset.corrSurfaceOverSamplingFactor = self.offsetCovarianceOversamplingFactor
-    objOffset.corrSurfaceZoomInWindow = self.offsetCovarianceOversamplingWindowsize
+
+    # set gross offset
     objOffset.grossOffsetAcrossStatic = 0
     objOffset.grossOffsetDownStatic = 0
+    # set the margin
+    margin = 0
 
-    objOffset.referenceStartPixelDownStatic = self.offsetWindowHeight//2
-    objOffset.referenceStartPixelAcrossStatic = self.offsetWindowWidth//2
+    # adjust the margin
+    margin = max(margin, abs(objOffset.grossOffsetAcrossStatic), abs(objOffset.grossOffsetDownStatic))
 
-    objOffset.numberWindowDown = (m.length - 2*self.offsetSearchWindowHeight - self.offsetWindowHeight) // self.offsetSkipHeight
-    objOffset.numberWindowAcross = (m.width - 2*self.offsetSearchWindowWidth - self.offsetWindowWidth) // self.offsetSkipWidth
+    # set the starting pixel of the first reference window
+    objOffset.referenceStartPixelDownStatic = margin + self.offsetSearchWindowHeight
+    objOffset.referenceStartPixelAcrossStatic = margin + self.offsetSearchWindowWidth
 
-    # generic control
-    objOffset.numberWindowDownInChunk = 8
-    objOffset.numberWindowAcrossInChunk = 8
+    # find out the total number of windows
+    objOffset.numberWindowDown = (m.length - 2*margin - 2*self.offsetSearchWindowHeight - self.offsetWindowHeight) // self.offsetSkipHeight
+    objOffset.numberWindowAcross = (m.width - 2*margin - 2*self.offsetSearchWindowWidth - self.offsetWindowWidth) // self.offsetSkipWidth
+
+    # gpu job control
+    objOffset.deviceID = 0
+    objOffset.nStreams = 2
+    objOffset.numberWindowDownInChunk = 1
+    objOffset.numberWindowAcrossInChunk = 64
     objOffset.mmapSize = 16
 
+    # pass/adjust the parameters
     objOffset.setupParams()
-    objOffset.setConstantGrossOffset(0, 0)
+    # set up the starting pixels for each window, based on the gross offset
+    objOffset.setConstantGrossOffset(objOffset.grossOffsetAcrossStatic, objOffset.grossOffsetDownStatic)
+    # check whether all pixels are in image range (optional)
     objOffset.checkPixelInImageRange()
+    print('\n======================================')
+    print('Running PyCuAmpcor...')
+    print('======================================\n')
     objOffset.runAmpcor()
 
     ### Store params for later
-    self._insar.offsetImageTopoffset = objOffset.halfSearchRangeDown
-    self._insar.offsetImageLeftoffset = objOffset.halfSearchRangeAcross
+    # location of the center of the first reference window
+    self._insar.offsetImageTopoffset = objOffset.referenceStartPixelDownStatic + (objOffset.windowSizeHeight-1)//2
+    self._insar.offsetImageLeftoffset = objOffset.referenceStartPixelAcrossStatic +(objOffset.windowSizeWidth-1)//2
 
-    
+    # offset image dimension,  the number of windows
     width = objOffset.numberWindowAcross
     length = objOffset.numberWindowDown
-    offsetBIP = np.fromfile(objOffset.offsetImageName.decode('utf-8'), dtype=np.float32).reshape(length, width*2)
+
+    # convert the offset image from BIP to BIL
+    offsetBIP = np.fromfile(objOffset.offsetImageName, dtype=np.float32).reshape(length, width*2)
     offsetBIL = np.zeros((length*2, width), dtype=np.float32)
     offsetBIL[0:length*2:2, :] = offsetBIP[:, 1:width*2:2]
     offsetBIL[1:length*2:2, :] = offsetBIP[:, 0:width*2:2]
-    os.remove(objOffset.offsetImageName.decode('utf-8'))
-    offsetBIL.astype(np.float32).tofile(objOffset.offsetImageName.decode('utf-8'))
+    os.remove(objOffset.offsetImageName)
+    offsetBIL.astype(np.float32).tofile(objOffset.offsetImageName)
 
+    # generate offset image description files
     outImg = isceobj.createImage()
     outImg.setDataType('FLOAT')
-    outImg.setFilename(objOffset.offsetImageName.decode('utf-8'))
+    outImg.setFilename(objOffset.offsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIL'
     outImg.setWidth(objOffset.numberWindowAcross)
@@ -314,8 +333,11 @@ def runDenseOffsetGPU(self):
     outImg.setAccessMode('read')
     outImg.renderHdr()
 
+    # gross offset image is not needed, since all zeros
+
+    # generate snr image description files
     snrImg = isceobj.createImage()
-    snrImg.setFilename( objOffset.snrImageName.decode('utf8'))
+    snrImg.setFilename( objOffset.snrImageName)
     snrImg.setDataType('FLOAT')
     snrImg.setBands(1)
     snrImg.setWidth(objOffset.numberWindowAcross)
@@ -323,4 +345,20 @@ def runDenseOffsetGPU(self):
     snrImg.setAccessMode('read')
     snrImg.renderHdr()
 
+    # generate cov image description files
+    # covariance of azimuth/range offsets.
+    # 1st band: cov(az, az), 2nd band: cov(rg, rg), 3rd band: cov(az, rg)
+    covImg = isceobj.createImage()
+    covImg.setFilename(objOffset.covImageName)
+    covImg.setDataType('FLOAT')
+    covImg.setBands(3)
+    covImg.scheme = 'BIP'
+    covImg.setWidth(objOffset.numberWindowAcross)
+    covImg.setLength(objOffset.numberWindowDown)
+    outImg.addDescription('covariance of azimuth/range offsets')
+    covImg.setAccessMode('read')
+    covImg.renderHdr()
+
     return (objOffset.numberWindowAcross, objOffset.numberWindowDown)
+
+# end of file

@@ -87,6 +87,8 @@ cdef extern from "cuAmpcorParameter.h":
         int *grossOffsetAcross              ## Gross offsets between reference and secondary windows (across)
         int grossOffsetDown0                ## constant gross offset (down)
         int grossOffsetAcross0              ## constant gross offset (across)
+        int mergeGrossOffset                ## whether to merge gross offset to final offset
+
         int referenceStartPixelDown0        ## the first pixel of reference image (down), be adjusted with margins and gross offset
         int referenceStartPixelAcross0      ## the first pixel of reference image (across)
         int *referenceChunkStartPixelDown   ## array of starting pixels for all reference chunks (down)
@@ -259,12 +261,7 @@ cdef class PyCuAmpcor(object):
     @secondaryImageName.setter
     def secondaryImageName(self, str a):
         self.c_cuAmpcor.param.secondaryImageName = <string> a.encode()
-    @property
-    def referenceImageName(self):
-        return self.c_cuAmpcor.param.referenceImageName
-    @referenceImageName.setter
-    def referenceImageName(self, str a):
-        self.c_cuAmpcor.param.referenceImageName = <string> a.encode()
+
     @property
     def referenceImageHeight(self):
         return self.c_cuAmpcor.param.referenceImageHeight
@@ -341,6 +338,13 @@ cdef class PyCuAmpcor(object):
     @offsetImageName.setter
     def offsetImageName(self, str a):
         self.c_cuAmpcor.param.offsetImageName = <string> a.encode()
+
+    @property
+    def mergeGrossOffset(self):
+        return self.c_cuAmpcor.param.mergeGrossOffset
+    @mergeGrossOffset.setter
+    def mergeGrossOffset(self, int a):
+        self.c_cuAmpcor.param.mergeGrossOffset = a
 
     @property
     def snrImageName(self):

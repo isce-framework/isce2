@@ -89,6 +89,8 @@ def createParser():
                        help='Gross range offset (default: %(default)s).')
     gross.add_argument('--gf', '--gross-file', type=str, dest='gross_offset_file',
                        help='Varying gross offset input file')
+    gross.add_argument('--mg', '--merge-gross-offset', type=int, dest='merge_gross_offset', default=0,
+                       help='Whether to merge gross offset to the output offset image (default: %(default)s).')
 
     corr = parser.add_argument_group('Correlation surface')
     corr.add_argument('--corr-stat-size', type=int, dest='corr_stat_win_size', default=21,
@@ -104,7 +106,7 @@ def createParser():
     # gpu settings
     proc = parser.add_argument_group('Processing parameters')
     proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=0,
-                        help='GPU ID (default: %(default)).')
+                        help='GPU ID (default: %(default)s).')
     proc.add_argument('--nstreams', dest='nstreams', type=int, default=2,
                         help='Number of cuda streams (default: %(default)s).')
     proc.add_argument('--usemmap', dest='usemmap', type=int, default=1,
@@ -237,6 +239,9 @@ def estimateOffsetField(reference, secondary, inps=None):
     print("gross offsetfield: ",objOffset.grossOffsetImageName)
     print("snr: ",objOffset.snrImageName)
     print("cov: ",objOffset.covImageName)
+
+    # whether to include the gross offset in offsetImage
+    objOffset.mergeGrossOffset = inps.merge_gross_offset
 
     offsetImageName = objOffset.offsetImageName
     grossOffsetImageName = objOffset.grossOffsetImageName

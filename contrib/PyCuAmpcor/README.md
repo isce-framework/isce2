@@ -91,7 +91,7 @@ mm=0   # margin to be neglected
 gross=0  # whether to use a varying gross offset
 azshift=0 # constant gross offset along height/azimuth 
 rgshift=0 # constant gross offset along width/range
-deramp=0 # 0 for mag (TOPS), 1 for complex  
+deramp=0 # 0 for mag (TOPS), 1 for complex linear ramp, 2 for complex no deramping  
 oo=32  # correlation surface oversampling factor 
 outprefix=./merged/20151120_20151214/offset  # output prefix
 outsuffix=_ww64_wh64   # output suffix
@@ -368,8 +368,7 @@ RIOPAC extracts the secondary window centering at the correlation surface peak. 
 | PyCuAmpcor          | CUDA variable       | ampcor.F equivalent   | Notes                     |
 | :---                | :---                | :----                 | :---                      |
 | rawDataOversamplingFactor | rawDataOversamplingFactor | i_ovs=2   | the oversampling factor for reference and secondary windows, use 2 for InSAR SLCs. |
-| derampMethod        | derampMethod        | 1 or no effect on TOPS | 0=mag for TOPS, 1=deramping (default), else=skip deramping.
-
+| derampMethod        | derampMethod        | 1 or no effect on TOPS | Only for complex: 0=take mag (TOPS), 1=linear deramp (default), else=skip deramp.
 
 **Difference to ROIPAC**
 

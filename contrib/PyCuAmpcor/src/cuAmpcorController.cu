@@ -41,7 +41,9 @@ void cuAmpcorController::runAmpcor()
     GDALAllRegister();
     // reference and secondary images; use band=1 as default
     // TODO: selecting band
+    std::cout << "Opening reference image " << param->referenceImageName << "...\n";
     GDALImage *referenceImage = new GDALImage(param->referenceImageName, 1, param->mmapSizeInGB);
+    std::cout << "Opening secondary image " << param->secondaryImageName << "...\n";
     GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
 
     cuArrays<float2> *offsetImage, *offsetImageRun;
@@ -100,9 +102,12 @@ void cuAmpcorController::runAmpcor()
         << nChunksDown << " x " << nChunksAcross  << std::endl;
 
     // iterative over chunks down
+    int message_interval = nChunksDown/10;
     for(int i = 0; i<nChunksDown; i++)
     {
-        std::cout << "Processing chunk (" << i <<", x" << ") out of " << nChunksDown << std::endl;
+        if(i%message_interval == 0)
+            std::cout << "Processing chunks (" << i+1 <<", x) - (" << std::min(nChunksDown, i+message_interval )
+                << ", x) out of " << nChunksDown << std::endl;
         // iterate over chunks across
         for(int j=0; j<nChunksAcross; j+=param->nStreams)
         {
@@ -124,12 +129,32 @@ void cuAmpcorController::runAmpcor()
     cuArraysCopyExtract(offsetImageRun, offsetImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(snrImageRun, snrImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(covImageRun, covImage, make_int2(0,0), streams[0]);
-    // save outputs to files
-    offsetImage->outputToFile(param->offsetImageName, streams[0]);
+
+    /* save the offsets and gross offsets */
+    // copy the offset to host
+    offsetImage->allocateHost();
+    offsetImage->copyToHost(streams[0]);
+    // construct the gross offset
+    cuArrays<float2> *grossOffsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    grossOffsetImage->allocateHost();
+    for(int i=0; i< param->numberWindows; i++)
+        grossOffsetImage->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
+
+    // check whether to merge gross offset
+    if (param->mergeGrossOffset)
+    {
+        // if merge, add the gross offsets to offset
+        for(int i=0; i< param->numberWindows; i++)
+            offsetImage->hostData[i] += grossOffsetImage->hostData[i];
+    }
+    // output both offset and gross offset
+    offsetImage->outputHostToFile(param->offsetImageName);
+    grossOffsetImage->outputHostToFile(param->grossOffsetImageName);
+    delete grossOffsetImage;
+
+    // save the snr/cov images
     snrImage->outputToFile(param->snrImageName, streams[0]);
     covImage->outputToFile(param->covImageName, streams[0]);
-    // also save the gross offsets
-    outputGrossOffsets();
 
     // Delete arrays.
     delete offsetImage;
@@ -150,19 +175,4 @@ void cuAmpcorController::runAmpcor()
     delete secondaryImage;
 
 }
-
-/**
- * Output gross offset fields
- */
-void cuAmpcorController::outputGrossOffsets()
-{
-    cuArrays<float2> *grossOffsets = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
-    grossOffsets->allocateHost();
-
-    for(int i=0; i< param->numberWindows; i++)
-        grossOffsets->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
-    grossOffsets->outputHostToFile(param->grossOffsetImageName);
-    delete grossOffsets;
-}
-
 // end of file
