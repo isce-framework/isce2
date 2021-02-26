@@ -156,11 +156,11 @@ def runDenseOffsetsGPU(self):
     secondary = os.path.join(self._insar.mergedDirname, sf)
 
     ####For this module currently, we need to create an actual file on disk
-
     for infile in [reference,secondary]:
         if os.path.isfile(infile):
             continue
 
+        print('Creating actual file {} ...\n'.format(infile))
         cmd = 'gdal_translate -of ENVI {0}.vrt {0}'.format(infile)
         status = os.system(cmd)
         if status:
@@ -170,21 +170,27 @@ def runDenseOffsetsGPU(self):
     m = isceobj.createSlcImage()
     m.load(reference + '.xml')
     m.setAccessMode('READ')
-#    m.createImage()
+    # re-create vrt in terms of merged full slc
+    m.renderHdr()
 
     ### Load the secondary object
     s = isceobj.createSlcImage()
     s.load(secondary + '.xml')
     s.setAccessMode('READ')
-#    s.createImage()
+    # re-create vrt in terms of merged full slc
+    s.renderHdr()
 
+    # get the dimension
     width = m.getWidth()
     length = m.getLength()
 
+    ### create the GPU processor
     objOffset = PyCuAmpcor.PyCuAmpcor()
+
+    ### Set parameters
+    # cross-correlation method, 0=Frequency domain, 1= Time domain
     objOffset.algorithm = 0
-    objOffset.deviceID = -1
-    objOffset.nStreams = 2
+    # deramping method: 0 to take magnitude (fixed for Tops)
     objOffset.derampMethod = 0
     objOffset.referenceImageName = reference + '.vrt'
     objOffset.referenceImageHeight = length
@@ -193,36 +199,59 @@ def runDenseOffsetsGPU(self):
     objOffset.secondaryImageHeight = length
     objOffset.secondaryImageWidth = width
 
-    objOffset.numberWindowDown = (length-100-self.winhgt)//self.skiphgt
-    objOffset.numberWindowAcross = (width-100-self.winwidth)//self.skipwidth
+    # adjust the margin
+    margin = max(self.margin, abs(self.azshift), abs(self.rgshift))
 
+    # set the start pixel in the reference image
+    objOffset.referenceStartPixelDownStatic = margin + self.srchgt
+    objOffset.referenceStartPixelAcrossStatic = margin + self.srcwidth
+
+    # compute the number of windows
+    objOffset.numberWindowDown = (length-2*margin-2*self.srchgt-self.winhgt)//self.skiphgt
+    objOffset.numberWindowAcross = (width-2*margin-2*self.srcwidth-self.winwidth)//self.skipwidth
+
+    # set the template window size
     objOffset.windowSizeHeight = self.winhgt
     objOffset.windowSizeWidth = self.winwidth
 
+    # set the (half) search range
     objOffset.halfSearchRangeDown = self.srchgt
     objOffset.halfSearchRangeAcross = self.srcwidth
 
-    objOffset.referenceStartPixelDownStatic = 50
-    objOffset.referenceStartPixelAcrossStatic = 50
-
+    # set the skip distance between windows
     objOffset.skipSampleDown = self.skiphgt
     objOffset.skipSampleAcross = self.skipwidth
 
-    objOffset.corrSufaceOverSamplingMethod = 0
+    # correlation surface oversampling method, # 0=FFT, 1=Sinc
+    objOffset.corrSurfaceOverSamplingMethod = 0
+    # oversampling factor
     objOffset.corrSurfaceOverSamplingFactor = self.oversample
 
-    # generic control
-    objOffset.numberWindowDownInChunk = 10
-    objOffset.numberWindowAcrossInChunk = 10
+    ### gpu control
+    objOffset.deviceID = 0
+    objOffset.nStreams = 2
+    # number of windows in a chunk/batch
+    objOffset.numberWindowDownInChunk = 1
+    objOffset.numberWindowAcrossInChunk = 64
+    # memory map cache size in GB
     objOffset.mmapSize = 16
 
+    # Modify BIL in filename to BIP if needed and store for future use
+    prefix, ext = os.path.splitext(self._insar.offsetfile)
+    if ext == '.bil':
+        ext = '.bip'
+        self._insar.offsetfile = prefix + ext
 
-    objOffset.setupParams()
+    # set the output file name
+    objOffset.offsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile)
+    objOffset.grossOffsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile + ".gross")
+    objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
+    objOffset.covImageName = os.path.join(self._insar.mergedDirname, self._insar.covfile)
 
-    objOffset.setConstantGrossOffset(self.azshift,self.rgshift)
+    # merge gross offset to final offset
+    objOffset.mergeGrossOffset = 1
 
-#    objOffset.numberThreads = 1
-    ### Configure dense Ampcor object
+    ### print the settings
     print('\nReference frame: %s' % (mf))
     print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
@@ -231,41 +260,41 @@ def runDenseOffsetsGPU(self):
     print('Search window size height: %d' % (self.srchgt))
     print('Skip sample across: %d' % (self.skipwidth))
     print('Skip sample down: %d' % (self.skiphgt))
-    print('Field margin: %d' % (self.margin))
+    print('Field margin: %d' % (margin))
     print('Oversampling factor: %d' % (self.oversample))
     print('Gross offset across: %d' % (self.rgshift))
     print('Gross offset down: %d\n' % (self.azshift))
-
-    #Modify BIL in filename to BIP if needed and store for future use
-    prefix, ext = os.path.splitext(self._insar.offsetfile)
-    if ext == '.bil':
-        ext = '.bip'
-        self._insar.offsetfile = prefix + ext
-
-    objOffset.offsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile)
-    objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
-
     print('Output dense offsets file name: %s' % (objOffset.offsetImageName))
+    print('Output gross offsets file name: %s' % (objOffset.grossOffsetImageName))
     print('Output SNR file name: %s' % (objOffset.snrImageName))
+    print('Output COV file name: %s' % (objOffset.covImageName))
+
+    # pass the parameters to C++ programs
+    objOffset.setupParams()
+    # set the (static) gross offset
+    objOffset.setConstantGrossOffset(self.azshift,self.rgshift)
+    # make sure all pixels are in range
+    objOffset.checkPixelInImageRange()
+
     print('\n======================================')
-    print('Running dense ampcor...')
+    print('Running PyCuAmpcor...')
     print('======================================\n')
 
-
-    objOffset.checkPixelInImageRange()
+    # run ampcor
     objOffset.runAmpcor()
 
-    #objOffset.denseampcor(m, s) ### Where the magic happens...
-
     ### Store params for later
+    # offset width x length, also number of windows
     self._insar.offset_width = objOffset.numberWindowAcross
     self._insar.offset_length = objOffset.numberWindowDown
-    self._insar.offset_top = 50
-    self._insar.offset_left = 50
+    # the center of the first reference window
+    self._insar.offset_top = objOffset.referenceStartPixelDownStatic + (objOffset.windowSizeHeight-1)//2
+    self._insar.offset_left = objOffset.referenceStartPixelAcrossStatic + (objOffset.windowSizeWidth-1)//2
 
+    # generate description files for output images
     outImg = isceobj.createImage()
     outImg.setDataType('FLOAT')
-    outImg.setFilename(objOffset.offsetImageName.decode('utf-8'))
+    outImg.setFilename(objOffset.offsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIP'
     outImg.setWidth(objOffset.numberWindowAcross)
@@ -273,8 +302,19 @@ def runDenseOffsetsGPU(self):
     outImg.setAccessMode('read')
     outImg.renderHdr()
 
+    # gross offset
+    goutImg = isceobj.createImage()
+    goutImg.setDataType('FLOAT')
+    goutImg.setFilename(objOffset.grossOffsetImageName)
+    goutImg.setBands(2)
+    goutImg.scheme = 'BIP'
+    goutImg.setWidth(objOffset.numberWindowAcross)
+    goutImg.setLength(objOffset.numberWindowDown)
+    goutImg.setAccessMode('read')
+    goutImg.renderHdr()
+
     snrImg = isceobj.createImage()
-    snrImg.setFilename( objOffset.snrImageName.decode('utf-8'))
+    snrImg.setFilename(objOffset.snrImageName)
     snrImg.setDataType('FLOAT')
     snrImg.setBands(1)
     snrImg.setWidth(objOffset.numberWindowAcross)
@@ -282,6 +322,15 @@ def runDenseOffsetsGPU(self):
     snrImg.setAccessMode('read')
     snrImg.renderHdr()
 
+    covImg = isceobj.createImage()
+    covImg.setFilename(objOffset.covImageName)
+    covImg.setDataType('FLOAT')
+    covImg.setBands(3)
+    covImg.scheme = 'BIP'
+    covImg.setWidth(objOffset.numberWindowAcross)
+    covImg.setLength(objOffset.numberWindowDown)
+    covImg.setAccessMode('read')
+    covImg.renderHdr()
 
 
 if __name__ == '__main__' :

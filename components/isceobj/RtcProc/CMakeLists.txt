@@ -2,6 +2,7 @@ InstallSameDir(
     __init__.py
     Factories.py
     RtcProc.py
+    runGeocode.py
     runLooks.py
     runNormalize.py
     runPreprocessor.py

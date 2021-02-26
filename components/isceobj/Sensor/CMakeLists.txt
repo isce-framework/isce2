@@ -1,7 +1,7 @@
 add_subdirectory(db)
 add_subdirectory(TOPS)
 add_subdirectory(MultiMode)
-
+add_subdirectory(GRD)
 isce2_add_cdll(asa_im_decode src/asa_im_decode/asa_im_decode.c)
 
 set(installfiles

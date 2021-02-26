@@ -76,7 +76,7 @@ class config(object):
         self.f.write('reference : ' + self.outDir + '\n')
         self.f.write('dem : ' + self.dem + '\n')
         self.f.write('geom_referenceDir : ' + self.geom_referenceDir + '\n')
-        self.f.write('numProcess : ' + str(self.numProcess) + '\n')
+        self.f.write('numProcess : ' + str(self.numProcess4topo) + '\n')
         self.f.write('##########################' + '\n')
 
     def geo2rdr(self,function):
@@ -333,7 +333,6 @@ class run(object):
         configObj.outDir = os.path.join(self.work_dir, 'reference')
         configObj.geom_referenceDir = os.path.join(self.work_dir, 'geom_reference')
         configObj.dem = os.path.join(self.work_dir, configObj.dem)
-        configObj.numProcess = self.numProcess
         configObj.Sentinel1_TOPS('[Function-1]')
         configObj.topo('[Function-2]')
         configObj.finalize()

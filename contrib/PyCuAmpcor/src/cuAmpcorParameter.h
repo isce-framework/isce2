@@ -112,6 +112,7 @@ public:
     int grossOffsetAcross0;     ///< gross offset static component (across)
     int *grossOffsetDown;		///< Gross offsets between reference and secondary windows (down)
     int *grossOffsetAcross;     ///< Gross offsets between reference and secondary windows (across)
+    int mergeGrossOffset;       ///< whether to merge gross offsets into the final offsets
 
     int *referenceChunkStartPixelDown;    ///< reference starting pixels for each chunk (down)
     int *referenceChunkStartPixelAcross;  ///< reference starting pixels for each chunk (across)

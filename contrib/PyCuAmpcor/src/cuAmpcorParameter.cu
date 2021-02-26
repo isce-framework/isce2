@@ -59,6 +59,8 @@ cuAmpcorParameter::cuAmpcorParameter()
     useMmap = 1; // use mmap
     mmapSizeInGB = 1;
 
+    mergeGrossOffset = 0; // default to separate gross offset
+
 }
 
 /**

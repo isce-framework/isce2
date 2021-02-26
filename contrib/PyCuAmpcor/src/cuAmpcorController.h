@@ -27,8 +27,6 @@ public:
     ~cuAmpcorController();
     // run interface
     void runAmpcor();
-    // output gross offsets
-    void outputGrossOffsets();
 };
 #endif
 

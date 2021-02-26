@@ -299,6 +299,10 @@ directory containing the SConstruct file):
 
 and then try "scons install" again.
 
+The same also applies for rebuilding with SCons after updating the code, e.g.
+via a `git pull`. If you encounter issues after such a change, it's recommended
+to remove the cache files and build directory and do a fresh rebuild.
+
 ### CMake (experimental)
 Make sure you have the following prerequisites:
 * CMake ≥ 3.13

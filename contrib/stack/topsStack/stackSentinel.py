@@ -166,8 +166,11 @@ def createParser():
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
                         help='Allow App to use GPU when available')
 
-    parser.add_argument('--num-proc', '--num-process', dest='numProcess', type=int, default=1,
-                        help='number of parallel processes (where applicable) (default: %(default)s).')
+    parser.add_argument('--num_proc', '--num_process', dest='numProcess', type=int, default=1,
+                        help='number of tasks running in parallel in each run file (default: %(default)s).')
+
+    parser.add_argument('--num_proc4topo', '--num_process4topo', dest='numProcess4topo', type=int, default=1,
+                        help='number of parallel processes (for topo only) (default: %(default)s).')
 
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
                         help='Unwrapping method (default: %(default)s).')
@@ -186,6 +189,10 @@ def cmdLineParse(iargs = None):
     inps.aux_dirname = os.path.abspath(inps.aux_dirname)
     inps.work_dir = os.path.abspath(inps.work_dir)
     inps.dem = os.path.abspath(inps.dem)
+
+    if any(i in iargs for i in ['--num_proc', '--num_process']) and all(
+            i not in iargs for i in ['--num_proc4topo', '--num_process4topo']):
+        inps.numProcess4topo = inps.numProcess
 
     return inps
 
@@ -762,4 +769,4 @@ def main(iargs=None):
 if __name__ == "__main__":
 
   # Main engine
-  main()
+  main(sys.argv[1:])
