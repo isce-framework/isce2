@@ -35,7 +35,7 @@ import os
 
 Import('envALOS_lib')
 build = envALOS_lib['PRJ_LIB_DIR'] 
-listFiles = ['cfft1d.c','fftpack.c','rng_compress.c','find_fft_length.c','ALOS_ldr_orbit.c','calc_dop.c','hermite_c.c','interpolate_ALOS_orbit.c','read_ALOS_sarleader.c','utils.c']
+listFiles = ['cfft1d.c','fftpack.c','rng_compress.c','find_fft_length.c','ALOS_ldr_orbit.c','calc_dop.c','hermite_c.c','image_sio.c','interpolate_ALOS_orbit.c','read_ALOS_sarleader.c','utils.c']
 lib = envALOS_lib.Library(target = 'ALOSStd', source = listFiles)
 envALOS_lib.Install(build,lib)
 envALOS_lib.Alias('build',build)
