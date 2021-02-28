@@ -55,7 +55,6 @@ endif()
 
 Python_add_library(alos MODULE
     bindings/alosmodule.cpp
-    src/ALOS_pre_process/SConscript
     src/ALOS_pre_process/lib_functions.h
     src/ALOS_pre_process/read_ALOSE_data.c
     src/ALOS_pre_process/siocomplex.h
