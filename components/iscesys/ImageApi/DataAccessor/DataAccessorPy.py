@@ -144,7 +144,7 @@ class DataAccessor(object):
         scheme = self.scheme
         #if the filename is a URL, the extraFilename should indicate the file from the local machine
         #instead of from the remote server.
-        if self.filename.startswith('http'):
+        if self.filename.startswith('http://') or self.filename.startswith('https://'):
             self.extraFilename = os.path.basename(self.filename) + '.' + self._extra_reader
         else:
             self.extraFilename = self.filename + '.' + self._extra_reader
