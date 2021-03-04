@@ -183,6 +183,8 @@ By default, ESD is always performed.
 #ionospheric correction module parameters
 #the values below are the default values used by the module
 <property name="do ionosphere correction">False</property>
+<property name="apply ionosphere correction">False</property>
+<property name="consider burst properties in ionosphere computation">False</property>
 #choose from: ['subband', 'rawion', 'grd2ion', 'filt_gaussian', 'ionosphere_shift', 'ion2grd', 'esd']
 <property name="start ionosphere step">subband</property>
 <property name="end ionosphere step">esd</property>

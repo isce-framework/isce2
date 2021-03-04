@@ -25,6 +25,11 @@ logger = logging.getLogger('isce.alos2insar.runSlcOffset')
 def runSlcOffset(self):
     '''estimate SLC offsets
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            print('\nInSAR processing not requested, skip this and the remaining InSAR steps...')
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

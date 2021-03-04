@@ -21,11 +21,23 @@ logger = logging.getLogger('isce.alos2insar.runFilt')
 def runFilt(self):
     '''filter interferogram
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
     #referenceTrack = self._insar.loadTrack(reference=True)
     #secondaryTrack = self._insar.loadTrack(reference=False)
+
+    filt(self)
+    
+    catalog.printToLog(logger, "runFilt")
+    self._insar.procDoc.addAllFromCatalog(catalog)
+
+
+def filt(self):
 
     insarDir = 'insar'
     os.makedirs(insarDir, exist_ok=True)
@@ -150,21 +162,17 @@ def runFilt(self):
     print('\nmask filtered interferogram using: {}'.format(self._insar.multilookWbdOut))
 
     if self.waterBodyMaskStartingStep=='filt':
-        if not os.path.exists(self._insar.multilookWbdOut):
-            catalog.addItem('warning message', 'requested masking interferogram with water body, but water body does not exist', 'runFilt')
-        else:
-            wbd = np.fromfile(self._insar.multilookWbdOut, dtype=np.int8).reshape(length, width)
-            phsig=np.memmap(self._insar.multilookPhsig, dtype='float32', mode='r+', shape=(length, width))
-            phsig[np.nonzero(wbd==-1)]=0
-            del phsig
-            filt=np.memmap(self._insar.filteredInterferogram, dtype='complex64', mode='r+', shape=(length, width))
-            filt[np.nonzero(wbd==-1)]=0
-            del filt
-            del wbd
+        #if not os.path.exists(self._insar.multilookWbdOut):
+        #    catalog.addItem('warning message', 'requested masking interferogram with water body, but water body does not exist', 'runFilt')
+        #else:
+        wbd = np.fromfile(self._insar.multilookWbdOut, dtype=np.int8).reshape(length, width)
+        phsig=np.memmap(self._insar.multilookPhsig, dtype='float32', mode='r+', shape=(length, width))
+        phsig[np.nonzero(wbd==-1)]=0
+        del phsig
+        filt=np.memmap(self._insar.filteredInterferogram, dtype='complex64', mode='r+', shape=(length, width))
+        filt[np.nonzero(wbd==-1)]=0
+        del filt
+        del wbd
 
 
     os.chdir('../')
-
-    catalog.printToLog(logger, "runFilt")
-    self._insar.procDoc.addAllFromCatalog(catalog)
-

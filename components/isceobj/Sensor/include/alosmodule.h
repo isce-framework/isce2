@@ -25,9 +25,6 @@
 // Author: Giangi Sacco
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
 #ifndef alosmodule_h
 #define alosmodue_h
 
@@ -42,7 +39,7 @@ extern "C"
     PyObject *alose_C(PyObject *self,PyObject *args);
     PyObject *createDictionaryOutput(struct PRM *prm,PyObject *dict);
     int ALOS_pre_process(struct PRM inputPRM, struct PRM *outputPRM,
-        struct GLOBALS globals);
+        struct GLOBALS globals, int image_i);
 }
 
 static PyMethodDef alos_methods[]  =

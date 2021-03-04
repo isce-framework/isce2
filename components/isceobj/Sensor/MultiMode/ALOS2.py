@@ -333,6 +333,8 @@ class ALOS2(Component):
         swath.rangePixelSize = Const.c/(2.0*swath.rangeSamplingRate)
         swath.rangeBandwidth =abs((sceneHeaderRecord.metadata['Nominal range pulse (chirp) amplitude coefficient linear term']) *
                                (sceneHeaderRecord.metadata['Range pulse length in microsec']*1.0e-6))
+        #this value is also correct
+        #swath.rangeBandwidth = sceneHeaderRecord.metadata['Total processor bandwidth in range'] * 1000.0
 
         #sensingStart
         yr = imageData.metadata['Sensor acquisition year']
@@ -357,9 +359,16 @@ class ALOS2(Component):
             # '64': 'Manual observation'
             #print('ScanSAR mode, using PRF from the line header')
             swath.prf = imageData.metadata['PRF'] * 1.0e-3
+            #entire azimuth spectrum is processed for ScanSAR. Here we 0.85 * minimum PRF of '08': 'ScanSAR nominal mode' (subswath 4)
+            swath.azimuthBandwidth = 2270.575 * 0.85
+            #if operationMode == '08':
+            #    swath.azimuthBandwidth = 2270.575 * 0.85 / 5.0
+            #else:
+            #    swath.azimuthBandwidth = 2270.575 * 0.85 / 7.0
         else:
             #print('not ScanSAR mode, using PRF from leader file')
             swath.prf = sceneHeaderRecord.metadata['Pulse Repetition Frequency in mHz']*1.0e-3
+            swath.azimuthBandwidth = sceneHeaderRecord.metadata['Total processor bandwidth in azimuth']
 
         #azimuth pixel size at swath center on ground
         azimuthTime = swath.sensingStart + datetime.timedelta(seconds=swath.numberOfLines/swath.prf/2.0)

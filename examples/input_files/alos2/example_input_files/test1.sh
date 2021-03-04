@@ -1,3 +1,6 @@
+export OMP_NUM_THREADS=4
+export CUDA_VISIBLE_DEVICES=7
+
 #scansar-scansar
 ##########################
 cd scansar-scansar/1

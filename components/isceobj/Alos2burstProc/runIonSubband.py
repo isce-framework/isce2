@@ -252,30 +252,38 @@ def runIonSubband(self):
             #list of input files
             inputInterferograms = []
             inputAmplitudes = []
-            phaseDiff = [None]
+            #phaseDiff = [None]
+            swathPhaseDiffIon = [self.swathPhaseDiffLowerIon, self.swathPhaseDiffUpperIon]
+            phaseDiff = swathPhaseDiffIon[k]
+            if swathPhaseDiffIon[k] is None:
+                phaseDiff = None
+            else:
+                phaseDiff = swathPhaseDiffIon[k][i]
+                phaseDiff.insert(0, None)
+
             for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
                 swathDir = 's{}'.format(swathNumber)
                 inputInterferograms.append(os.path.join('../', swathDir, self._insar.interferogram))
                 inputAmplitudes.append(os.path.join('../', swathDir, self._insar.amplitude))
 
-                #compute phase needed to be compensated using startingRange
-                if j >= 1:
-                    #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
-                    #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
-                    phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
-                                      -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
-                    if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
-                       referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
-                        #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
-                        #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
-                        #it should be OK to do the above.
-                        #see results in neom where it meets the above requirement, but there is still phase diff
-                        #to be less risky, we do not input values here
-                        phaseDiff.append(None)
-                    else:
-                        phaseDiff.append(None)
+                # #compute phase needed to be compensated using startingRange
+                # if j >= 1:
+                #     #phaseDiffSwath1 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange)/subbandRadarWavelength[k]
+                #     #phaseDiffSwath2 = -4.0 * np.pi * (referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange)/subbandRadarWavelength[k]
+                #     phaseDiffSwath1 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j-1].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                #     phaseDiffSwath2 = +4.0 * np.pi * referenceTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k]) \
+                #                       -4.0 * np.pi * secondaryTrack.frames[i].swaths[j].startingRange * (1.0/radarWavelength - 1.0/subbandRadarWavelength[k])
+                #     if referenceTrack.frames[i].swaths[j-1].startingRange - secondaryTrack.frames[i].swaths[j-1].startingRange == \
+                #        referenceTrack.frames[i].swaths[j].startingRange - secondaryTrack.frames[i].swaths[j].startingRange:
+                #         #phaseDiff.append(phaseDiffSwath2 - phaseDiffSwath1)
+                #         #if reference and secondary versions are all before or after version 2.025 (starting range error < 0.5 m), 
+                #         #it should be OK to do the above.
+                #         #see results in neom where it meets the above requirement, but there is still phase diff
+                #         #to be less risky, we do not input values here
+                #         phaseDiff.append(None)
+                #     else:
+                #         phaseDiff.append(None)
 
             #note that frame parameters are updated after mosaicking
             #mosaic amplitudes
@@ -294,24 +302,36 @@ def runIonSubband(self):
                 phaseDiffFixed = None
                 snapThreshold = None
 
-            (phaseDiffEst, phaseDiffUsed, phaseDiffSource) = swathMosaic(referenceTrack.frames[i], inputInterferograms, self._insar.interferogram, 
+            #whether snap for each swath
+            if self.swathPhaseDiffSnapIon == None:
+                snapSwath = [[True for jjj in range(numberOfSwaths-1)] for iii in range(numberOfFrames)]
+            else:
+                snapSwath = self.swathPhaseDiffSnapIon
+                if len(snapSwath) != numberOfFrames:
+                    raise Exception('please specify each frame for parameter: swath phase difference snap to fixed values')
+                for iii in range(numberOfFrames):
+                    if len(snapSwath[iii]) != (numberOfSwaths-1):
+                       raise Exception('please specify correct number of swaths for parameter: swath phase difference snap to fixed values')
+
+            (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = swathMosaic(referenceTrack.frames[i], inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, updateFrame=False, 
-                phaseCompensation=True, phaseDiff=phaseDiff, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, pcRangeLooks=1, pcAzimuthLooks=3, 
+                phaseCompensation=True, phaseDiff=phaseDiff, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, snapSwath=snapSwath[i], pcRangeLooks=1, pcAzimuthLooks=3, 
                 filt=False, resamplingMethod=1)
 
             #the first item is meaningless for all the following list, so only record the following items
             if phaseDiff == None:
                 phaseDiff = [None for iii in range(self._insar.startingSwath, self._insar.endingSwath + 1)]
-            catalog.addItem('{} subswath phase difference input'.format(ionDir['subband'][k]), phaseDiff[1:], 'runIonSubband')
-            catalog.addItem('{} subswath phase difference estimated'.format(ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
-            catalog.addItem('{} subswath phase difference used'.format(ionDir['subband'][k]), phaseDiffUsed[1:], 'runIonSubband')
-            catalog.addItem('{} subswath phase difference used source'.format(ionDir['subband'][k]), phaseDiffSource[1:], 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff input'.format(frameNumber, ionDir['subband'][k]), phaseDiff[1:], 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff estimated'.format(frameNumber, ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff used'.format(frameNumber, ionDir['subband'][k]), phaseDiffUsed[1:], 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff used source'.format(frameNumber, ionDir['subband'][k]), phaseDiffSource[1:], 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff samples used'.format(frameNumber, ionDir['subband'][k]), numberOfValidSamples[1:], 'runIonSubband')
             #check if there is value around 3.130810857, which may not be stable
             phaseDiffUnstableExist = False
             for xxx in phaseDiffUsed:
                 if abs(abs(xxx) - 3.130810857) < 0.2:
                     phaseDiffUnstableExist = True
-            catalog.addItem('{} subswath phase difference unstable exists'.format(ionDir['subband'][k]), phaseDiffUnstableExist, 'runIonSubband')
+            catalog.addItem('frame {} {} band subswath phase diff unstable exists'.format(frameNumber, ionDir['subband'][k]), phaseDiffUnstableExist, 'runIonSubband')
 
             create_xml(self._insar.amplitude, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'amp')
             create_xml(self._insar.interferogram, referenceTrack.frames[i].numberOfSamples, referenceTrack.frames[i].numberOfLines, 'int')
@@ -378,12 +398,17 @@ def runIonSubband(self):
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=False, resamplingMethod=0)
             #mosaic interferograms
-            frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
+            (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=True, resamplingMethod=1)
 
             create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
             create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
+
+            catalog.addItem('{} band frame phase diff estimated'.format(ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
+            catalog.addItem('{} band frame phase diff used'.format(ionDir['subband'][k]), phaseDiffUsed[1:], 'runIonSubband')
+            catalog.addItem('{} band frame phase diff used source'.format(ionDir['subband'][k]), phaseDiffSource[1:], 'runIonSubband')
+            catalog.addItem('{} band frame phase diff samples used'.format(ionDir['subband'][k]), numberOfValidSamples[1:], 'runIonSubband')
 
         os.chdir('../')
         os.chdir('../')

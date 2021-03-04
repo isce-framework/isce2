@@ -4,6 +4,7 @@ InstallSameDir(
     Alos2ProcPublic.py
     Factories.py
     denseOffsetNote.txt
+    runBaseline.py
     runCoherence.py
     runDenseOffset.py
     runDiffInterferogram.py
@@ -16,6 +17,7 @@ InstallSameDir(
     runGeo2Rdr.py
     runGeocode.py
     runGeocodeOffset.py
+    runIonCorrect.py
     runIonFilt.py
     runIonSubband.py
     runIonUwrap.py

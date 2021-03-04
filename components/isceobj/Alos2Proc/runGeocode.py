@@ -16,6 +16,10 @@ logger = logging.getLogger('isce.alos2insar.runGeocode')
 def runGeocode(self):
     '''geocode final products
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

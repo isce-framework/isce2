@@ -4,16 +4,18 @@ Read the document for each stack processor for details.
 
 + [stripmapStack](./stripmapStack/README.md)
 + [topsStack](./topsStack/README.md)
++ [alosStack](./alosStack/alosStack_tutorial.txt)
 
 ### Installation
 
-To use the TOPS or Stripmap stack processors you need to:
+To use a stack processor you need to:
 
 1. Install ISCE as usual
 
 2. Depending on which stack processor you need to try, add the path of the folder containing the python scripts to your `$PATH` environment variable as follows:
    - add the full path of your **contrib/stack/topsStack** to `$PATH` to use the topsStack for processing a stack of Sentinel-1 TOPS data
    - add the full path of your **contrib/stack/stripmapStack** to `$PATH` to use the stripmapStack for processing a stack of StripMap data
+   - set environment variable `$PATH_ALOSSTACK` by doing: export PATH_ALOSSTACK=CODE_DIR/contrib/stack/alosStack to use the alosStack for processing a stack of ALOS-2 data
 
 Note: The stack processors do not show up in the install directory of your isce software. They can be found in the isce source directory. 
 
@@ -32,3 +34,4 @@ For StripMap stack processor and ionospheric phase estimation:
 For TOPS stack processing:
 
 + H. Fattahi, P. Agram, and M. Simons, “A network-based enhanced spectral diversity approach for TOPS time-series analysis,” IEEE Trans. Geosci. Remote Sens., vol. 55, no. 2, pp. 777–786, Feb. 2017. (https://ieeexplore.ieee.org/abstract/document/7637021/)
+

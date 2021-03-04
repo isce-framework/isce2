@@ -18,6 +18,10 @@ logger = logging.getLogger('isce.alos2insar.runFormInterferogram')
 def runFormInterferogram(self):
     '''form interferograms.
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

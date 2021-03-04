@@ -25,9 +25,6 @@
 // Author: Giangi Sacco
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
 #include <Python.h>
 #include "image_sio.h"
 #include "siocomplex.h"
@@ -219,8 +216,8 @@ PyObject * ALOS_fbd2fbs_C(PyObject* self, PyObject* args)
             i = j + r.first_sample;
 
             /* increase dynamic range by 2 and set the mean value to 63.5 */
-            rtest = rintf(2.*cout[j].r+63.5);
-            itest = rintf(2.*cout[j].i+63.5);
+            rtest = rintf(cout[j].r+r.xmi);
+            itest = rintf(cout[j].i+r.xmq);
 
             /* sometimes the range can exceed 0-127 so
                clip the numbers to be in the correct range */

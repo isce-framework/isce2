@@ -20,6 +20,38 @@ import logging
 from isceobj.Util.ImageUtil import ImageLib as IML
 
 
+def interpolateDifferentNumberOfLooks(inputData, lengtho, widtho, nrli, nali, nrlo, nalo):
+    '''
+    inputData:   input numpy 2-d array
+    lengtho:     length of output array
+    widtho:      width of output array
+    nrli:        number of range looks input
+    nali:        number of azimuth looks input
+    nrlo:        number of range looks output
+    nalo:        number of azimuth looks output
+    '''
+    import numpy as np
+    from scipy.interpolate import interp1d
+
+    (lengthi, widthi) = inputData.shape
+
+    indexi = np.linspace(0, widthi-1, num=widthi, endpoint=True)
+    indexo = np.linspace(0, widtho-1, num=widtho, endpoint=True) * nrli/nrlo + (nrli-nrlo)/(2.0*nrlo)
+    outputData0 = np.zeros((lengthi, widtho), dtype=inputData.dtype)
+    for i in range(lengthi):
+        f = interp1d(indexi, inputData[i,:], kind='cubic', fill_value="extrapolate")
+        outputData0[i, :] = f(indexo)
+    
+    indexi = np.linspace(0, lengthi-1, num=lengthi, endpoint=True)
+    indexo = np.linspace(0, lengtho-1, num=lengtho, endpoint=True) * nali/nalo + (nali-nalo)/(2.0*nalo)
+    outputData = np.zeros((lengtho, widtho), dtype=inputData.dtype)
+    for j in range(widtho):
+        f = interp1d(indexi, outputData0[:, j], kind='cubic', fill_value="extrapolate")
+        outputData[:, j] = f(indexo)
+
+    return outputData
+
+
 def mergeBox(frame):
     '''
     Merging using VRTs.
@@ -666,14 +698,16 @@ def runMergeBursts(self, adjust=1):
     #totalLooksThreshold = 9
     totalLooksThreshold = 99999999999999
     #if doing ionospheric correction
-    ionCorrection = self.ION_doIon
+    doIon = self.ION_doIon
+    applyIon = self.ION_applyIon
+    considerBurstProperties = self.ION_considerBurstProperties
     ionDirname = 'ion/ion_burst'
     mergedIonname = 'topophase.ion'
     originalIfgname = 'topophase_ori.flat'
     #########################################
 
     # backing out the tigher constraints for ionosphere as it could itnroduce gabs between along track products produced seperately  
-    if not ionCorrection:
+    if not (doIon and considerBurstProperties):
         adjust=0
 
     #########################################
@@ -712,7 +746,7 @@ def runMergeBursts(self, adjust=1):
             #restore
             frames = frames_bak
         else:
-            validOnly==True
+            validOnly=True
 
 
     #########################################
@@ -738,7 +772,7 @@ def runMergeBursts(self, adjust=1):
         mergeBursts2(frames, os.path.join(self._insar.fineIfgDirname, 'IW%d',  'burst_%02d.int'), burstIndex, box, os.path.join(mergedir, self._insar.mergedIfgname+suffix), virtual=virtual, validOnly=True)
         if self.numberAzimuthLooks * self.numberRangeLooks < totalLooksThreshold:
             mergeBursts2(frames, os.path.join(self._insar.fineIfgDirname, 'IW%d',  'burst_%02d.cor'), burstIndex, box, os.path.join(mergedir, self._insar.correlationFilename+suffix), virtual=virtual, validOnly=True)
-        if ionCorrection == True:
+        if doIon and considerBurstProperties:
             mergeBursts2(frames, os.path.join(ionDirname, 'IW%d',  'burst_%02d.ion'), burstIndex, box, os.path.join(mergedir, mergedIonname+suffix), virtual=virtual, validOnly=True)
 
 
@@ -782,12 +816,60 @@ def runMergeBursts(self, adjust=1):
                 os.remove(os.path.join(mergedir, pwrfile+'.xml'))
                 os.remove(os.path.join(mergedir, pwrfile+'.vrt'))
 
-            if ionCorrection:
-                multilook(os.path.join(mergedir, mergedIonname+suffix),
-                  outname = os.path.join(mergedir, mergedIonname),
-                  alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
+            if doIon:
+                if considerBurstProperties:
+                    multilook(os.path.join(mergedir, mergedIonname+suffix),
+                      outname = os.path.join(mergedir, mergedIonname),
+                      alks = self.numberAzimuthLooks, rlks=self.numberRangeLooks)
+                else:
+                    ionFilt = 'ion/ion_cal/filt.ion'
+                    img = isceobj.createImage()
+                    img.load(ionFilt+'.xml')
+                    ionFiltImage = (np.fromfile(ionFilt, dtype=np.float32).reshape(img.length*2, img.width))[1:img.length*2:2, :]
+                    img = isceobj.createImage()
+                    img.load(os.path.join(mergedir, self._insar.mergedIfgname)+'.xml')
+
+                    #interpolate original
+                    ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, img.length, img.width, self.numberRangeLooks, self.numberAzimuthLooks, self.ION_numberRangeLooks, self.ION_numberAzimuthLooks)
+                    ionFiltOut = os.path.join(mergedir, mergedIonname)
+                    ionFiltImageOut.astype(np.float32).tofile(ionFiltOut)
+
+                    image = isceobj.createImage()
+                    image.setDataType('FLOAT')
+                    image.setFilename(ionFiltOut)
+                    image.extraFilename = ionFiltOut + '.vrt'
+                    image.setWidth(img.width)
+                    image.setLength(img.length)
+                    #image.setAccessMode('read')
+                    #image.createImage()
+                    image.renderHdr()
+                    #image.finalizeImage()
     else:
         print('Skipping multi-looking ....')
+
+        if self.doInSAR and doIon and (not considerBurstProperties):
+            ionFilt = 'ion/ion_cal/filt.ion'
+            img = isceobj.createImage()
+            img.load(ionFilt+'.xml')
+            ionFiltImage = (np.fromfile(ionFilt, dtype=np.float32).reshape(img.length*2, img.width))[1:img.length*2:2, :]
+            img = isceobj.createImage()
+            img.load(os.path.join(mergedir, self._insar.mergedIfgname+suffix)+'.xml')
+
+            #interpolate original
+            ionFiltImageOut = interpolateDifferentNumberOfLooks(ionFiltImage, img.length, img.width, self.numberRangeLooks, self.numberAzimuthLooks, self.ION_numberRangeLooks, self.ION_numberAzimuthLooks)
+            ionFiltOut = os.path.join(mergedir, mergedIonname)
+            ionFiltImageOut.astype(np.float32).tofile(ionFiltOut)
+
+            image = isceobj.createImage()
+            image.setDataType('FLOAT')
+            image.setFilename(ionFiltOut)
+            image.extraFilename = ionFiltOut + '.vrt'
+            image.setWidth(img.width)
+            image.setLength(img.length)
+            #image.setAccessMode('read')
+            #image.createImage()
+            image.renderHdr()
+            #image.finalizeImage()
 
 
     #########################################
@@ -796,8 +878,8 @@ def runMergeBursts(self, adjust=1):
     #do ionospheric and other corrections here
     #should also consider suffix, but usually we use multiple looks, so I ignore it for now.
     if self.doInSAR:
-        if ionCorrection:
-            print('user choose to do ionospheric correction')
+        if doIon and applyIon:
+            print('user choose to apply ionospheric correction')
 
             #define file names
             interferogramFilename = os.path.join(mergedir, self._insar.mergedIfgname)

@@ -2,47 +2,47 @@
 #include "siocomplex.h"
 #include <math.h>
 
-fcomplex Cmul(fcomplex x, fcomplex y)
+fcomplex_sio Cmul(fcomplex_sio x, fcomplex_sio y)
 {
-    fcomplex z;
+    fcomplex_sio z;
     z.r = x.r*y.r - x.i*y.i;
     z.i = x.i*y.r + x.r*y.i;
     return z;
 }
 
-fcomplex Cexp(float theta)
+fcomplex_sio Cexp(float theta)
 {
-    fcomplex z;
+    fcomplex_sio z;
     z.r = cos(theta);
     z.i = sin(theta);
     return z;
 }
 
-fcomplex Conjg(fcomplex z)
+fcomplex_sio Conjg(fcomplex_sio z)
 {
-    fcomplex x;
+    fcomplex_sio x;
     x.r = z.r;
     x.i = -z.i;
     return x;
 }
 
-fcomplex RCmul(float a, fcomplex z)
+fcomplex_sio RCmul(float a, fcomplex_sio z)
 {
-    fcomplex x;
+    fcomplex_sio x;
     x.r = a*z.r;
     x.i = a*z.i;
     return x;
 }
 
-fcomplex Cadd(fcomplex x, fcomplex y)
+fcomplex_sio Cadd(fcomplex_sio x, fcomplex_sio y)
 {
-    fcomplex z;
+    fcomplex_sio z;
     z.r = x.r + y.r;
     z.i = x.i + y.i;
     return z;
 }
 
-float Cabs(fcomplex z)
+float Cabs(fcomplex_sio z)
 {
     return hypot(z.r, z.i);
 }

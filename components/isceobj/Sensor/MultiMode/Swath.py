@@ -91,6 +91,13 @@ AZIMUTH_PIXEL_SIZE = Component.Parameter('azimuthPixelSize',
         mandatory = True,
         doc = 'azimuth pixel size on ground in m')
 
+AZIMUTH_BANDWIDTH = Component.Parameter('azimuthBandwidth',
+        public_name = 'azimuth bandwidth',
+        default = None,
+        type=float,
+        mandatory = True,
+        doc = 'azimuth bandwidth in Hz')
+
 AZIMUTH_LINE_INTERVAL = Component.Parameter('azimuthLineInterval',
         public_name = 'azimuth line interval',
         default = None,
@@ -206,6 +213,7 @@ class Swath(Component):
                       SENSING_START,
                       PRF,
                       AZIMUTH_PIXEL_SIZE,
+                      AZIMUTH_BANDWIDTH,
                       AZIMUTH_LINE_INTERVAL,
                       DOPPLER_VS_PIXEL,
                       AZIMUTH_FMRATE_VS_PIXEL,

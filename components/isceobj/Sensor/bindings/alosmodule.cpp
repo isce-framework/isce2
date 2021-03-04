@@ -25,9 +25,6 @@
 // Author: Giangi Sacco
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-
-
 #include <Python.h>
 #include <iostream>
 #include "alosmodule.h"
@@ -68,11 +65,12 @@ PyInit_alos()
 PyObject *alos_C(PyObject* self,PyObject *args)
 {
     char *imageFile,*leaderFile,*outFile;
+    int image_i;
     struct PRM inputPRM;
     struct PRM outputPRM;
     struct GLOBALS globals;
 
-    if(!PyArg_ParseTuple(args,"sss",&leaderFile,&imageFile,&outFile))
+    if(!PyArg_ParseTuple(args,"sssi",&leaderFile,&imageFile,&outFile, &image_i))
     {
         return NULL;
     }
@@ -96,7 +94,7 @@ PyObject *alos_C(PyObject* self,PyObject *args)
     globals.dopp = 0; // Are we calculating a doppler?
     globals.tbias = 0.0; // Is there a time bias to fix poor orbits?
 
-    ALOS_pre_process(inputPRM,&outputPRM,globals);
+    ALOS_pre_process(inputPRM,&outputPRM,globals,image_i);
 
     PyObject * dict = PyDict_New();
     createDictionaryOutput(&outputPRM,dict);
@@ -106,11 +104,12 @@ PyObject *alos_C(PyObject* self,PyObject *args)
 PyObject *alose_C(PyObject* self,PyObject *args)
 {
     char *imageFile,*leaderFile,*outFile;
+    int image_i;
     struct PRM inputPRM;
     struct PRM outputPRM;
     struct GLOBALS globals;
 
-    if(!PyArg_ParseTuple(args,"sss",&leaderFile,&imageFile,&outFile))
+    if(!PyArg_ParseTuple(args,"sssi",&leaderFile,&imageFile,&outFile, &image_i))
     {
         return NULL;
     }
@@ -134,7 +133,7 @@ PyObject *alose_C(PyObject* self,PyObject *args)
     globals.dopp = 0; // Are we calculating a doppler?
     globals.tbias = 0.0; // Is there a time bias to fix poor orbits?
 
-    ALOS_pre_process(inputPRM,&outputPRM,globals);
+    ALOS_pre_process(inputPRM,&outputPRM,globals,image_i);
 
     PyObject * dict = PyDict_New();
     createDictionaryOutput(&outputPRM,dict);
@@ -184,6 +183,14 @@ PyObject * createDictionaryOutput(struct PRM * prm, PyObject * dict)
     intVal = PyLong_FromLong((long) prm->good_bytes);
     PyDict_SetItemString(dict,"NUMBER_GOOD_BYTES",intVal);
     Py_XDECREF(intVal);
+
+
+
+    intVal = PyLong_FromLong((long) prm->num_lines);
+    PyDict_SetItemString(dict,"NUMBER_LINES",intVal);
+    Py_XDECREF(intVal);
+
+
     intVal = PyLong_FromLong((long) prm->num_rng_bins);
     PyDict_SetItemString(dict,"NUMBER_RANGE_BIN",intVal);
     Py_XDECREF(intVal);

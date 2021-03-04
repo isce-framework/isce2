@@ -1,0 +1,265 @@
+######################################################################################
+# Tutorial for alosStack
+# Cunren Liang, October 2020
+######################################################################################
+
+This is the tutorial of alosStack processor.
+
+
+###########################################
+#        0. SET ENVIRONMENT VARIABLE
+###########################################
+
+Set environment variable 'PATH_ALOSSTACK'
+export PATH_ALOSSTACK=CODE_DIR/contrib/stack/alosStack
+
+where CODE_DIR is the directory of your isce code. Note that alosStack is not installed when you install
+the software, so CODE_DIR is your code directory rather than installation directory.
+
+
+###########################################
+#            1. PREPARE DATA
+###########################################
+
+1. ALOS-2 data
+Currently the processor only supports the processing of a stack of data acquired in the same mode.
+
+To find the acquisition mode code, check the unpacked ALOS-2 product. For example, in the following
+file name
+
+IMG-HH-ALOS2183010685-171012-FBDR1.1__A
+                             ^^^
+FBD (indicated by ^) is the acquisition mode code. Here is the list of acquistion modes:
+
+ Operation Mode   |   Mode (AUIG2)  |    Mode (in file name)
+--------------------------------------------------------------
+   spotlight      |       SPT       |    SBS
+--------------------------------------------------------------
+   stripmap       |       SM1       |    UBS, UBD
+                  |       SM2       |    HBS, HBD, HBQ
+                  |       SM3       |    FBS, FBD, FBQ
+--------------------------------------------------------------
+   ScanSAR        |       WD1       |    WBS, WBD, WWS, WWD
+                  |       WD2       |    VBS, VBD
+
+
+Create a folder such as 'saf_d169', and in this folder, unpack all frames of each date in an individual folder
+named YYMMDD. YYMMDD is the acquistion date, and it must be in this format. Now the data directory should look
+like
+
+saf_d169_data-------150225-------IMG-HH-ALOS2041062800-150225-WBDR1.1__D-F1
+                 |__150408    |__IMG-HH-ALOS2041062800-150225-WBDR1.1__D-F2
+                 |__150520    |__IMG-HH-ALOS2041062800-150225-WBDR1.1__D-F3
+                 |__150701    |__IMG-HH-ALOS2041062800-150225-WBDR1.1__D-F4
+                 |__...       |__IMG-HH-ALOS2041062800-150225-WBDR1.1__D-F5
+                              |__IMG-HH-ALOS2041062850-150225-WBDR1.1__D-F1
+                              |__IMG-HH-ALOS2041062850-150225-WBDR1.1__D-F2
+                              |__IMG-HH-ALOS2041062850-150225-WBDR1.1__D-F3
+                              |__IMG-HH-ALOS2041062850-150225-WBDR1.1__D-F4
+                              |__IMG-HH-ALOS2041062850-150225-WBDR1.1__D-F5
+                              |__LED-ALOS2041062800-150225-WBDR1.1__D
+                              |__LED-ALOS2041062850-150225-WBDR1.1__D
+
+2. DEM and water body
+
+You MUST FIRST have an account to download DEM and water body. See
+https://github.com/isce-framework/isce2#notes-on-digital-elevation-models
+or
+https://github.com/isce-framework/isce2
+for more details.
+
+See input xml file alosStack.xml in this folder on how to download DEM and water body.
+
+
+###########################################
+#            2. PROCESS DATA
+###########################################
+
+1. Create and enter a folder for processing data, e.g.
+mkdir saf_d169_proc
+cd saf_d169_proc
+
+2. Input xml file alosStack.xml can be found in code directory. Copy it to current folder and simply set 
+the parameters.
+cp ${PATH_ALOSSTACK}/alosStack.xml ./
+
+3. Create command files for processing data. Run
+${PATH_ALOSSTACK}/create_cmds.py -stack_par alosStack.xml
+
+4. Do most of the single date processing. Run
+./cmd_1.sh
+
+In cmd_1.sh and other command files, note that you can split the 'for loop' in each step into a number
+of parallel runs. See command file for details.
+
+Higly recommended parallel processing steps in each command file.
+
+cmd_1.sh:
+estimate SLC offsets
+resample to a common grid (WD1 SLC size may be up to 7.2 G, so each run requires this much memory!)
+
+cmd_2.sh
+form interferograms (does not requires a lot of computation, more parallel runs recommended)
+mosaic interferograms (does not requires a lot of computation, more parallel runs recommended)
+
+cmd_3.sh
+subband interferograms (does not requires a lot of computation, more parallel runs recommended)
+
+cmd_4.sh
+all steps
+
+
+5. InSAR processing before ionosphere correction. Run
+./cmd_2.sh
+
+6. Ionosphere correction (if do ionospheric phase estimation, by default True). If the following parameter of 
+the input xml file is True (default)
+
+    <!--<property name="do ionospheric phase estimation">True</property>-->
+
+Run
+./cmd_3.sh
+
+After it finishes, check the images in folder 'fig_ion' to see if ionosphere estimation is OK for each
+pair. The anomalies include dense fringes or slight phase difference between adjacent swaths in ScanSAR
+interferograms after removing ionosphere. There might also be dense fringes elsewhere. These are all anomalies
+and the associated ionosphere estimation results should not be used in the next steps.
+
+At the end of this command file, there is a step called 'estimate ionospheric phase for each date'. If you found 
+some pairs with ionosphere estimation anomalies, specify them by adding argument '-exc_pair' to the command ion_ls.py. 
+Make sure all dates are still connected after excluding these pairs, and then run ion_ls.py.
+
+You can plot baselines to see if the pairs are fully connected, e.g.
+${PATH_ALOSSTACK}/plot_baseline.py -baseline baseline/baseline_center.txt -pairs_dir pairs_ion -pairs_exc 150520-150701 -output baselines.pdf
+
+If the following parameters of the input xml file are True (default)
+
+    <!--<property name="do ionospheric phase estimation">True</property>-->
+    <!--<property name="apply ionospheric phase correction">True</property>-->
+
+there is a final step called 'correct ionosphere' in cmd_3.sh, uncomment the code marked by '#uncomment to run this command'
+and then run the entire step.
+
+7. InSAR processing after ionosphere correction. Run
+./cmd_4.sh
+
+If everything is OK, you may consider removing the huge slc files in folder dates_resampled. When you need them in
+the future, you can re-run the commands in the '#resample to a common grid' step in cmd_1.sh.
+
+Furthermore, you may consider removing the huge original data files you unpacked previously.
+
+
+###########################################
+#          3. ADDING MORE DATES
+###########################################
+
+Sometimes we want to add new acquistions to the already processed stack. To do this, 
+
+1. Upack the new acquistions in data directory following #1. PREPARE DATA.
+
+2. Repeat the processing in #2. PROCESS DATA.
+
+We recommend saving previous command files in a folder before new processing. Note that even the previously processed
+pairs will be reprocessed again by cmd_4.sh if the following parameters of the input xml file are True (default)
+
+    <!--<property name="do ionospheric phase estimation">True</property>-->
+    <!--<property name="apply ionospheric phase correction">True</property>-->
+
+because ionospheric phase will be estimated by ion_ls.py at the end of cmd_3.sh for each date with new pairs included,
+and therefore all steps after ion_ls.py should be reprocessed.
+
+
+###########################################
+#            4. CHECK RESULTS
+###########################################
+
+baseline                    basline files
+burst_synchronization.txt   burst synchronization
+dates                       original date of each date
+dates_ion                   ionospheric phase of each date
+dates_resampled             resampled date of each date. Data of all other dates are coregistered to reference date.
+                            The parameter xml files including *.track.xml and f*_*/*.frame.xml are in reference date
+                            folder. These should be the files you should use in most cases, such as looking for data
+                            parameters, preparing for time series analysis etc.
+fig_ion                     figures for checking ionosphere estimation results
+pairs                       pairs of InSAR processing
+pairs_ion                   pairs for ionosphere estimation
+
+If you want to know more details about the files in each folder, read
+CODE_DIR/examples/input_files/alos2/alos2_tutorial.txt
+File name conventions and directory structures are mostly the same.
+
+
+###########################################
+#            5. KNOWN ISSUES
+###########################################
+
+1. Issues with Ionospheric Correction
+According to our experience, ionospheric correction works for most of the interferograms. Because it 
+relies on coherence and phase unwrapping, it does not work in some cases. These include:
+
+(1) data have low coherence
+(2) the majority of the imaged area is low coherence area like lake, ocean...
+(3) the imaged area is completely divided into several isolated areas by low coherence areas, such as
+    islands.
+
+In addition to the above issues, there are also data-mode-related issues.
+(1) ScanSAR-ScanSAR interferometry. While you can process one single subswath, it's better to process 
+more than one subswath if the addistional subswath has good coherence. This is good for ionospheric 
+correction.
+
+(2) Range distortions in JAXA product. This mostly happens in stripmap-stripmap interferometry using 
+data not covering Japan. If you see very dense fringes in the corrected inteferogram, probably it is 
+caused by this problem. This has been reported to JAXA and JAXA is working on debugging the focusing 
+program.
+
+UPDATE: On November 20, 2018 (JST), JAXA updated the software for PALSAR-2 standard products. Therefore, 
+if your product is ordered after this time, you don't have this problem.
+
+
+2. How do I improve ionospheric correction?
+
+First of all, we recommend reading through cmd_3.sh before manually improving ionosphere estimation results.
+
+Isolated areas lead to relative phase unwrapping errors, and therefore leads to significant errors in ionosphere
+estimation result, usually shown as dense fringes in the corrected interferograms. If your scene covers an area 
+with two or more isolated areas and you are interested in one of the areas, you can mask out the other areas by 
+setting "areas masked out in ionospheric phase estimation".
+
+Or if you have processed the data, you can also specify the argument -masked_areas in ion_filt.py in cmd_3.sh.
+Then check the updated results following step '#check ionosphere estimation results' in cmd_3.sh
+
+For ScanSAR, the software uses some accurate values for removing phase difference between adjacent swaths.
+This, however, does not work well sometimes as a result of the inconistencies between different JAXA products,
+especially products processed by different versions of JAXA software. As a result of this, you may see dense
+fringes in the ionospheric correction result. In this case, you can try not to use aforementioned accurate
+values by setting -snap in ion_subband.py in cmd_3.sh, and run this command and the remaining commands to see
+if ionosphere estimation results have improvement.
+
+Note that each time you updated ionosphere estimation results, you need to re-run the steps after
+'#estimate ionospheric phase for each date' (including this step) in cmd_3.sh, as well as cmd_4.sh
+
+4. ScanSAR burst synchronization
+For ScanSAR data acquired before February 8, 2015, chances of having enough burst synchronization for 
+interferometry are very low. Don't include data acquired before this date in your stack processing.
+
+
+###########################################
+#            6. REFRENCES
+###########################################
+The methods and algorithms implemented can be found in the following papers.
+
+1. ScanSAR or multi-mode InSAR processing
+C. Liang and E. J. Fielding, "Interferometry with ALOS-2 full-aperture ScanSAR data," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2739-2750, May 2017.
+
+2. Ionospheric correction, burst-by-burst ScanSAR processing, and burst-mode spectral diversity (SD) or 
+multi-aperture InSAR (MAI) processing
+C. Liang and E. J. Fielding, "Measuring azimuth deformation with L-band ALOS-2 ScanSAR interferometry," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 55, no. 5, pp. 2725-2738, May 2017.
+
+3. Ionospheric correction
+C. Liang, Z. Liu, E. J. Fielding, and R. Bürgmann, "InSAR time series analysis of L-band wide-swath SAR 
+data acquired by ALOS-2," 
+IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-4506, Aug. 2018.
+

@@ -40,13 +40,30 @@ def runSlcMosaic(self):
     if len(referenceTrack.frames) > 1:
         matchingMode=1
 
+        #determine whether reference offset from matching is already done in previous InSAR processing.
+        if hasattr(self, 'doInSAR'):
+            if not self.doInSAR:
+                referenceEstimated = False
+            else:
+                if self.frameOffsetMatching == False:
+                    referenceEstimated = False
+                else:
+                    referenceEstimated = True
+        else:
+            if self.frameOffsetMatching == False:
+                referenceEstimated = False
+            else:
+                referenceEstimated = True
+
         #if reference offsets from matching are not already computed
-        if self.frameOffsetMatching == False:
+        #if self.frameOffsetMatching == False:
+        if referenceEstimated == False:
             offsetReference = frameOffset(referenceTrack, self._insar.referenceSlc, self._insar.referenceFrameOffset, 
                                        crossCorrelation=True, matchingMode=matchingMode)
         offsetSecondary = frameOffset(secondaryTrack, self._insar.secondarySlc, self._insar.secondaryFrameOffset, 
                                   crossCorrelation=True, matchingMode=matchingMode)
-        if self.frameOffsetMatching == False:
+        #if self.frameOffsetMatching == False:
+        if referenceEstimated == False:
             self._insar.frameRangeOffsetMatchingReference = offsetReference[2]
             self._insar.frameAzimuthOffsetMatchingReference = offsetReference[3]
         self._insar.frameRangeOffsetMatchingSecondary = offsetSecondary[2]
@@ -110,6 +127,43 @@ def runSlcMosaic(self):
         secondaryTrack.dopplerVsPixel = secondaryTrack.frames[0].swaths[0].dopplerVsPixel
 
     else:
+        #in case InSAR, and therefore runSwathMosaic, was not done previously
+        for i, frameNumber in enumerate(self._insar.referenceFrames):
+            #update frame parameters
+            #########################################################
+            frame = referenceTrack.frames[i]
+            #mosaic size
+            frame.numberOfSamples = frame.swaths[0].numberOfSamples
+            frame.numberOfLines = frame.swaths[0].numberOfLines
+            #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
+            #range parameters
+            frame.startingRange = frame.swaths[0].startingRange
+            frame.rangeSamplingRate = frame.swaths[0].rangeSamplingRate
+            frame.rangePixelSize = frame.swaths[0].rangePixelSize
+            #azimuth parameters
+            frame.sensingStart = frame.swaths[0].sensingStart
+            frame.prf = frame.swaths[0].prf
+            frame.azimuthPixelSize = frame.swaths[0].azimuthPixelSize
+            frame.azimuthLineInterval = frame.swaths[0].azimuthLineInterval
+
+            #update frame parameters, secondary
+            #########################################################
+            frame = secondaryTrack.frames[i]
+            #mosaic size
+            frame.numberOfSamples = frame.swaths[0].numberOfSamples
+            frame.numberOfLines = frame.swaths[0].numberOfLines
+            #NOTE THAT WE ARE STILL USING SINGLE LOOK PARAMETERS HERE
+            #range parameters
+            frame.startingRange = frame.swaths[0].startingRange
+            frame.rangeSamplingRate = frame.swaths[0].rangeSamplingRate
+            frame.rangePixelSize = frame.swaths[0].rangePixelSize
+            #azimuth parameters
+            frame.sensingStart = frame.swaths[0].sensingStart
+            frame.prf = frame.swaths[0].prf
+            frame.azimuthPixelSize = frame.swaths[0].azimuthPixelSize
+            frame.azimuthLineInterval = frame.swaths[0].azimuthLineInterval
+
+
         #mosaic reference slc
         #########################################################
         #choose offsets

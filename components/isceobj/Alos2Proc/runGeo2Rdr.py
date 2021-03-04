@@ -13,6 +13,10 @@ logger = logging.getLogger('isce.alos2insar.runGeo2Rdr')
 def runGeo2Rdr(self):
     '''compute range and azimuth offsets
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

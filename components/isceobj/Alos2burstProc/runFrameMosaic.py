@@ -102,12 +102,17 @@ def runFrameMosaic(self):
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=False, phaseCompensation=False, resamplingMethod=0)
         #mosaic interferograms
-        frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
+        (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=True, phaseCompensation=True, resamplingMethod=1)
 
         create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
         create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
+
+        catalog.addItem('frame phase diff estimated', phaseDiffEst[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff used', phaseDiffUsed[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff used source', phaseDiffSource[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff samples used', numberOfValidSamples[1:], 'runFrameMosaic')
 
         #update secondary parameters here
         #do not match for secondary, always use geometrical
@@ -153,10 +158,16 @@ def runFrameMosaic(self):
                 inputSd[k].append(os.path.join('../', frameDir, 'mosaic', sdFile))
 
         #mosaic spectral diversity interferograms
-        for inputSdList, outputSdFile in zip(inputSd, self._insar.interferogramSd):
-            frameMosaic(referenceTrack, inputSdList, outputSdFile, 
+        for i, (inputSdList, outputSdFile) in enumerate(zip(inputSd, self._insar.interferogramSd)):
+            (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = frameMosaic(referenceTrack, inputSdList, outputSdFile, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=True, resamplingMethod=1)
+
+        catalog.addItem('sd {} frame phase diff estimated'.format(i+1), phaseDiffEst[1:], 'runFrameMosaic')
+        catalog.addItem('sd {} frame phase diff used'.format(i+1), phaseDiffUsed[1:], 'runFrameMosaic')
+        catalog.addItem('sd {} frame phase diff used source'.format(i+1), phaseDiffSource[1:], 'runFrameMosaic')
+        catalog.addItem('sd {} frame phase diff samples used'.format(i+1), numberOfValidSamples[1:], 'runFrameMosaic')
+
 
         for sdFile in self._insar.interferogramSd:
             create_xml(sdFile, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')

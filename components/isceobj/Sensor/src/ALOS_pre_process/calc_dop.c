@@ -12,6 +12,7 @@
  * Date:                                                                        *
  * *****************************************************************************/
 
+
 #include "image_sio.h"
 #include "lib_functions.h"
 #include "siocomplex.h"
@@ -23,8 +24,8 @@ void calc_dop(struct  PRM *prm)
 	long	n;
         float *xr, *ac, *sg; 
 	double sumd;
-	fcomplex	*ai, *bi, *ab;
-	fcomplex ctmp;
+	fcomplex_sio	*ai, *bi, *ab;
+	fcomplex_sio ctmp;
 	FILE	*fin;
 
 	fprintf(stderr,".... calculating doppler for %s\n",prm->input_file);
@@ -40,9 +41,15 @@ void calc_dop(struct  PRM *prm)
 	ac = (float *) malloc(n*sizeof(float));
 	sg = (float *) malloc(n*sizeof(float));
 
-	ai = (fcomplex *) malloc(n*sizeof(fcomplex));
-	bi = (fcomplex *) malloc(n*sizeof(fcomplex));
-	ab = (fcomplex *) malloc(2*n*sizeof(fcomplex));
+	ai = (fcomplex_sio *) malloc(n*sizeof(fcomplex_sio));
+	bi = (fcomplex_sio *) malloc(n*sizeof(fcomplex_sio));
+	ab = (fcomplex_sio *) malloc(2*n*sizeof(fcomplex_sio));
+
+
+    for(i = 0; i< n;i++){
+    	ab[i].r = 0;
+    	ab[i].i = 0;
+    }
 
 /* read a line of data from fin (input file, chars) to ai (complex floats) */
 	fread(indata, sizeof(unsigned char), prm->bytes_per_line, fin);
@@ -52,7 +59,7 @@ void calc_dop(struct  PRM *prm)
 /* inefficient; could put loops inside each other 	*/
 	for (i=prm->first_line; i<prm->num_lines-1; i++){
 
-		if (i/2000 == i/2000.0) fprintf(stderr," Working on line %d \n",i);
+		//if (i/2000 == i/2000.0) fprintf(stderr," Working on line %d \n",i);
 
 		fread(indata, sizeof(unsigned char), prm->bytes_per_line, fin);
 
@@ -87,9 +94,10 @@ void calc_dop(struct  PRM *prm)
 	free(xr); free(ac); free(sg);
 	free(ai); free(bi); free(ab);
 	free(indata);
+	fprintf(stderr,"done\n");
 }
 /*---------------------------------------------------*/
-void read_data(fcomplex *data, unsigned char *indata, int i, struct PRM *prm)
+void read_data(fcomplex_sio *data, unsigned char *indata, int i, struct PRM *prm)
 {
 int	ii ;
 

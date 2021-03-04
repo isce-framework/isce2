@@ -15,6 +15,10 @@ logger = logging.getLogger('isce.alos2insar.runIonFilt')
 def runIonFilt(self):
     '''compute and filter ionospheric phase
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -110,56 +114,71 @@ def runIonFilt(self):
     ############################################################
     # STEP 2. filter ionospheric phase
     ############################################################
+    import scipy.signal as ss
 
     #################################################
     #SET PARAMETERS HERE
-    #if applying polynomial fitting
-    #False: no fitting, True: with fitting
+    #fit and filter ionosphere
     fit = self.fitIon
-    #gaussian filtering window size
+    filt = self.filtIon
+    fitAdaptive = self.fitAdaptiveIon
+    filtSecondary = self.filtSecondaryIon
+    if (fit == False) and (filt == False):
+        raise Exception('either fit ionosphere or filt ionosphere should be True when doing ionospheric correction\n')
+
+    #filtering window size
     size_max = self.filteringWinsizeMaxIon
     size_min = self.filteringWinsizeMinIon
+    size_secondary = self.filteringWinsizeSecondaryIon
+    if size_min > size_max:
+        print('\n\nWARNING: minimum window size for filtering ionosphere phase {} > maximum window size {}'.format(size_min, size_max))
+        print('         re-setting maximum window size to {}\n\n'.format(size_min))
+        size_max = size_min
+    if size_secondary % 2 != 1:
+        size_secondary += 1
+        print('window size of secondary filtering of ionosphere phase should be odd, window size changed to {}'.format(size_secondary))
 
-    if size_min >= size_max:
-        print('\n\nWARNING: minimum window size for filtering ionosphere phase {} >= maximum window size {}'.format(size_min, size_max))
-        print('         resetting maximum window size to {}\n\n'.format(size_min+5))
-        size_max = size_min + 5
+    #coherence threshold for fitting a polynomial
+    corThresholdFit = 0.25
 
-    #THESE SHOULD BE GOOD ENOUGH, NO NEED TO SET IN setup(self)
-    #corThresholdFit = 0.85
-
-    #Now changed to use lower band coherence. crl, 23-apr-2020.
-    useDiffCoherence = False
-    if useDiffCoherence:
-        #parameters for using diff coherence
-        corfile = 'diff'+ml2+'.cor'
-        corThresholdFit = 0.95
-        # 1 is not good for low coherence case, changed to 20
-        #corOrderFit = 1
-        corOrderFit = 20
-        corOrderFilt = 14
+    #ionospheric phase standard deviation after filtering
+    if self.filterStdIon is not None:
+        std_out0 = self.filterStdIon
     else:
-        #parameters for using lower/upper band coherence
-        corfile = subbandPrefix[0]+ml2+'.cor'
-        corThresholdFit = 0.4
-        corOrderFit = 10
-        corOrderFilt = 4
-
+        if referenceTrack.operationMode == secondaryTrack.operationMode:
+            from isceobj.Alos2Proc.Alos2ProcPublic import modeProcParDict
+            std_out0 = modeProcParDict['ALOS-2'][referenceTrack.operationMode]['filterStdIon']
+        else:
+            from isceobj.Alos2Proc.Alos2ProcPublic import filterStdPolyIon
+            std_out0 = np.polyval(filterStdPolyIon, referenceTrack.frames[0].swaths[0].rangeBandwidth/(1e6))
+    #std_out0 = 0.1
     #################################################
 
     print('\nfiltering ionosphere')
+
+    #input files
     ionfile = 'ion'+ml2+'.ion'
     #corfile = 'diff'+ml2+'.cor'
+    corLowerfile = subbandPrefix[0]+ml2+'.cor'
+    corUpperfile = subbandPrefix[1]+ml2+'.cor'
+    #output files
     ionfiltfile = 'filt_ion'+ml2+'.ion'
+    stdfiltfile = 'filt_ion'+ml2+'.std'
+    windowsizefiltfile = 'filt_ion'+ml2+'.win'
 
+    #read data
     img = isceobj.createImage()
     img.load(ionfile + '.xml')
     width = img.width
     length = img.length
-    #ion = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
+
     ion = np.fromfile(ionfile, dtype=np.float32).reshape(length, width)
-    cor = (np.fromfile(corfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
-    #amp = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[0:length*2:2, :]
+    corLower = (np.fromfile(corLowerfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
+    corUpper = (np.fromfile(corUpperfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
+    cor = (corLower + corUpper) / 2.0
+    index = np.nonzero(np.logical_or(corLower==0, corUpper==0))
+    cor[index] = 0
+    del corLower, corUpper
 
     #masked out user-specified areas
     if self.maskedAreasIon != None:
@@ -172,7 +191,7 @@ def runIonFilt(self):
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
 
-    #remove water body
+    #remove water body. Not helpful, just leave it here
     wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
     cor[np.nonzero(wbd==-1)] = 0.0
 
@@ -183,141 +202,121 @@ def runIonFilt(self):
     #     wbd = np.fromfile(waterBodyFile, dtype=np.int8).reshape(length, width)
     #     cor[np.nonzero(wbd!=0)] = 0.00001
 
-    if fit:
-        import copy
-        wgt = copy.deepcopy(cor)
-        wgt[np.nonzero(wgt<corThresholdFit)] = 0.0
-        ion_fit = weight_fitting(ion, wgt**corOrderFit, width, length, 1, 1, 1, 1, 2)
-        ion -= ion_fit * (ion!=0)
-
     #minimize the effect of low coherence pixels
     #cor[np.nonzero( (cor<0.85)*(cor!=0) )] = 0.00001
     #filt = adaptive_gaussian(ion, cor, size_max, size_min)
     #cor**14 should be a good weight to use. 22-APR-2018
-    filt = adaptive_gaussian(ion, cor**corOrderFilt, size_max, size_min)
+    #filt = adaptive_gaussian_v0(ion, cor**corOrderFilt, size_max, size_min)
 
+
+    #1. compute number of looks
+    azimuthBandwidth = 0
+    for i, frameNumber in enumerate(self._insar.referenceFrames):
+        for j, swathNumber in enumerate(range(self._insar.startingSwath, self._insar.endingSwath + 1)):
+            #azimuthBandwidth += 2270.575 * 0.85
+            azimuthBandwidth += referenceTrack.frames[i].swaths[j].azimuthBandwidth
+    azimuthBandwidth = azimuthBandwidth / (len(self._insar.referenceFrames)*(self._insar.endingSwath-self._insar.startingSwath+1))
+
+    #azimuth number of looks should also apply to burst mode
+    #assume range bandwidth of subband image is 1/3 of orginal range bandwidth, as in runIonSubband.py!!!
+    numberOfLooks = referenceTrack.azimuthLineInterval * self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon / (1.0/azimuthBandwidth) *\
+                    referenceTrack.frames[0].swaths[0].rangeBandwidth / 3.0 / referenceTrack.rangeSamplingRate * self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon
+
+    #consider also burst characteristics. In ScanSAR-stripmap interferometry, azimuthBandwidth is from referenceTrack (ScanSAR)
+    if self._insar.modeCombination in [21, 31]:
+        numberOfLooks /= 5.0
+    if self._insar.modeCombination in [22, 32]:
+        numberOfLooks /= 7.0
+    if self._insar.modeCombination in [21]:
+        numberOfLooks *= (self._insar.burstSynchronization/100.0)
+
+    #numberOfLooks checked
+    print('number of looks to be used for computing subband interferogram standard deviation: {}'.format(numberOfLooks))
+    catalog.addItem('number of looks of subband interferograms', numberOfLooks, 'runIonFilt')
+
+
+    #2. compute standard deviation of the raw ionospheric phase
+    #f0 same as in runIonSubband.py!!!
+    def ion_std(fl, fu, numberOfLooks, cor):
+        '''
+        compute standard deviation of ionospheric phase
+        fl:  lower band center frequency
+        fu:  upper band center frequency
+        cor: coherence, must be numpy array
+        '''
+        f0 = (fl + fu) / 2.0
+        interferogramVar = (1.0 - cor**2) / (2.0 * numberOfLooks * cor**2 + (cor==0))
+        std = fl*fu/f0/(fu**2-fl**2)*np.sqrt(fu**2*interferogramVar+fl**2*interferogramVar)
+        std[np.nonzero(cor==0)] = 0
+        return std
+    std = ion_std(fl, fu, numberOfLooks, cor)
+
+
+    #3. compute minimum filter window size for given coherence and standard deviation of filtered ionospheric phase
+    cor2 = np.linspace(0.1, 0.9, num=9, endpoint=True)
+    std2 = ion_std(fl, fu, numberOfLooks, cor2)
+    std_out2 = np.zeros(cor2.size)
+    win2 = np.zeros(cor2.size, dtype=np.int32)
+    for i in range(cor2.size):
+        for size in range(9, 10001, 2):
+            #this window must be the same as those used in adaptive_gaussian!!!
+            gw = gaussian(size, size/2.0, scale=1.0)
+            scale = 1.0 / np.sum(gw / std2[i]**2)
+            std_out2[i] = scale * np.sqrt(np.sum(gw**2 / std2[i]**2))
+            win2[i] = size
+            if std_out2[i] <= std_out0:
+                break
+    print('if ionospheric phase standard deviation <= {} rad, minimum filtering window size required:'.format(std_out0))
+    print('coherence   window size')
+    print('************************')
+    for x, y in zip(cor2, win2):
+        print('  %5.2f       %5d'%(x, y))
+    print()
+    catalog.addItem('coherence value', cor2, 'runIonFilt')
+    catalog.addItem('minimum filter window size', win2, 'runIonFilt')
+
+
+    #4. filter interferogram
+    #fit ionosphere
     if fit:
-        filt += ion_fit * (filt!=0)
+        #prepare weight
+        wgt = std**2
+        wgt[np.nonzero(cor<corThresholdFit)] = 0
+        index = np.nonzero(wgt!=0)
+        wgt[index] = 1.0/(wgt[index])
+        #fit
+        ion_fit, coeff = polyfit_2d(ion, wgt, 2)
+        ion -= ion_fit * (ion!=0)
+    #filter the rest of the ionosphere
+    if filt:
+        (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive)
+        if filtSecondary:
+            print('applying secondary filtering with window size {}'.format(size_secondary))
+            g2d = gaussian(size_secondary, size_secondary/2.0, scale=1.0)
+            scale = ss.fftconvolve((ion_filt!=0), g2d, mode='same')
+            ion_filt = (ion_filt!=0) * ss.fftconvolve(ion_filt, g2d, mode='same') / (scale + (scale==0))
+    catalog.addItem('standard deviation of filtered ionospheric phase', std_out0, 'runIonFilt')
 
-    # ion = np.zeros((length*2, width), dtype=np.float32)
-    # ion[0:length*2:2, :] = amp
-    # ion[1:length*2:2, :] = filt
-    # ion.astype(np.float32).tofile(ionfiltfile)
-    # img.filename = ionfiltfile
-    # img.extraFilename = ionfiltfile + '.vrt'
-    # img.renderHdr()
+    #get final results
+    if (fit == True) and (filt == True):
+        ion_final = ion_filt + ion_fit * (ion_filt!=0)
+    elif (fit == True) and (filt == False):
+        ion_final = ion_fit
+    elif (fit == False) and (filt == True):
+        ion_final = ion_filt
+    else:
+        ion_final = ion
 
-    filt.astype(np.float32).tofile(ionfiltfile)
+    #output results
+    ion_final.astype(np.float32).tofile(ionfiltfile)
     create_xml(ionfiltfile, width, length, 'float')
+    if filt == True:
+        std_out.astype(np.float32).tofile(stdfiltfile)
+        create_xml(stdfiltfile, width, length, 'float')
+        window_size_out.astype(np.float32).tofile(windowsizefiltfile)
+        create_xml(windowsizefiltfile, width, length, 'float')
 
-
-    ############################################################
-    # STEP 3. resample ionospheric phase
-    ############################################################
-    from contrib.alos2proc_f.alos2proc_f import rect
-    from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
-    from scipy.interpolate import interp1d
-    import shutil
-
-    #################################################
-    #SET PARAMETERS HERE
-    #interpolation method
-    interpolationMethod = 1
-    #################################################
-
-    print('\ninterpolate ionosphere')
-
-    ml3 = '_{}rlks_{}alks'.format(self._insar.numberRangeLooks1*self._insar.numberRangeLooks2, 
-                              self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooks2)
-
-    ionfiltfile = 'filt_ion'+ml2+'.ion'
-    #ionrectfile = 'filt_ion'+ml3+'.ion'
-    ionrectfile = self._insar.multilookIon
-
-    img = isceobj.createImage()
-    img.load(ionfiltfile + '.xml')
-    width2 = img.width
-    length2 = img.length
-
-    img = isceobj.createImage()
-    img.load(os.path.join('../../', ionDir['insar'], self._insar.multilookDifferentialInterferogram) + '.xml')
-    width3 = img.width
-    length3 = img.length
-
-    #number of range looks output
-    nrlo = self._insar.numberRangeLooks1*self._insar.numberRangeLooks2
-    #number of range looks input
-    nrli = self._insar.numberRangeLooks1*self._insar.numberRangeLooksIon
-    #number of azimuth looks output
-    nalo = self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooks2
-    #number of azimuth looks input
-    nali = self._insar.numberAzimuthLooks1*self._insar.numberAzimuthLooksIon
-
-    if (self._insar.numberRangeLooks2 != self._insar.numberRangeLooksIon) or \
-       (self._insar.numberAzimuthLooks2 != self._insar.numberAzimuthLooksIon):
-        #this should be faster using fortran
-        if interpolationMethod == 0:
-            rect(ionfiltfile, ionrectfile,
-                width2,length2,
-                width3,length3,
-                nrlo/nrli, 0.0,
-                0.0, nalo/nali,
-                (nrlo-nrli)/(2.0*nrli),
-                (nalo-nali)/(2.0*nali),
-                'REAL','Bilinear')
-        #finer, but slower method
-        else:
-            ionfilt = np.fromfile(ionfiltfile, dtype=np.float32).reshape(length2, width2)
-            index2 = np.linspace(0, width2-1, num=width2, endpoint=True)
-            index3 = np.linspace(0, width3-1, num=width3, endpoint=True) * nrlo/nrli + (nrlo-nrli)/(2.0*nrli)
-            ionrect = np.zeros((length3, width3), dtype=np.float32)
-            for i in range(length2):
-                f = interp1d(index2, ionfilt[i,:], kind='cubic', fill_value="extrapolate")
-                ionrect[i, :] = f(index3)
-            
-            index2 = np.linspace(0, length2-1, num=length2, endpoint=True)
-            index3 = np.linspace(0, length3-1, num=length3, endpoint=True) * nalo/nali + (nalo-nali)/(2.0*nali)
-            for j in range(width3):
-                f = interp1d(index2, ionrect[0:length2, j], kind='cubic', fill_value="extrapolate")
-                ionrect[:, j] = f(index3)
-            ionrect.astype(np.float32).tofile(ionrectfile)
-            del ionrect
-        create_xml(ionrectfile, width3, length3, 'float')
-
-        os.rename(ionrectfile, os.path.join('../../insar', ionrectfile))
-        os.rename(ionrectfile+'.vrt', os.path.join('../../insar', ionrectfile)+'.vrt')
-        os.rename(ionrectfile+'.xml', os.path.join('../../insar', ionrectfile)+'.xml')
-        os.chdir('../../insar')
-    else:
-        shutil.copyfile(ionfiltfile, os.path.join('../../insar', ionrectfile))
-        os.chdir('../../insar')
-        create_xml(ionrectfile, width3, length3, 'float')
-    #now we are in 'insar'
-
-
-    ############################################################
-    # STEP 4. correct interferogram
-    ############################################################
-    from isceobj.Alos2Proc.Alos2ProcPublic import renameFile
-    from isceobj.Alos2Proc.Alos2ProcPublic import runCmd
-
-    if self.applyIon:
-        print('\ncorrect interferogram')
-        if os.path.isfile(self._insar.multilookDifferentialInterferogramOriginal):
-            print('original interferogram: {} is already here, do not rename: {}'.format(self._insar.multilookDifferentialInterferogramOriginal, self._insar.multilookDifferentialInterferogram))
-        else:
-            print('renaming {} to {}'.format(self._insar.multilookDifferentialInterferogram, self._insar.multilookDifferentialInterferogramOriginal))
-            renameFile(self._insar.multilookDifferentialInterferogram, self._insar.multilookDifferentialInterferogramOriginal)
-
-        cmd = "imageMath.py -e='a*exp(-1.0*J*b)' --a={} --b={} -s BIP -t cfloat -o {}".format(
-            self._insar.multilookDifferentialInterferogramOriginal,
-            self._insar.multilookIon,
-            self._insar.multilookDifferentialInterferogram)
-        runCmd(cmd)
-    else:
-        print('\nionospheric phase estimation finished, but correction of interfeorgram not requested')
-
-    os.chdir('../')
+    os.chdir('../../')
 
     catalog.printToLog(logger, "runIonFilt")
     self._insar.procDoc.addAllFromCatalog(catalog)
@@ -372,7 +371,8 @@ def computeIonosphere(lowerUnw, upperUnw, wgt, fl, fu, adjFlag, dispersive):
         diff = mv
     #adjust phase using a surface
     else:
-        diff = weight_fitting(lowerUnw - upperUnw, wgt, width, length, 1, 1, 1, 1, 2)
+        #diff = weight_fitting(lowerUnw - upperUnw, wgt, width, length, 1, 1, 1, 1, 2)
+        diff, coeff = polyfit_2d(lowerUnw - upperUnw, wgt, 2)
 
     flag2 = (lowerUnw!=0)
     index2 = np.nonzero(flag2)
@@ -403,133 +403,6 @@ def computeIonosphere(lowerUnw, upperUnw, wgt, fl, fu, adjFlag, dispersive):
     return ionos
 
 
-def fit_surface(x, y, z, wgt, order):
-    # x: x coordinate, a column vector
-    # y: y coordinate, a column vector
-    # z: z coordinate, a column vector
-    # wgt: weight of the data points, a column vector
-
-
-    #number of data points
-    m = x.shape[0]
-    l = np.ones((m,1), dtype=np.float64)
-
-#    #create polynomial
-#    if order == 1:
-#        #order of estimated coefficents: 1, x, y
-#        a1 = np.concatenate((l, x, y), axis=1)
-#    elif order == 2:
-#        #order of estimated coefficents: 1, x, y, x*y, x**2, y**2
-#        a1 = np.concatenate((l, x, y, x*y, x**2, y**2), axis=1)
-#    elif order == 3:
-#        #order of estimated coefficents: 1, x, y, x*y, x**2, y**2, x**2*y, y**2*x, x**3, y**3
-#        a1 = np.concatenate((l, x, y, x*y, x**2, y**2, x**2*y, y**2*x, x**3, y**3), axis=1)
-#    else:
-#        raise Exception('order not supported yet\n')
-
-    if order < 1:
-        raise Exception('order must be larger than 1.\n')
-
-    #create polynomial
-    a1 = l;
-    for i in range(1, order+1):
-        for j in range(i+1):
-            a1 = np.concatenate((a1, x**(i-j)*y**(j)), axis=1)
-
-    #number of variable to be estimated
-    n = a1.shape[1]
-
-    #do the least squares
-    a = a1 * np.matlib.repmat(np.sqrt(wgt), 1, n)
-    b = z * np.sqrt(wgt)
-    c = np.linalg.lstsq(a, b, rcond=-1)[0]
-    
-    #type: <class 'numpy.ndarray'>
-    return c
-
-
-def cal_surface(x, y, c, order):
-    #x: x coordinate, a row vector
-    #y: y coordinate, a column vector
-    #c: coefficients of polynomial from fit_surface
-    #order: order of polynomial
-
-    if order < 1:
-        raise Exception('order must be larger than 1.\n')
-
-    #number of lines
-    length = y.shape[0]
-    #number of columns, if row vector, only one element in the shape tuple
-    #width = x.shape[1]
-    width = x.shape[0]
-
-    x = np.matlib.repmat(x, length, 1)
-    y = np.matlib.repmat(y, 1, width)
-    z = c[0] * np.ones((length,width), dtype=np.float64)
-
-    index = 0
-    for i in range(1, order+1):
-        for j in range(i+1):
-            index += 1
-            z += c[index] * x**(i-j)*y**(j)
-
-    return z
-
-
-def weight_fitting(ionos, weight, width, length, nrli, nali, nrlo, nalo, order):
-    '''
-    ionos:  input ionospheric phase
-    weight: weight
-    width:  file width
-    length: file length
-    nrli:   number of range looks of the input interferograms
-    nali:   number of azimuth looks of the input interferograms
-    nrlo:   number of range looks of the output ionosphere phase
-    nalo:   number of azimuth looks of the ioutput ionosphere phase
-    order:  the order of the polynomial for fitting ionosphere phase estimates
-    '''
-
-    from isceobj.Alos2Proc.Alos2ProcPublic import create_multi_index2
-
-    lengthi = int(length/nali)
-    widthi = int(width/nrli)
-    lengtho = int(length/nalo)
-    widtho = int(width/nrlo)
-
-    #calculate output index
-    rgindex = create_multi_index2(widtho, nrli, nrlo)
-    azindex = create_multi_index2(lengtho, nali, nalo)
-
-    #look for data to use
-    flag = (weight!=0)*(ionos!=0)
-    point_index = np.nonzero(flag)
-    m = point_index[0].shape[0]
-
-    #calculate input index matrix
-    x0=np.matlib.repmat(np.arange(widthi), lengthi, 1)
-    y0=np.matlib.repmat(np.arange(lengthi).reshape(lengthi, 1), 1, widthi)
-
-    x = x0[point_index].reshape(m, 1)
-    y = y0[point_index].reshape(m, 1)
-    z = ionos[point_index].reshape(m, 1)
-    w = weight[point_index].reshape(m, 1)
-
-    #convert to higher precision type before use
-    x=np.asfarray(x,np.float64)
-    y=np.asfarray(y,np.float64)
-    z=np.asfarray(z,np.float64)
-    w=np.asfarray(w,np.float64)
-    coeff = fit_surface(x, y, z, w, order)
-
-    #convert to higher precision type before use
-    rgindex=np.asfarray(rgindex,np.float64)
-    azindex=np.asfarray(azindex,np.float64)
-    phase_fit = cal_surface(rgindex, azindex.reshape(lengtho, 1), coeff, order)
-
-    #format: widtho, lengtho, single band float32
-    return phase_fit
-
-
 def gaussian(size, sigma, scale = 1.0):
 
     if size % 2 != 1:
@@ -542,7 +415,7 @@ def gaussian(size, sigma, scale = 1.0):
     return f2d/np.sum(f2d)
 
 
-def adaptive_gaussian(ionos, wgt, size_max, size_min):
+def adaptive_gaussian_v0(ionos, wgt, size_max, size_min):
     '''
     This program performs Gaussian filtering with adaptive window size.
     ionos: ionosphere
@@ -602,6 +475,253 @@ def adaptive_gaussian(ionos, wgt, size_max, size_min):
     return out2
 
 
+def least_sqares(H, S, W=None):
+    '''
+    #This can make use multiple threads (set environment variable: OMP_NUM_THREADS)
+    linear equations:  H theta = s
+    W:                 weight matrix
+    '''
+
+    S.reshape(H.shape[0], 1)
+    if W is None:
+        #use np.dot instead since some old python versions don't have matmul
+        m1 = np.linalg.inv(np.dot(H.transpose(), H))
+        Z = np.dot(       np.dot(m1, H.transpose())           , S)
+    else:
+        #use np.dot instead since some old python versions don't have matmul
+        m1 = np.linalg.inv(np.dot(np.dot(H.transpose(), W), H))
+        Z = np.dot(np.dot(np.dot(m1, H.transpose()), W), S)
+
+    return Z.reshape(Z.size)
+
+
+def polyfit_2d(data, weight, order):
+    '''
+    fit a surface to a 2-d matrix
+
+    data:   input 2-d data
+    weight: corresponding 2-d weight
+    order:  order. must >= 1
+
+    zero samples in data and weight are OK.
+    '''
+    #import numpy as np
+
+    if order < 1:
+        raise Exception('order must >= 1!\n')
+
+    if data.shape != weight.shape:
+        raise Exception('data and weight must be of same size!\n')
+
+    (length, width) = data.shape
+    #length*width, but below is better since no need to convert to int
+    n = data.size
+
+    #number of coefficients
+    ncoeff = 1
+    for i in range(1, order+1):
+        for j in range(i+1):
+            ncoeff += 1
+
+    #row, column
+    y, x = np.indices((length, width))
+    x = x.flatten()
+    y = y.flatten()
+    z = data.flatten()
+    weight = np.sqrt(weight.flatten())
+
+    #linear functions: H theta = s
+    #compute observation matrix H (n*ncoeff)
+    H = np.zeros((n, ncoeff))
+    H[:,0] += 1
+    k = 1
+    for i in range(1, order+1):
+        for j in range(i+1):
+            #x and y do not need to be column vector here
+            H[:, k] = x**(i-j)*y**(j)
+            k += 1
+
+    #least squares
+    #this is robust to singular cases
+    coeff = np.linalg.lstsq(H*weight[:,None], z*weight, rcond=-1)[0]
+    #this uses multiple threads, should be faster
+    #coeff = least_sqares(H*weight[:,None], z*weight, W=None)
+
+    #fit surface
+    data_fit = (np.dot(H, coeff)).reshape(length, width)
+
+    return (data_fit, coeff)
+
+
+def adaptive_gaussian(data, std, size_min, size_max, std_out0, fit=True):
+    '''
+    This program performs Gaussian filtering with adaptive window size.
+    Cunren Liang, 11-JUN-2020
+
+    data:     input raw data, numpy array
+    std:      standard deviation of raw data, numpy array
+    size_min: minimum filter window size
+    size_max: maximum filter window size (size_min <= size_max, size_min == size_max is allowed)
+    std_out0: standard deviation of output data
+    fit:      whether do fitting before gaussian filtering
+    '''
+    import scipy.signal as ss
+
+
+    (length, width) = data.shape
+
+    #assume zero-value samples are invalid
+    index = np.nonzero(np.logical_or(data==0, std==0))
+    data[index] = 0
+    std[index] = 0
+    #compute weight using standard deviation
+    wgt = 1.0 / (std**2 + (std==0))
+    wgt[index] = 0
+
+    #compute number of gaussian filters
+    if size_min > size_max:
+        raise Exception('size_min: {} > size_max: {}\n'.format(size_min, size_max))
+
+    if size_min % 2 == 0:
+        size_min += 1
+    if size_max % 2 == 0:
+        size_max += 1
+
+    size_num = int((size_max - size_min) / 2 + 1)
+    #'size_num == 1' is checked to be OK starting from here
+
+
+    #create gaussian filters
+    print('compute Gaussian filters\n')
+    gaussian_filters = []
+    for i in range(size_num):
+        size = int(size_min + i * 2)
+        gaussian_filters.append(gaussian(size, size/2.0, scale=1.0))
+
+
+    #compute standard deviation after filtering coresponding to each of gaussian_filters
+    #if value is 0, there is no valid sample in the gaussian window
+    print('compute standard deviation after filtering for each filtering window size')
+    std_filt = np.zeros((length, width, size_num))
+    for i in range(size_num):
+        size = int(size_min + i * 2)
+        print('current window size: %4d, min window size: %4d, max window size: %4d' % (size, size_min, size_max), end='\r', flush=True)
+        #robust zero value detector. non-zero convolution result at least >= 1, so can use 0.5 
+        #as threshold to detect zero-value result
+        index = np.nonzero(ss.fftconvolve(wgt!=0, gaussian_filters[i]!=0, mode='same') < 0.5)
+        scale = ss.fftconvolve(wgt, gaussian_filters[i], mode='same')
+        scale[index] = 0
+        #variance of resulting filtered sample
+        var_filt = ss.fftconvolve(wgt, gaussian_filters[i]**2, mode='same') / (scale**2 + (scale==0))
+        var_filt[index] = 0
+        std_filt[:, :, i] = np.sqrt(var_filt)
+    print('\n')
+
+
+    #find gaussian window size (3rd-dimension index of the window size in gaussian_filters)
+    #if value is -1, there is no valid sample in any of the gaussian windows
+    #and therefore no filtering in the next step is needed
+    print('find Gaussian window size to use')
+    gaussian_index = np.zeros((length, width), dtype=np.int32)
+    std_filt2 = np.zeros((length, width))
+    for i in range(length):
+        if (((i+1)%50) == 0):
+            print('processing line %6d of %6d' % (i+1, length), end='\r', flush=True)
+        for j in range(width):
+            if np.sum(std_filt[i, j, :]) == 0:
+                gaussian_index[i, j] = -1
+            else:
+                gaussian_index[i, j] = size_num - 1
+                for k in range(size_num):
+                    if (std_filt[i, j, k] != 0) and (std_filt[i, j, k] <= std_out0):
+                        gaussian_index[i, j] = k
+                        break
+            if gaussian_index[i, j] != -1:
+                std_filt2[i, j] = std_filt[i, j, gaussian_index[i, j]]
+    del std_filt
+    print("processing line %6d of %6d\n" % (length, length))
+
+
+    #adaptive gaussian filtering
+    print('filter image')
+    data_out = np.zeros((length, width))
+    std_out = np.zeros((length, width))
+    window_size_out = np.zeros((length, width), dtype=np.int16)
+    for i in range(length):
+        #if (((i+1)%5) == 0):
+        print('processing line %6d of %6d' % (i+1, length), end='\r', flush=True)
+        for j in range(width):
+            #if value is -1, there is no valid sample in any of the gaussian windows
+            #and therefore no filtering in the next step is needed
+            if gaussian_index[i, j] == -1:
+                continue
+
+            #1. extract data
+            size = int(size_min + gaussian_index[i, j] * 2)
+            size_half = int((size - 1) / 2)
+            window_size_out[i, j] = size
+
+            #index in original data
+            first_line = max(i-size_half, 0)
+            last_line = min(i+size_half, length-1)
+            first_column = max(j-size_half, 0)
+            last_column = min(j+size_half, width-1)
+            length_valid = last_line - first_line + 1
+            width_valid = last_column - first_column + 1
+
+            #index in filter window
+            if first_line == 0:
+                last_line2 = size - 1
+                first_line2 = last_line2 - (length_valid - 1)
+            else:
+                first_line2 = 0
+                last_line2 = first_line2 + (length_valid - 1)
+            if first_column == 0:
+                last_column2 = size - 1
+                first_column2 = last_column2 - (width_valid - 1)
+            else:
+                first_column2 = 0
+                last_column2 = first_column2 + (width_valid - 1)
+
+            #prepare data and weight within the window
+            data_window = np.zeros((size, size))
+            wgt_window = np.zeros((size, size))
+            data_window[first_line2:last_line2+1, first_column2:last_column2+1] = data[first_line:last_line+1, first_column:last_column+1]
+            wgt_window[first_line2:last_line2+1, first_column2:last_column2+1] = wgt[first_line:last_line+1, first_column:last_column+1]
+            #number of valid samples in the filtering window
+            n_valid = np.sum(data_window!=0)
+
+            #2. fit
+            #order, n_coeff = (1, 3)
+            order, n_coeff = (2, 6)
+            if fit:
+                #must have enough samples to do fitting
+                #even if order is 2, n_coeff * 3 is much smaller than size_min*size_min in most cases.
+                if n_valid > n_coeff * 3:
+                    #data_fit = weight_fitting(data_window, wgt_window, size, size, 1, 1, 1, 1, order)
+                    data_fit, coeff = polyfit_2d(data_window, wgt_window, order)
+                    index = np.nonzero(data_window!=0)
+                    data_window[index] -= data_fit[index]
+
+            #3. filter
+            wgt_window_2 = wgt_window * gaussian_filters[gaussian_index[i, j]]
+            scale = 1.0/np.sum(wgt_window_2)
+            wgt_window_2 *= scale
+            data_out[i, j] = np.sum(wgt_window_2 * data_window)
+            #std_out[i, j] = scale * np.sqrt(np.sum(wgt_window*(gaussian_filters[gaussian_index[i, j]]**2)))
+            #already computed
+            std_out[i, j] = std_filt2[i, j]
+            #print('std_out[i, j], std_filt2[i, j]', std_out[i, j], std_filt2[i, j])
+
+            #4. add back filtered value
+            if fit:
+                if n_valid > n_coeff * 3:
+                    data_out[i, j] += data_fit[size_half, size_half]
+    print('\n')
+
+    return (data_out, std_out, window_size_out)
+
+
 def reformatMaskedAreas(maskedAreas, length, width):
     '''
     reformat masked areas coordinates that are ready to use
@@ -633,3 +753,5 @@ def reformatMaskedAreas(maskedAreas, length, width):
             raise Exception('area {} masked out in ionospheric phase estimation not correct'.format(i+1))
 
     return maskedAreasReformated
+
+

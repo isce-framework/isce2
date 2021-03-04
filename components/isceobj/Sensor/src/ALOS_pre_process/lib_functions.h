@@ -9,8 +9,8 @@
 void ALOS_ldr_orbit(struct ALOS_ORB *, struct PRM *);
 void calc_height_velocity(struct ALOS_ORB *, struct PRM *, double, double, double *, double *, double *, double *, double *);
 void calc_dop(struct  PRM *);
-void cfft1d_(int *, fcomplex *, int *);
-void read_data(fcomplex *, unsigned char *, int, struct PRM *);
+void cfft1d_(int *, fcomplex_sio *, int *);
+void read_data(fcomplex_sio *, unsigned char *, int, struct PRM *);
 void null_sio_struct(struct PRM *);
 void get_sio_struct(FILE *, struct PRM *);
 void put_sio_struct(struct PRM, FILE *);

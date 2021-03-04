@@ -55,6 +55,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <assert.h>
@@ -1755,6 +1756,8 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
   double cost,  c_max;
   short *cap;  /* cap changed to short by CWC */
 
+  long row_index, col_index;  /* report out-of-bounds index by Cunren, 18-aug-2020 */
+
   short **rowcost, **colcost;
   short **rowflow, **colflow;
   
@@ -1808,19 +1811,10 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
 	  exit(ABNORMAL_EXIT);
 	}
 
-	if(from==(to+1)){    
-	  num=from+(int )((from-1)/nNrow);
-	  colflow[(num-1) % (nNrow+1)][(int )(num-1)/(nNrow+1)]-=flow;
-	}else if(from==(to-1)){
-	  num=from+(int )((from-1)/nNrow)+1;
-	  colflow[(num-1) % (nNrow+1)][(int )(num-1)/(nNrow+1)]+=flow;
-	}else if(from==(to-nNrow)){
-	  num=from+nNrow;
-	  rowflow[(num-1) % nNrow][(int )((num-1)/nNrow)]+=flow;
-	}else if(from==(to+nNrow)){
-	  num=from;
-	  rowflow[(num-1) % nNrow][(int )((num-1)/nNrow)]-=flow;
-	}else if((from==ground) || (to==ground)){
+        /* node indices are indexed from 1, not 0 */
+        /* node indices are in column major order, not row major */
+        /* handle flow to/from ground first */
+        if((from==ground) || (to==ground)){
 	  if(to==ground){
 	    num=to;
 	    to=from;
@@ -1828,17 +1822,69 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
 	    flow=-flow;
 	  }
 	  if(!((to-1) % nNrow)){
-	    colflow[0][(int )((to-1)/nNrow)]+=flow;
+      row_index = 0;
+      col_index = (int )((to-1)/nNrow);
+      if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
+        colflow[row_index][col_index]+=flow;
+      else
+	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
 	  }else if(to<=nNrow){
-	    rowflow[to-1][0]+=flow;
+      row_index = to-1;
+      col_index = 0;
+      if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
+        rowflow[row_index][col_index]+=flow;
+      else
+	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
 	  }else if(to>=(ground-nNrow-1)){
-	    rowflow[(to-1) % nNrow][nNcol]-=flow;
+      row_index = (to-1) % nNrow;
+      col_index = nNcol;
+      if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
+        rowflow[row_index][col_index]-=flow;
+      else
+	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
 	  }else if(!(to % nNrow)){
-	    colflow[nNrow][(int )((to/nNrow)-1)]-=flow;
+      row_index = nNrow;
+      col_index = (int )((to/nNrow)-1);
+      if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
+        colflow[row_index][col_index]-=flow;
+      else
+	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
 	  }else{
 	    fprintf(sp0,"Unassigned ground arc parsing cs2 solution\nAbort\n");
 	    exit(ABNORMAL_EXIT);
-	  }        
+	  }
+        }else if(from==(to+1)){    
+	  num=from+(int )((from-1)/nNrow);
+    row_index = (num-1) % (nNrow+1);
+    col_index = (int )(num-1)/(nNrow+1);
+    if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
+      colflow[row_index][col_index]-=flow;
+    else
+	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
+	}else if(from==(to-1)){
+	  num=from+(int )((from-1)/nNrow)+1;
+    row_index = (num-1) % (nNrow+1);
+    col_index = (int )(num-1)/(nNrow+1);
+    if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
+      colflow[row_index][col_index]+=flow;
+    else
+	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
+	}else if(from==(to-nNrow)){
+	  num=from+nNrow;
+    row_index = (num-1) % nNrow;
+    col_index = (int )((num-1)/nNrow);
+    if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
+      rowflow[row_index][col_index]+=flow;
+    else
+	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
+	}else if(from==(to+nNrow)){
+	  num=from;
+    row_index = (num-1) % nNrow;
+    col_index = (int )((num-1)/nNrow);
+    if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
+      rowflow[row_index][col_index]-=flow;
+    else
+	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
 	}else{
 	  fprintf(sp0,"Non-grid arc parsing cs2 solution\nAbort\n");
 	  exit(ABNORMAL_EXIT);

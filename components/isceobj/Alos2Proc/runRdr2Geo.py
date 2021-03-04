@@ -14,6 +14,10 @@ logger = logging.getLogger('isce.alos2insar.runRdr2Geo')
 def runRdr2Geo(self):
     '''compute lat/lon/hgt
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 

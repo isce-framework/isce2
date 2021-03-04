@@ -33,9 +33,9 @@
 #define NULL_DOUBLE -99999.9999
 #define NULL_CHAR  "XXXXXXXX"
 
-typedef struct SCOMPLEX {short r,i;} scomplex;
-typedef struct FCOMPLEX {float r,i;} fcomplex;
-typedef struct DCOMPLEX {double r,i;} dcomplex;
+typedef struct SCOMPLEX_SIO {short r,i;} scomplex_sio;
+typedef struct FCOMPLEX_SIO {float r,i;} fcomplex_sio;
+typedef struct DCOMPLEX_SIO {double r,i;} dcomplex_sio;
 
 struct PRM {
 	char input_file[256];
@@ -120,6 +120,20 @@ struct PRM {
 	double alpha_end;
 	double bpara;			/* parallel baseline - added by RJM */
 	double bperp;			/* perpendicular baseline - added by RJM */
+};
+struct resamp_info {
+	//we assume there are no more than 20 prfs per image
+	int nPRF; //number of prfs, start with 1
+    int frame_counter_start[20];
+    int frame_counter_end[20];
+    int num_lines[20];
+    int num_bins[20];
+	double prf[20];
+	double SC_clock_start[20];	/* YYDDD.DDDD */
+	double fd1[20];
+	double fdd1[20];
+	double fddd1[20];
+	char input_file[20][256]; //we assume there are no more than 256 characters in the file name
 };
 /*
 offset_video 		off_vid		

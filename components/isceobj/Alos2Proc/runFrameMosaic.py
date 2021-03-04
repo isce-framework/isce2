@@ -17,6 +17,10 @@ logger = logging.getLogger('isce.alos2insar.runFrameMosaic')
 def runFrameMosaic(self):
     '''mosaic frames
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
@@ -103,12 +107,17 @@ def runFrameMosaic(self):
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=False, phaseCompensation=False, resamplingMethod=0)
         #mosaic interferograms
-        frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
+        (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
             rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
             updateTrack=True, phaseCompensation=True, resamplingMethod=1)
 
         create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
         create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
+
+        catalog.addItem('frame phase diff estimated', phaseDiffEst[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff used', phaseDiffUsed[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff used source', phaseDiffSource[1:], 'runFrameMosaic')
+        catalog.addItem('frame phase diff samples used', numberOfValidSamples[1:], 'runFrameMosaic')
 
         #update secondary parameters here
         #do not match for secondary, always use geometrical
@@ -125,7 +134,7 @@ def runFrameMosaic(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateTrack=False, phaseCompensation=False, resamplingMethod=0):
+def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateTrack=False, phaseCompensation=False, phaseDiffFixed=None, snapThreshold=None, resamplingMethod=0):
     '''
     mosaic frames
     
@@ -138,6 +147,8 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     numberOfAzimuthLooks:  number of azimuth looks of the input files
     updateTrack:           whether update track parameters
     phaseCompensation:     whether do phase compensation for each frame
+    phaseDiffFixed:        if provided, the estimated value will snap to one of these values, which is nearest to the estimated one.
+    snapThreshold:         this is used with phaseDiffFixed
     resamplingMethod:      0: amp resampling. 1: int resampling. 2: slc resampling
     '''
     import numpy as np
@@ -149,6 +160,8 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
     from isceobj.Alos2Proc.Alos2ProcPublic import find_vrt_file
     from isceobj.Alos2Proc.Alos2ProcPublic import find_vrt_keyword
+    from isceobj.Alos2Proc.Alos2ProcPublic import computePhaseDiff
+    from isceobj.Alos2Proc.Alos2ProcPublic import snap
 
     numberOfFrames = len(track.frames)
     frames = track.frames
@@ -184,90 +197,107 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
         if i == 0:
             rinfs[i] = inf
         else:
-            infImg = isceobj.createImage()
-            infImg.load(inf+'.xml')
-            rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
-            azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
+            #no need to resample
+            if (abs(rangeOffsets2[i] - round(rangeOffsets2[i])) < 0.0001) and (abs(azimuthOffsets2[i] - round(azimuthOffsets2[i])) < 0.0001):
+                if os.path.isfile(rinfs[i]):
+                    os.remove(rinfs[i])
+                os.symlink(inf, rinfs[i])
+                #all of the following use of rangeOffsets2/azimuthOffsets2 is inside int(), we do the following in case it is like
+                #4.99999999999...
+                rangeOffsets2[i] = round(rangeOffsets2[i])
+                azimuthOffsets2[i] = round(azimuthOffsets2[i])
 
-            if resamplingMethod == 0:
-                rect_with_looks(inf,
-                                rinfs[i],
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Bilinear')
-                if infImg.getImageType() == 'amp':
-                    create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
-                else:
-                    create_xml(rinfs[i], infImg.width, infImg.length, 'int')
-
-            elif resamplingMethod == 1:
-                #decompose amplitude and phase
-                phaseFile = 'phase'
-                amplitudeFile = 'amplitude'
-                data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
-                phase = np.exp(np.complex64(1j) * np.angle(data))
-                phase[np.nonzero(data==0)] = 0
-                phase.astype(np.complex64).tofile(phaseFile)
-                amplitude = np.absolute(data)
-                amplitude.astype(np.float32).tofile(amplitudeFile)
-
-                #resampling
-                phaseRectFile = 'phaseRect'
-                amplitudeRectFile = 'amplitudeRect'
-                rect_with_looks(phaseFile,
-                                phaseRectFile,
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'COMPLEX',
-                                'Sinc')
-                rect_with_looks(amplitudeFile,
-                                amplitudeRectFile,
-                                infImg.width, infImg.length,
-                                infImg.width, infImg.length,
-                                1.0, 0.0,
-                                0.0, 1.0,
-                                rangeOffsets2Frac, azimuthOffsets2Frac,
-                                1,1,
-                                1,1,
-                                'REAL',
-                                'Bilinear')
-
-                #recombine amplitude and phase
-                phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(infImg.length, infImg.width)
-                amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(infImg.length, infImg.width)
-                (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
-
-                #tidy up
-                os.remove(phaseFile)
-                os.remove(amplitudeFile)
-                os.remove(phaseRectFile)
-                os.remove(amplitudeRectFile)
+                infImg = isceobj.createImage()
+                infImg.load(inf+'.xml')
                 if infImg.getImageType() == 'amp':
                     create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
                 else:
                     create_xml(rinfs[i], infImg.width, infImg.length, 'int')
             else:
-                resamp(inf,
-                       rinfs[i],
-                       'fake',
-                       'fake',
-                       infImg.width, infImg.length,
-                       frames[i].swaths[0].prf,
-                       frames[i].swaths[0].dopplerVsPixel,
-                       [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                       [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-                create_xml(rinfs[i], infImg.width, infImg.length, 'slc')
+                infImg = isceobj.createImage()
+                infImg.load(inf+'.xml')
+                rangeOffsets2Frac = rangeOffsets2[i] - int(rangeOffsets2[i])
+                azimuthOffsets2Frac = azimuthOffsets2[i] - int(azimuthOffsets2[i])
+
+                if resamplingMethod == 0:
+                    rect_with_looks(inf,
+                                    rinfs[i],
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Bilinear')
+                    if infImg.getImageType() == 'amp':
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
+                    else:
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'int')
+
+                elif resamplingMethod == 1:
+                    #decompose amplitude and phase
+                    phaseFile = 'phase'
+                    amplitudeFile = 'amplitude'
+                    data = np.fromfile(inf, dtype=np.complex64).reshape(infImg.length, infImg.width)
+                    phase = np.exp(np.complex64(1j) * np.angle(data))
+                    phase[np.nonzero(data==0)] = 0
+                    phase.astype(np.complex64).tofile(phaseFile)
+                    amplitude = np.absolute(data)
+                    amplitude.astype(np.float32).tofile(amplitudeFile)
+
+                    #resampling
+                    phaseRectFile = 'phaseRect'
+                    amplitudeRectFile = 'amplitudeRect'
+                    rect_with_looks(phaseFile,
+                                    phaseRectFile,
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'COMPLEX',
+                                    'Sinc')
+                    rect_with_looks(amplitudeFile,
+                                    amplitudeRectFile,
+                                    infImg.width, infImg.length,
+                                    infImg.width, infImg.length,
+                                    1.0, 0.0,
+                                    0.0, 1.0,
+                                    rangeOffsets2Frac, azimuthOffsets2Frac,
+                                    1,1,
+                                    1,1,
+                                    'REAL',
+                                    'Bilinear')
+
+                    #recombine amplitude and phase
+                    phase = np.fromfile(phaseRectFile, dtype=np.complex64).reshape(infImg.length, infImg.width)
+                    amplitude = np.fromfile(amplitudeRectFile, dtype=np.float32).reshape(infImg.length, infImg.width)
+                    (phase*amplitude).astype(np.complex64).tofile(rinfs[i])
+
+                    #tidy up
+                    os.remove(phaseFile)
+                    os.remove(amplitudeFile)
+                    os.remove(phaseRectFile)
+                    os.remove(amplitudeRectFile)
+                    if infImg.getImageType() == 'amp':
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'amp')
+                    else:
+                        create_xml(rinfs[i], infImg.width, infImg.length, 'int')
+                else:
+                    resamp(inf,
+                           rinfs[i],
+                           'fake',
+                           'fake',
+                           infImg.width, infImg.length,
+                           frames[i].swaths[0].prf,
+                           frames[i].swaths[0].dopplerVsPixel,
+                           [rangeOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                           [azimuthOffsets2Frac, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+                    create_xml(rinfs[i], infImg.width, infImg.length, 'slc')
 
     #determine output width and length
     #actually no need to calculate in azimuth direction
@@ -305,6 +335,15 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
 
     #compute phase offset
     if phaseCompensation:
+
+        phaseDiffEst    = [0.0 for i in range(numberOfFrames)]
+        phaseDiffUsed   = [0.0 for i in range(numberOfFrames)]
+        phaseDiffSource = ['estimated' for i in range(numberOfFrames)]
+        numberOfValidSamples = [0 for i in range(numberOfFrames)]
+        #phaseDiffEst    = [0.0]
+        #phaseDiffUsed   = [0.0]
+        #phaseDiffSource = ['estimated']
+
         phaseOffsetPolynomials = [np.array([0.0])]
         for i in range(1, numberOfFrames):
             upperframe = np.zeros((ye[i-1]-ys[i]+1, outWidth), dtype=np.complex128)
@@ -323,8 +362,29 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
             diff = np.sum(upperframe * np.conj(lowerframe), axis=0)
             (firstLine, lastLine, firstSample, lastSample) = findNonzero(np.reshape(diff, (1, outWidth)))
             #here i use mean value(deg=0) in case difference is around -pi or pi.
+            #!!!!!there have been updates, now deg must be 0
             deg = 0
             p = np.polyfit(np.arange(firstSample, lastSample+1), np.angle(diff[firstSample:lastSample+1]), deg)
+
+            #need to use a more sophisticated method to compute the mean phase difference
+            (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80)
+
+            #snap phase difference to fixed values
+            if phaseDiffFixed is not None:
+                (outputValue, snapped) = snap(phaseDiffEst[i], phaseDiffFixed, snapThreshold)
+                if snapped == True:
+                    phaseDiffUsed[i] = outputValue
+                    phaseDiffSource[i] = 'estimated+snap'
+                else:
+                    phaseDiffUsed[i] = phaseDiffEst[i]
+                    phaseDiffSource[i] = 'estimated'
+            else:
+                phaseDiffUsed[i] = phaseDiffEst[i]
+                phaseDiffSource[i] = 'estimated'
+
+            #use new phase constant value
+            p[-1] = phaseDiffUsed[i]
+
             phaseOffsetPolynomials.append(p)
 
 
@@ -434,6 +494,10 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
         track.prf = frames[0].prf
         track.azimuthPixelSize = frames[0].azimuthPixelSize
         track.azimuthLineInterval = frames[0].azimuthLineInterval
+
+    if phaseCompensation:
+        # estimated phase diff, used phase diff, used phase diff source
+        return (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples)
 
 
 def frameMosaicParameters(track, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks):

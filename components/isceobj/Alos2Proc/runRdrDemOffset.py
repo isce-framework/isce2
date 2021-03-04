@@ -20,10 +20,20 @@ logger = logging.getLogger('isce.alos2insar.runRdrDemOffset')
 def runRdrDemOffset(self):
     '''estimate between radar image and dem
     '''
+    if hasattr(self, 'doInSAR'):
+        if not self.doInSAR:
+            return
+
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
     self.updateParamemetersFromUser()
 
     referenceTrack = self._insar.loadTrack(reference=True)
+
+    rdrDemOffset(self, referenceTrack, catalog=catalog)
+
+
+def rdrDemOffset(self, referenceTrack, catalog=None):
+
     demFile = os.path.abspath(self._insar.dem)
 
     insarDir = 'insar'
@@ -96,13 +106,15 @@ def runRdrDemOffset(self):
     if (landRatio <= 0.00125):
         print('\n\nWARNING: land area too small for estimating offsets between radar and dem')
         print('do not estimate offsets between radar and dem\n\n')
-        self._insar.radarDemAffineTransform = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        catalog.addItem('warning message', 'land area too small for estimating offsets between radar and dem', 'runRdrDemOffset')
+        if catalog is not None:
+            self._insar.radarDemAffineTransform = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
+            catalog.addItem('warning message', 'land area too small for estimating offsets between radar and dem', 'runRdrDemOffset')
 
         os.chdir('../../')
 
-        catalog.printToLog(logger, "runRdrDemOffset")
-        self._insar.procDoc.addAllFromCatalog(catalog)
+        if catalog is not None:
+            catalog.printToLog(logger, "runRdrDemOffset")
+            self._insar.procDoc.addAllFromCatalog(catalog)
 
         return
 
@@ -130,8 +142,9 @@ def runRdrDemOffset(self):
     if numberOfOffsetsAzimuth < 10:
         numberOfOffsetsAzimuth = 10
 
-    catalog.addItem('number of range offsets', '{}'.format(numberOfOffsetsRange), 'runRdrDemOffset')
-    catalog.addItem('number of azimuth offsets', '{}'.format(numberOfOffsetsAzimuth), 'runRdrDemOffset')
+    if catalog is not None:
+        catalog.addItem('number of range offsets', '{}'.format(numberOfOffsetsRange), 'runRdrDemOffset')
+        catalog.addItem('number of azimuth offsets', '{}'.format(numberOfOffsetsAzimuth), 'runRdrDemOffset')
 
     #matching
     ampcor = Ampcor(name='insarapp_slcs_ampcor')
@@ -247,12 +260,14 @@ def runRdrDemOffset(self):
         print('\n\nWARNING: too few points left after culling, {} left'.format(numCullOffsets))
         print('do not estimate offsets between radar and dem\n\n')
         self._insar.radarDemAffineTransform = [1.0, 0.0, 0.0, 1.0, 0.0, 0.0]
-        catalog.addItem('warning message', 'too few points left after culling, {} left'.format(numCullOffsets), 'runRdrDemOffset')
+        if catalog is not None:
+            catalog.addItem('warning message', 'too few points left after culling, {} left'.format(numCullOffsets), 'runRdrDemOffset')
 
         os.chdir('../../')
 
-        catalog.printToLog(logger, "runRdrDemOffset")
-        self._insar.procDoc.addAllFromCatalog(catalog)
+        if catalog is not None:
+            catalog.printToLog(logger, "runRdrDemOffset")
+            self._insar.procDoc.addAllFromCatalog(catalog)
 
         return
 
@@ -277,8 +292,9 @@ def runRdrDemOffset(self):
     os.chdir('../../')
 
 
-    catalog.printToLog(logger, "runRdrDemOffset")
-    self._insar.procDoc.addAllFromCatalog(catalog)
+    if catalog is not None:
+        catalog.printToLog(logger, "runRdrDemOffset")
+        self._insar.procDoc.addAllFromCatalog(catalog)
 
 
 def simulateRadar(hgtfile, simfile, scale=3.0, offset=100.0):
