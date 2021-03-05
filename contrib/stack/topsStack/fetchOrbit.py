@@ -8,8 +8,7 @@ import argparse
 import datetime
 from html.parser import HTMLParser
 
-server = 'https://qc.sentinel1.eo.esa.int/'
-server2 = 'http://aux.sentinel1.eo.esa.int/'
+server = 'https://aux.sentinel1.eo.esa.int/'
 
 orbitMap = [('precise','aux_poeorb'),
             ('restituted','aux_resorb')]
@@ -202,7 +201,7 @@ if __name__ == '__main__':
 
                     if (tbef <= fileTSStart) and (taft >= fileTS):
                         datestr2 = FileToTimeStamp(result)[0].strftime(queryfmt2) 
-                        match = (server2 + spec[1].replace('aux_', '').upper() +
+                        match = (server + spec[1].replace('aux_', '').upper() +
                                  '/' +datestr2+ result + '.EOF')
                         break
 

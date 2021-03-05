@@ -14,7 +14,7 @@ requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 fmt = '%Y%m%d'
 today  = datetime.datetime.now().strftime(fmt)
 
-server = 'https://qc.sentinel1.eo.esa.int/'
+server = 'https://aux.sentinel1.eo.esa.int/'
 queryfmt = '%Y-%m-%d'
 datefmt = '%Y%m%dT%H%M%S'
 
