@@ -13,7 +13,8 @@ libList2 = ['cosar','DataAccessor','InterleavedAccessor']
 envSensor1.PrependUnique(LIBS = libList1)
 envSensor2.PrependUnique(LIBS = libList2)
 
-alosmodule = envSensor1.LoadableModule(target = 'alos.abi3.so', source = 'alosmodule.cpp')
+alosmodule = envSensor1.LoadableModule(target = 'alos.abi3.so',
+        source = [ 'alosmodule.cpp', '../src/ALOS_pre_process/image_sio.c' ])
 envSensor1.Install(install,alosmodule)
 
 cosarmodule = envSensor2.LoadableModule(target = 'cosar.abi3.so', source = 'cosarmodule.cpp')
