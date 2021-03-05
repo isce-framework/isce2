@@ -144,9 +144,8 @@ jobs:
           name: Install dependencies
           command: |
             apk add --no-cache \
-              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev
-            pip install \
-              docker-compose awscli
+              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev \
+              docker-compose aws-cli
       - run:
           name: Build docker image
           command: |
@@ -171,9 +170,8 @@ jobs:
           name: Install dependencies
           command: |
             apk add --no-cache \
-              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev
-            pip install \
-              docker-compose awscli
+              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev \
+              docker-compose aws-cli
       - run:
           name: Build docker image
           command: |
@@ -197,9 +195,8 @@ jobs:
           name: Install dependencies
           command: |
             apk add --no-cache \
-              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev
-            pip install \
-              docker-compose awscli
+              python3-dev py3-pip bash pigz build-base libffi-dev openssl-dev \
+              docker-compose aws-cli
       - run:
           name: Build docker image
           command: |
