@@ -1,4 +1,4 @@
-add_library(concatenate SHARED
+isce2_add_cdll(concatenate
     src/frame_concatenate.c
     src/swst_resample.c
     )
