@@ -8,35 +8,33 @@ import requests
 from html.parser import HTMLParser
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-
 fmt = '%Y%m%d'
-today  = datetime.datetime.now().strftime(fmt)
+today = datetime.datetime.now().strftime(fmt)
 
-server = 'https://qc.sentinel1.eo.esa.int/'
+server = 'https://aux.sentinel1.eo.esa.int/'
 queryfmt = '%Y-%m-%d'
 datefmt = '%Y%m%dT%H%M%S'
 
 S1Astart = '20140901'
 S1Astart_dt = datetime.datetime.strptime(S1Astart, '%Y%m%d')
 
-
 S1Bstart = '20160501'
 S1Bstart_dt = datetime.datetime.strptime(S1Bstart, '%Y%m%d')
 
 
 def cmdLineParse():
-   '''
-   Automated download of orbits.
-   '''
-   parser = argparse.ArgumentParser('S1A orbit downloader')
-   parser.add_argument('--start','-b', dest='start', type=str, default=S1Astart, help='Start date')
-   parser.add_argument('--end','-e', dest='end',
-type=str, default=today, help='Stop date')
-   parser.add_argument('--dir', '-d', dest='dirname',
-type=str, default='.', help='Directory with precise orbits')
-   return parser.parse_args()
+    '''
+    Automated download of orbits.
+    '''
+    parser = argparse.ArgumentParser('S1A orbit downloader')
+    parser.add_argument('--start', '-b', dest='start', type=str, default=S1Astart, help='Start date')
+    parser.add_argument('--end', '-e', dest='end', type=str, default=today, help='Stop date')
+    parser.add_argument('--dir', '-d', dest='dirname', type=str, default='.', help='Directory with precise orbits')
+    return parser.parse_args()
+
 
 def fileToRange(fname):
     '''
@@ -50,13 +48,14 @@ def fileToRange(fname):
 
     return (start, stop, mission)
 
+
 def gatherExistingOrbits(dirname):
     '''
     Gather existing orbits.
     '''
 
     fnames = glob.glob(os.path.join(dirname, 'S1?_OPER_AUX_POEORB*'))
-    rangeList=[]
+    rangeList = []
 
     for name in fnames:
         rangeList.append(fileToRange(name))
@@ -84,10 +83,11 @@ def ifAlreadyExists(indate, mission, rangeList):
 
     return found
 
+
 def validS1BDate(indate):
     if indate < S1Bstart_dt:
         return False
-    else: 
+    else:
         return True
 
 
@@ -110,7 +110,7 @@ def download_file(url, outdir='.', session=None):
         success = False
 
     if success:
-        with open(path,'wb') as f:
+        with open(path, 'wb') as f:
             for chunk in request.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
@@ -121,13 +121,13 @@ def download_file(url, outdir='.', session=None):
 
 class MyHTMLParser(HTMLParser):
 
-    def __init__(self):
+    def __init__(self, url):
         HTMLParser.__init__(self)
         self.fileList = []
         self.in_td = False
         self.in_a = False
         self.in_table = False
-        self._url = None
+        self._url = url
 
     def handle_starttag(self, tag, attrs):
         if tag == 'td':
@@ -135,14 +135,16 @@ class MyHTMLParser(HTMLParser):
         elif tag == 'a':
             self.in_a = True
             for name, val in attrs:
-                if name== "href":
+                if name == "href":
                     if val.startswith("http"):
                         self._url = val.strip()
 
-    def handle_data(self,data):
+    def handle_data(self, data):
         if self.in_td and self.in_a:
             if ('S1A_OPER' in data) or ('S1B_OPER' in data):
+                # print(data.strip())
                 self.fileList.append((self._url, data.strip()))
+                print(self._url, data.strip())
 
     def handle_tag(self, tag):
         if tag == 'td':
@@ -150,51 +152,7 @@ class MyHTMLParser(HTMLParser):
             self.in_a = False
         elif tag == 'a':
             self.in_a = False
-            self._url=None
-
-def query(indate, mission, session):
-    '''
-    Query the system for a given date.
-    '''
-
-    if mission == 'S1B':
-        if not validS1BDate(indate):
-            return
-
-    delta = datetime.timedelta(days=2)
-    timebef = (indate - delta).strftime(queryfmt)
-    timeaft = (indate + delta).strftime(queryfmt)
-
-    url = server + 'aux_poeorb'
-    query = url + '/?validity_start={0}..{1}&sentinel1__mission={2}'.format(timebef, timeaft,mission)
-    success = False
-    match = None
-    try:
-        r = session.get(query, verify=False)
-        r.raise_for_status()
-
-        parser = MyHTMLParser()
-        parser.feed(r.text)
-
-        for resulturl, result in parser.fileList:
-            tbef, taft, mission = fileToRange(os.path.basename(result))
-        
-
-            if (tbef <= indate) and (taft >= indate):
-                #match = os.path.join(url, result)
-                match = resulturl
-                break
-        
-        if match is not None:
-            success = True
-    except:
-        pass
-
-    if match is None:
-        print('Failed to find {1} orbits for tref {0}'.format(indate, mission))
-        return
-
-    return match
+            self._url = None
 
 
 if __name__ == '__main__':
@@ -202,7 +160,7 @@ if __name__ == '__main__':
     Main driver.
     '''
 
-    #Parse command line
+    # Parse command line
     inps = cmdLineParse()
 
     ###Compute interval
@@ -212,20 +170,40 @@ if __name__ == '__main__':
     days = (tend - tstart).days
     print('Number of days to check: ', days)
 
-    ####Gather existing orbits
     ranges = gatherExistingOrbits(inps.dirname)
-    session = requests.session()
 
     for dd in range(days):
         indate = tstart + datetime.timedelta(days=dd, hours=12)
-        print('Searching for {0}'.format(indate))
+
+        url = server + 'POEORB/' + str(indate.year).zfill(2) + '/' + str(indate.month).zfill(2) + '/' + str(
+            indate.day).zfill(2) + '/'
+
+        session = requests.session()
+        match = None
 
         for mission in ['S1A', 'S1B']:
             if not ifAlreadyExists(indate, mission, ranges):
-                match = query(indate, mission, session)
+
+                try:
+                    r = session.get(url, verify=False)
+                    r.raise_for_status()
+
+                    parser = MyHTMLParser(url)
+                    parser.feed(r.text)
+
+                    for resulturl, result in parser.fileList:
+                        match = os.path.join(resulturl, result)
+                        if match is not None:
+                            success = True
+                except:
+                    pass
 
                 if match is not None:
                     download_file(match, inps.dirname, session)
-                    pass
+                else:
+                    print('Failed to find {1} orbits for tref {0}'.format(indate, mission))
+
             else:
                 print('Already exists: ', mission, indate)
+
+    print('Exit dloadOrbits Successfully')

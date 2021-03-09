@@ -24,7 +24,7 @@ All file paths in the input files should either be absolute paths or relative to
     For more details on what these corrections are and where to get the aux files, see: https://sentinel.esa.int/documents/247904/1653440/Sentinel-1-IPF_EAP_Phase_correction
 
     Aux data can be accessed here: 
-    https://qc.sentinel1.eo.esa.int/aux_cal/?instrument_configuration_id=3
+    https://aux.sentinel1.eo.esa.int/AUX_CAL/
 
     
     Note 3: Precise orbits
@@ -33,10 +33,10 @@ All file paths in the input files should either be absolute paths or relative to
     Use of precise / restituted orbits are highly recommend for precise processing of Sentinel-1A interferograms. You can dump all the orbits in a common folder and ISCE will automatically identify the right orbit file to use with your data.
 
     Precise orbit data can be accessed here and are typically available 3 weeks after the SLCs are available:
-    https://qc.sentinel1.eo.esa.int/aux_poeorb/
+    https://aux.sentinel1.eo.esa.int/POEORB/
 
     Restituted orbits can be accessed here and are available at the same time as the SLCs:
-    https://qc.sentinel1.eo.esa.int/aux_resorb/
+    https://aux.sentinel1.eo.esa.int/RESORB/
 
 
     Note 3: Multiple slices
