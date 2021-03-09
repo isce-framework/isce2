@@ -37,9 +37,7 @@ The following calibration auxliary (AUX_CAL) file is used for **antenna pattern 
 Run the command below to download the AUX_CAL file once and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
 
 ```
-wget https://qc.sentinel1.eo.esa.int/product/S1A/AUX_CAL/20140908T000000/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
-tar zxvf S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
-rm S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
+wget https://aux.sentinel1.eo.esa.int/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE/ --no-check-certificate --recursive --level=1 --cut-dirs=4 -nH
 ```
 
 #### 1. Create your project folder somewhere ####
