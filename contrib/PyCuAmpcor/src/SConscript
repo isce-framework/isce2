@@ -24,30 +24,11 @@ envPyCuAmpcor.Append(ENABLESHAREDNVCCFLAG = ' -DNDEBUG ' + gdal_cflags)
 envPyCuAmpcor.Install(build,lib)
 envPyCuAmpcor.Alias('install', build)
 
-
-###custom builder for cython
-cythonBuilder = Builder(action='cython3 $SOURCE --cplus',
-                        suffix='.cpp',
-                        src_suffix='.pyx')
-
-envPyCuAmpcor.Append(BUILDERS = {'Pyx2Cpp':cythonBuilder})
-def cythonPseudoBuilder(env, src, bld, inst):
-    listFiles = env.Pyx2Cpp(src)
+def pybind11PseudoBuilder(env, src, bld, inst):
+    listFiles = [ src ]
     env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
-    # Need to do a little magic here to auto-detect the Numpy headers for Python 3.x (since this scons runs in a Python 2.x environment)
-    import subprocess
-    # This calls the script indicated in this directory and intercepts the stdout print() response (stripping the newline at the end). We're
-    # okay to use shell here since this is a fixed command being called (i.e. no user input)
-    np_header_path = subprocess.check_output('python3 -c "import numpy; print(numpy.get_include())"', shell=True)[:-1]
-    if sys.version_info[0] == 3:
-        np_header_path = np_header_path.decode('utf-8')
-
-    # Add the Numpy headers to the include path
-    env.Append(CPPFLAGS = ['-I'+np_header_path])
     libList = ['gdal']
     env.PrependUnique(LIBS=libList)
-    listFiles.append('PyCuAmpcor.so')
-    env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME'] = True
     lib = env.LoadableModule(target='PyCuAmpcor.abi3.so', source=listFiles, CPPDEFINES='GPU_ACC_ENABLED')
 
     env.Install(inst, lib)
@@ -56,5 +37,5 @@ def cythonPseudoBuilder(env, src, bld, inst):
     env.Alias('build', bld)
 
 
-envPyCuAmpcor.AddMethod(cythonPseudoBuilder, 'Cython')
-envPyCuAmpcor.Cython('PyCuAmpcor', build, install)
+envPyCuAmpcor.AddMethod(pybind11PseudoBuilder, 'Pybind11')
+envPyCuAmpcor.Pybind11(['PyCuAmpcor.cpp'] + listFiles, build, install)
