@@ -24,7 +24,7 @@ In practice, we
 
 A detailed formulation can be found, e.g., by J. P. Lewis with [the frequency domain approach](http://scribblethink.org/Work/nvisionInterface/nip.html).
 
-PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in RIOPAC. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of PyCuAmpcor, as well as their differences.
+PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of PyCuAmpcor, as well as their differences.
 
 ## 2. Installation
 
@@ -338,8 +338,8 @@ This step provides an initial estimate of the offset, usually with a large searc
 
 **Difference to ROIPAC**
 
-* RIOPAC only offers the time-domain algorithm. The frequency-domain algorithm is faster and is set as default in PyCuAmpcor.
-* RIOPAC proceeds from here only for windows with *good* match, or with high coherence. To maintain parallelism, PyCuAmpcor proceeds anyway while leaving the *filtering* to users in post processing.
+* ROIPAC only offers the time-domain algorithm. The frequency-domain algorithm is faster and is set as default in PyCuAmpcor.
+* ROIPAC proceeds from here only for windows with *good* match, or with high coherence. To maintain parallelism, PyCuAmpcor proceeds anyway while leaving the *filtering* to users in post processing.
 
 
 ### 5.3 Extract a smaller window from the secondary window for oversampling
@@ -354,12 +354,12 @@ This step provides an initial estimate of the offset, usually with a large searc
 
 **Difference to ROIPAC**
 
-RIOPAC extracts the secondary window centering at the correlation surface peak. If the peak locates near the edge, zeros are padded if the extraction zone exceeds the window range. In PyCuAmpcor, the extraction center may be shifted away from peak to warrant all pixels being in the range of the original window.
+ROIPAC extracts the secondary window centering at the correlation surface peak. If the peak locates near the edge, zeros are padded if the extraction zone exceeds the window range. In PyCuAmpcor, the extraction center may be shifted away from peak to warrant all pixels being in the range of the original window.
 
 
 ### 5.4 Oversampling reference and (extracted) secondary windows
 
-* Oversample both the reference and the (extracted) secondary windows by a factor of 2, which is to avoid aliasing in the complex multiplication of the SAR images. The oversampling is performed with FFT (zero padding), same as in RIOPAC.
+* Oversample both the reference and the (extracted) secondary windows by a factor of 2, which is to avoid aliasing in the complex multiplication of the SAR images. The oversampling is performed with FFT (zero padding), same as in ROIPAC.
 * A deramping procedure is in general required for complex signals before oversampling, to shift the band center to 0. The procedure is only designed to remove a linear phase ramp. It doesn't work for TOPSAR, whose ramp goes quadratic. Instead, the amplitudes are taken before oversampling.
 * the amplitudes (real) are then taken for each pixel of the complex signals in reference and secondary windows.
 
@@ -372,9 +372,9 @@ RIOPAC extracts the secondary window centering at the correlation surface peak. 
 
 **Difference to ROIPAC**
 
-RIOPAC enlarges both windows to a size which is a power of 2; ideal for FFT. PyCuAmpcor uses their original sizes for FFT.
+ROIPAC enlarges both windows to a size which is a power of 2; ideal for FFT. PyCuAmpcor uses their original sizes for FFT.
 
-RIOPAC always performs deramping with Method 1, to obtain the ramp by averaging the phase difference between neighboring pixels. For TOPS mode, users need to specify 'mag' as the image *datatype* such that the amplitudes are taken before oversampling. Therefore, deramping has no effect. In PyCuAmpcor, derampMethod=0 is equivalent to *datatype='mag'*, taking amplitudes but skipping deramping. derampMethod=1 always performs deramping, no matter the 'complex' or 'real' image datatypes.
+ROIPAC always performs deramping with Method 1, to obtain the ramp by averaging the phase difference between neighboring pixels. For TOPS mode, users need to specify 'mag' as the image *datatype* such that the amplitudes are taken before oversampling. Therefore, deramping has no effect. In PyCuAmpcor, derampMethod=0 is equivalent to *datatype='mag'*, taking amplitudes but skipping deramping. derampMethod=1 always performs deramping, no matter the 'complex' or 'real' image datatypes.
 
 ### 5.5 Cross-Correlate the oversampled reference and secondary windows
 
@@ -386,11 +386,11 @@ RIOPAC always performs deramping with Method 1, to obtain the ramp by averaging 
 
 | PyCuAmpcor          | CUDA variable       | ampcor.F equivalent   | Notes                     |
 | :---                | :---                | :----                 | :---                      |
-| corrSurfaceZoomInWindow | zoomWindowSize  | i_cw   | The size of correlation surface of the (anti-aliasing) oversampled reference/secondary windows, also used to set halfZoomWindowSizeRaw. Set it to 16 to be consistent with RIOPAC. |
+| corrSurfaceZoomInWindow | zoomWindowSize  | i_cw   | The size of correlation surface of the (anti-aliasing) oversampled reference/secondary windows, also used to set halfZoomWindowSizeRaw. Set it to 16 to be consistent with ROIPAC. |
 
 **Difference to ROIPAC**
 
-In RIOPAC, an extra resizing step is performed on the correlation surface, from (2\*halfZoomWindowSizeRaw\*rawDataOversamplingFactor+1, 2\*halfZoomWindowSizeRaw\*rawDataOversamplingFactor+1) to (i_cw, i_cw), centered at the peak (in RIOPAC, the peak seeking is incorporated in the correlation module while is seperate in PyCuAmpcor). i_cw is a user configurable variable; it could be smaller or bigger than 2\*i_srchp\*i_ovs+1=17 (fixed), leading to extraction or enlargement by padding 0s. This procedure is not performed in PyCuAmpcor, as it makes little difference in the next oversampling procedure.
+In ROIPAC, an extra resizing step is performed on the correlation surface, from (2\*halfZoomWindowSizeRaw\*rawDataOversamplingFactor+1, 2\*halfZoomWindowSizeRaw\*rawDataOversamplingFactor+1) to (i_cw, i_cw), centered at the peak (in ROIPAC, the peak seeking is incorporated in the correlation module while is seperate in PyCuAmpcor). i_cw is a user configurable variable; it could be smaller or bigger than 2\*i_srchp\*i_ovs+1=17 (fixed), leading to extraction or enlargement by padding 0s. This procedure is not performed in PyCuAmpcor, as it makes little difference in the next oversampling procedure.
 
 ### 5.6 Oversample the correlation surface and find the peak position
 
@@ -412,4 +412,4 @@ Note that this offset does not include the pre-defined gross offset. Users need 
 
 **Difference to ROIPAC**
 
-RIOPAC by default uses the sinc interpolator (the FFT method is included but one needs to change the FORTRAN code to switch). For since interpolator, there is no difference in implementations. For FFT, RIOPAC always enlarges the window to a size in power of 2.
+ROIPAC by default uses the sinc interpolator (the FFT method is included but one needs to change the FORTRAN code to switch). For since interpolator, there is no difference in implementations. For FFT, ROIPAC always enlarges the window to a size in power of 2.
