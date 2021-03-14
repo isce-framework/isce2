@@ -158,9 +158,9 @@ if __name__ == '__main__':
             delta = datetime.timedelta(days=1)
             timebef = (fileTS - delta).strftime(queryfmt)
             timeaft = (fileTS + delta).strftime(queryfmt)
-            url = (server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
+            url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
                 '/' + str(fileTS.day).zfill(2) + '/' + '?validity_start={0}..{1}&sentinel1__mission={2}'.\
-                format(timebef, timeaft,satName))
+                format(timebef, timeaft,satName)
 
 
 
