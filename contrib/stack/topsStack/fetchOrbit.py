@@ -152,11 +152,17 @@ if __name__ == '__main__':
             end_date = dt + datetime.timedelta(days=20)
             fileTS1 = end_date.strftime(queryfmt3)   
             url = server + spec[1] + str(fileTS1[0:4]) + '/' + str(fileTS1[5:7]) + \
-                               '/' + str(fileTS1[8:10]) + '/'
+            '/' + str(fileTS1[8:10]) + '/'
             
         elif oType == 'restituted':
-            url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
-                               '/' + str(fileTS.day).zfill(2) + '/'
+            delta = datetime.timedelta(days=1)
+            timebef = (fileTS - delta).strftime(queryfmt)
+            timeaft = (fileTS + delta).strftime(queryfmt)
+            url = (server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
+                '/' + str(fileTS.day).zfill(2) + '/' + '?validity_start={0}..{1}&sentinel1__mission={2}'.\
+                format(timebef, timeaft,satName))
+
+
 
         success = False
         match = None
@@ -164,22 +170,20 @@ if __name__ == '__main__':
         try:
             r = session.get(url, verify=False)
             r.raise_for_status()
-
             parser = MyHTMLParser(satName, url)
             parser.feed(r.text)
             for resulturl, result in parser.fileList:
                 match = os.path.join(resulturl, result)
                 if match is not None:
                     success = True
-            
         except:
             pass
-        
+
         if success:
             break
-            
+
     if match is not None:
-            
+
         res = download_file(match, inps.outdir, session)
         if res is False:
             print('Failed to download URL: ', match)
