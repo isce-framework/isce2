@@ -173,7 +173,7 @@ if __name__ == '__main__':
     ranges = gatherExistingOrbits(inps.dirname)
 
     for dd in range(days):
-        indate = tstart + datetime.timedelta(days=dd, hours=12)
+        indate = tstart + datetime.timedelta(days=dd + 19, hours=12)
 
         url = server + 'POEORB/' + str(indate.year).zfill(2) + '/' + str(indate.month).zfill(2) + '/' + str(
             indate.day).zfill(2) + '/'
