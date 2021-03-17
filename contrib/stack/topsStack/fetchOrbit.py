@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+#!/usr/bin/env python3
+
 import numpy as np
 import re
 import requests
@@ -159,8 +161,7 @@ if __name__ == '__main__':
             timebef = (fileTS - delta).strftime(queryfmt)
             timeaft = (fileTS + delta).strftime(queryfmt)
             url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
-                '/' + str(fileTS.day).zfill(2) + '/' + '?validity_start={0}..{1}&sentinel1__mission={2}'.\
-                format(timebef, timeaft,satName)
+                '/' + str(fileTS.day).zfill(2) +'/'
 
 
 
@@ -173,9 +174,16 @@ if __name__ == '__main__':
             parser = MyHTMLParser(satName, url)
             parser.feed(r.text)
             for resulturl, result in parser.fileList:
-                match = os.path.join(resulturl, result)
-                if match is not None:
-                    success = True
+                if oType == 'precise':
+                    match = os.path.join(resulturl, result)
+                elif oType == "restituted":
+                    tbef, taft, mission = fileToRange(os.path.basename(result))
+                    if (tbef <= fileTSStart) and (taft >= fileTS):
+                        datestr2 = FileToTimeStamp(result)[0].strftime(queryfmt2) 
+                        match = url + result
+
+            if match is not None:
+                success = True
         except:
             pass
 
