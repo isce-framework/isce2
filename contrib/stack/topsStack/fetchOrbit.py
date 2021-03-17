@@ -149,21 +149,15 @@ if __name__ == '__main__':
         oType = spec[0]
 
         if oType == 'precise':
+            end_date = fileTS + datetime.timedelta(days=20)
             queryfmt3 = "%Y-%m-%d %H:%M:%S"
-            dt = datetime.datetime.strptime(str(fileTS), queryfmt3)
-            end_date = dt + datetime.timedelta(days=20)
             fileTS1 = end_date.strftime(queryfmt3)   
             url = server + spec[1] + str(fileTS1[0:4]) + '/' + str(fileTS1[5:7]) + \
             '/' + str(fileTS1[8:10]) + '/'
             
         elif oType == 'restituted':
-            delta = datetime.timedelta(days=1)
-            timebef = (fileTS - delta).strftime(queryfmt)
-            timeaft = (fileTS + delta).strftime(queryfmt)
             url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
                 '/' + str(fileTS.day).zfill(2) +'/'
-
-
 
         success = False
         match = None
