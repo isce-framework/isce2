@@ -150,10 +150,8 @@ if __name__ == '__main__':
 
         if oType == 'precise':
             end_date = fileTS + datetime.timedelta(days=20)
-            queryfmt3 = "%Y-%m-%d %H:%M:%S"
-            fileTS1 = end_date.strftime(queryfmt3)   
-            url = server + spec[1] + str(fileTS1[0:4]) + '/' + str(fileTS1[5:7]) + \
-            '/' + str(fileTS1[8:10]) + '/'
+            url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
+            '/' + str(end_date.day).zfill(2) + '/'
             
         elif oType == 'restituted':
             url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
