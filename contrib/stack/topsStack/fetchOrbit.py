@@ -179,7 +179,6 @@ if __name__ == '__main__':
                 elif oType == "restituted":
                     tbef, taft, mission = fileToRange(os.path.basename(result))
                     if (tbef <= fileTSStart) and (taft >= fileTS):
-                        datestr2 = FileToTimeStamp(result)[0].strftime(queryfmt2) 
                         match = url + result
 
             if match is not None:
