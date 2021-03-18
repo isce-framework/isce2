@@ -334,7 +334,7 @@ def main(iargs=None):
     runDir = os.path.join(inps.workDir,'run_files')
     os.makedirs(runDir, exist_ok=True)
 
-    if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
+    if inps.sensor and inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
         pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
     else:
         pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)
