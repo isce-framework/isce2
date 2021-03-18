@@ -10,6 +10,7 @@ add_library(alos_lib STATIC
     ALOS_lib/src/get_sio_struct.c
     ALOS_lib/src/hermite_c.c
     ALOS_lib/src/interpolate_ALOS_orbit.c
+    ALOS_lib/src/image_sio.c
     ALOS_lib/src/null_sio_struct.c
     ALOS_lib/src/read_ALOS_sarleader.c
     ALOS_lib/src/rng_compress.c
