@@ -26,6 +26,7 @@ noMCF = 'False'
 defoMax = '2'
 maxNodes = 72
 
+
 def createParser():
     parser = argparse.ArgumentParser( description='Preparing the directory structure and config files for stack processing of StripMap data')
 
@@ -42,7 +43,7 @@ def createParser():
 
     parser.add_argument('-m', '--reference_date', dest='referenceDate', type=str, default=None,
             help='Directory with reference acquisition')
-    
+
     parser.add_argument('-t', '--time_threshold', dest='dtThr', type=float, default=10000.0,
             help='Time threshold (max temporal baseline in days)')
 
@@ -57,7 +58,7 @@ def createParser():
     parser.add_argument('-S', '--sensor', dest='sensor', type=str, required=False,
             help='SAR sensor used to define square multi-look pixels')
 
-    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', 
+    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu',
             help='unwrapping method (icu, snaphu, or snaphu2stage), no to skip phase unwrapping.')
 
     parser.add_argument('-f','--filter_strength', dest='filtStrength', type=str, default=filtStrength,
@@ -72,7 +73,7 @@ def createParser():
     iono.add_argument('-B', '--subband_bandwidth ', dest='bandWidth', type=str, default=None,
             help='sub-band band width')
 
-    iono.add_argument('--filter_sigma_x', dest='filterSigmaX', type=str, default='100', 
+    iono.add_argument('--filter_sigma_x', dest='filterSigmaX', type=str, default='100',
             help='filter sigma for gaussian filtering the dispersive and nonDispersive phase')
 
     iono.add_argument('--filter_sigma_y', dest='filterSigmaY', type=str, default='100.0',
@@ -87,14 +88,14 @@ def createParser():
     iono.add_argument('--filter_kernel_rotation', dest='filterKernelRotation', type=str, default='0.0',
             help='rotation angle of the filter kernel in degrees (default = 0.0)')
 
-    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='slc', 
+    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='slc',
             help='The InSAR processing workflow : (slc, interferogram, ionosphere)')
 
-    parser.add_argument('-z', '--zero', dest='zerodop', action='store_true', default=False, 
+    parser.add_argument('-z', '--zero', dest='zerodop', action='store_true', default=False,
             help='Use zero doppler geometry for processing - Default : No')
-    parser.add_argument('--nofocus', dest='nofocus', action='store_true', default=False, 
+    parser.add_argument('--nofocus', dest='nofocus', action='store_true', default=False,
             help='If input data is already focused to SLCs - Default : do focus')
-    parser.add_argument('-c', '--text_cmd', dest='text_cmd', type=str, default='', 
+    parser.add_argument('-c', '--text_cmd', dest='text_cmd', type=str, default='',
             help='text command to be added to the beginning of each line of the run files. Example : source ~/.bash_profile;')
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
              help='Allow App to use GPU when available')
@@ -102,18 +103,19 @@ def createParser():
     parser.add_argument('--summary', dest='summary', action='store_true', default=False, help='Show summary only')
     return parser
 
+
 def cmdLineParse(iargs = None):
     parser = createParser()
     inps = parser.parse_args(args=iargs)
     inps.slcDir = os.path.abspath(inps.slcDir)
     inps.workDir = os.path.abspath(inps.workDir)
     inps.dem = os.path.abspath(inps.dem)
-     
+
     return inps
 
-    
+
 def get_dates(inps):
- 
+
     dirs = glob.glob(inps.slcDir+'/*')
     acuisitionDates = []
     for dirf in dirs:
@@ -134,12 +136,12 @@ def get_dates(inps):
         inps.referenceDate = acuisitionDates[0]
     secondaryDates = acuisitionDates.copy()
     secondaryDates.remove(inps.referenceDate)
-    return acuisitionDates, inps.referenceDate, secondaryDates 
-  
+    return acuisitionDates, inps.referenceDate, secondaryDates
+
+
 def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False):
     # A coregistered stack of SLCs
     i=0
-
 
     if inps.bbox:
         i+=1
@@ -148,7 +150,6 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
         config_prefix = "config_crop_"
         runObj.crop(acquisitionDates, config_prefix, native=not inps.zerodop, israw=not inps.nofocus)
         runObj.finalize()
-
 
     i+=1
     runObj = run()
@@ -190,40 +191,40 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
     config_prefix = 'config_fineResamp_'
     runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
     runObj.finalize()
-    
+
     if rubberSheet:
-       i+=1
-       runObj = run()
-       runObj.configure(inps, 'run_{:02d}_denseOffset'.format(i))
-       config_prefix = 'config_denseOffset_'
-       runObj.denseOffsets_Network(pairs, stackReferenceDate, secondaryDates, config_prefix) 
-       runObj.finalize()
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_denseOffset'.format(i))
+        config_prefix = 'config_denseOffset_'
+        runObj.denseOffsets_Network(pairs, stackReferenceDate, secondaryDates, config_prefix)
+        runObj.finalize()
 
-       i+=1
-       runObj = run()
-       runObj.configure(inps, 'run_{:02d}_invertDenseOffsets'.format(i))
-       runObj.invertDenseOffsets()
-       runObj.finalize()
- 
-       i+=1
-       runObj = run()
-       runObj.configure(inps, 'run_{:02d}_resampleOffset'.format(i))
-       config_prefix = 'config_resampOffsets_'
-       runObj.resampleOffset(secondaryDates, config_prefix)
-       runObj.finalize()
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_invertDenseOffsets'.format(i))
+        runObj.invertDenseOffsets()
+        runObj.finalize()
 
-       i+=1
-       runObj = run()
-       runObj.configure(inps, 'run_{:02d}_replaceOffsets'.format(i))
-       runObj.replaceOffsets(secondaryDates)
-       runObj.finalize()
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_resampleOffset'.format(i))
+        config_prefix = 'config_resampOffsets_'
+        runObj.resampleOffset(secondaryDates, config_prefix)
+        runObj.finalize()
 
-       i+=1
-       runObj = run()
-       runObj.configure(inps, 'run_{:02d}_fineResamp'.format(i))
-       config_prefix = 'config_fineResamp_'
-       runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
-       runObj.finalize()
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_replaceOffsets'.format(i))
+        runObj.replaceOffsets(secondaryDates)
+        runObj.finalize()
+
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_fineResamp'.format(i))
+        config_prefix = 'config_fineResamp_'
+        runObj.secondarys_fine_resampleSlc(stackReferenceDate, secondaryDates, config_prefix, split=splitFlag)
+        runObj.finalize()
 
     # adding the baseline grid generation
     i+=1
@@ -235,20 +236,22 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
 
     return i
 
+
 def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs):
-    # an interferogram stack without ionosphere correction. 
+    # an interferogram stack without ionosphere correction.
     # coregistration is with geometry + const offset
 
-
     i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False)
-    
+
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_igram'.format(i))
     config_prefix = 'config_igram_'
     low_or_high = "/"
-    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)    
+    runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
     runObj.finalize()
+    return
+
 
 def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs):
 
@@ -273,7 +276,7 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
     config_prefix = 'config_igram_'
     low_or_high = "/"
     runObj.igrams_network(pairs, acquisitionDates, stackReferenceDate, low_or_high, config_prefix)
-    runObj.finalize()    
+    runObj.finalize()
 
     i+=1
     runObj = run()
@@ -297,69 +300,68 @@ def interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondary
     config_prefix = 'config_iono_'
     lowBand = '/LowBand/'
     highBand = '/HighBand/'
-    runObj.dispersive_nonDispersive(pairs, acquisitionDates, stackReferenceDate,
-                           lowBand, highBand, config_prefix)
+    runObj.dispersive_nonDispersive(pairs, acquisitionDates, stackReferenceDate, lowBand, highBand, config_prefix)
     runObj.finalize()
+    return
+
 
 def main(iargs=None):
 
-  inps = cmdLineParse(iargs)
-  # name of the folder of the coreg SLCs including baselines, SLC, geom_reference subfolders
-  inps.stack_folder = 'merged'
-  inps.dense_offsets_folder = 'dense_offsets'
+    inps = cmdLineParse(iargs)
+    # name of the folder of the coreg SLCs including baselines, SLC, geom_reference subfolders
+    inps.stack_folder = 'merged'
+    inps.dense_offsets_folder = 'dense_offsets'
 
 
-  # check if a sensor is defined and update if needed azimuth looks to give square pixels
-  ar=1
-  if inps.sensor:
-      if inps.sensor.lower() == "alos":
-          ar=4            
-          print("Looks like " + inps.sensor.lower() + ", multi-look AR=" + str(ar))
-      elif inps.sensor.lower() == "envisat" or inps.sensor.lower() == "ers":
-          ar=5
-          print("Looks like " + inps.sensor.lower() + ", multi-look AR=" + str(ar))
-      else:
-          print("Sensor is not hard-coded (ers, envisat, alos), will keep default alks")
-          # sensor is not recognised, report to user and state default 
-  inps.alks = str(int(inps.alks)*int(ar))
- 
-  # getting the acquisitions
-  acquisitionDates, stackReferenceDate, secondaryDates = get_dates(inps)
-  configDir = os.path.join(inps.workDir,'configs')
-  os.makedirs(configDir, exist_ok=True)
-  runDir = os.path.join(inps.workDir,'run_files')
-  os.makedirs(runDir, exist_ok=True)
+    # check if a sensor is defined and update if needed azimuth looks to give square pixels
+    ar=1
+    if inps.sensor:
+        if inps.sensor.lower() == "alos":
+            ar=4
+            print("Looks like " + inps.sensor.lower() + ", multi-look AR=" + str(ar))
+        elif inps.sensor.lower() == "envisat" or inps.sensor.lower() == "ers":
+            ar=5
+            print("Looks like " + inps.sensor.lower() + ", multi-look AR=" + str(ar))
+        else:
+            print("Sensor is not hard-coded (ers, envisat, alos), will keep default alks")
+            # sensor is not recognised, report to user and state default
+    inps.alks = str(int(inps.alks)*int(ar))
 
-  if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
-    pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
-  else:
-    pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)  
-  print ('number of pairs: ', len(pairs))
+    # getting the acquisitions
+    acquisitionDates, stackReferenceDate, secondaryDates = get_dates(inps)
+    configDir = os.path.join(inps.workDir,'configs')
+    os.makedirs(configDir, exist_ok=True)
+    runDir = os.path.join(inps.workDir,'run_files')
+    os.makedirs(runDir, exist_ok=True)
 
-  ###If only a summary is requested quit after this
-  if inps.summary:
-      return
+    if inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
+        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
+    else:
+        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)
+    print ('number of pairs: ', len(pairs))
 
-  #if cropping is requested, then change the slc directory:
-  inps.fullFrameSlcDir = inps.slcDir
+    ###If only a summary is requested quit after this
+    if inps.summary:
+        return
 
-  if inps.bbox:
-     inps.slcDir = inps.slcDir + "_crop"
-  #############################
+    #if cropping is requested, then change the slc directory:
+    inps.fullFrameSlcDir = inps.slcDir
 
-  if inps.workflow == 'slc':
-     slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False)
+    if inps.bbox:
+        inps.slcDir = inps.slcDir + "_crop"
+    #############################
 
-  elif inps.workflow == 'interferogram':
-     interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs)
+    if inps.workflow == 'slc':
+        slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False)
 
-  elif inps.workflow == 'ionosphere':
-     interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs) 
+    elif inps.workflow == 'interferogram':
+        interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs)
 
-  
+    elif inps.workflow == 'ionosphere':
+        interferogramIonoStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs)
+    return
+
+
 if __name__ == "__main__":
-       
-  # Main engine  
-  main()
-       
-
+    # Main engine
+    main(sys.argv[1:])
