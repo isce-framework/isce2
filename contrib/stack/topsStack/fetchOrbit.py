@@ -166,10 +166,10 @@ if __name__ == '__main__':
             for resulturl, result in parser.fileList:
                 if oType == 'precise':
                     match = os.path.join(resulturl, result)
-                elif oType == 'restituted':
+                elif oType == "restituted":
                     tbef, taft, mission = fileToRange(os.path.basename(result))
                     if (tbef <= fileTSStart) and (taft >= fileTS):
-                        match = url + result
+                        match = os.path.join(resulturl, result)
 
             if match is not None:
                 success = True
