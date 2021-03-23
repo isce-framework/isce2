@@ -151,7 +151,7 @@ if __name__ == '__main__':
         elif oType == 'restituted':
             end_date = fileTS
         else:
-            throw ValueError("Unexpected orbit type: '" + oType + "'")
+            raise ValueError("Unexpected orbit type: '" + oType + "'")
         url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
             '/' + str(end_date.day).zfill(2) + '/'
 
