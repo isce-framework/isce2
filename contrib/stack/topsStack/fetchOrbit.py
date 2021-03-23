@@ -148,12 +148,12 @@ if __name__ == '__main__':
 
         if oType == 'precise':
             end_date = fileTS + datetime.timedelta(days=20)
-            url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
-            '/' + str(end_date.day).zfill(2) + '/'
-            
         elif oType == 'restituted':
-            url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
-                '/' + str(fileTS.day).zfill(2) +'/'
+            end_date = fileTS
+        else:
+            throw ValueError("Unexpected orbit type: '" + oType + "'")
+        url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
+            '/' + str(end_date.day).zfill(2) + '/'
 
         success = False
         match = None
