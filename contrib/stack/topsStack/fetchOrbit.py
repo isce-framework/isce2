@@ -153,17 +153,17 @@ if __name__ == '__main__':
         else:
             raise ValueError("Unexpected orbit type: '" + oType + "'")
         end_date2 = end_date + datetime.timedelta(days=1)
-        url = (server + spec[1] + end_date.strftime("%Y/%m/%d/") for end_date in (end_date, end_date2))
+        urls = (server + spec[1] + end_date.strftime("%Y/%m/%d/") for end_date in (end_date, end_date2))
 
         success = False
         match = None
 
         try:
-            for url1 in url:
-                r = session.get(url1, verify=False)
+            for url in urls:
+                r = session.get(url, verify=False)
                 r.raise_for_status()
-                parser = MyHTMLParser(satName, url1)
-                parser.feed(r.text + "\n")
+                parser = MyHTMLParser(satName, url)
+                parser.feed(r.text)
                 
                 for resulturl, result in parser.fileList:
                     if oType == 'precise':
