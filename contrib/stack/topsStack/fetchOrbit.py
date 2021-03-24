@@ -153,9 +153,7 @@ if __name__ == '__main__':
         else:
             raise ValueError("Unexpected orbit type: '" + oType + "'")
         end_date2 = end_date + datetime.timedelta(days=1)
-        url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
-            '/' + str(end_date.day).zfill(2) + '/', server + spec[1] + str(end_date2.year).zfill(2) + '/' + str(end_date2.month).zfill(2) + \
-            '/' + str(end_date2.day).zfill(2) + '/'
+        url = (server + spec[1] + end_date.strftime("%Y/%m/%d/") for end_date in (end_date, end_date2))
 
         success = False
         match = None
