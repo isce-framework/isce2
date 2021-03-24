@@ -147,7 +147,7 @@ if __name__ == '__main__':
         oType = spec[0]
 
         if oType == 'precise':
-            end_date = fileTS + datetime.timedelta(days=20)
+            end_date = fileTS + datetime.timedelta(days=19)
         elif oType == 'restituted':
             end_date = fileTS
         else:
