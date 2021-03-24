@@ -152,17 +152,20 @@ if __name__ == '__main__':
             end_date = fileTS
         else:
             raise ValueError("Unexpected orbit type: '" + oType + "'")
+        end_date2 = end_date + datetime.timedelta(days=1)
         url = server + spec[1] + str(end_date.year).zfill(2) + '/' + str(end_date.month).zfill(2) + \
-            '/' + str(end_date.day).zfill(2) + '/'
+            '/' + str(end_date.day).zfill(2) + '/', server + spec[1] + str(end_date2.year).zfill(2) + '/' + str(end_date2.month).zfill(2) + \
+            '/' + str(end_date2.day).zfill(2) + '/'
 
         success = False
         match = None
 
         try:
-            r = session.get(url, verify=False)
-            r.raise_for_status()
-            parser = MyHTMLParser(satName, url)
-            parser.feed(r.text)
+            for url1 in url:
+                r = session.get(url1, verify=False)
+                r.raise_for_status()
+                parser = MyHTMLParser(satName, url1)
+                parser.feed(r.text)
             for resulturl, result in parser.fileList:
                 if oType == 'precise':
                     match = os.path.join(resulturl, result)
