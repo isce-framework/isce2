@@ -161,7 +161,6 @@ if __name__ == '__main__':
         match = None
 
         try:
-            
             for url1 in url:
                 r = session.get(url1, verify=False)
                 r.raise_for_status()
