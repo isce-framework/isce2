@@ -161,18 +161,20 @@ if __name__ == '__main__':
         match = None
 
         try:
+            
             for url1 in url:
                 r = session.get(url1, verify=False)
                 r.raise_for_status()
                 parser = MyHTMLParser(satName, url1)
-                parser.feed(r.text)
-            for resulturl, result in parser.fileList:
-                if oType == 'precise':
-                    match = os.path.join(resulturl, result)
-                elif oType == "restituted":
-                    tbef, taft, mission = fileToRange(os.path.basename(result))
-                    if (tbef <= fileTSStart) and (taft >= fileTS):
+                parser.feed(r.text + "\n")
+                
+                for resulturl, result in parser.fileList:
+                    if oType == 'precise':
                         match = os.path.join(resulturl, result)
+                    elif oType == "restituted":
+                        tbef, taft, mission = fileToRange(os.path.basename(result))
+                        if (tbef <= fileTSStart) and (taft >= fileTS):
+                            match = os.path.join(resulturl, result)
 
             if match is not None:
                 success = True
