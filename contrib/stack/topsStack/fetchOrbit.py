@@ -147,7 +147,7 @@ if __name__ == '__main__':
         oType = spec[0]
 
         if oType == 'precise':
-            end_date = fileTS + datetime.timedelta(days=19)
+            end_date = fileTS + datetime.timedelta(days=20)
         elif oType == 'restituted':
             end_date = fileTS
         else:
@@ -159,6 +159,7 @@ if __name__ == '__main__':
         match = None
 
         try:
+            
             for url in urls:
                 r = session.get(url, verify=False)
                 r.raise_for_status()
@@ -166,12 +167,9 @@ if __name__ == '__main__':
                 parser.feed(r.text)
                 
                 for resulturl, result in parser.fileList:
-                    if oType == 'precise':
+                    tbef, taft, mission = fileToRange(os.path.basename(result))
+                    if (tbef <= fileTSStart) and (taft >= fileTS):
                         match = os.path.join(resulturl, result)
-                    elif oType == 'restituted':
-                        tbef, taft, mission = fileToRange(os.path.basename(result))
-                        if (tbef <= fileTSStart) and (taft >= fileTS):
-                            match = os.path.join(resulturl, result)
 
             if match is not None:
                 success = True
