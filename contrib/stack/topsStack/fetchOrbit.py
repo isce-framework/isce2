@@ -146,28 +146,43 @@ if __name__ == '__main__':
     for spec in orbitMap:
         oType = spec[0]
 
-        url = server + spec[1] + str(fileTS.year).zfill(2) + '/' + str(fileTS.month).zfill(2) + \
-                               '/' + str(fileTS.day).zfill(2) + '/'
+        if oType == 'precise':
+            end_date = fileTS + datetime.timedelta(days=20)
+        elif oType == 'restituted':
+            end_date = fileTS
+        else:
+            raise ValueError("Unexpected orbit type: '" + oType + "'")
+        end_date2 = end_date + datetime.timedelta(days=1)
+        urls = (server + spec[1] + end_date.strftime("%Y/%m/%d/") for end_date in (end_date, end_date2))
 
         success = False
         match = None
 
         try:
-            r = session.get(url, verify=False)
-            r.raise_for_status()
+            
+            for url in urls:
+                r = session.get(url, verify=False)
+                r.raise_for_status()
+                parser = MyHTMLParser(satName, url)
+                parser.feed(r.text)
+                
+                for resulturl, result in parser.fileList:
+                    tbef, taft, mission = fileToRange(os.path.basename(result))
+                    if (tbef <= fileTSStart) and (taft >= fileTS):
+                        match = os.path.join(resulturl, result)
 
-            parser = MyHTMLParser(satName, url)
-            parser.feed(r.text)
-            for resulturl, result in parser.fileList:
-                match = os.path.join(resulturl, result)
-                if match is not None:
-                    success = True
+            if match is not None:
+                success = True
         except:
             pass
 
-        if match is not None:
-            res = download_file(match, inps.outdir, session)
-            if res is False:
-                print('Failed to download URL: ', match)
-        else:
-            print('Failed to find {1} orbits for tref {0}'.format(fileTS, satName))
+        if success:
+            break
+
+    if match is not None:
+
+        res = download_file(match, inps.outdir, session)
+        if res is False:
+            print('Failed to download URL: ', match)
+    else:
+        print('Failed to find {1} orbits for tref {0}'.format(fileTS, satName))
