@@ -21,6 +21,8 @@ cython_add_module(PyCuAmpcor
     src/cuArraysPadding.cu
     src/cuCorrFrequency.cu
     src/cuCorrNormalization.cu
+    src/cuCorrNormalizationSAT.cu
+    src/cuCorrNormalizer.cu
     src/cuCorrTimeDomain.cu
     src/cuDeramp.cu
     src/cuEstimateStats.cu

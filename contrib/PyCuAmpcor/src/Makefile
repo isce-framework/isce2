@@ -15,7 +15,8 @@ NVCC=nvcc
 DEPS = cudaUtil.h cudaError.h cuArrays.h GDALImage.h cuAmpcorParameter.h
 OBJS =  GDALImage.o cuArrays.o cuArraysCopy.o cuArraysPadding.o cuOverSampler.o \
 		cuSincOverSampler.o cuDeramp.o cuOffset.o \
-		cuCorrNormalization.o cuAmpcorParameter.o cuCorrTimeDomain.o cuCorrFrequency.o \
+		cuCorrNormalization.o cuCorrNormalizationSAT.o cuCorrNormalizer.o \
+		cuAmpcorParameter.o cuCorrTimeDomain.o cuCorrFrequency.o \
 		cuAmpcorChunk.o cuAmpcorController.o cuEstimateStats.o
 
 all: pyampcor
@@ -46,6 +47,12 @@ cuOffset.o: cuOffset.cu $(DEPS)
 
 cuCorrNormalization.o: cuCorrNormalization.cu $(DEPS)
 	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalization.cu
+
+cuCorrNormalizationSAT.o: cuCorrNormalizationSAT.cu $(DEPS)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalizationSAT.cu
+
+cuCorrNormalizer.o: cuCorrNormalizer.cu $(DEPS)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalizer.cu
 
 cuAmpcorParameter.o: cuAmpcorParameter.cu
 	$(NVCC) $(NVCCFLAGS) -c -o $@ cuAmpcorParameter.cu
