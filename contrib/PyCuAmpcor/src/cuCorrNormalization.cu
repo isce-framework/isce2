@@ -321,7 +321,6 @@ __global__ void cuCorrNormalize_kernel(
  * @param[in] stream cudaStream
  * @warning The current implementation uses one thread for one column, therefore,
  *   the secondary window width is limited to <=1024, the max threads in a block.
- * @todo an implementation for arbitrary window width, might not be as efficient
  */
 void cuCorrNormalize(cuArrays<float> *templates, cuArrays<float> *images, cuArrays<float> *results, cudaStream_t stream)
 {
@@ -376,7 +375,72 @@ void cuCorrNormalize(cuArrays<float> *templates, cuArrays<float> *images, cuArra
         throw;
     }
 
-
 }
+
+void cuCorrNormalize64(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+{
+    const int nImages = correlation->count;
+    const dim3 grid(1, 1, nImages);
+    const float invReferenceSize = 1.0f/reference->size;
+    cuCorrNormalize_kernel< 6><<<grid,  64, 0, stream>>>(nImages,
+                reference->devData, reference->height, reference->width, reference->size,
+                secondary->devData, secondary->height, secondary->width, secondary->size,
+                correlation->devData, correlation->height, correlation->width, correlation->size,
+                invReferenceSize);
+    getLastCudaError("cuCorrNormalize kernel error");
+}
+
+void cuCorrNormalize128(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+{
+    const int nImages = correlation->count;
+    const dim3 grid(1, 1, nImages);
+    const float invReferenceSize = 1.0f/reference->size;
+    cuCorrNormalize_kernel< 7><<<grid,  128, 0, stream>>>(nImages,
+                reference->devData, reference->height, reference->width, reference->size,
+                secondary->devData, secondary->height, secondary->width, secondary->size,
+                correlation->devData, correlation->height, correlation->width, correlation->size,
+                invReferenceSize);
+    getLastCudaError("cuCorrNormalize kernel error");
+}
+
+void cuCorrNormalize256(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+{
+    const int nImages = correlation->count;
+    const dim3 grid(1, 1, nImages);
+    const float invReferenceSize = 1.0f/reference->size;
+    cuCorrNormalize_kernel< 8><<<grid,  256, 0, stream>>>(nImages,
+                reference->devData, reference->height, reference->width, reference->size,
+                secondary->devData, secondary->height, secondary->width, secondary->size,
+                correlation->devData, correlation->height, correlation->width, correlation->size,
+                invReferenceSize);
+    getLastCudaError("cuCorrNormalize kernel error");
+}
+
+void cuCorrNormalize512(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+{
+    const int nImages = correlation->count;
+    const dim3 grid(1, 1, nImages);
+    const float invReferenceSize = 1.0f/reference->size;
+    cuCorrNormalize_kernel< 9><<<grid,  512, 0, stream>>>(nImages,
+                reference->devData, reference->height, reference->width, reference->size,
+                secondary->devData, secondary->height, secondary->width, secondary->size,
+                correlation->devData, correlation->height, correlation->width, correlation->size,
+                invReferenceSize);
+    getLastCudaError("cuCorrNormalize kernel error");
+}
+
+void cuCorrNormalize1024(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+{
+    const int nImages = correlation->count;
+    const dim3 grid(1, 1, nImages);
+    const float invReferenceSize = 1.0f/reference->size;
+    cuCorrNormalize_kernel< 10><<<grid,  1024, 0, stream>>>(nImages,
+                reference->devData, reference->height, reference->width, reference->size,
+                secondary->devData, secondary->height, secondary->width, secondary->size,
+                correlation->devData, correlation->height, correlation->width, correlation->size,
+                invReferenceSize);
+    getLastCudaError("cuCorrNormalize kernel error");
+}
+
 
 // end of file
