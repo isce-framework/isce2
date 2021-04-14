@@ -260,7 +260,7 @@ class config(object):
         #self.f.write('ww : 256\n')
         #self.f.write('wh : 128\n')
 
-    def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
+    def write_wrapper_config2run_file(self, configName, line_cnt, last_line = False, numProcess = 1):
         # dispassionate list of commands for single process
         if numProcess == 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
@@ -270,6 +270,9 @@ class config(object):
             if line_cnt == numProcess:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
+            # last line of file, wait for any background processes to complete
+            if last_line:
+                self.runf.write('wait\n')
         return line_cnt
 
     def finalize(self):
@@ -358,7 +361,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def averageBaseline(self, stackReferenceDate, secondaryList):
@@ -375,7 +378,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def gridBaseline(self, stackReferenceDate, secondaryList):
@@ -440,7 +443,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def resample_with_carrier(self, secondaryList, fullBurst='False'):
@@ -470,7 +473,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
 
@@ -521,7 +524,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
             ########################
 
@@ -560,7 +563,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
 
@@ -594,7 +597,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
@@ -746,7 +749,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
 
@@ -772,7 +775,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
     def denseOffsets(self, pairs):
