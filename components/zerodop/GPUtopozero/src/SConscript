@@ -3,7 +3,7 @@
 import os
 
 Import('envGPUtopozero')
-package = envGPUtopozero['PACKAGE'] 
+package = envGPUtopozero['PACKAGE']
 project = envGPUtopozero['PROJECT']
 install = envGPUtopozero['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
 build = envGPUtopozero['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
@@ -11,7 +11,7 @@ build = envGPUtopozero['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/sr
 if envGPUtopozero['GPU_ACC_ENABLED']:
     envGPUtopozero.AppendUnique(CPPPATH=envGPUtopozero['CUDACPPPATH'])
     envGPUtopozero.AppendUnique(LIBPATH=envGPUtopozero['CUDALIBPATH'])
-    envGPUtopozero.AppendUnique(LIBS=['cuda','cudart'])
+    envGPUtopozero.AppendUnique(LIBS=['cudart'])
 
 ###Custom cython builder
 cythonBuilder = Builder(action = 'cython3 $SOURCE --cplus',
