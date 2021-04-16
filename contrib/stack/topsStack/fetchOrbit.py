@@ -162,7 +162,7 @@ if __name__ == '__main__':
             break
 
     if match is not None:
-        output = inps.outdir + matchFileName
+        output = os.path.join(inps.outdir, matchFileName)
         res = download_file(match, output, session)
         if res is False:
             print('Failed to download URL: ', match)
