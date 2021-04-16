@@ -129,7 +129,6 @@ if __name__ == '__main__':
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
-    print(fileTS)
     match = None
     session = requests.Session()
 
