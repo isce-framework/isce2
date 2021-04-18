@@ -88,7 +88,7 @@ def download_file(url, outdir='.', session=None):
 
     path = outdir
     print('Downloading URL: ', url)
-    request = session.get(url, stream=True, verify=False, auth=credentials)
+    request = session.get(url, stream=True, verify=True, auth=credentials)
 
     try:
         val = request.raise_for_status()
@@ -143,7 +143,7 @@ if __name__ == '__main__':
         match = None
   
         try:
-            r = session.get(url, verify=False, auth=credentials)
+            r = session.get(url, verify=True, auth=credentials)
             r.raise_for_status()
             parser = MyHTMLParser(url)
             parser.feed(r.text)
