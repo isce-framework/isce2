@@ -2,6 +2,7 @@
 
 import numpy as np
 import requests
+import re
 import os
 import argparse
 import datetime
