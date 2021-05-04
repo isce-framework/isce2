@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import re
 import requests
+import re
 import os
 import argparse
 import datetime
 from html.parser import HTMLParser
 
-server = 'http://aux.sentinel1.eo.esa.int/'
+server = 'https://scihub.copernicus.eu/gnss/'
 
-orbitMap = [('precise', 'POEORB/'),
-            ('restituted', 'RESORB/')]
+orbitMap = [('precise', 'AUX_POEORB'),
+            ('restituted', 'AUX_RESORB')]
 
 datefmt = "%Y%m%dT%H%M%S"
 queryfmt = "%Y-%m-%d"
 queryfmt2 = "%Y/%m/%d/"
+
+#Generic credentials to query and download orbit files
+credentials = ('gnssguest', 'gnssguest')
 
 
 def cmdLineParse():
@@ -55,38 +58,26 @@ def FileToTimeStamp(safename):
 
 class MyHTMLParser(HTMLParser):
 
-    def __init__(self, satName, url):
+    def __init__(self,url):
         HTMLParser.__init__(self)
         self.fileList = []
-        self.in_td = False
-        self.in_a = False
-        self.in_table = False
         self._url = url
-        self.satName = satName
-
+        
     def handle_starttag(self, tag, attrs):
-        if tag == 'td':
-            self.in_td = True
-        elif tag == 'a':
-            self.in_a = True
-            for name, val in attrs:
-                if name == "href":
-                    if val.startswith("http"):
-                        self._url = val.strip()
-
+        for name, val in attrs:
+            if name == 'href':
+                if val.startswith("https://scihub.copernicus.eu/gnss/odata") and val.endswith(")/"):
+                    pass
+                else:
+                    downloadLink = val.strip()
+                    downloadLink = downloadLink.split("/Products('Quicklook')")
+                    downloadLink = downloadLink[0] + downloadLink[-1]
+                    self._url = downloadLink
+                
     def handle_data(self, data):
-        if self.in_td and self.in_a:
-            if self.satName in data:
-                self.fileList.append((self._url, data.strip()))
-
-    def handle_tag(self, tag):
-        if tag == 'td':
-            self.in_td = False
-            self.in_a = False
-        elif tag == 'a':
-            self.in_a = False
-            self._url = None
-
+        if data.startswith("S1") and data.endswith(".EOF"):
+            self.fileList.append((self._url, data.strip()))
+            
 
 def download_file(url, outdir='.', session=None):
     '''
@@ -96,9 +87,9 @@ def download_file(url, outdir='.', session=None):
     if session is None:
         session = requests.session()
 
-    path = os.path.join(outdir, os.path.basename(url))
+    path = outdir
     print('Downloading URL: ', url)
-    request = session.get(url, stream=True, verify=False)
+    request = session.get(url, stream=True, verify=True, auth=credentials)
 
     try:
         val = request.raise_for_status()
@@ -139,37 +130,29 @@ if __name__ == '__main__':
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
-
     match = None
     session = requests.Session()
 
     for spec in orbitMap:
         oType = spec[0]
-
-        if oType == 'precise':
-            end_date = fileTS + datetime.timedelta(days=20)
-        elif oType == 'restituted':
-            end_date = fileTS
-        else:
-            raise ValueError("Unexpected orbit type: '" + oType + "'")
-        end_date2 = end_date + datetime.timedelta(days=1)
-        urls = (server + spec[1] + end_date.strftime("%Y/%m/%d/") for end_date in (end_date, end_date2))
-
+        delta = datetime.timedelta(days=1)
+        timebef = (fileTS - delta).strftime(queryfmt)
+        timeaft = (fileTS + delta).strftime(queryfmt)
+        url = server + 'search?q=( beginPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] AND endPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] ) AND ( (platformname:Sentinel-1 AND filename:{2}_* AND producttype:{3}))&start=0&rows=100'.format(timebef,timeaft, satName,spec[1])
+        
         success = False
         match = None
-
+  
         try:
-            
-            for url in urls:
-                r = session.get(url, verify=False)
-                r.raise_for_status()
-                parser = MyHTMLParser(satName, url)
-                parser.feed(r.text)
-                
-                for resulturl, result in parser.fileList:
-                    tbef, taft, mission = fileToRange(os.path.basename(result))
-                    if (tbef <= fileTSStart) and (taft >= fileTS):
-                        match = os.path.join(resulturl, result)
+            r = session.get(url, verify=True, auth=credentials)
+            r.raise_for_status()
+            parser = MyHTMLParser(url)
+            parser.feed(r.text)
+            for resulturl, result in parser.fileList:
+                tbef, taft, mission = fileToRange(os.path.basename(result))
+                if (tbef <= fileTSStart) and (taft >= fileTS):
+                    matchFileName = result
+                    match = os.path.join(server[0:-5],resulturl[36:])
 
             if match is not None:
                 success = True
@@ -180,8 +163,8 @@ if __name__ == '__main__':
             break
 
     if match is not None:
-
-        res = download_file(match, inps.outdir, session)
+        output = os.path.join(inps.outdir, matchFileName)
+        res = download_file(match, output, session)
         if res is False:
             print('Failed to download URL: ', match)
     else:
