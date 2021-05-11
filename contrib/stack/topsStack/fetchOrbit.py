@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 tbef, taft, mission = fileToRange(os.path.basename(result))
                 if (tbef <= fileTSStart) and (taft >= fileTS):
                     matchFileName = result
-                    match = os.path.join(server[0:-5],resulturl[36:])
+                    match = resulturl
 
             if match is not None:
                 success = True
