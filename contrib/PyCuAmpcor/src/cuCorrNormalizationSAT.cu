@@ -5,7 +5,11 @@
  */
 
 #include <cooperative_groups.h>
+
+#if __CUDACC_VER_MAJOR__ >= 11
 #include <cooperative_groups/reduce.h>
+#endif
+
 // my declarations
 #include "cuAmpcorUtil.h"
 // for FLT_EPSILON
@@ -25,6 +29,9 @@ namespace cg = cooperative_groups;
  * @note use one thread block for each image, blockIdx.x is image index
  **/
 
+
+#if __CUDACC_VER_MAJOR__ >= 11
+// use cg::reduce for NVCC 11 and above
 __global__ void sum_square_kernel(float *sum2, const float *images, int n, int batch)
 {
     // get block id for each image
@@ -65,6 +72,69 @@ __global__ void sum_square_kernel(float *sum2, const float *images, int n, int b
         sum2[imageid] = sum;
     }
 }
+
+#else
+// use warp-shuffle reduction for NVCC 9 & 10
+__global__ void sum_square_kernel(float *sum2, const float *images, int n, int batch)
+{
+    // get block id for each image
+    int imageid = blockIdx.x;
+    const float *image = images + imageid*n;
+
+    // get the thread block
+    cg::thread_block cta = cg::this_thread_block();
+    // get the shared memory
+    extern float __shared__ sdata[];
+
+    // get the current thread
+    unsigned int tid = cta.thread_rank();
+    unsigned int blockSize = cta.size();
+
+    // stride over grid and add the values to the shared memory
+    float sum = 0;
+
+    for(int i = tid; i < n; i += blockSize ) {
+        auto value = image[i];
+        sum += value*value;
+    }
+    sdata[tid] = sum;
+    cg::sync(cta);
+
+    // do reduction in shared memory in log2 steps
+    if ((blockSize >= 512) && (tid < 256)) {
+        sdata[tid] = sum = sum + sdata[tid + 256];
+    }
+    cg::sync(cta);
+
+    if ((blockSize >= 256) && (tid < 128)) {
+        sdata[tid] = sum = sum + sdata[tid + 128];
+    }
+    cg::sync(cta);
+
+    if ((blockSize >= 128) && (tid < 64)) {
+        sdata[tid] = sum = sum + sdata[tid + 64];
+    }
+    cg::sync(cta);
+
+    // partition thread block into tiles in size 32 (warp)
+    cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
+
+    // reduce within warp
+    if(tid < 32) {
+        if(blockSize >=64) sum += sdata[tid + 32];
+        for (int offset = tile32.size()/2; offset >0; offset /=2) {
+            sum += tile32.shfl_down(sum, offset);
+        }
+    }
+
+    // return results with thread 0
+    if(tid == 0) {
+        // assign the value to results
+        sum2[imageid] = sum;
+    }
+}
+#endif // __CUDACC_VER_MAJOR check
+
 
 /**
  * cuda kernel for 2d sum area table
