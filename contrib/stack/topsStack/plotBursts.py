@@ -138,7 +138,8 @@ def main(iargs=None):
                 lateNear = burst.orbit.rdr2geo(t1,r0)
 
                 ring = ogr.Geometry(ogr.wkbLinearRing)
-                if int(gdal.__version__[0]) >= 3:
+                from distutils.version import StrictVersion
+                if StrictVersion(gdal.__version__) >= StrictVersion("3.0"):
                     ring.AddPoint(earlyNear[0], earlyNear[1])
                     ring.AddPoint(earlyFar[0], earlyFar[1])
                     ring.AddPoint(lateFar[0], lateFar[1])
