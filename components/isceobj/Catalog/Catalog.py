@@ -246,7 +246,7 @@ from collections import UserDict
 def dict_to_xml(adict,file,nodeTag=None,elementTag=None):
     a = ET.Element(nodeTag)  # something to hang nodes on
     a = dict_to_et(a,adict,nodeTag,elementTag)
-    et = a.getchildren()[0]
+    et = list(a)[0]
     indent(et)
     tree = ET.ElementTree(et)
     tree.write(file)

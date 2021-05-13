@@ -154,7 +154,7 @@ class XmlUtil:
             else:
                 keyWord = var.find('name').text
 
-            listChildren = var.getchildren()
+            listChildren = list(var)
             tmpDict = {}
             for description in listChildren:
                 if(description.tag == 'name'):

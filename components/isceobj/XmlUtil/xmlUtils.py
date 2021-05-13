@@ -90,7 +90,7 @@ class OrderedDict(UserDict):
 def dict_to_xml(adict,file):
     a = ET.Element('')  # something to hang nodes on
     a = dict_to_et(a,adict)
-    et = a.getchildren()[0]
+    et = list(a)[0]
     indent(et)
     tree = ET.ElementTree(et)
     tree.write(file)

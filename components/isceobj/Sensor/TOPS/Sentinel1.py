@@ -635,7 +635,7 @@ class Sentinel1(Component):
         '''
         
         burstList = self.getxmlelement('swathTiming/burstList')
-        for index, burst in enumerate(burstList.getchildren()):
+        for index, burst in enumerate(burstList):
             bb = self.product.bursts[index]
             bb.sensingStart = self.convertToDateTime(burst.find('azimuthTime').text)
             deltaT = datetime.timedelta(seconds=(bb.numberOfLines - 1)*bb.azimuthTimeInterval)
@@ -670,7 +670,7 @@ class Sentinel1(Component):
         ####Read in fm rates separately
         fmrateList = self.getxmlelement('generalAnnotation/azimuthFmRateList')
         fmRates = []
-        for index, burst in enumerate(fmrateList.getchildren()):
+        for index, burst in enumerate(fmrateList):
             r0 = 0.5 * Const.c * float(burst.find('t0').text)
             try:
                 c0 = float(burst.find('c0').text)
@@ -702,7 +702,7 @@ class Sentinel1(Component):
 
         dcList = self.getxmlelement('dopplerCentroid/dcEstimateList')
         dops = [ ]
-        for index, burst in enumerate(dcList.getchildren()):
+        for index, burst in enumerate(dcList):
 
             r0 = 0.5 * Const.c* float(burst.find('t0').text)
             refTime = self.convertToDateTime(burst.find('azimuthTime').text)
@@ -729,7 +729,7 @@ class Sentinel1(Component):
             eapList = self.getxmlelement('antennaPattern/antennaPatternList')
             eaps = []
             
-            for index, burst in enumerate(eapList.getchildren()):
+            for index, burst in enumerate(eapList):
                 refTime = self.convertToDateTime(burst.find('azimuthTime').text)
                 taus = [float(val) for val in burst.find('slantRangeTime').text.split()]
                 angs = [float(val) for val in burst.find('elevationAngle').text.split()]
@@ -801,7 +801,7 @@ class Sentinel1(Component):
         frameOrbit = Orbit()
         frameOrbit.configure()
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('time').text)
             pos = []
             vel = []
@@ -847,7 +847,7 @@ class Sentinel1(Component):
         tstart = self.product.bursts[0].sensingStart - margin
         tend = self.product.bursts[-1].sensingStop + margin
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('UTC').text[4:])
 
             if (timestamp >= tstart) and (timestamp < tend):
@@ -889,7 +889,7 @@ class Sentinel1(Component):
         xml_root = ET.ElementTree(file=fp).getroot()
         res = xml_root.find('calibrationParamsList/calibrationParams')
         paramsList = xml_root.find('calibrationParamsList')
-        for par in (paramsList.getchildren()):
+        for par in paramsList:
             if (par.find('swath').text.strip() == ('IW'+str(burst.swathNumber))) and (par.find('polarisation').text == burst.polarization):
               self._delta_theta = float(par.find('elevationAntennaPattern/elevationAngleIncrement').text)
               Geap_IQ = [float(val) for val in par.find('elevationAntennaPattern/values').text.split()]

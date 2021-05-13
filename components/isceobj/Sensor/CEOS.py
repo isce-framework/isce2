@@ -44,7 +44,7 @@ class CEOSDB(object):
         self.metadata = {}
         if not  xml == None:
             self.xmlFP = open(self.xml, 'r')
-            self.rootChildren = ET(file=self.xmlFP).getroot().getchildren()
+            self.rootChildren = list(ET(file=self.xmlFP).getroot())
         else:
             self.xmlFP = None
             self.rootChildren = []
@@ -81,7 +81,7 @@ class CEOSDB(object):
                 self.metadata[key] = [None]*loopCount
                 for i in range(loopCount):
                     struct = {}
-                    for node in z.getchildren():
+                    for node in z:
                         (subkey,data) = self.decodeNode(node)
                         struct[subkey] = data
                     self.metadata[key][i] = struct
@@ -98,7 +98,7 @@ class CEOSDB(object):
         xmlFP = open(self.xml, 'r')
 
         self.root = ET(file=xmlFP).getroot()
-        for z in self.root.getchildren():
+        for z in self.root:
             # If the tag name is 'rec', this is a plain old record
             if z.tag == 'rec':
                 (key,data) = self.decodeNode(z)
@@ -116,7 +116,7 @@ class CEOSDB(object):
                 self.metadata[key] = [None]*loopCount
                 for i in range(loopCount):
                     struct = {}
-                    for node in z.getchildren():
+                    for node in z:
                         (subkey,data) = self.decodeNode(node)
                         struct[subkey] = data
                     self.metadata[key][i] = struct
