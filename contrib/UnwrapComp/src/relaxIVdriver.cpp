@@ -2,6 +2,7 @@
 #include <sstream>
 #include <RelaxIV.h>
 #include <relaxIVdriver.h>
+#include <MCFClass.h>
 
 template<class T>
 inline T ABS( const T x )
