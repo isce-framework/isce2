@@ -48,7 +48,7 @@ def main(iargs=None):
 
 
     inps=cmdLineParse(iargs)
-    from osgeo import ogr, osr
+    from osgeo import gdal, ogr, osr
     import matplotlib
     if inps.shapefile is not None:
         matplotlib.use('Agg')
@@ -138,11 +138,19 @@ def main(iargs=None):
                 lateNear = burst.orbit.rdr2geo(t1,r0)
 
                 ring = ogr.Geometry(ogr.wkbLinearRing)
-                ring.AddPoint(earlyNear[1], earlyNear[0])
-                ring.AddPoint(earlyFar[1], earlyFar[0])
-                ring.AddPoint(lateFar[1], lateFar[0])
-                ring.AddPoint(lateNear[1], lateNear[0])
-                ring.AddPoint(earlyNear[1], earlyNear[0])
+                from distutils.version import StrictVersion
+                if StrictVersion(gdal.__version__) >= StrictVersion("3.0"):
+                    ring.AddPoint(earlyNear[0], earlyNear[1])
+                    ring.AddPoint(earlyFar[0], earlyFar[1])
+                    ring.AddPoint(lateFar[0], lateFar[1])
+                    ring.AddPoint(lateNear[0], lateNear[1])
+                    ring.AddPoint(earlyNear[0], earlyNear[1])
+                else:
+                    ring.AddPoint(earlyNear[1], earlyNear[0])
+                    ring.AddPoint(earlyFar[1], earlyFar[0])
+                    ring.AddPoint(lateFar[1], lateFar[0])
+                    ring.AddPoint(lateNear[1], lateNear[0])
+                    ring.AddPoint(earlyNear[1], earlyNear[0])
 
                 feature = ogr.Feature(layer.GetLayerDefn())
                 feature.SetField('Name', 'IW{0}-{1}'.format(swath, ii))
