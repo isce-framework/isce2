@@ -53,6 +53,10 @@ jobs:
             topsApp.py --help --steps
             stripmapApp.py --help --steps
             python3 -c "import isce"
+            # Create dummy ref/secondary configs for topsApp
+            ln -s ../examples/input_files/reference_TOPS_SENTINEL1.xml reference.xml
+            ln -s reference.xml secondary.xml
+            topsApp.py --steps --end=preprocess ../examples/input_files/topsApp.xml
 
   test:
     docker:
