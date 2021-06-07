@@ -160,8 +160,14 @@ def createParser():
     parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85', 
                         help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
 
-    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram', choices=['slc', 'correlation', 'interferogram', 'offset'],
+    parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram',
+                        choices=['slc', 'correlation', 'interferogram', 'offset'],
                         help='The InSAR processing workflow (default: %(default)s).')
+
+    parser.add_argument('-V', '--virtual_merge', dest='virtualMerge', type=str, default=None, choices=['True', 'False'],
+                        help='Use virtual files for the merged SLCs and geometry files.\n'
+                             'Default: True  for correlation / interferogram workflow\n'
+                             '         False for slc / offset workflow')
 
     parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
                         help='Allow App to use GPU when available')
@@ -531,15 +537,16 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_di
 
 def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
-    #############################
     i = slcStack(inps, acquisitionDates,stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
+    # default value of virtual_merge
+    virtual_merge = 'True' if not inps.virtualMerge else inps.virtualMerge
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
-    runObj.mergeReference(stackReferenceDate, virtual = 'True')
-    runObj.mergeSecondarySLC(secondaryDates, virtual = 'True')
+    runObj.mergeReference(stackReferenceDate, virtual = virtual_merge)
+    runObj.mergeSecondarySLC(secondaryDates, virtual = virtual_merge)
     runObj.finalize()
 
     i+=1
@@ -559,11 +566,14 @@ def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDate
 
     i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
+    # default value of virtual_merge
+    virtual_merge = 'True' if not inps.virtualMerge else inps.virtualMerge
+
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
-    runObj.mergeReference(stackReferenceDate, virtual = 'True')
-    runObj.mergeSecondarySLC(secondaryDates, virtual = 'True')
+    runObj.mergeReference(stackReferenceDate, virtual = virtual_merge)
+    runObj.mergeSecondarySLC(secondaryDates, virtual = virtual_merge)
     runObj.finalize()
 
     i+=1
@@ -595,11 +605,14 @@ def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe
 
     i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
 
+    # default value of virtual_merge
+    virtual_merge = 'False' if not inps.virtualMerge else inps.virtualMerge
+
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_merge_reference_secondary_slc'.format(i))
-    runObj.mergeReference(stackReferenceDate, virtual = 'False')
-    runObj.mergeSecondarySLC(secondaryDates, virtual = 'False')
+    runObj.mergeReference(stackReferenceDate, virtual = virtual_merge)
+    runObj.mergeSecondarySLC(secondaryDates, virtual = virtual_merge)
     runObj.finalize()
 
     i+=1
