@@ -22,6 +22,7 @@ EXAMPLE = '''example
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2
 
   # offset and its geometry
+  # tip: re-run with --full/out-geom and without --redo to generate geometry only
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
@@ -148,14 +149,13 @@ def cmdLineParse(iargs = None):
 
 @use_api
 def estimateOffsetField(reference, secondary, inps=None):
-
-    # check redo
-    print('redo: ', inps.redo)
-    if not inps.redo:
-        offsetImageName = '{}{}.bip'.format(inps.outprefix, inps.outsuffix)
-        if os.path.exists(offsetImageName):
-            print('offset field file: {} exists and w/o redo, skip re-estimation.'.format(offsetImageName))
-            return 0
+    """Estimte offset field using PyCuAmpcor.
+    Parameters: reference - str, path of the reference SLC file
+                secondary - str, path of the secondary SLC file
+                inps      - Namespace, input configuration
+    Returns:    objOffset - PyCuAmpcor object
+                geomDict  - dict, geometry location info of the offset field
+    """
 
     # update file path in xml file
     if inps.fixImageXml:
@@ -295,8 +295,10 @@ def estimateOffsetField(reference, secondary, inps=None):
         numberWindows = objOffset.numberWindowDown*objOffset.numberWindowAcross
         if grossOffset.size != 2*numberWindows :
             print(('WARNING: The input gross offsets do not match the number of windows:'
-                   ' {} by {} in int32 type').format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
-            return 0;
+                   ' {} by {} in int32 type').format(objOffset.numberWindowDown,
+                                                     objOffset.numberWindowAcross))
+            return 0
+
         grossOffset = grossOffset.reshape(numberWindows, 2)
         grossAzimuthOffset = grossOffset[:, 0]
         grossRangeOffset = grossOffset[:, 1]
@@ -308,6 +310,24 @@ def estimateOffsetField(reference, secondary, inps=None):
 
     # check
     objOffset.checkPixelInImageRange()
+
+    # save output geometry location info
+    geomDict = {
+        'x_start'   : objOffset.referenceStartPixelAcrossStatic + int(objOffset.windowSizeWidth / 2.),
+        'y_start'   : objOffset.referenceStartPixelDownStatic + int(objOffset.windowSizeHeight / 2.),
+        'x_step'    : objOffset.skipSampleAcross,
+        'y_step'    : objOffset.skipSampleDown,
+        'x_win_num' : objOffset.numberWindowAcross,
+        'y_win_num' : objOffset.numberWindowDown,
+    }
+
+    # check redo
+    print('redo: ', inps.redo)
+    if not inps.redo:
+        offsetImageName = '{}{}.bip'.format(inps.outprefix, inps.outsuffix)
+        if os.path.exists(offsetImageName):
+            print('offset field file: {} exists and w/o redo, skip re-estimation.'.format(offsetImageName))
+            return objOffset, geomDict
 
     # Run the code
     print('Running PyCuAmpcor')
@@ -362,10 +382,10 @@ def estimateOffsetField(reference, secondary, inps=None):
     covImg.setAccessMode('read')
     covImg.renderHdr()
 
-    return objOffset
+    return objOffset, geomDict
 
 
-def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, num_win_x, num_win_y,
+def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, x_win_num, y_win_num,
                     fbases=['hgt','lat','lon','los','shadowMask','waterMask']):
     """Generate multilooked geometry datasets in the same grid as the estimated offset field
     from the full resolution geometry datasets.
@@ -373,7 +393,7 @@ def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, num_win
                 out_dir     - str, path of output geometry directory
                 x/y_start   - int, starting column/row number
                 x/y_step    - int, output pixel step in column/row direction
-                num_win_x/y - int, number of columns/rows
+                x/y_win_num - int, number of columns/rows
     """
     full_dir = os.path.abspath(full_dir)
     out_dir = os.path.abspath(out_dir)
@@ -406,14 +426,14 @@ def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, num_win
         in_len = ds.RasterYSize
 
         # starting column/row and column/row number
-        src_win = [x_start, y_start, num_win_x * x_step, num_win_y * y_step]
+        src_win = [x_start, y_start, x_win_num * x_step, y_win_num * y_step]
         print('read {} from file: {}'.format(src_win, in_file))
 
         # write binary data file
         print('write file: {}'.format(out_file))
         opts = gdal.TranslateOptions(format='ENVI',
-                                     width=num_win_x,
-                                     height=num_win_y,
+                                     width=x_win_num,
+                                     height=y_win_num,
                                      srcWin=src_win,
                                      noData=0)
         gdal.Translate(out_file, ds, options=opts)
@@ -437,17 +457,17 @@ def main(iargs=None):
     os.makedirs(outDir, exist_ok=True)
 
     # estimate offset
-    objOffset = estimateOffsetField(inps.reference, inps.secondary, inps)
+    geomDict = estimateOffsetField(inps.reference, inps.secondary, inps)[1]
 
     # generate geometry
     if inps.full_geometry_dir and inps.out_geometry_dir:
         prepareGeometry(inps.full_geometry_dir, inps.out_geometry_dir,
-                        x_start=objOffset.referenceStartPixelAcrossStatic,
-                        y_start=objOffset.referenceStartPixelDownStatic,
-                        x_step=objOffset.skipSampleAcross,
-                        y_step=objOffset.skipSampleDown,
-                        num_win_x=objOffset.numberWindowAcross,
-                        num_win_y=objOffset.numberWindowDown)
+                        x_start=geomDict['x_start'],
+                        y_start=geomDict['y_start'],
+                        x_step=geomDict['x_step'],
+                        y_step=geomDict['y_step'],
+                        x_win_num=geomDict['x_win_num'],
+                        y_win_num=geomDict['y_win_num'])
 
     m, s = divmod(time.time() - start_time, 60)
     print('time used: {:02.0f} mins {:02.1f} secs.\n'.format(m, s))
