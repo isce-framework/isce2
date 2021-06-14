@@ -1,4 +1,4 @@
-subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,outband,iscomplex,method)
+subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,outband,iscomplex,method,lookSide)
   use geozeroState
   use geozeroReadWrite
   use geozeroMethods
@@ -16,7 +16,7 @@ subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,out
   !! DECLARE LOCAL VARIABLES
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   integer inband,outband
-  integer iscomplex,method
+  integer iscomplex,method,lookSide
   integer stat,cnt
   integer*8 inAccessor,demAccessor
   integer*8 outAccessor,demCropAccessor
@@ -69,6 +69,10 @@ subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,out
   real*8 BAD_VALUE
   parameter(BAD_VALUE = -10000.0d0)
 
+  !! Cross product holder, for comparison to lookSide
+  real*8 :: look_side_vec(3)
+  real*8 look_side_sign
+  integer pixel_side
 
   !Doppler factor
   type(poly1dType) :: fdvsrng, fddotvsrng
@@ -300,6 +304,22 @@ subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,out
         satx = xyz_mid
         satv = vel_mid
 
+        ! Check that the pixel is on the correct side of the platform
+        ! https://github.com/isce-framework/isce2/issues/294#issuecomment-853413396
+        dr = xyz - satx
+        call cross(dr, satv, look_side_vec)
+        look_side_sign = dot(look_side_vec, satx)
+        if(look_side_sign.gt.0) then
+            pixel_side = -1
+        else
+            pixel_side = 1
+        endif
+        ! Skip if the current pixel side doesn't matches the look side
+        if(pixel_side.ne.lookSide) then
+            ! print *, "Skipp. lookSide ", lookSide, "look_side_sign", look_side_sign
+            goto 100
+        endif
+
         do k=1,21
             tprev = tline  
 !!            print *, pixel, k, tline
@@ -320,7 +340,6 @@ subroutine geozero(demAccessor,inAccessor,demCropAccessor,outAccessor,inband,out
             c3 = dopfact * (fdop / rngpix +  fdopder)
 
             tline = tline + c1/(c2-c3)
-
 
             stat = interpolateWGS84Orbit_f(orbit,tline,satx,satv)
 
