@@ -62,7 +62,7 @@ GEOMETRY_DIRNAME = Component.Parameter('geometryDirname',
                                 public_name='geometry directory name',
                                 default='geom_reference',
                                 type=str,
-                                mandatory=False, 
+                                mandatory=False,
                                 doc = 'Geometry directory')
 
 ESD_DIRNAME = Component.Parameter('esdDirname',
@@ -456,19 +456,19 @@ class TopsProc(Component):
         '''
         Save the product to an XML file using Product Manager.
         '''
-        
+
         from iscesys.Component.ProductManager import ProductManager as PM
 
         pm = PM()
         pm.configure()
 
         pm.dumpProduct(obj, xmlname)
-        
+
         return None
 
     @property
     def referenceSlcOverlapProduct(self):
-        return os.path.join(self.referenceSlcProduct, self.overlapsSubDirname) 
+        return os.path.join(self.referenceSlcProduct, self.overlapsSubDirname)
 
     @property
     def coregOverlapProduct(self):
@@ -519,7 +519,7 @@ class TopsProc(Component):
             return [x+1 for x in range(self.numberOfSwaths)]
         else:
             return inlist
-    
+
     def getValidSwathList(self, inlist):
         '''
         Used to get list of swaths left after applying all filters  - e.g, region of interest.
@@ -540,6 +540,7 @@ class TopsProc(Component):
         try:
             from zerodop.GPUtopozero.GPUtopozero import PyTopozero
             from zerodop.GPUgeo2rdr.GPUgeo2rdr import PyGeo2rdr
+            from zerodop.GPUresampslc.GPUresampslc import PyResampSlc
             flag = True
         except:
             pass

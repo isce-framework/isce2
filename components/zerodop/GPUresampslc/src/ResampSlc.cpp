@@ -144,8 +144,25 @@ void copyPolyToArr(Poly2d *poly, vector<double> &destArr) {
     for (int i=0; i<((destArr[0]+1)*(destArr[1]+1)); i++) destArr[6+i] = poly->coeffs[i];
 }
 
-void ResampSlc::resamp() {
-    
+
+// wrapper for calling cpu or gpu methods
+void ResampSlc::resamp()
+{
+    #ifndef GPU_ACC_ENABLED
+    usr_enable_gpu = false;
+    #endif
+
+    if (usr_enable_gpu) {
+        _resamp_gpu();
+    }
+    else {
+        _resamp_cpu();
+    }
+}
+
+// not checked
+void ResampSlc::_resamp_cpu() {
+
     vector<double> residAz(outWidth,0.), residRg(outWidth,0.);
     double ro, ao, ph, dop, fracr, fraca, t0, k, kk;
 
@@ -167,9 +184,6 @@ void ResampSlc::resamp() {
     if (residAzAccessor != 0) residAzAccObj = (DataAccessor*)residAzAccessor;
     else residAzAccObj = NULL;
 
-    #ifndef GPU_ACC_ENABLED
-    usr_enable_gpu = false;
-    #endif
 
     // Moving this here so we don't waste any time
     if (!isComplex) {
@@ -220,7 +234,7 @@ void ResampSlc::resamp() {
         // index from the reference input image). Then we eval the bottom 40 lines worth of pixel offsets and find the largest
         // positive row shift (the maximum row index). This gives us the number of lines to read, as well as the firstImageRow
         // reference offset for the tile. Note that firstImageRow/lastImageRow are row indices relative to the reference input image.
-        
+
         printf("Reading in image data for tile %d\n", tile);
 
         firstImageRow = outLength - 1;                                                  // Initialize to last image row
@@ -232,9 +246,9 @@ void ResampSlc::resamp() {
                 imgLine = int(i+ao) - SINC_HALF;
                 firstImageRow = min(firstImageRow, imgLine);                            // Set the first input image line idx to the smallest value
             }
-        } 
+        }
         firstImageRow = max(firstImageRow, 0);                                          // firstImageRow now has the lowest image row called in the tile processing
-        
+
         lastImageRow = 0;                                                                       // Initialize to first image row
         for (int i=(firstTileRow+LINES_PER_TILE-40); i<(firstTileRow+LINES_PER_TILE); i++) {   // Iterate over last 40 lines of tile
             if (residAzAccessor != 0) residAzAccObj->getLine((char *)&residAz[0], i);           // Read in azimuth residual
@@ -254,7 +268,7 @@ void ResampSlc::resamp() {
         if (imgIn.size() < size_t(nRowsInBlock*inWidth)) imgIn.resize(nRowsInBlock*inWidth);
         for (int i=0; i<nRowsInBlock; i++) {                                    // Read in nRowsInBlock lines of data from the input image to the image block
             slcInAccObj->getLine((char *)&(imgIn[IDX1D(i,0,inWidth)]), firstImageRow+i);      // Sets imgIn[0] == reference_image[firstImageRow]
-            
+
             // Remove the carriers using OpenMP acceleration
             #pragma omp parallel for private(ph)
             for (int j=0; j<inWidth; j++) {
@@ -262,133 +276,73 @@ void ResampSlc::resamp() {
                 imgIn[IDX1D(i,j,inWidth)] = imgIn[IDX1D(i,j,inWidth)] * complex<float>(cos(ph), -sin(ph));                  // Remove the carrier
             }
         }
-        
+
         // Loop over lines
         printf("Interpolating tile %d\n", tile);
 
-        if (usr_enable_gpu) {
-            #ifdef GPU_ACC_ENABLED
-            vector<complex<float> > imgOutBlock(LINES_PER_TILE*outWidth);
 
-            vector<double> residAzBlock(1,0.); // Dummy length to use for GPU
-            double *residAzPtr = 0;
-            if (residAzAccessor != 0) {
-                residAzBlock.resize(LINES_PER_TILE*outWidth);
-                for (int i=0; i<LINES_PER_TILE; i++) residAzAccObj->getLineSequential((char *)&residAzBlock[i*LINES_PER_TILE]);
-                residAzPtr = &residAzBlock[0];
-            }
-            vector<double> residRgBlock(1,0.);
-            double *residRgPtr = 0;
-            if (residRgAccessor != 0) {
-                residRgBlock.resize(LINES_PER_TILE*outWidth);
-                for (int i=0; i<LINES_PER_TILE; i++) residRgAccObj->getLineSequential((char *)&residRgBlock[i*LINES_PER_TILE]);
-                residRgPtr = &residRgBlock[0];
-            }
+        // Interpolation of the complex image. Note that we don't need to make very many changes to the original code in this loop
+        // since the i-index should numerically match the original i-index
+        for (int i=firstTileRow; i<(firstTileRow+LINES_PER_TILE); i++) {
+            // GetLineSequential is fine here, we don't need specific lines, just continue grabbing them
+            if (residAzAccessor != 0) residAzAccObj->getLineSequential((char *)&residAz[0]);
+            if (residRgAccessor != 0) residRgAccObj->getLineSequential((char *)&residRg[0]);
 
-            vector<double> azOffPolyArr(((azOffsetsPoly->azimuthOrder+1)*(azOffsetsPoly->rangeOrder+1))+6);
-            vector<double> rgOffPolyArr(((rgOffsetsPoly->azimuthOrder+1)*(rgOffsetsPoly->rangeOrder+1))+6);
-            vector<double> dopPolyArr(((dopplerPoly->azimuthOrder+1)*(dopplerPoly->rangeOrder+1))+6);
-            vector<double> azCarPolyArr(((azCarrier->azimuthOrder+1)*(azCarrier->rangeOrder+1))+6);
-            vector<double> rgCarPolyArr(((rgCarrier->azimuthOrder+1)*(rgCarrier->rangeOrder+1))+6);
+            #pragma omp parallel for private(ro,ao,fracr,fraca,ph,cval,dop,chipi,chipj,k,kk) \
+                                     firstprivate(chip)
+            for (int j=0; j<outWidth; j++) {
 
-            copyPolyToArr(azOffsetsPoly, azOffPolyArr);     // arrs are: [azord, rgord, azmean, rgmean, aznorm, rgnorm, coeffs...]
-            copyPolyToArr(rgOffsetsPoly, rgOffPolyArr);
-            copyPolyToArr(dopplerPoly, dopPolyArr);
-            copyPolyToArr(azCarrier, azCarPolyArr);
-            copyPolyToArr(rgCarrier, rgCarPolyArr);
+                ao = azOffsetsPoly->eval(i+1,j+1) + residAz[j];
+                ro = rgOffsetsPoly->eval(i+1,j+1) + residRg[j];
 
-            double gpu_inputs_d[6];
-            int gpu_inputs_i[8];
+                fraca = modf(i+ao, &k);
+                if ((k < SINC_HALF) || (k >= (inLength-SINC_HALF))) continue;
 
-            gpu_inputs_d[0] = wvl;
-            gpu_inputs_d[1] = refwvl;
-            gpu_inputs_d[2] = r0;
-            gpu_inputs_d[3] = refr0;
-            gpu_inputs_d[4] = slr;
-            gpu_inputs_d[5] = refslr;
+                fracr = modf(j+ro, &kk);
+                if ((kk < SINC_HALF) || (kk >= (inWidth-SINC_HALF))) continue;
 
-            gpu_inputs_i[0] = inLength;
-            gpu_inputs_i[1] = inWidth;
-            gpu_inputs_i[2] = outWidth;
-            gpu_inputs_i[3] = firstImageRow;
-            gpu_inputs_i[4] = firstTileRow;
-            gpu_inputs_i[5] = nRowsInBlock;
-            gpu_inputs_i[6] = LINES_PER_TILE;
-            gpu_inputs_i[7] = int(flatten);
+                dop = dopplerPoly->eval(i+1,j+1);
 
-            // 1000 lines per tile is peanuts for this algorithm to run (for test set is only 20M pixels)
-
-            runGPUResamp(gpu_inputs_d, gpu_inputs_i, (void*)&imgIn[0], (void*)&imgOutBlock[0], residAzPtr, residRgPtr, 
-                            &azOffPolyArr[0], &rgOffPolyArr[0], &dopPolyArr[0], &azCarPolyArr[0], &rgCarPolyArr[0],
-                            &(rMethods.fintp[0]));
-
-            for (int i=0; i<LINES_PER_TILE; i++) slcOutAccObj->setLineSequential((char *)&imgOutBlock[i*outWidth]);
-            #endif
-        } else {
-
-            // Interpolation of the complex image. Note that we don't need to make very many changes to the original code in this loop
-            // since the i-index should numerically match the original i-index
-            for (int i=firstTileRow; i<(firstTileRow+LINES_PER_TILE); i++) {
-                // GetLineSequential is fine here, we don't need specific lines, just continue grabbing them
-                if (residAzAccessor != 0) residAzAccObj->getLineSequential((char *)&residAz[0]);
-                if (residRgAccessor != 0) residRgAccObj->getLineSequential((char *)&residRg[0]);
-
-                #pragma omp parallel for private(ro,ao,fracr,fraca,ph,cval,dop,chipi,chipj,k,kk) \
-                                         firstprivate(chip)
-                for (int j=0; j<outWidth; j++) {
-                    
-                    ao = azOffsetsPoly->eval(i+1,j+1) + residAz[j];
-                    ro = rgOffsetsPoly->eval(i+1,j+1) + residRg[j];
-
-                    fraca = modf(i+ao, &k);
-                    if ((k < SINC_HALF) || (k >= (inLength-SINC_HALF))) continue;
-
-                    fracr = modf(j+ro, &kk);
-                    if ((kk < SINC_HALF) || (kk >= (inWidth-SINC_HALF))) continue;
-
-                    dop = dopplerPoly->eval(i+1,j+1);
-
-                    // Data chip without the carriers
-                    for (int ii=0; ii<SINC_ONE; ii++) {
-                        // Subtracting off firstImageRow removes the offset from the first row in the reference
-                        // image to the first row actually contained in imgIn
-                        chipi = k - firstImageRow + ii - SINC_HALF;
-                        cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));
-                        for (int jj=0; jj<SINC_ONE; jj++) {
-                            chipj = kk + jj - SINC_HALF;
-                            // Take out doppler in azimuth
-                            chip[ii][jj] = imgIn[IDX1D(chipi,chipj,inWidth)] * cval;
-                        }
+                // Data chip without the carriers
+                for (int ii=0; ii<SINC_ONE; ii++) {
+                    // Subtracting off firstImageRow removes the offset from the first row in the reference
+                    // image to the first row actually contained in imgIn
+                    chipi = k - firstImageRow + ii - SINC_HALF;
+                    cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));
+                    for (int jj=0; jj<SINC_ONE; jj++) {
+                        chipj = kk + jj - SINC_HALF;
+                        // Take out doppler in azimuth
+                        chip[ii][jj] = imgIn[IDX1D(chipi,chipj,inWidth)] * cval;
                     }
-
-                    // Doppler to be added back. Simultaneously evaluate carrier that needs to be added back after interpolation
-                    ph = (dop * fraca) + rgCarrier->eval(i+ao,j+ro) + azCarrier->eval(i+ao,j+ro);
-
-                    // Flatten the carrier if the user wants to
-                    if (flatten) {
-                        ph = ph + ((4. * (M_PI / wvl)) * ((r0 - refr0) + (j * (slr - refslr)) + (ro * slr))) +
-                                ((4. * M_PI * (refr0 + (j * refslr))) * ((1. / refwvl) - (1. / wvl)));
-                    }
-
-                    ph = modulo_f(ph, 2.*M_PI);
-                    
-                    cval = rMethods.interpolate_cx(chip,(SINC_HALF+1),(SINC_HALF+1),fraca,fracr,SINC_ONE,SINC_ONE,SINC_METHOD);
-
-                    imgOut[j] = cval * complex<float>(cos(ph), sin(ph));
                 }
-                slcOutAccObj->setLineSequential((char *)&imgOut[0]);
+
+                // Doppler to be added back. Simultaneously evaluate carrier that needs to be added back after interpolation
+                ph = (dop * fraca) + rgCarrier->eval(i+ao,j+ro) + azCarrier->eval(i+ao,j+ro);
+
+                // Flatten the carrier if the user wants to
+                if (flatten) {
+                    ph = ph + ((4. * (M_PI / wvl)) * ((r0 - refr0) + (j * (slr - refslr)) + (ro * slr))) +
+                            ((4. * M_PI * (refr0 + (j * refslr))) * ((1. / refwvl) - (1. / wvl)));
+                }
+
+                ph = modulo_f(ph, 2.*M_PI);
+
+                cval = rMethods.interpolate_cx(chip,(SINC_HALF+1),(SINC_HALF+1),fraca,fracr,SINC_ONE,SINC_ONE,SINC_METHOD);
+
+                imgOut[j] = cval * complex<float>(cos(ph), sin(ph));
             }
+            slcOutAccObj->setLineSequential((char *)&imgOut[0]);
         }
     }
-    
+
     // And if there is a final partial tile...
     if (lastLines > 0) {
-        
+
         firstTileRow = nTiles * LINES_PER_TILE;
-        nRowsInTile = outLength - firstTileRow + 1; // NOT EQUIVALENT TO NUMBER OF ROWS IN IMAGE BLOCK
+        nRowsInTile = outLength - firstTileRow ; // NOT EQUIVALENT TO NUMBER OF ROWS IN IMAGE BLOCK
 
         printf("Reading in image data for final partial tile\n");
-        
+
         firstImageRow = outLength - 1;
         for (int i=firstTileRow; i<min(firstTileRow+40,outLength); i++) { // Make sure if nRowsInTile < 40 to not read too many lines
             if (residAzAccessor != 0) residAzAccObj->getLine((char *)&residAz[0], i);
@@ -407,7 +361,7 @@ void ResampSlc::resamp() {
                 ao = azOffsetsPoly->eval(i+1, j+1) + residAz[j];
                 imgLine = int(i+ao) + SINC_HALF;
                 lastImageRow = max(lastImageRow, imgLine);
-            } 
+            }
         }
         lastImageRow = min(lastImageRow, inLength-1);
 
@@ -426,119 +380,166 @@ void ResampSlc::resamp() {
 
         printf("Interpolating final partial tile\n");
 
-        if (usr_enable_gpu) {
-            #ifdef GPU_ACC_ENABLED
-            vector<complex<float> > imgOutBlock(nRowsInTile*outWidth);
 
-            vector<double> residAzBlock(1,0.); // Dummy length to use for GPU
-            double *residAzPtr = 0;
-            if (residAzAccessor != 0) {
-                residAzBlock.resize(nRowsInTile*outWidth);
-                for (int i=0; i<nRowsInTile; i++) residAzAccObj->getLineSequential((char *)&residAzBlock[i*nRowsInTile]);
-                residAzPtr = &residAzBlock[0];
-            }
-            vector<double> residRgBlock(1,0.);
-            double *residRgPtr = 0;
-            if (residRgAccessor != 0) {
-                residRgBlock.resize(nRowsInTile*outWidth);
-                for (int i=0; i<nRowsInTile; i++) residRgAccObj->getLineSequential((char *)&residRgBlock[i*nRowsInTile]);
-                residRgPtr = &residRgBlock[0];
-            }
+        for (int i=firstTileRow; i<(firstTileRow+nRowsInTile); i++) {
 
-            vector<double> azOffPolyArr(((azOffsetsPoly->azimuthOrder+1)*(azOffsetsPoly->rangeOrder+1))+6);
-            vector<double> rgOffPolyArr(((rgOffsetsPoly->azimuthOrder+1)*(rgOffsetsPoly->rangeOrder+1))+6);
-            vector<double> dopPolyArr(((dopplerPoly->azimuthOrder+1)*(dopplerPoly->rangeOrder+1))+6);
-            vector<double> azCarPolyArr(((azCarrier->azimuthOrder+1)*(azCarrier->rangeOrder+1))+6);
-            vector<double> rgCarPolyArr(((rgCarrier->azimuthOrder+1)*(rgCarrier->rangeOrder+1))+6);
+            if (residAzAccessor != 0) residAzAccObj->getLineSequential((char *)&residAz[0]);
+            if (residRgAccessor != 0) residRgAccObj->getLineSequential((char *)&residRg[0]);
 
-            copyPolyToArr(azOffsetsPoly, azOffPolyArr);     // arrs are: [azord, rgord, azmean, rgmean, aznorm, rgnorm, coeffs...]
-            copyPolyToArr(rgOffsetsPoly, rgOffPolyArr);
-            copyPolyToArr(dopplerPoly, dopPolyArr);
-            copyPolyToArr(azCarrier, azCarPolyArr);
-            copyPolyToArr(rgCarrier, rgCarPolyArr);
+            #pragma omp parallel for private(ro,ao,fracr,fraca,ph,cval,dop,chipi,chipj,k,kk) \
+                                     firstprivate(chip)
+            for (int j=0; j<outWidth; j++) {
 
-            double gpu_inputs_d[6];
-            int gpu_inputs_i[8];
+                ro = rgOffsetsPoly->eval(i+1,j+1) + residRg[j];
+                ao = azOffsetsPoly->eval(i+1,j+1) + residAz[j];
 
-            gpu_inputs_d[0] = wvl;
-            gpu_inputs_d[1] = refwvl;
-            gpu_inputs_d[2] = r0;
-            gpu_inputs_d[3] = refr0;
-            gpu_inputs_d[4] = slr;
-            gpu_inputs_d[5] = refslr;
+                fraca = modf(i+ao, &k);
+                if ((k < SINC_HALF) || (k >= (inLength-SINC_HALF))) continue;
 
-            gpu_inputs_i[0] = inLength;
-            gpu_inputs_i[1] = inWidth;
-            gpu_inputs_i[2] = outWidth;
-            gpu_inputs_i[3] = firstImageRow;
-            gpu_inputs_i[4] = firstTileRow;
-            gpu_inputs_i[5] = nRowsInBlock;
-            gpu_inputs_i[6] = nRowsInTile;
-            gpu_inputs_i[7] = int(flatten);
+                fracr = modf(j+ro, &kk);
+                if ((kk < SINC_HALF) || (kk >= (inWidth-SINC_HALF))) continue;
 
-            // 1000 lines per tile is peanuts for this algorithm to run (for test set is only 20M pixels)
+                dop = dopplerPoly->eval(i+1,j+1);
 
-            runGPUResamp(gpu_inputs_d, gpu_inputs_i, (void*)&imgIn[0], (void*)&imgOutBlock[0], residAzPtr, residRgPtr,
-                            &azOffPolyArr[0], &rgOffPolyArr[0], &dopPolyArr[0], &azCarPolyArr[0], &rgCarPolyArr[0],
-                            &(rMethods.fintp[0]));
-
-            for (int i=0; i<nRowsInTile; i++) slcOutAccObj->setLineSequential((char *)&imgOutBlock[i*outWidth]);
-            #endif
-        } else {
-
-            for (int i=firstTileRow; i<(firstTileRow+nRowsInTile); i++) {
-
-                if (residAzAccessor != 0) residAzAccObj->getLineSequential((char *)&residAz[0]);
-                if (residRgAccessor != 0) residRgAccObj->getLineSequential((char *)&residRg[0]);
-
-                #pragma omp parallel for private(ro,ao,fracr,fraca,ph,cval,dop,chipi,chipj,k,kk) \
-                                         firstprivate(chip)
-                for (int j=0; j<outWidth; j++) {
-
-                    ro = rgOffsetsPoly->eval(i+1,j+1) + residRg[j];
-                    ao = azOffsetsPoly->eval(i+1,j+1) + residAz[j];
-
-                    fraca = modf(i+ao, &k);
-                    if ((k < SINC_HALF) || (k >= (inLength-SINC_HALF))) continue;
-
-                    fracr = modf(j+ro, &kk);
-                    if ((kk < SINC_HALF) || (kk >= (inWidth-SINC_HALF))) continue;
-
-                    dop = dopplerPoly->eval(i+1,j+1);
-
-                    // Data chip without the carriers
-                    for (int ii=0; ii<SINC_ONE; ii++) {
-                        // Subtracting off firstImageRow removes the offset from the first row in the reference
-                        // image to the first row actually contained in imgIn
-                        chipi = k - firstImageRow + ii - SINC_HALF;
-                        cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));
-                        for (int jj=0; jj<SINC_ONE; jj++) {
-                            chipj = kk + jj - SINC_HALF;
-                            // Take out doppler in azimuth
-                            chip[ii][jj] = imgIn[IDX1D(chipi,chipj,inWidth)] * cval;
-                        }
+                // Data chip without the carriers
+                for (int ii=0; ii<SINC_ONE; ii++) {
+                    // Subtracting off firstImageRow removes the offset from the first row in the reference
+                    // image to the first row actually contained in imgIn
+                    chipi = k - firstImageRow + ii - SINC_HALF;
+                    cval = complex<float>(cos((ii-4.)*dop), -sin((ii-4.)*dop));
+                    for (int jj=0; jj<SINC_ONE; jj++) {
+                        chipj = kk + jj - SINC_HALF;
+                        // Take out doppler in azimuth
+                        chip[ii][jj] = imgIn[IDX1D(chipi,chipj,inWidth)] * cval;
                     }
-
-                    // Doppler to be added back. Simultaneously evaluate carrier that needs to be added back after interpolation
-                    ph = (dop * fraca) + rgCarrier->eval(i+ao,j+ro) + azCarrier->eval(i+ao,j+ro);
-
-                    // Flatten the carrier if the user wants to
-                    if (flatten) {
-                        ph = ph + ((4. * (M_PI / wvl)) * ((r0 - refr0) + (j * (slr - refslr)) + (ro * slr))) +
-                                ((4. * M_PI * (refr0 + (j * refslr))) * ((1. / refwvl) - (1. / wvl)));
-                    }
-
-                    ph = modulo_f(ph, 2.*M_PI);
-
-                    cval = rMethods.interpolate_cx(chip,(SINC_HALF+1),(SINC_HALF+1),fraca,fracr,SINC_ONE,SINC_ONE,SINC_METHOD);
-
-                    imgOut[j] = cval * complex<float>(cos(ph), sin(ph));
-                    
                 }
-                slcOutAccObj->setLineSequential((char *)&imgOut[0]);
+
+                // Doppler to be added back. Simultaneously evaluate carrier that needs to be added back after interpolation
+                ph = (dop * fraca) + rgCarrier->eval(i+ao,j+ro) + azCarrier->eval(i+ao,j+ro);
+
+                // Flatten the carrier if the user wants to
+                if (flatten) {
+                    ph = ph + ((4. * (M_PI / wvl)) * ((r0 - refr0) + (j * (slr - refslr)) + (ro * slr))) +
+                            ((4. * M_PI * (refr0 + (j * refslr))) * ((1. / refwvl) - (1. / wvl)));
+                }
+
+                ph = modulo_f(ph, 2.*M_PI);
+
+                cval = rMethods.interpolate_cx(chip,(SINC_HALF+1),(SINC_HALF+1),fraca,fracr,SINC_ONE,SINC_ONE,SINC_METHOD);
+
+                imgOut[j] = cval * complex<float>(cos(ph), sin(ph));
+
             }
+            slcOutAccObj->setLineSequential((char *)&imgOut[0]);
         }
     }
     printf("Elapsed time: %f\n", (omp_get_wtime()-t0));
 }
 
+void ResampSlc::_resamp_gpu()
+{
+    vector<complex<float> > imgIn(inLength*inWidth);
+    vector<complex<float> > imgOut(outLength*outWidth);
+    vector<float> residAz(outLength*outWidth), residRg(outLength*outWidth);
+
+    ResampMethods rMethods;
+
+    DataAccessor *slcInAccObj = (DataAccessor*)slcInAccessor;
+    DataAccessor *slcOutAccObj = (DataAccessor*)slcOutAccessor;
+
+    DataAccessor *residRgAccObj, *residAzAccObj;
+    if (residRgAccessor != 0) residRgAccObj = (DataAccessor*)residRgAccessor;
+    else residRgAccObj = NULL;
+    if (residAzAccessor != 0) residAzAccObj = (DataAccessor*)residAzAccessor;
+    else residAzAccObj = NULL;
+
+    // Moving this here so we don't waste any time
+    if (!isComplex) {
+        printf("Real data interpolation not implemented yet.\n");
+        return;
+    }
+
+    double t0 = omp_get_wtime();
+
+    printf("\n << Resample one image to another image coordinates >> \n\n");
+    printf("Input Image Dimensions:  %6d lines, %6d pixels\n\n", inLength, inWidth);
+    printf("Output Image Dimensions: %6d lines, %6d pixels\n\n", outLength, outWidth);
+
+    printf("Complex data interpolation\n");
+
+    rMethods.prepareMethods(SINC_METHOD);
+
+    printf("Azimuth Carrier Poly\n");
+    azCarrier->printPoly();
+    printf("Range Carrier Poly\n");
+    rgCarrier->printPoly();
+    printf("Range Offsets Poly\n");
+    rgOffsetsPoly->printPoly();
+    printf("Azimuth Offsets Poly\n");
+    azOffsetsPoly->printPoly();
+    printf("Doppler Poly\n");
+    dopplerPoly->printPoly();
+
+
+    printf("Reading in image data ... \n");
+    // read the whole input SLC image
+    for (int i=0; i<inLength; i++) {
+        slcInAccObj->getLineSequential((char *)&imgIn[i*inWidth]);
+    }
+    // read the residAz if providied
+    if (residAzAccessor != 0) {
+        for (int i=0; i<outLength; i++)
+            residAzAccObj->getLineSequential((char *)&residAz[i*outWidth]);
+    }
+    if (residRgAccessor != 0) {
+        for (int i=0; i<outLength; i++)
+            residRgAccObj->getLineSequential((char *)&residRg[i*outWidth]);
+    }
+
+    // set up and copy the Poly objects
+    vector<double> azOffPolyArr(((azOffsetsPoly->azimuthOrder+1)*(azOffsetsPoly->rangeOrder+1))+6);
+    vector<double> rgOffPolyArr(((rgOffsetsPoly->azimuthOrder+1)*(rgOffsetsPoly->rangeOrder+1))+6);
+    vector<double> dopPolyArr(((dopplerPoly->azimuthOrder+1)*(dopplerPoly->rangeOrder+1))+6);
+    vector<double> azCarPolyArr(((azCarrier->azimuthOrder+1)*(azCarrier->rangeOrder+1))+6);
+    vector<double> rgCarPolyArr(((rgCarrier->azimuthOrder+1)*(rgCarrier->rangeOrder+1))+6);
+
+    copyPolyToArr(azOffsetsPoly, azOffPolyArr);     // arrs are: [azord, rgord, azmean, rgmean, aznorm, rgnorm, coeffs...]
+    copyPolyToArr(rgOffsetsPoly, rgOffPolyArr);
+    copyPolyToArr(dopplerPoly, dopPolyArr);
+    copyPolyToArr(azCarrier, azCarPolyArr);
+    copyPolyToArr(rgCarrier, rgCarPolyArr);
+
+    double gpu_inputs_d[6];
+    int gpu_inputs_i[8];
+
+    gpu_inputs_d[0] = wvl;
+    gpu_inputs_d[1] = refwvl;
+    gpu_inputs_d[2] = r0;
+    gpu_inputs_d[3] = refr0;
+    gpu_inputs_d[4] = slr;
+    gpu_inputs_d[5] = refslr;
+
+    gpu_inputs_i[0] = inLength;
+    gpu_inputs_i[1] = inWidth;
+    gpu_inputs_i[2] = outWidth;
+
+    int firstImageRow = 0;
+    int firstTileRow = 0;
+    int nRowsInBlock = outLength;
+
+    gpu_inputs_i[3] = firstImageRow;
+    gpu_inputs_i[4] = firstTileRow;
+    gpu_inputs_i[5] = nRowsInBlock;
+    gpu_inputs_i[6] = outLength; //LINES_PER_TILE;
+    gpu_inputs_i[7] = int(flatten);
+
+    // call gpu routine
+    runGPUResamp(gpu_inputs_d, gpu_inputs_i, (void*)&imgIn[0], (void*)&imgOut[0], &residAz[0], &residRg[0],
+                            &azOffPolyArr[0], &rgOffPolyArr[0], &dopPolyArr[0], &azCarPolyArr[0], &rgCarPolyArr[0],
+                            &(rMethods.fintp[0]));
+
+    // write the output file
+   for (int i=0; i<outLength; i++) slcOutAccObj->setLineSequential((char *)&imgOut[i*outWidth]);
+   printf("Elapsed time: %f\n", (omp_get_wtime()-t0));
+   // all done
+}
