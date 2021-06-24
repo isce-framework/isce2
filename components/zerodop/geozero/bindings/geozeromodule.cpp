@@ -75,15 +75,15 @@ PyObject * geozero_C(PyObject* self, PyObject* args)
     uint64_t var1;
     uint64_t var2;
     uint64_t var3;
-    int b1, b2, b3,b4;
-    if(!PyArg_ParseTuple(args, "KKKKiiii", &var0, &var1, &var2, &var3,
-        &b1,&b2,&b3,&b4))
+    int b1, b2, b3, b4, b5;
+    if(!PyArg_ParseTuple(args, "KKKKiiiii", &var0, &var1, &var2, &var3,
+        &b1,&b2,&b3,&b4,&b5))
     {
         return NULL;
     }
     b1++;    //Python bandnumber to Fortran bandnumber
     b2++;    //Python bandnumber to Fortran bandnumber
-    geozero_f(&var0,&var1,&var2,&var3,&b1,&b2,&b3,&b4);
+    geozero_f(&var0,&var1,&var2,&var3,&b1,&b2,&b3,&b4,&b5);
     return Py_BuildValue("i", 0);
 }
 PyObject * setEllipsoidMajorSemiAxis_C(PyObject* self, PyObject* args)
