@@ -519,6 +519,14 @@ ION_AZSHIFT_FLAG = Application.Parameter('ION_azshiftFlag',
     mandatory=False,
     doc='')
 
+ION_MASKED_AREAS = Application.Parameter('ION_maskedAreas',
+    public_name = 'areas masked out in ionospheric phase estimation',
+    default = None,
+    type = int,
+    mandatory = False,
+    container = list,
+    doc = 'areas masked out in ionospheric phase estimation')
+
 ION_NUMBER_AZIMUTH_LOOKS = Application.Parameter('ION_numberAzimuthLooks',
     public_name='total number of azimuth looks in the ionosphere processing',
     default=50,
@@ -674,6 +682,7 @@ class TopsInSAR(Application):
                       ION_IONSHIFT_FILTERING_WINSIZE_MAX,
                       ION_IONSHIFT_FILTERING_WINSIZE_MIN,
                       ION_AZSHIFT_FLAG,
+                      ION_MASKED_AREAS,
                       ION_NUMBER_AZIMUTH_LOOKS,
                       ION_NUMBER_RANGE_LOOKS,
                       ION_NUMBER_AZIMUTH_LOOKS0,
