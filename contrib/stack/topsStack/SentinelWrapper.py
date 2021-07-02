@@ -110,7 +110,7 @@ class ConfigParser:
 
   # Looks for string between $ sysmbols in the common subheading in config file
   def __parseString(self, iString):
-    if iString is '':
+    if iString == '':
       return iString
     elif isinstance(self.common, (dict)):
       # Case when "common" parameters are read from the configuration file
