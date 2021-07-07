@@ -9,7 +9,6 @@
 #endif
 
 #include <iostream>
-#include <stdexcept>
 #include "InterleavedBase.h"
 #include <stdint.h>
 #include "gdal_priv.h"

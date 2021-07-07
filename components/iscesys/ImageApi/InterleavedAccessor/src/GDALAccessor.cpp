@@ -75,8 +75,7 @@ GDALAccessor::openFile (string filename, string accessMode, GDALDataset ** fd)
             string errMsg = "Cannot open the file " + filename + " in "
                             + accessMode + " mode.";
             throw runtime_error(errMsg);
-            // ERR_MESSAGE
-            // ;
+            // ERR_MESSAGE;
         }
     }
     else
