@@ -143,8 +143,7 @@ createAccessor_C(PyObject* self, PyObject* args)
   }
   catch(const std::exception& e)
   {
-    std::cerr << e.what() << '\n';
-    PyErr_SetString(PyExc_OSError, "Failed to created DataAccessor.");
+    PyErr_SetString(PyExc_OSError, e.what());
     return NULL;
   }
 
