@@ -71,10 +71,11 @@ GDALAccessor::openFile (string filename, string accessMode, GDALDataset ** fd)
         std::cout << "GDAL open (R): " << filename << std::endl;
 	(*fd) = (GDALDataset *) GDALOpenShared (filename.c_str (), GA_ReadOnly);
 	if ((*fd) == NULL)
-	{
+    {
 	    cout << "Error. Cannot open the file " << filename << " in "
 		    << accessMode << " mode." << endl;
-	    ERR_MESSAGE
+        throw runtime_error("GDAL file open error.");
+	    // ERR_MESSAGE
 	    ;
 	}
     }
