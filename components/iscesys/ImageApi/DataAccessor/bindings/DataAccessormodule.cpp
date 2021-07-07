@@ -136,16 +136,16 @@ createAccessor_C(PyObject* self, PyObject* args)
   }
   if (casterCh[0] == '\0')
   {
-  try
-  {
-    ptDataAccessor = (uint64_t) AF->createAccessor(filename, filemode, size,
-        bands, width, scheme);
-  }
-  catch(const std::exception& e)
-  {
-    PyErr_SetString(PyExc_OSError, e.what());
-    return NULL;
-  }
+    try
+    {
+      ptDataAccessor = (uint64_t) AF->createAccessor(filename, filemode, size,
+          bands, width, scheme);
+    }
+    catch(const std::exception& e)
+    {
+      PyErr_SetString(PyExc_OSError, e.what());
+      return NULL;
+    }
 
   }
   else if (casterCh[0] != '\0' && PyDict_Size(dict) == 0)
