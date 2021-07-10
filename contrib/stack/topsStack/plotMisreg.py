@@ -3,7 +3,7 @@
 import os, sys, glob
 import argparse
 import configparser
-import  datetime
+import datetime
 import time
 import numpy as np
 import matplotlib.pyplot as plt
