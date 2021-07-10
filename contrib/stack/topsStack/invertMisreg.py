@@ -3,7 +3,7 @@
 #Author: Heresh Fattahi
 #Copyright 2016
 ######################
-import os, imp, sys, glob
+import os, sys, glob
 import argparse
 import configparser
 import  datetime
