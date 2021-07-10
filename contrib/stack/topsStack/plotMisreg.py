@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 ########################
-import os, imp, sys, glob
+import os, sys, glob
 import argparse
 import configparser
 import  datetime
