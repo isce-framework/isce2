@@ -242,6 +242,63 @@ WIDTH = Component.Parameter(
     doc='Image width'
 )
 
+####################################
+
+NTILEROW = Component.Parameter(
+    'ntilerow',
+    public_name='NTILEROW',
+    default=None,
+    type=int,
+    mandatory=True,
+    intent='input',
+    doc='NTileRow'
+)
+NTILECOL = Component.Parameter(
+    'ntilecol',
+    public_name='NTILECOL',
+    default=None,
+    type=int,
+    mandatory=True,
+    intent='input',
+    doc='NTileCol'
+)
+
+ROWOVERLAP = Component.Parameter(
+    'rowovrlp',
+    public_name='COLOVERLAP',
+    default=None,
+    type=int,
+    mandatory=True,
+    intent='input',
+    doc='ROW OVERLAP'
+)
+COLOVERLAP = Component.Parameter(
+    'colovrlp',
+    public_name='COLOVERLAP',
+    default=None,
+    type=int,
+    mandatory=True,
+    intent='input',
+    doc='COLUMN OVERLAP'
+)
+NTHREADS = Component.Parameter(
+    'nthreads',
+    public_name='NTHREADS',
+    default=None,
+    type=int,
+    mandatory=True,
+    intent='input',
+    doc='NTHREADS'
+)
+
+
+
+
+
+###################################
+
+
+
 class Snaphu(Component):
 
     parameter_list = (
@@ -263,7 +320,10 @@ class Snaphu(Component):
                       AZIMUTH_LOOKS,
                       INIT_METHOD,
                       COSTMODE,
-                      INT_FILE_FORMAT
+                      INT_FILE_FORMAT,
+                      NTILEROW,NTILECOL,
+                      ROWOVERLAP,COLOVERLAP,
+                      NTHREADS
                      )
 
     """The Snaphu cost unwrapper"""
@@ -358,6 +418,29 @@ class Snaphu(Component):
         """Set the maximum number of connected components."""
         self.maxComponents = num
     
+
+    #############################
+
+    def setNTileRow(self,nrow):
+        self.ntilerow = nrow
+
+    def setNTileCol(self,ncol):
+        self.ntilecol = ncol
+        
+    def setRowOverlap(self,rowovrlp):
+        self.rowovrlp=rowovrlp
+
+    def setColOverlap(self,colovrlp):
+        self.colovrlp=colovrlp
+
+    def setNThreads(self,nthreads):
+        self.nthreads=nthreads
+
+    #############################
+
+
+
+
     def prepare(self):
         """Perform some initialization of defaults"""
         
@@ -397,7 +480,27 @@ class Snaphu(Component):
         snaphu.setIntFileFormat_Py( int(self.fileFormats[self.intFileFormat]))
         snaphu.setCorFileFormat_Py( int(self.fileFormats[self.corFileFormat]))
         snaphu.setUnwFileFormat_Py( int(self.fileFormats[self.unwFileFormat]))
-    
+
+
+        ###################
+
+        if self.ntilerow is not None:
+            snaphu.setNTileRow_Py(self.ntilerow)
+
+        if self.ntilecol is not None:
+            snaphu.setNTileCol_Py(self.ntilecol)
+
+        if self.rowovrlp is not None:
+            snaphu.setRowOverlap_Py(self.rowovrlp)
+
+        if self.colovrlp is not None:
+            snaphu.setColOverlap_Py(self.colovrlp)
+
+        if self.nthreads is not None:
+            snaphu.setNThreads_Py(self.nthreads)
+
+
+        ##########
 
     def unwrap(self):
         """Unwrap the interferogram"""       
