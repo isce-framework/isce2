@@ -1,0 +1,12 @@
+cython
+gdal
+git
+h5py
+libgdal
+pytest
+numpy
+fftw
+scipy
+basemap
+scons
+opencv
