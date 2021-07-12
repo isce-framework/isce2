@@ -63,6 +63,13 @@ extern "C"
     PyObject *setIntFileFormat_C(PyObject *self, PyObject *args);
     PyObject *setUnwFileFormat_C(PyObject *self, PyObject *args);
     PyObject *setCorFileFormat_C(PyObject *self, PyObject *args);
+    
+    PyObject *setNTileRow_C(PyObject *self, PyObject *args);
+    PyObject *setNTileCol_C(PyObject *self, PyObject *args);
+    PyObject *setRowOverlap_C(PyObject *self, PyObject *args);
+    PyObject *setColOverlap_C(PyObject *self, PyObject *args);
+    PyObject *setNThreads_C(PyObject *self, PyObject *args);
+
 }
 
 static PyMethodDef snaphu_methods[] =
@@ -92,7 +99,16 @@ static PyMethodDef snaphu_methods[] =
     {"setCorFileFormat_Py", setCorFileFormat_C, METH_VARARGS, " "},
     {"setUnwFileFormat_Py", setUnwFileFormat_C, METH_VARARGS, " "},
     {"setMagnitude_Py", setMagnitude_C, METH_VARARGS, " "},
-    {NULL,NULL,0,NULL}
+
+    {"setNTileRow_Py",setNTileRow_C, METH_VARARGS, " "}, 
+    {"setNTileCol_Py",setNTileCol_C, METH_VARARGS, " "},
+    {"setRowOverlap_Py",setRowOverlap_C, METH_VARARGS, " "},
+    {"setColOverlap_Py",setColOverlap_C, METH_VARARGS, " "},
+    {"setNThreads_Py",setNThreads_C, METH_VARARGS, " "},
+
+    {NULL,NULL,0, NULL}
+    // Author: junyan Chen (20210711) adding setNTileRaw, setNTileCol
+
 };
 
 #endif
