@@ -16,7 +16,8 @@ envSnaphu = envcontrib.Clone()
 project = 'Snaphu'
 package = envSnaphu['PACKAGE']
 envSnaphu['PROJECT'] = project
-envSnaphu.Append(CCFLAGS="-O3")
+if "-O2" in envSnaphu['CCFLAGS']: envSnaphu['CCFLAGS'].remove('-O2')
+envSnaphu.Append(CCFLAGS=['-O3'])
 Export('envSnaphu')
 
 
