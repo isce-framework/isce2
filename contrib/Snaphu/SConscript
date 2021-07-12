@@ -18,6 +18,7 @@ package = envSnaphu['PACKAGE']
 envSnaphu['PROJECT'] = project
 Export('envSnaphu')
 
+
 bindingsScons = os.path.join('bindings','SConscript')
 SConscript(bindingsScons,variant_dir = os.path.join(envSnaphu['PRJ_SCONS_BUILD'],package,project,'bindings'))
 
