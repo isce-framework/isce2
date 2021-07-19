@@ -7,44 +7,29 @@
 #include "cuCorrNormalizer.h"
 #include "cuAmpcorUtil.h"
 
-cuNormalizer::cuNormalizer(int secondaryNX, int secondaryNY, int count)
+cuNormalizeProcessor*
+newCuNormalizer(int secondaryNX, int secondaryNY, int count)
 {
     // depending on NY, choose different processor
     if(secondaryNY <= 64) {
-        processor = new cuNormalizeFixed<64>();
+        return new cuNormalizeFixed<64>();
     }
     else if (secondaryNY <= 128) {
-        processor = new cuNormalizeFixed<128>();
+        return new cuNormalizeFixed<128>();
     }
     else if (secondaryNY <= 256) {
-        processor = new cuNormalizeFixed<256>();
+        return new cuNormalizeFixed<256>();
     }
     else if (secondaryNY <= 512) {
-        processor = new cuNormalizeFixed<512>();
+        return new cuNormalizeFixed<512>();
     }
     else if (secondaryNY <= 1024) {
-        processor = new cuNormalizeFixed<1024>();
+        return new cuNormalizeFixed<1024>();
     }
     else {
-        processor = new cuNormalizeSAT(secondaryNX, secondaryNY, count);
+        return new cuNormalizeSAT(secondaryNX, secondaryNY, count);
     }
 }
-
-cuNormalizer::~cuNormalizer()
-{
-    delete processor;
-}
-
-void cuNormalizer::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    processor->execute(correlation, reference, secondary, stream);
-}
-
-/**
- *
- *
- **/
 
 cuNormalizeSAT::cuNormalizeSAT(int secondaryNX, int secondaryNY, int count)
 {

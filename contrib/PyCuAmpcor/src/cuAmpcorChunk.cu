@@ -553,17 +553,18 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
             stream);
     }
 
-    corrNormalizerRaw = new cuNormalizer(
+    corrNormalizerRaw = std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
         param->searchWindowSizeHeightRaw,
         param->searchWindowSizeWidthRaw,
         param->numberWindowDownInChunk * param->numberWindowAcrossInChunk
-        );
+        ));
 
-    corrNormalizerOverSampled = new cuNormalizer(
+    corrNormalizerOverSampled =
+        std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
         param->searchWindowSizeHeight,
         param->searchWindowSizeWidth,
         param->numberWindowDownInChunk * param->numberWindowAcrossInChunk
-        );
+        ));
 
 
 #ifdef CUAMPCOR_DEBUG

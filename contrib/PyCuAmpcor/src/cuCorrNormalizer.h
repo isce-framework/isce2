@@ -22,26 +22,14 @@
 class cuNormalizeProcessor {
 public:
     // default constructor and destructor
-    cuNormalizeProcessor() {}
-    ~cuNormalizeProcessor() {}
+    cuNormalizeProcessor() = default;
+    virtual ~cuNormalizeProcessor() = default;
     // execute interface
     virtual void execute(cuArrays<float> * correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream) = 0;
 };
 
-class cuNormalizer {
-private:
-    cuNormalizeProcessor *processor;
-public:
-     // disable the default constructor
-     cuNormalizer() = delete;
-     // constructor with the secondary dimension
-     cuNormalizer(int secondaryNX, int secondaryNY, int count);
-     // destructor
-     ~cuNormalizer();
-     // execute correlation surface normalization
-     void execute(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary,
-        cudaStream_t stream);
-};
+// factory with the secondary dimension
+cuNormalizeProcessor* newCuNormalizer(int NX, int NY, int count);
 
 
 template<int Size>
