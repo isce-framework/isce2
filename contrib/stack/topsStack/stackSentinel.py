@@ -236,6 +236,8 @@ def get_dates(inps):
 
     else:
         SAFE_files = glob.glob(os.path.join(inps.slc_dirname,'S1*_IW_SLC*zip')) # changed to zip file by Minyan Zhong
+        if SAFE_files == []:
+            SAFE_files = glob.glob(os.path.join(inps.slc_dirname,'S1*_IW_SLC*SAFE'))
 
     if len(SAFE_files) == 0:
         raise Exception('No SAFE file found')
