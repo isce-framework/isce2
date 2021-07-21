@@ -519,6 +519,14 @@ ION_AZSHIFT_FLAG = Application.Parameter('ION_azshiftFlag',
     mandatory=False,
     doc='')
 
+#seperated islands or areas usually affect ionosphere estimation and it's better to mask them
+#out. check ion/ion_cal/raw_no_projection.ion for areas to be masked out.
+#The parameter is a 2-D list. Each element in the 2-D list is a four-element list: [firstLine,
+#lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the
+#four elements is specified as -1, the program will use firstLine/lastLine/firstColumn/
+#lastColumn instead. For exmple, if you want to mask the following two areas out, you can
+#specify a 2-D list like:
+#[[100, 200, 100, 200],[1000, 1200, 500, 600]]
 ION_MASKED_AREAS = Application.Parameter('ION_maskedAreas',
     public_name = 'areas masked out in ionospheric phase estimation',
     default = None,
