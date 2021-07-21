@@ -52,6 +52,7 @@ def main(iargs=None):
     '''
     inps=cmdLineParse(iargs)
     from isceobj.Planet.Planet import Planet
+    from isceobj.Util.Poly2D import Poly2D
     import numpy as np
     import shelve
 
@@ -101,6 +102,8 @@ def main(iargs=None):
     nAzimuth = int(np.max([30,int(np.ceil(azimuthLimits))]))
     azimuthTime = [mSensingStart + datetime.timedelta(seconds= x * azimuthLimits/(nAzimuth-1.0))  for x in range(nAzimuth)]
 
+    doppler = Poly2D()
+    doppler.initPoly(azimuthOrder=0, rangeOrder=0, coeffs=[[0.]])
     
     Bperp = np.zeros((nAzimuth,nRange), dtype=np.float32)
     Bpar = np.zeros((nAzimuth,nRange), dtype=np.float32)
@@ -123,7 +126,7 @@ def main(iargs=None):
                 target = mOrb.rdr2geo(taz, rng)
     
                 targxyz = np.array(refElp.LLH(target[0], target[1], target[2]).ecef().tolist())
-                slvTime,slvrng = sOrb.geo2rdr(target)
+                slvTime, slvrng = sOrb.geo2rdr(target, doppler=doppler, wvl=0)
     
                 secondarySV = sOrb.interpolateOrbit(slvTime, method='hermite')
     
