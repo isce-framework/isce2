@@ -66,6 +66,21 @@ InstallSameDir(
     release_history.py
     )
 
+file(READ license.py LICENSE_TXT)
+string(FIND "${LICENSE_TXT}" "stanford_license = None" match)
+if(${match} EQUAL -1)
+    set(ISCE2_HAVE_LICENSE YES)
+else()
+    set(ISCE2_HAVE_LICENSE NO)
+endif()
+option(ISCE2_WITH_STANFORD "Build Stanford components" ${ISCE2_HAVE_LICENSE})
+if(ISCE2_WITH_STANFORD)
+    InstallSameDir(license.py)
+    message(STATUS "ISCE2's Stanford-licensed components will be built.")
+else()
+    message(STATUS "ISCE2's Stanford-licensed components will NOT be built.")
+endif()
+
 # We also need to create an empty directory for help
 install(DIRECTORY DESTINATION ${ISCE2_PKG}/helper)
 
