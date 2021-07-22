@@ -72,7 +72,11 @@ install(DIRECTORY DESTINATION ${ISCE2_PKG}/helper)
 # CMake will install a python package named "isce2",
 # but legacy scripts import it as simply "isce".
 # Make a symlink isce -> isce2 for compatibility.
-set(symsrc ${CMAKE_INSTALL_PREFIX}/${ISCE2_PKG})
-set(symdest ${symsrc}/../isce)
+set(symsrc isce2)
+if(IS_ABSOLUTE "${PYTHON_MODULE_DIR}")
+    set(symdest "${PYTHON_MODULE_DIR}/isce")
+else()
+    set(symdest "${CMAKE_INSTALL_PREFIX}/${PYTHON_MODULE_DIR}/isce")
+endif()
 install(CODE "execute_process(COMMAND
     ${CMAKE_COMMAND} -E create_symlink ${symsrc} ${symdest})")
