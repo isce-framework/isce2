@@ -26,7 +26,7 @@
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #ifndef alosmodule_h
-#define alosmodue_h
+#define alosmodule_h
 
 #include <Python.h>
 #include <stdint.h>
