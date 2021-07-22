@@ -32,9 +32,10 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
     # override this to also test the resulting extension
     function(Python_add_library target)
         _Python_add_library(${target} ${ARGN})
+        set(name "$<TARGET_PROPERTY:${target},OUTPUT_NAME>")
         add_test(NAME import_${target}
                  COMMAND ${Python_EXECUTABLE} -c
-                     "import ${target}"
+                     "import $<IF:$<BOOL:${name}>,${name},${target}>"
                  )
     endfunction()
 endif()
