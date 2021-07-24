@@ -415,7 +415,7 @@ def main(args, files):
     outBands = iMath['outBands']
 
     ####Array representing columns
-    dataDict['COL'] = np.arange(iMath['width'], dtype=np.float)
+    dataDict['COL'] = np.arange(iMath['width'], dtype=np.float32)
 
     #####Replace ^ by **
     for lineno in range(int(iMath['length'])):
