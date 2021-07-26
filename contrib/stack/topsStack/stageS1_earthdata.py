@@ -17,168 +17,6 @@ from urllib.error import HTTPError, URLError
 from http.cookiejar import MozillaCookieJar
 
 
-def fetchCookies(infile):
-    """
-    Derived from ASF's bulk downloader python script.
-    """
-
-    def check_cookie_is_logged_in(jar):
-        """
-        Return true if logged in already.
-        """
-        for cookie in jar:
-            if cookie.name == 'urs_user_already_logged':
-                return True
-
-        return False
-
-    def check_cookie(cookie_jar):
-        """
-        Check if cookie in the jar is any good.
-        """
-        # Make sure cookie is still valid against a known file
-        file_check = 'https://urs.earthdata.nasa.gov/profile'
-
-        # Apply custom Redirect Hanlder
-        ctx = {}
-        opener = build_opener(HTTPCookieProcessor(cookie_jar), HTTPHandler(),
-                              HTTPSHandler(**ctx))
-        install_opener(opener)
-
-        # Attempt a HEAD request
-        request = Request(file_check)
-        request.get_method = lambda: 'HEAD'
-        try:
-            print(" > attempting to download {0}".format(file_check))
-            response = urlopen(request, timeout=30)
-            resp_code = response.getcode()
-            # Make sure we're logged in
-            if not check_cookie_is_logged_in(cookie_jar):
-                cookie_status = False
-
-        except HTTPError:
-            # If we ge this error, again, it likely means the user has not
-            # agreed to current EULA
-            print("\nIMPORTANT: ")
-            print("Your user appears to lack permissions to download data "
-                  "from the ASF Datapool.")
-            print("\n\nNew users: you must first log into Vertex and accept "
-                  "the EULA. In addition, your Study Area must be set at "
-                  "Earthdata https://urs.earthdata.nasa.gov")
-            raise HTTPError('No permission to work with ASF datapool. \n')
-
-        # This return codes indicate the USER has not been approved to download
-        # the data
-        if resp_code in (300, 301, 302, 303):
-            try:
-                redir_url = response.info().getheader('Location')
-            except AttributeError:
-                redir_url = response.getheader('Location')
-
-            print("Redirect ({0}) occured, invalid cookie "
-                  "value!".format(resp_code))
-            cookie_status = False
-
-        # These are successes!
-        if resp_code in (200, 307):
-            cookie_status = True
-
-        return cookie_status
-
-    def get_new_cookie(infile):
-        """
-        Get new cookie from earthdata.
-        """
-        # URS
-        urs = 'urs.earthdata.nasa.gov'
-        username, dummy, password = netrc.netrc().authenticators(urs)
-
-        #ASF credentials
-        asf_urs4 = {'url': 'https://urs.earthdata.nasa.gov/oauth/authorize',
-                    'client': 'BO_n7nTIlMljdvU6kRRB3g',
-                    'redir': 'https://auth.asf.alaska.edu/login'}
-
-        # Build URS4 Cookie request
-        auth_cookie_url = (asf_urs4['url'] + '?client_id=' +
-                           asf_urs4['client'] + '&redirect_uri=' +
-                           asf_urs4['redir'] + '&response_type=code&state=')
-
-        # python3
-        user_pass = base64.b64encode(bytes(username+":"+password, "utf-8"))
-        user_pass = user_pass.decode("utf-8")
-
-        # Authenticate against URS, grab all the cookies
-        ctx = {}
-        cookie_jar = MozillaCookieJar()
-        opener = build_opener(HTTPCookieProcessor(cookie_jar), HTTPHandler(),
-                              HTTPSHandler(**ctx))
-        request = Request(auth_cookie_url,
-                          headers={"Authorization":
-                                   "Basic {0}".format(user_pass)})
-
-        # Watch out cookie rejection!
-        try:
-            response = opener.open(request)
-        except HTTPError as e:
-            if ("WWW-Authenticate" in e.headers and
-                "Please enter your Earthdata Login credentials" in
-                e.headers["WWW-Authenticate"]):
-                print(" > Username and Password combo was not successful. "
-                      "Please try again.")
-                return False
-            else:
-                # If an error happens here, the user most likely
-                # has not confirmed EULA.
-                print("\nIMPORTANT: There was an error obtaining a download "
-                      "cookie!")
-                print("Your user appears to lack permission to download data "
-                      "from the ASF Datapool.")
-                print("\n\nNew users: you must first log into Vertex and "
-                      "accept the EULA. In addition, your Study Area must be "
-                      "set at Earthdata https://urs.earthdata.nasa.gov")
-                raise Exception('Could not obtain cookie')
-
-        except URLError as e:
-            print("\nIMPORTANT: There was a problem communicating with URS, "
-                  "unable to obtain cookie. ")
-            print("Try cookie generation later.")
-            raise Exception('Could not obtain cookie')
-
-        # Did we get a cookie?
-        if check_cookie_is_logged_in(cookie_jar):
-            # COOKIE SUCCESS!
-            cookie_jar.save(infile)
-            return True
-
-        # if we aren't successful generating the cookie, nothing will work.
-        # Stop here!
-        print("WARNING: Could not generate new cookie! Cannot proceed. "
-              "Please try Username and Password again.")
-        print("Response was {0}.".format(response.getcode()))
-        print("\n\nNew users: you must first log into Vertex and accept the "
-              "EULA. In addition, your Study Area must be set at Earthdata "
-              "https://urs.earthdata.nasa.gov")
-        raise Exception('Could not generate cookie!!! '
-                        'Check your login credentials....')
-
-    # If cookie file exists load it
-    if os.path.exists(infile):
-        cookie_jar = MozillaCookieJar()
-        cookie_jar.load(infile)
-
-        # Get cookie is good, return
-        if check_cookie(cookie_jar):
-            # Save cookiejar
-            cookie_jar.save(infile)
-            return
-
-    # Setup fresh cookies
-    status = False
-    while not status:
-        status = get_new_cookie(infile)
-
-
-
 class SentinelVRT:
     """
     Class for virtual download of S1 products.
@@ -401,12 +239,6 @@ def cmdLineParse():
     return parser.parse_args()
 
 
-# def setupCookies(cookiefile, inurl):
-#     """
-#     Get information from netrc and setup cookies.
-#     """
-
-
 def main(inps=None):
     """
     Main driver.
@@ -418,13 +250,6 @@ def main(inps=None):
     else:
         print('Creating output directory {0}'.format(inps.outdir))
         os.mkdir(inps.outdir)
-
-    # Check / Fetch Earthdata cookies
-    # This is derived from ASF's bulk download script
-    # Needed since vsicurl recognizes 200 as the only right response codde
-    # From ASF script, 307 can also be a valid response.
-    # If vsicurl interface is updated, might no longer be needed.
-    fetchCookies(inps.cookies)
 
     # Setup GDAL with cookies
     gdal.UseExceptions()
