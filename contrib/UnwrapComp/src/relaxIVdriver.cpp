@@ -95,7 +95,7 @@ vector<int> driver(char *fileName)
 
   // load the network - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  cout << "Loading Network :" << fileName  << endl;
+  cout << "Loading Network: " << fileName  << endl;
   mcf->LoadDMX( iFile );
 
   // set "reasonable" values for the epsilons, if any - - - - - - - - - - - -
