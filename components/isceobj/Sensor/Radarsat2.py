@@ -441,7 +441,7 @@ class _Product(Radarsat2Namespace):
         self.imageAttributes = _ImageAttributes()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('productId'):
                 self.productId = z.text
             elif z.tag == self.elementName('documentIdentifier'):
@@ -483,7 +483,7 @@ class _SourceAttributes(Radarsat2Namespace):
         self.orbitAndAttitude = _OrbitAndAttitude()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('satellite'):
                 self.satellite = z.text
             elif z.tag == self.elementName('sensor'):
@@ -548,7 +548,7 @@ class _RadarParameters(Radarsat2Namespace):
 
     def set_from_etnode(self,node):
         i = 0
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('acquisitionType'):
                 self.acquisitionType = z.text
             elif z.tag == self.elementName('beams'):
@@ -608,7 +608,7 @@ class _ReferenceNoiseLevel(Radarsat2Namespace):
         self.noiseLevelValues = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('pixelFirstNoiseValue'):
                 self.pixelFirstNoiseValue = int(z.text)
             elif z.tag == self.elementName('stepSize'):
@@ -660,7 +660,7 @@ class _OrbitAndAttitude(Radarsat2Namespace):
         self.attitudeInformation = _AttitudeInformation()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('orbitInformation'):
                 self.orbitInformation.set_from_etnode(z)
             elif z.tag == self.elementName('attitudeInformation'):
@@ -685,7 +685,7 @@ class _OrbitInformation(Radarsat2Namespace):
         self.stateVectors = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('passDirection'):
                 self.passDirection = z.text
             elif z.tag == self.elementName('orbitDataSource'):
@@ -722,7 +722,7 @@ class _StateVector(Radarsat2Namespace):
         self.zVelocity = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('timeStamp'):
                 self.timeStamp = self.convertToDateTime(z.text)
             elif z.tag == self.elementName('xPosition'):
@@ -766,7 +766,7 @@ class _AttitudeInformation(Radarsat2Namespace):
         self.attitudeAngles = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('attitudeDataSource'):
                 self.attitudeDataSource = z.text
             elif z.tag == self.elementName('attitudeOffsetApplied'):
@@ -797,7 +797,7 @@ class _AttitudeAngles(Radarsat2Namespace):
         self.pitch = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('timeStamp'):
                 self.timeStamp = self.convertToDateTime(z.text)
             elif z.tag == self.elementName('yaw'):
@@ -833,7 +833,7 @@ class _ImageGenerationParameters(Radarsat2Namespace):
         self.payloadCharacteristicsFile = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('generalProcessingInformation'):
                 self.generalProcessingInformation.set_from_etnode(z)
             elif z.tag == self.elementName('sarProcessingInformation'):
@@ -869,7 +869,7 @@ class _GeneralProcessingInformation(Radarsat2Namespace):
         self.softwareVersion = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('productType'):
                 self.productType = z.text
             elif z.tag == self.elementName('_processingFacility'):
@@ -925,7 +925,7 @@ class _SarProcessingInformation(Radarsat2Namespace):
         self._satelliteHeight = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('lutApplied'):
                 self.lutApplied = z.text
             elif z.tag == self.elementName('numberOfLinesProcessed'):
@@ -971,7 +971,7 @@ class _Window(Radarsat2Namespace):
         self.windowCoefficient = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('windowName'):
                 self.windowName = z.text
             elif z.tag == self.elementName('windowCoefficient'):
@@ -1000,7 +1000,7 @@ class _DopplerCentroid(Radarsat2Namespace):
         self.dopplerCentroidConfidence = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('timeOfDopplerCentroidEstimate'):
                 self.timeOfDopplerCentroidEstimate = self.convertToDateTime(z.text)
             elif z.tag == self.elementName('dopplerAmbiguity'):
@@ -1027,7 +1027,7 @@ class _DopplerRateValues(Radarsat2Namespace):
         self.dopplerRateValuesCoefficients = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('dopplerRateReferenceTime'):
                 self.dopplerRateReferenceTime = float(z.text)
             elif z.tag == self.elementName('dopplerRateValuesCoefficients'):
@@ -1056,7 +1056,7 @@ class _SlantRangeToGroundRange(Radarsat2Namespace):
         self.groundToSlantRangeCoefficients = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('zeroDopplerAzimuthTime'):
                 self.zeroDopplerAzimuthTime = self.convertToDateTime(z.text)
             elif z.tag == self.elementName('slantRangeTimeToFirstRangeSample'):
@@ -1072,7 +1072,7 @@ class _ImageAttributes(Radarsat2Namespace):
         self.fullResolutionImageData = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('productFormat'):
                 self.productFormat = z.text
             elif z.tag == self.elementName('outputMediaInterleaving'):
@@ -1097,7 +1097,7 @@ class _RasterAttributes(Radarsat2Namespace):
         self.pixelTimeOrdering = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('dataType'):
                 self.dataType = z.text
             elif z.tag == self.elementName('bitsPerSample'):
@@ -1123,7 +1123,7 @@ class _GeographicInformation(Radarsat2Namespace):
         self.referenceEllipsoidParameters = _ReferenceEllipsoidParameters()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('geolocationGrid'):
                 self.geolocationGrid.set_from_etnode(z)
 
@@ -1133,7 +1133,7 @@ class _GeolocationGrid(Radarsat2Namespace):
         self.imageTiePoint = []
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('imageTiePoint'):
                 tp = _ImageTiePoint()
                 tp.set_from_etnode(z)
@@ -1147,7 +1147,7 @@ class _ImageTiePoint(Radarsat2Namespace):
         self.geodeticCoordinates = _GeodeticCoordinates()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('imageCoordinate'):
                 self.imageCoordinates.set_from_etnode(z)
             elif z.tag == self.elementName('geodeticCoordinate'):
@@ -1170,7 +1170,7 @@ class _ImageCoordinates(Radarsat2Namespace):
         self.pixel = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('line'):
                 self.line = float(z.text)
             elif z.tag == self.elementName('pixel'):
@@ -1194,7 +1194,7 @@ class _GeodeticCoordinates(Radarsat2Namespace):
         self.height = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('latitude'):
                 self.latitude = float(z.text)
             elif z.tag == self.elementName('longitude'):
@@ -1223,7 +1223,7 @@ class _ReferenceEllipsoidParameters(Radarsat2Namespace):
         self.geodeticTerrainHeight = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == self.elementName('ellipsoidName'):
                 self.ellipsoidName = z.text
             elif z.tag == self.elementName('semiMajorAxis'):

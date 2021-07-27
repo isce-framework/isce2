@@ -66,8 +66,8 @@ private:
     cuFreqCorrelator *cuCorrFreqDomain, *cuCorrFreqDomain_OverSampled;
 
     // correlation surface normalizer
-    cuNormalizer *corrNormalizerRaw;
-    cuNormalizer *corrNormalizerOverSampled;
+    std::unique_ptr<cuNormalizeProcessor> corrNormalizerRaw;
+    std::unique_ptr<cuNormalizeProcessor> corrNormalizerOverSampled;
 
     // save offset results in different stages
     cuArrays<int2> *offsetInit;

@@ -40,6 +40,8 @@ def createParser():
                         help='Reference image')
     parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
                         help='Secondary image')
+    parser.add_argument('--fix-xml','--fix-image-xml', dest='fixImageXml', action='store_true',
+                        help='Fix the image file path in the XML file. Enable this if input files havee been moved.')
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
@@ -156,12 +158,13 @@ def estimateOffsetField(reference, secondary, inps=None):
             return 0
 
     # update file path in xml file
-    for fname in [reference, secondary]:
-        fname = os.path.abspath(fname)
-        img = IML.loadImage(fname)[0]
-        img.filename = fname
-        img.setAccessMode('READ')
-        img.renderHdr()
+    if inps.fixImageXml:
+        for fname in [reference, secondary]:
+            fname = os.path.abspath(fname)
+            img = IML.loadImage(fname)[0]
+            img.filename = fname
+            img.setAccessMode('READ')
+            img.renderHdr()
 
     ###Loading the secondary image object
     sim = isceobj.createSlcImage()
@@ -372,14 +375,24 @@ def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, num_win
                 x/y_step    - int, output pixel step in column/row direction
                 num_win_x/y - int, number of columns/rows
     """
+    full_dir = os.path.abspath(full_dir)
+    out_dir = os.path.abspath(out_dir)
+
+    # grab the file extension for full resolution file
+    full_exts = ['.rdr.full','.rdr'] if full_dir != out_dir else ['.rdr.full']
+    full_exts = [e for e in full_exts if os.path.isfile(os.path.join(full_dir, '{f}{e}'.format(f=fbases[0], e=e)))]
+    if len(full_exts) == 0:
+        raise ValueError('No full resolution {}.rdr* file found in: {}'.format(fbases[0], full_dir))
+    full_ext = full_exts[0]
+
     print('-'*50)
     print('generate the corresponding multi-looked geometry datasets using gdal ...')
-    in_files = [os.path.join(full_dir, '{}.rdr.full'.format(i)) for i in fbases]
+    # input files
+    in_files = [os.path.join(full_dir, '{f}{e}'.format(f=f, e=full_ext)) for f in fbases]
     in_files = [i for i in in_files if os.path.isfile(i)]
-    if len(in_files) == 0:
-        raise ValueError('No full resolution geometry file found in: {}'.format(full_dir))
-
     fbases = [os.path.basename(i).split('.')[0] for i in in_files]
+
+    # output files
     out_files = [os.path.join(out_dir, '{}.rdr'.format(i)) for i in fbases]
     os.makedirs(out_dir, exist_ok=True)
 

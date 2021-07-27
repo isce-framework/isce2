@@ -377,12 +377,20 @@ void cuCorrNormalize(cuArrays<float> *templates, cuArrays<float> *images, cuArra
 
 }
 
-void cuCorrNormalize64(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+template<int N> struct Log2;
+template<> struct Log2<64> { static const int value = 6; };
+template<> struct Log2<128> { static const int value = 7; };
+template<> struct Log2<256> { static const int value = 8; };
+template<> struct Log2<512> { static const int value = 9; };
+template<> struct Log2<1024> { static const int value = 10; };
+
+template<int Size>
+void cuCorrNormalizeFixed(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
 {
     const int nImages = correlation->count;
     const dim3 grid(1, 1, nImages);
     const float invReferenceSize = 1.0f/reference->size;
-    cuCorrNormalize_kernel< 6><<<grid,  64, 0, stream>>>(nImages,
+    cuCorrNormalize_kernel<Log2<Size>::value><<<grid, Size, 0, stream>>>(nImages,
                 reference->devData, reference->height, reference->width, reference->size,
                 secondary->devData, secondary->height, secondary->width, secondary->size,
                 correlation->devData, correlation->height, correlation->width, correlation->size,
@@ -390,57 +398,20 @@ void cuCorrNormalize64(cuArrays<float> *correlation, cuArrays<float> *reference,
     getLastCudaError("cuCorrNormalize kernel error");
 }
 
-void cuCorrNormalize128(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    const int nImages = correlation->count;
-    const dim3 grid(1, 1, nImages);
-    const float invReferenceSize = 1.0f/reference->size;
-    cuCorrNormalize_kernel< 7><<<grid,  128, 0, stream>>>(nImages,
-                reference->devData, reference->height, reference->width, reference->size,
-                secondary->devData, secondary->height, secondary->width, secondary->size,
-                correlation->devData, correlation->height, correlation->width, correlation->size,
-                invReferenceSize);
-    getLastCudaError("cuCorrNormalize kernel error");
-}
-
-void cuCorrNormalize256(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    const int nImages = correlation->count;
-    const dim3 grid(1, 1, nImages);
-    const float invReferenceSize = 1.0f/reference->size;
-    cuCorrNormalize_kernel< 8><<<grid,  256, 0, stream>>>(nImages,
-                reference->devData, reference->height, reference->width, reference->size,
-                secondary->devData, secondary->height, secondary->width, secondary->size,
-                correlation->devData, correlation->height, correlation->width, correlation->size,
-                invReferenceSize);
-    getLastCudaError("cuCorrNormalize kernel error");
-}
-
-void cuCorrNormalize512(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    const int nImages = correlation->count;
-    const dim3 grid(1, 1, nImages);
-    const float invReferenceSize = 1.0f/reference->size;
-    cuCorrNormalize_kernel< 9><<<grid,  512, 0, stream>>>(nImages,
-                reference->devData, reference->height, reference->width, reference->size,
-                secondary->devData, secondary->height, secondary->width, secondary->size,
-                correlation->devData, correlation->height, correlation->width, correlation->size,
-                invReferenceSize);
-    getLastCudaError("cuCorrNormalize kernel error");
-}
-
-void cuCorrNormalize1024(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    const int nImages = correlation->count;
-    const dim3 grid(1, 1, nImages);
-    const float invReferenceSize = 1.0f/reference->size;
-    cuCorrNormalize_kernel< 10><<<grid,  1024, 0, stream>>>(nImages,
-                reference->devData, reference->height, reference->width, reference->size,
-                secondary->devData, secondary->height, secondary->width, secondary->size,
-                correlation->devData, correlation->height, correlation->width, correlation->size,
-                invReferenceSize);
-    getLastCudaError("cuCorrNormalize kernel error");
-}
-
+template void cuCorrNormalizeFixed<64>(cuArrays<float> *correlation,
+        cuArrays<float> *reference, cuArrays<float> *secondary,
+        cudaStream_t stream);
+template void cuCorrNormalizeFixed<128>(cuArrays<float> *correlation,
+        cuArrays<float> *reference, cuArrays<float> *secondary,
+        cudaStream_t stream);
+template void cuCorrNormalizeFixed<256>(cuArrays<float> *correlation,
+        cuArrays<float> *reference, cuArrays<float> *secondary,
+        cudaStream_t stream);
+template void cuCorrNormalizeFixed<512>(cuArrays<float> *correlation,
+        cuArrays<float> *reference, cuArrays<float> *secondary,
+        cudaStream_t stream);
+template void cuCorrNormalizeFixed<1024>(cuArrays<float> *correlation,
+        cuArrays<float> *reference, cuArrays<float> *secondary,
+        cudaStream_t stream);
 
 // end of file

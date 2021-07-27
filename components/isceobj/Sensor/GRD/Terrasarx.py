@@ -325,8 +325,8 @@ class Terrasar_GRD(Component):
         glist = (self.getxmlelement(self._xml2_root, 'geolocationGrid'))
         lat = []
         lon = []
-        for child in glist.getchildren():
-            for grandchild in child.getchildren():
+        for child in glist:
+            for grandchild in child:
                 string = ElementTree.tostring(child, encoding = 'unicode', method = 'xml')
                 string = string.split("<")[1]
                 string = string.split(">")[0]
@@ -352,7 +352,7 @@ class Terrasar_GRD(Component):
             if node.tag == 'stateVec':
                 sv = StateVector()
                 sv.configure()
-                for z in node.getchildren():
+                for z in node:
                     if z.tag == 'timeUTC':
                         timeStamp = self.convertToDateTime2(z.text)
                     elif z.tag == 'posX':
@@ -396,7 +396,7 @@ class Terrasar_GRD(Component):
             if not node.tag == 'gridPoint':
                 continue
     
-            for zz in node.getchildren():
+            for zz in node:
                 if zz.tag == 't':
                     az_time = float(zz.text)
                 elif zz.tag == 'tau':
@@ -429,9 +429,9 @@ class Terrasar_GRD(Component):
             if not node.tag == 'antennaPattern':
                 continue
 
-            for z in node.getchildren():
+            for z in node:
                 if z.tag == 'elevationPattern':
-                    for zz in z.getchildren():
+                    for zz in z:
                         if zz.tag == 'gainExt':
                             node = float(zz.text)
                             node2.append(node)
@@ -467,9 +467,9 @@ class Terrasar_GRD(Component):
         for node in self._xml_root.find('productSpecific'):
             if not node.tag == 'projectedImageInfo':
                 continue
-            for z in node.getchildren():
+            for z in node:
                 if z.tag == 'slantToGroundRangeProjection':
-                    for zz in z.getchildren():
+                    for zz in z:
                         if zz.tag == 'coefficient':
                             p = float(zz.text)*(SPEED_OF_LIGHT)
                             pp.append(p)

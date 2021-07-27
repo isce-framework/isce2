@@ -7,44 +7,29 @@
 #include "cuCorrNormalizer.h"
 #include "cuAmpcorUtil.h"
 
-cuNormalizer::cuNormalizer(int secondaryNX, int secondaryNY, int count)
+cuNormalizeProcessor*
+newCuNormalizer(int secondaryNX, int secondaryNY, int count)
 {
     // depending on NY, choose different processor
     if(secondaryNY <= 64) {
-        processor = new cuNormalize64();
+        return new cuNormalizeFixed<64>();
     }
     else if (secondaryNY <= 128) {
-        processor = new cuNormalize128();
+        return new cuNormalizeFixed<128>();
     }
     else if (secondaryNY <= 256) {
-        processor = new cuNormalize256();
+        return new cuNormalizeFixed<256>();
     }
     else if (secondaryNY <= 512) {
-        processor = new cuNormalize512();
+        return new cuNormalizeFixed<512>();
     }
     else if (secondaryNY <= 1024) {
-        processor = new cuNormalize1024();
+        return new cuNormalizeFixed<1024>();
     }
     else {
-        processor = new cuNormalizeSAT(secondaryNX, secondaryNY, count);
+        return new cuNormalizeSAT(secondaryNX, secondaryNY, count);
     }
 }
-
-cuNormalizer::~cuNormalizer()
-{
-    delete processor;
-}
-
-void cuNormalizer::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    processor->execute(correlation, reference, secondary, stream);
-}
-
-/**
- *
- *
- **/
 
 cuNormalizeSAT::cuNormalizeSAT(int secondaryNX, int secondaryNY, int count)
 {
@@ -74,34 +59,17 @@ void cuNormalizeSAT::execute(cuArrays<float> *correlation,
         referenceSum2, secondarySAT, secondarySAT2, stream);
 }
 
-void cuNormalize64::execute(cuArrays<float> *correlation,
+template<int Size>
+void cuNormalizeFixed<Size>::execute(cuArrays<float> *correlation,
     cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
 {
-    cuCorrNormalize64(correlation, reference, secondary, stream);
+    cuCorrNormalizeFixed<Size>(correlation, reference, secondary, stream);
 }
 
-void cuNormalize128::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    cuCorrNormalize128(correlation, reference, secondary, stream);
-}
-
-void cuNormalize256::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    cuCorrNormalize256(correlation, reference, secondary, stream);
-}
-
-void cuNormalize512::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    cuCorrNormalize512(correlation, reference, secondary, stream);
-}
-
-void cuNormalize1024::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
-{
-    cuCorrNormalize1024(correlation, reference, secondary, stream);
-}
+template class cuNormalizeFixed<64>;
+template class cuNormalizeFixed<128>;
+template class cuNormalizeFixed<256>;
+template class cuNormalizeFixed<512>;
+template class cuNormalizeFixed<1024>;
 
 // end of file

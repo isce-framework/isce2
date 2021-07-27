@@ -162,7 +162,7 @@ def formPairs(idir, numberOfSubsequentDates, pairTimeSpanMinimum=None, pairTimeS
         for pair in pairsProcess:
             rdate = pair.split('-')[0]
             sdate = pair.split('-')[1]
-            if (rdate not in datesIncluded) and (sdate not in datesIncluded):
+            if (rdate not in datesExcluded) and (sdate not in datesExcluded):
                 pairsProcess2.append(pair)
         pairsProcess = pairsProcess2
 

@@ -11,7 +11,7 @@ build = envGPUresampslc['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/s
 if envGPUresampslc['GPU_ACC_ENABLED']:
     envGPUresampslc.AppendUnique(CPPPATH=envGPUresampslc['CUDACPPPATH'])
     envGPUresampslc.AppendUnique(LIBPATH=envGPUresampslc['CUDALIBPATH'])
-    envGPUresampslc.AppendUnique(LIBS=['cuda','cudart'])
+    envGPUresampslc.AppendUnique(LIBS=['cudart'])
 
 
 ###Custom cython builder

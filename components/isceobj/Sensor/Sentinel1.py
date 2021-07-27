@@ -370,7 +370,7 @@ class Sentinel1(Sensor):
         frameOrbit = Orbit()
         frameOrbit.setOrbitSource('Header')
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('time').text)
             pos = []
             vel = []
@@ -416,7 +416,7 @@ class Sentinel1(Sensor):
         tstart = self.frame.getSensingStart() - margin
         tend = self.frame.getSensingStop() + margin
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('UTC').text[4:])
 
             if (timestamp >= tstart) and (timestamp < tend):
@@ -487,7 +487,7 @@ class Sentinel1(Sensor):
         tdiff = 1.0e9
         dpoly = None
 
-        for index, burst in enumerate(node.getchildren()):
+        for index, burst in enumerate(node):
             refTime = self.convertToDateTime( burst.find('azimuthTime').text)
             
             delta = abs((refTime - self.frame.sensingMid).total_seconds())
