@@ -14,6 +14,7 @@ import isceobj
 import logging
 from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.TopsProc.runBurstIfg import loadVirtualArray
+from isceobj.Alos2Proc.runIonFilt import reformatMaskedAreas
 
 
 logger = logging.getLogger('isce.topsinsar.ion')
@@ -89,6 +90,7 @@ def setup(self):
     ionParam.ionshiftFilteringWinsizeMax = self.ION_ionshiftFilteringWinsizeMax
     ionParam.ionshiftFilteringWinsizeMin = self.ION_ionshiftFilteringWinsizeMin
     ionParam.azshiftFlag = self.ION_azshiftFlag
+    ionParam.maskedAreas = self.ION_maskedAreas
 
     ionParam.numberAzimuthLooks = self.ION_numberAzimuthLooks
     ionParam.numberRangeLooks = self.ION_numberRangeLooks
@@ -1283,6 +1285,14 @@ def ionosphere(self, ionParam):
     cor = (np.fromfile(corfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
     amp = np.sqrt(lowerAmp**2+upperAmp**2)
 
+    #masked out user-specified areas
+    if ionParam.maskedAreas != None:
+        maskedAreas = reformatMaskedAreas(ionParam.maskedAreas, length, width)
+        for area in maskedAreas:
+            lowerUnw[area[0]:area[1], area[2]:area[3]] = 0
+            upperUnw[area[0]:area[1], area[2]:area[3]] = 0
+            cor[area[0]:area[1], area[2]:area[3]] = 0
+
     #compute ionosphere
     fl = SPEED_OF_LIGHT / ionParam.radarWavelengthLower
     fu = SPEED_OF_LIGHT / ionParam.radarWavelengthUpper
@@ -1548,6 +1558,14 @@ def ionSwathBySwath(self, ionParam):
         upperAmp = (np.fromfile(upperUnwfile, dtype=np.float32).reshape(length*2, width))[0:length*2:2, :]
         cor = (np.fromfile(corfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
         amp = np.sqrt(lowerAmp**2+upperAmp**2)
+
+        #masked out user-specified areas
+        if ionParam.maskedAreas != None:
+            maskedAreas = reformatMaskedAreas(ionParam.maskedAreas, length, width)
+            for area in maskedAreas:
+                lowerUnw[area[0]:area[1], area[2]:area[3]] = 0
+                upperUnw[area[0]:area[1], area[2]:area[3]] = 0
+                cor[area[0]:area[1], area[2]:area[3]] = 0
 
         #compute ionosphere
         fl = SPEED_OF_LIGHT / ionParam.radarWavelengthLower
@@ -1922,6 +1940,13 @@ def filt_gaussian(self, ionParam):
     ion = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
     cor = (np.fromfile(corfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
     amp = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[0:length*2:2, :]
+
+    #masked out user-specified areas
+    if ionParam.maskedAreas != None:
+        maskedAreas = reformatMaskedAreas(ionParam.maskedAreas, length, width)
+        for area in maskedAreas:
+            ion[area[0]:area[1], area[2]:area[3]] = 0
+            cor[area[0]:area[1], area[2]:area[3]] = 0
 
     ########################################################################################
     #AFTER COHERENCE IS RESAMPLED AT grd2ion, THERE ARE SOME WIRED VALUES
