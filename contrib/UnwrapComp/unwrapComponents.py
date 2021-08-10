@@ -442,6 +442,6 @@ if __name__ == "__main__":
     import isceobj
 
     unw = UnwrapComponents()
-    unw.setInpFile('filt_topophase.unw.xml')
-    unw.setConnCompFile('filt_topophase.unw.conncomp.xml')
+    unw.setInpFile(inpFile)
+    unw.setConnCompFile(ccFile)
     unw.unwrapComponents()
