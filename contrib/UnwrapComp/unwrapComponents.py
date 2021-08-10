@@ -327,7 +327,7 @@ band names = {{component (Band 1) }}
           dst_ds.SetGeoTransform( self.cc_ds.GetGeoTransform() )
           dst_ds.SetProjection( self.cc_ds.GetProjectionRef() )
           dstband = dst_ds.GetRasterBand(1)
-          print('Estimating neighbors of component : %d'%(compNumber))
+          print('Estimating neighbors of component: %d'%(compNumber))
 
           gdal.ComputeProximity(self.ccband, dstband, options, callback = gdal.TermProgress)
           width = self.cc_ds.RasterXSize
