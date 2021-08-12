@@ -11,6 +11,7 @@ listFiles = ['GDALImage.cu', 'cuArrays.cu', 'cuArraysCopy.cu',
              'cuArraysPadding.cu', 'cuOverSampler.cu',
              'cuSincOverSampler.cu', 'cuDeramp.cu',
              'cuOffset.cu', 'cuCorrNormalization.cu',
+             'cuCorrNormalizationSAT.cu', 'cuCorrNormalizer.cu'
              'cuAmpcorParameter.cu', 'cuCorrTimeDomain.cu',
              'cuAmpcorController.cu', 'cuCorrFrequency.cu',
              'cuAmpcorChunk.cu', 'cuEstimateStats.cu']
