@@ -171,7 +171,7 @@ This workflow is basically similar to the previous one. The difference is that t
 -----------------------------------
 ### Ionospheric Phase Estimation
 
-Ionospheric phase estimation can be performed for each of the workflow introduced above. Generally, we should do ionospheric phase estimation for data acquired at low latitudes on ascending tracks. Details about Sentinel-1 ionosphere correction can be found in
+Ionospheric phase estimation can be performed for each of the workflow introduced above. Generally, we should do ionospheric phase estimation for data acquired at low latitudes on ascending tracks. However, ionospheric phase estimation only works well in areas with high coherence since it requires phase unwrapping. Details about Sentinel-1 ionospheric correction can be found in
 
 + C. Liang, P. Agram, M. Simons, and E. J. Fielding, “Ionospheric correction of InSAR time series analysis of C-band Sentinel-1 TOPS data,” IEEE Transactions on Geoscience and Remote Sensing, vol. 57, no. 9, pp. 6755-6773, Sep. 2019.
 
@@ -215,7 +215,7 @@ If ionospheric phase estimation is enabled in stackSentinel.py, it will generate
 -	run_ns+7_filtIon
 -	run_ns+8_invertIon
 
-Note about **'areas masked out in ionospheric phase estimation'** in ion_param.txt. Seperated islands or areas usually lead to phase unwrapping errors and therefore significantly affect ionosphere estimation. It's better to mask them out. Check ion/date1_date2/ion_cal/raw_no_projection.ion for areas to be masked out. However, we don't have this file before processing the data. To quickly get this file, we can process a stack of two acquistions to get this file. NOTE that the reference of this two-acquisition stack should be the same as that of the full stack we want to process.
+Note about **'areas masked out in ionospheric phase estimation'** in ion_param.txt. Seperated islands or areas usually lead to phase unwrapping errors and therefore significantly affect ionospheric phase estimation. It's better to mask them out. Check ion/date1_date2/ion_cal/raw_no_projection.ion for areas to be masked out. However, we don't have this file before processing the data. To quickly get this file, we can process a stack of two acquistions to get this file. NOTE that the reference of this two-acquisition stack should be the same as that of the full stack we want to process.
 
 **run_ns+1_subband_and_resamp**
 
@@ -273,7 +273,7 @@ If ionospheric phase estimation processing is swath by swath because of differen
 -	ion/date1_date2/lower/merged_IW*
 -	ion/date1_date2/upper/merged_IW*
 
-After processing, we can plot ionosphere estimation results using plotIonPairs.py and plotIonDates.py. For example
+After processing, we can plot ionospheric phase estimation results using plotIonPairs.py and plotIonDates.py. For example
 
 ```
 plotIonPairs.py -idir ion -odir ion_plot
@@ -284,5 +284,5 @@ Relationships of the ionospheric phases:
 
 ```
 ion_dates/date1.ion - ion_dates/date2.ion = ion/date1_date2/ion_cal/filt.ion
-ion_dates/date1.ion - ion_dates/date2.ion = ionosphere in merged/interferograms/date1_date2/filt_fine.unw
+ion_dates/date1.ion - ion_dates/date2.ion = ionospheric phase in merged/interferograms/date1_date2/filt_fine.unw
 ```
