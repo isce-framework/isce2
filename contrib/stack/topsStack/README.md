@@ -37,7 +37,7 @@ The following calibration auxliary (AUX_CAL) file is used for **antenna pattern 
 Run the command below to download the AUX_CAL file once and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
 
 ```
-wget https://aux.sentinel1.eo.esa.int/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE/ --no-check-certificate --recursive --level=1 --cut-dirs=4 -nH
+wget https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
 ```
 
 #### 1. Create your project folder somewhere ####
@@ -53,7 +53,7 @@ Download of DEM (need to use wgs84 version) using the ISCE DEM download script.
 
 ```
 mkdir DEM; cd DEM
-dem.py -a stitch -b 18 20 -100 -97 -r -s 1 –c
+dem.py -a stitch -b 18 20 -100 -97 -r -s 1 -c
 rm demLat*.dem demLat*.dem.xml demLat*.dem.vrt
 cd ..
 ```
