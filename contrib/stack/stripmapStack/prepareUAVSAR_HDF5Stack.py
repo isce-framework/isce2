@@ -106,14 +106,8 @@ def main():
         subdataset = "/science/LSAR/SLC/swaths/frequencyA/{}".format(inps.polarization)
         cmd = 'gdal_translate -of ISCE HDF5:"{}":"/{}" {}'.format(h5_file, subdataset, slcFile)
 
-        # cmd = "ln -s " + h5_file + " " + slcFile
         print(cmd)
         subprocess.check_call(cmd, shell=True)
-
-        # cmd = "mv " + annFile + " " + imgDir
-        # print(cmd)
-        # os.system(cmd)
-        # subprocess.check_call(cmd, shell=True)
 
         shelveFile = os.path.join(imgDir, "data")
         write_xml(shelveFile, slcFile)

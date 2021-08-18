@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# modified to pass the segment number to UAVSAR_STACK sensor EJF 2020/08/02
 
 import isce  # noqa
 from isceobj.Sensor import createSensor
