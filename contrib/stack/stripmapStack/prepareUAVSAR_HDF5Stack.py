@@ -103,8 +103,11 @@ def main():
         slcFile = os.path.join(imgDir, imgDate + ".slc")
 
         # Now extract the correct pol SLC from the HDF5 file
-        subdataset = "/science/LSAR/SLC/swaths/frequencyA/{}".format(inps.polarization)
-        cmd = 'gdal_translate -of ISCE HDF5:"{}":"/{}" {}'.format(h5_file, subdataset, slcFile)
+        subdataset = "/science/LSAR/SLC/swaths"
+        subdataset += "/frequency{}/{}".format(inps.frequency, inps.polarization)
+        cmd = 'gdal_translate -of ISCE HDF5:"{fname}":"/{sds}" {out}'.format(
+            fname=h5_file, sds=subdataset, out=slcFile
+        )
 
         print(cmd)
         subprocess.check_call(cmd, shell=True)
