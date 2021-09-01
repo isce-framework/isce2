@@ -19,6 +19,7 @@ find_package(FFTW REQUIRED)
 find_package(Motif)
 find_package(OpenMP REQUIRED COMPONENTS C CXX Fortran)
 find_package(OpenCV COMPONENTS core highgui imgproc)
+find_package(pybind11 CONFIG)
 
 # Find these, and create IMPORTED INTERFACE libraries for them if they exist
 include(TargetGDAL)
