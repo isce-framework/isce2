@@ -117,7 +117,7 @@ def cmdLineParse(iargs = None):
 def get_dates(inps):
 
     dirs = glob.glob(inps.slcDir+'/*')
-    acuisitionDates = []
+    acquisitionDates = []
     for dirf in dirs:
         if inps.nofocus:
             expectedRaw = os.path.join(dirf,os.path.basename(dirf) + '.slc')
@@ -125,18 +125,18 @@ def get_dates(inps):
             expectedRaw = os.path.join(dirf, os.path.basename(dirf) + '.raw')
 
         if os.path.exists(expectedRaw):
-             acuisitionDates.append(os.path.basename(dirf))
+            acquisitionDates.append(os.path.basename(dirf))
 
-    acuisitionDates.sort()
-    print (dirs)
-    print (acuisitionDates)
-    if inps.referenceDate not in acuisitionDates:
-        print ('reference date was not found. The first acquisition will be considered as the stack reference date.')
-    if inps.referenceDate is None or inps.referenceDate not in acuisitionDates:
-        inps.referenceDate = acuisitionDates[0]
-    secondaryDates = acuisitionDates.copy()
+    acquisitionDates.sort()
+    print("dirs = ", dirs)
+    print("acquisitionDates = ", acquisitionDates)
+    if inps.referenceDate not in acquisitionDates:
+        print('reference date was not found. The first acquisition will be considered as the stack reference date.')
+    if inps.referenceDate is None or inps.referenceDate not in acquisitionDates:
+        inps.referenceDate = acquisitionDates[0]
+    secondaryDates = acquisitionDates.copy()
     secondaryDates.remove(inps.referenceDate)
-    return acuisitionDates, inps.referenceDate, secondaryDates
+    return acquisitionDates, inps.referenceDate, secondaryDates
 
 
 def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, splitFlag=False, rubberSheet=False):
@@ -334,7 +334,7 @@ def main(iargs=None):
     runDir = os.path.join(inps.workDir,'run_files')
     os.makedirs(runDir, exist_ok=True)
 
-    if inps.sensor and inps.sensor.lower() == 'uavsar_stack':    # don't try to calculate baselines for UAVSAR_STACK data
+    if inps.sensor and inps.sensor.lower().startswith('uavsar'):    # don't try to calculate baselines for UAVSAR_STACK data
         pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
     else:
         pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)
