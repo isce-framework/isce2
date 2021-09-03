@@ -82,10 +82,10 @@ def runPrepareResamps(self, rangeLooks=None, azLooks=None):
         looksaz=int(round(posting/(s2_2 - s2)))
     
     if (looksrange < 1):
-        logger.warn("Number range looks less than zero, setting to 1")
+        logger.warning("Number range looks less than zero, setting to 1")
         looksrange = 1
     if (looksaz < 1):
-        logger.warn("Number azimuth looks less than zero, setting to 1")
+        logger.warning("Number azimuth looks less than zero, setting to 1")
         looksaz = 1
 
     self._insar.setNumberAzimuthLooks(looksaz) 
