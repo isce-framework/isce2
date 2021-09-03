@@ -754,19 +754,19 @@ class _InsarBase(Application, FrameMixin):
                 if self.geocode_bbox:
                     ####Adjust bbox according to dem
                     if self.geocode_bbox[0] < dem_snwe[0]:
-                        logger.warn('Geocoding southern extent changed to match DEM')
+                        logger.warning('Geocoding southern extent changed to match DEM')
                         self.geocode_bbox[0] = dem_snwe[0]
 
                     if self.geocode_bbox[1] > dem_snwe[1]:
-                        logger.warn('Geocoding northern extent changed to match DEM')
+                        logger.warning('Geocoding northern extent changed to match DEM')
                         self.geocode_bbox[1] = dem_snwe[1]
 
                     if self.geocode_bbox[2] < dem_snwe[2]:
-                        logger.warn('Geocoding western extent changed to match DEM')
+                        logger.warning('Geocoding western extent changed to match DEM')
                         self.geocode_bbox[2] = dem_snwe[2]
 
                     if self.geocode_bbox[3] > dem_snwe[3]:
-                        logger.warn('Geocoding eastern extent changed to match DEM')
+                        logger.warning('Geocoding eastern extent changed to match DEM')
                         self.geocode_bbox[3] = dem_snwe[3]
 
         #Ensure consistency in geocode_list maintained by insarApp and
