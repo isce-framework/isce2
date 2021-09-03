@@ -81,8 +81,8 @@ you want to try the unwrap 2 stage option:
 
 * RelaxIV (a minimum cost flow relaxation algorithm coded in C++ by
 Antonio Frangioni and Claudio Gentile at the University of Pisa,
-based on the Fortran code developed by Dimitri Bertsekas (while
-at MIT) which is available at https://github.com/frangio68/Min-Cost-Flow-Class.
+based on the Fortran code developed by Dimitri Bertsekas while
+at MIT) is available at https://github.com/frangio68/Min-Cost-Flow-Class.
 The RelaxIV files should be placed in the directory: 'contrib/UnwrapComp/src/RelaxIV' so that ISCE will compile it properly.
 
 * PULP: Use easy\_install or pip to install it or else clone it from,
