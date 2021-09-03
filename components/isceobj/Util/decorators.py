@@ -56,7 +56,7 @@ def force(type_):
                     self.__class__.__name__,
                     setter.__name__)
                 if hasattr(self, "logger"):
-                    self.logger.warn(message)
+                    self.logger.warning(message)
                 else:
                     raise ValueError(message)
                 pass
