@@ -283,7 +283,7 @@ class ALOS(Sensor):
                 self.imageFile.width*rangePixelSize
                 )
         except TypeError as strerr:
-            self.logger.warn(strerr)
+            self.logger.warning(strerr)
 
         self.frame.frameNumber = frame
         self.frame.setOrbitNumber(
