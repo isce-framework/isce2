@@ -17,7 +17,7 @@ from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
 from Stack import config, run, sentinelSLC
 
 
-helpstr= '''
+helpstr = """
 
 Stack processor for Sentinel-1 data using ISCE software.
 
@@ -73,7 +73,7 @@ stackSentinel.py -s ../SLC/ -d ../../MexicoCity/demLat_N18_N20_Lon_W100_W097.dem
 For all workflows, coregistration can be done using only geometry or with geometry plus refined azimuth offsets through NESD approach.
 Existing workflows: slc, interferogram, correlation, offset
 
-'''
+"""
 
 class customArgparseAction(argparse.Action):
     def __call__(self, parser, args, values, option_string=None):
@@ -85,7 +85,7 @@ class customArgparseAction(argparse.Action):
 
 
 def createParser():
-    parser = argparse.ArgumentParser( description='Preparing the directory structure and config files for stack processing of Sentinel data')
+    parser = argparse.ArgumentParser(description='Preparing the directory structure and config files for stack processing of Sentinel data')
 
     parser.add_argument('-H','--hh', nargs=0, action=customArgparseAction,
                         help='Display detailed help information.')
@@ -117,37 +117,33 @@ def createParser():
     parser.add_argument('-b', '--bbox', dest='bbox', type=str, default=None,
                         help="Lat/Lon Bounding SNWE. -- Example : '19 20 -99.5 -98.5' -- Default : common overlap between stack")
 
-    parser.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='', 
-                        help="text command to be added to the beginning of each line of the run files (default: '%(default)s'). "
-                             "Example : 'source ~/.bash_profile;'")
-
-    parser.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None, 
+    parser.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None,
                         help="List of the dates to be excluded for processing. -- Example : '20141007,20141031' (default: %(default)s).")
 
-    parser.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None, 
+    parser.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None,
                         help="List of the dates to be included for processing. -- Example : '20141007,20141031' (default: %(default)s).")
 
-    parser.add_argument('--start_date', dest='startDate', type=str, default=None, 
+    parser.add_argument('--start_date', dest='startDate', type=str, default=None,
                         help='Start date for stack processing. Acquisitions before start date are ignored. '
                              'format should be YYYY-MM-DD e.g., 2015-01-23')
 
-    parser.add_argument('--stop_date', dest='stopDate', type=str, default=None, 
+    parser.add_argument('--stop_date', dest='stopDate', type=str, default=None,
                         help='Stop date for stack processing. Acquisitions after stop date are ignored. '
                              'format should be YYYY-MM-DD e.g., 2017-02-26')
 
-    parser.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3', 
+    parser.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3',
                         help='Number of looks in azimuth for interferogram multi-looking (default: %(default)s).')
 
-    parser.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9', 
+    parser.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9',
                         help='Number of looks in range for interferogram multi-looking (default: %(default)s).')
 
-    parser.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5', 
+    parser.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5',
                         help='Filter strength for interferogram filtering (default: %(default)s).')
 
-    parser.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10', 
+    parser.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10',
                         help='SNR threshold for estimating range misregistration using cross correlation (default: %(default)s).')
 
-    parser.add_argument('-p', '--polarization', dest='polarization', type=str, default='vv', 
+    parser.add_argument('-p', '--polarization', dest='polarization', type=str, default='vv',
                         help='SAR data polarization (default: %(default)s).')
 
     parser.add_argument('-C', '--coregistration', dest='coregistration', type=str, default='NESD', choices=['geometry', 'NESD'],
@@ -157,39 +153,46 @@ def createParser():
                         help='number of overlap interferograms between each date and subsequent dates used for NESD computation '
                              '(for azimuth offsets misregistration) (default: %(default)s).')
 
-    parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85', 
+    parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85',
                         help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
 
     parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram',
                         choices=['slc', 'correlation', 'interferogram', 'offset'],
                         help='The InSAR processing workflow (default: %(default)s).')
 
-    parser.add_argument('-V', '--virtual_merge', dest='virtualMerge', type=str, default=None, choices=['True', 'False'],
-                        help='Use virtual files for the merged SLCs and geometry files.\n'
-                             'Default: True  for correlation / interferogram workflow\n'
-                             '         False for slc / offset workflow')
-
-    parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
-                        help='Allow App to use GPU when available')
-
-    parser.add_argument('--num_proc', '--num_process', dest='numProcess', type=int, default=1,
-                        help='number of tasks running in parallel in each run file (default: %(default)s).')
-
-    parser.add_argument('--num_proc4topo', '--num_process4topo', dest='numProcess4topo', type=int, default=1,
-                        help='number of parallel processes (for topo only) (default: %(default)s).')
-
+    # unwrap
     parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
                         help='Unwrapping method (default: %(default)s).')
 
     parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
 
-    parser.add_argument('--param_ion', dest='param_ion', type=str, default=None, 
+    # ionospheric correction
+    parser.add_argument('--param_ion', dest='param_ion', type=str, default=None,
                         help='ionosphere estimation parameter file. if provided, will do ionosphere estimation.')
 
     parser.add_argument('--num_connections_ion', dest='num_connections_ion', type=str, default = '3',
                         help='number of interferograms between each date and subsequent dates for ionosphere estimation (default: %(default)s).')
 
+    # computing
+    compute = parser.add_argument_group('Computing options')
+    compute.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
+                         help='Allow App to use GPU when available')
+
+    compute.add_argument('--num_proc', '--num_process', dest='numProcess', type=int, default=1,
+                         help='number of tasks running in parallel in each run file (default: %(default)s).')
+
+    compute.add_argument('--num_proc4topo', '--num_process4topo', dest='numProcess4topo', type=int, default=1,
+                         help='number of parallel processes (for topo only) (default: %(default)s).')
+
+    compute.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='',
+                         help="text command to be added to the beginning of each line of the run files (default: '%(default)s'). "
+                              "Example : 'source ~/.bash_profile;'")
+
+    compute.add_argument('-V', '--virtual_merge', dest='virtualMerge', type=str, default=None, choices=['True', 'False'],
+                         help='Use virtual files for the merged SLCs and geometry files.\n'
+                              'Default: True  for correlation / interferogram workflow\n'
+                              '         False for slc / offset workflow')
 
     return parser
 
@@ -213,13 +216,14 @@ def cmdLineParse(iargs = None):
 def generate_geopolygon(bbox):
     """generate shapely Polygon"""
     from shapely.geometry import Point, Polygon
-    
+
     # convert pnts to shapely polygon format
     # the order of pnts is conter-clockwise, starting from the lower ldft corner
     # the order for Point is lon,lat
     points = [Point(bbox[i][0], bbox[i][1]) for i in range(4)]
 
     return Polygon([(p.coords.xy[0][0], p.coords.xy[1][0]) for p in points])
+
 
 ####################################
 def get_dates(inps):
@@ -429,19 +433,32 @@ def get_dates(inps):
 
     return dateList, inps.reference_date, secondaryList, safe_dict
 
-def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should be changed to able to account for the existed aquisitions -- Minyan Zhong
+
+def selectNeighborPairs(dateList, secondaryDates, num_connections, updateStack=False):
+    """Select nearest neighbor acquisitions to form seqential pairs."""
 
     pairs = []
+
+    if updateStack:
+        # use the secondaryDates (new acquisitions), instead of the entire list of dates
+        print('\nUpdating an existing stack ...\n')
+        # include the reference date for pairing if it is among the most recent acquisitions
+        dateList = sorted(secondaryDates + [stackReferenceDate])[1:]
+    num_date = len(dateList)
+
+    # translate num_connections input
     if num_connections == 'all':
         num_connections = len(dateList) - 1
     else:
         num_connections = int(num_connections)
 
+    # selecting nearest pairs based on dateList and num_connections
     num_connections = num_connections + 1
-    for i in range(len(dateList)-1):
-        for j in range(i+1,i + num_connections):
-            if j<len(dateList):
-                pairs.append((dateList[i],dateList[j]))
+    for i in range(num_date-1):
+        for j in range(i+1, i+num_connections):
+            if j < num_date:
+                pairs.append((dateList[i], dateList[j]))
+    print('selecting pairs with {} nearest neighbor connections: {}'.format(num_connections-1, len(pairs)))
 
     return pairs
 
@@ -474,7 +491,7 @@ def selectNeighborPairsIonosphere(safe_dict, num_connections):
         if starting_ranges[i] not in starting_ranges_unique:
             starting_ranges_unique.append(starting_ranges[i])
     ndate_unique = len(starting_ranges_unique)
- 
+
     #put dates of same starting ranges in a list
     #result is a 2-D list, each D is sorted by date
     starting_ranges_unique_dates = [[] for i in range(ndate_unique)]
@@ -850,12 +867,9 @@ def checkCurrentStatus(inps):
         coregSLC.sort()
         if len(coregSLC)>0:
             print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-            print('')
-            print('An existing stack with following coregistered SLCs was found:')
+            print('\nAn existing stack with following coregistered SLCs was found:')
             print(coregSLC)
-            print('')
-            print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-
+            print('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         else:
             pass
 
@@ -863,11 +877,9 @@ def checkCurrentStatus(inps):
         newAcquisitions.sort()
         if len(newAcquisitions)>0:
             print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
-            print('')
-            print('New acquisitions was found: ')
+            print('\nNew acquisitions was found: ')
             print(newAcquisitions)
-            print('')
-            print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+            print('\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         else:
             print('         *********************************           ')
             print('                 *****************           ')
@@ -883,7 +895,6 @@ def checkCurrentStatus(inps):
 
 
         if inps.coregistration in ['NESD','nesd']:
-
             numSLCReprocess = 2*int(inps.num_overlap_connections)
             if numSLCReprocess > len(secondaryDates):
                 numSLCReprocess = len(secondaryDates)
@@ -894,7 +905,6 @@ def checkCurrentStatus(inps):
                 raise Exception('The original SAFE files for latest {0} coregistered SLCs is needed'.format(numSLCReprocess))
 
         else:  # add by Minyan Zhong, should be changed later as numSLCReprocess should be 0
-
             numSLCReprocess = int(inps.num_connections)
             if numSLCReprocess > len(secondaryDates):
                 numSLCReprocess = len(secondaryDates)
@@ -905,7 +915,6 @@ def checkCurrentStatus(inps):
                 raise Exception('The original SAFE files for latest {0} coregistered SLCs is needed'.format(numSLCReprocess))
 
         print ('Last {0} coregistred SLCs to be updated: '.format(numSLCReprocess), latestCoregSLCs)
-
         secondaryDates = latestCoregSLCs + newAcquisitions
         secondaryDates.sort()
 
@@ -941,6 +950,7 @@ def checkCurrentStatus(inps):
 
     return acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, stackUpdate
 
+
 def main(iargs=None):
 
     inps = cmdLineParse(iargs)
@@ -955,29 +965,11 @@ def main(iargs=None):
         print('**************************')
         sys.exit(1)
 
-    if inps.workflow not in ['interferogram', 'offset', 'correlation', 'slc']:
-        print('')
-        print('**************************')
-        print('Error: workflow ', inps.workflow, ' is not valid.')
-        print('Please choose one of these workflows: interferogram, offset, correlation, slc')
-        print('Use argument "-W" or "--workflow" to choose a specific workflow.')
-        print('**************************')
-        print('')
-        sys.exit(1)
-
     acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack = checkCurrentStatus(inps)
 
-
-
-    if updateStack:
-        print('')
-        print('Updating an existing stack ...')
-        print('')
-        dates4NewPairs = sorted(secondaryDates + [stackReferenceDate])[1:]
-        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,updateStack)   # will be change later
-    else:
-        pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack)
-
+    # selecting pairs for interferograms / correlation / offset workflows
+    if inps.workflow != 'slc':
+        pairs = selectNeighborPairs(acquisitionDates, stackReferenceDate, secondaryDates, inps.num_connections, updateStack)
 
     print ('*****************************************')
     print ('Coregistration method: ', inps.coregistration )
@@ -1007,6 +999,5 @@ def main(iargs=None):
 
 
 if __name__ == "__main__":
-
   # Main engine
   main(sys.argv[1:])
