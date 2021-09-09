@@ -782,7 +782,7 @@ class TopsInSAR(Application):
             #warn if there are any differences in content
             if g_count > 0:
                 print()
-                logger.warn((
+                logger.warning((
                     "Some filenames in insarApp.geocode_list configuration "+
                     "are different from those in InsarProc. Using names given"+
                     " to insarApp."))

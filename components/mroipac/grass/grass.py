@@ -163,7 +163,7 @@ class Grass(Component):
         #####Old files need to be cleaned out
         #####Otherwise will use old result
         if os.path.exists(flagFilename):
-            self.logger.warn('Old Mask File found. Will be deleted.')
+            self.logger.warning('Old Mask File found. Will be deleted.')
             os.remove(flagFilename)
     
         intFile_C = ctypes.c_char_p(self.interferogram.getFilename().encode('utf-8'))

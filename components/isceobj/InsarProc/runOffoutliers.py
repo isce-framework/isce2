@@ -72,6 +72,6 @@ def runOffoutliers(self, distance, errorLimit=100):
         logger.error('Small number of output Offsets after culling: %d .\n Increase number of windows (or) window sizes (or) provide gross offset manually.'%(lenOut))
         raise Exception('Offset estimation Failed.')
     elif lenOut < warnLimit:
-        logger.warn('Number of output offsets after culling are low: %d. Might be ok to continue.'%(lenOut))
+        logger.warning('Number of output offsets after culling are low: %d. Might be ok to continue.'%(lenOut))
 
     self._insar.setRefinedOffsetField(refinedOffsets)
