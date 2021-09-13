@@ -50,6 +50,7 @@ InstallSameDir(
     correct_geoid_i2_srtm/egm96geoid.dat
     demstitcher/DemStitcher.py
     demstitcher/DemStitcherV3.py
+    demstitcher/DemStitcherND.py
     swbdstitcher/SWBDStitcher.py
     upsampledem/UpsampleDem.py
     watermask/WaterMask.py
