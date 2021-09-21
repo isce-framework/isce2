@@ -6,6 +6,7 @@
 add_definitions(-DNEEDS_F77_TRANSLATION -DF77EXTERNS_LOWERCASE_TRAILINGBAR)
 add_compile_options(
     $<$<COMPILE_LANGUAGE:Fortran>:-ffixed-line-length-none>
+    $<$<COMPILE_LANGUAGE:Fortran>:-ffree-line-length-none>
     $<$<COMPILE_LANGUAGE:Fortran>:-fno-range-check>
     $<$<COMPILE_LANGUAGE:Fortran>:-fno-second-underscore>)
 if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND
