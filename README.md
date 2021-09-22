@@ -874,14 +874,7 @@ Filename: reference\_offset1.xml:
 
 ## User community forums
 
-Sign up to participate in the ISCE user communities at the following website:
+Read helpful information and participate in discussion with
+the user/developer community on GitHub Discussions:
 
-[http://earthdef.caltech.edu/account/register](http://earthdef.caltech.edu/account/register)
-
-
-After you sign up read helpful information and participate in discussion with
-the user/developer community at the following website:
-
-[http://earthdef.caltech.edu/projects/isce_forum/boards](http://earthdef.caltech.edu/projects/isce_forum/boards)
-
-
+https://github.com/isce-framework/isce2/discussions
