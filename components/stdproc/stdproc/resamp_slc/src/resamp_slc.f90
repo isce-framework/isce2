@@ -22,19 +22,19 @@
       integer int_az_off
       integer i_na
       integer ith, thnum, ithorig
-        
+
       integer ii, jj
       integer chipi, chipj
       real*8 r_ro, r_ao, r_rt, r_at, r_ph, r_dop
-      
-      real*4 t0, t1 
+
+      real*4 t0, t1
 
       real*8 r_azcorner,r_racorner,fracr,fraca
 
       complex, allocatable, dimension(:,:) :: cin
       complex, allocatable, dimension(:) :: cout
       complex, allocatable, dimension(:) :: cline
-      complex, allocatable, dimension(:,:,:) :: chip 
+      complex, allocatable, dimension(:,:,:) :: chip
 
       complex cval
       real*4, allocatable, dimension(:,:) :: rin
@@ -52,9 +52,9 @@
       iscomplex = 1
       t0 = secnds(0.0)
 
-      print *, ' '       
+      print *, ' '
       print *,  ' << Resample one image to another image coordinates >>'
-      print *, ' ' 
+      print *, ' '
 
       print *, 'Input Image Dimensions: '
       print *, inwidth, ' pixels'
@@ -105,7 +105,7 @@
       allocate(residrg(outwidth))
 
       call prepareMethods(method)
-        
+
       print *, 'Azimuth Carrier Poly'
       call printpoly2d_f(azCarrier)
 
@@ -118,6 +118,8 @@
       print *, 'Azimuth offsets poly'
       call printpoly2d_f(azOffsetsPoly)
 
+      print *, 'Doppler poly'
+      call printpoly2d_f(dopplerPoly)
 
       print *, 'Reading in the image'
 !c  read in the reference image
@@ -176,7 +178,7 @@
             if(residRgAccessor .ne. 0) then
               call getLineSequential(residRgAccessor, residrg, lineNum)
             endif
-          
+
             cout=cmplx(0.,0.)
 
             !!!Start of the parallel loop
@@ -188,7 +190,7 @@
             !$OMP shared(rgCarrier,azCarrier,outwidth,inwidth,dopplerPoly)&
             !$OMP shared(REFR0, REFSLR, R0, REFWVL)
             do i=1,outwidth
-                
+
                !!!Get thread number
                thnum = omp_get_thread_num() + 1
 
@@ -199,14 +201,14 @@
                r_ao = evalPoly2d_f(azOffsetsPoly,r_at,r_rt) + residaz(i)
 
 
-               k=int(i+r_ro)   !range offset
+               k=floor(i+r_ro)   !range offset
                fracr=i+r_ro-k
 
                if ((k .le. sinchalf) .or. (k.ge.(inwidth-sinchalf))) then
                  cycle
                endif
 
-               kk=int(j+r_ao)  !azimuth offset
+               kk=floor(j+r_ao)  !azimuth offset
                fraca=j+r_ao-kk
 
                if ((kk .le. sinchalf) .or. (kk.ge.(inlength-sinchalf))) then
@@ -228,7 +230,7 @@
                      chip(ii,jj,thnum) = cin(chipi,chipj)*cval
                   end do
                end do
-    
+
                !!!Doppler to be added back
                r_ph = r_dop*fraca
 
@@ -261,7 +263,7 @@
 
 
            print *, 'Real data interpolation not implemented yet.'
-      
+
      endif
 
 
@@ -289,5 +291,5 @@
       !Reset number of threads
       call omp_set_num_threads(ithorig)
       end
-      
+
 

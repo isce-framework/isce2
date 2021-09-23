@@ -34,6 +34,9 @@ struct ResampSlc {
     void clearPolys();
     void resetPolys();
     void resamp();
+    void _resamp_cpu();
+    void _resamp_gpu();
+
 };
 
 #endif
