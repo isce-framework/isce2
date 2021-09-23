@@ -50,7 +50,7 @@ __device__ double evalPolyAt(double *polyArr, double azi, double rng) {
     //  polyArr[4] = azimuthNorm
     //  polyArr[5] = rangeNorm
     //  polyArr[6...] = coeffs (len ([0]+1)*([1]+1))
-    // Therefore we can guarantee that polyArr has at least 7 elements, and intuitively stores its own length usinfg the orders
+    // Therefore we can guarantee that polyArr has at least 7 elements, and intuitively stores its own length using the orders
 
     double val, scalex, scaley, xval, yval;
     int i, j;
