@@ -5,7 +5,7 @@
 #######################
 
 import os, glob, sys
-import  datetime
+import datetime
 
 
 noMCF = 'False'
