@@ -14,13 +14,16 @@ set_target_properties(issi PROPERTIES
     SUFFIX .so)
 target_include_directories(issi PUBLIC include)
 
-InstallSameDir(
-    issi
-    __init__.py
-    FR.py
-    )
-
-file(RELATIVE_PATH relpath ${isce2_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+#file(RELATIVE_PATH relpath ${isce2_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY src/igrf_data
-        DESTINATION ${ISCE2_PKG}/${relpath}
+        DESTINATION ${ISCE2_PKG}/components/contrib/ISSI
+        )
+install(PROGRAMS FR.py
+        DESTINATION ${ISCE2_PKG}/components/contrib/ISSI
+        )
+install(PROGRAMS __init__.py
+        DESTINATION ${ISCE2_PKG}/components/contrib/ISSI
+        )
+install(TARGETS issi
+        DESTINATION ${ISCE2_PKG}/components/contrib/ISSI
         )
