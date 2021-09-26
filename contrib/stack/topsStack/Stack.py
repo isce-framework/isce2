@@ -1,10 +1,10 @@
-  #!/usr/bin/env python3
+#!/usr/bin/env python3
 ########################
 #Author: Heresh Fattahi
 
 #######################
 
-import os, glob , sys
+import os, glob, sys
 import  datetime
 
 
