@@ -1,4 +1,4 @@
-add_subdirectory(issi)
+add_subdirectory(issi/components/ISSI ISSI)
 add_subdirectory(Snaphu)
 add_subdirectory(demUtils)
 add_subdirectory(frameUtils)
