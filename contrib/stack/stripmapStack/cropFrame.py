@@ -161,18 +161,18 @@ def cropFrame(frame, limits, outdir, israw=False):
     ####sensing start
     ymin = np.floor( (limits[0] - frame.sensingStart).total_seconds() * frame.PRF)
     print('Line start: ', ymin)
-    ymin = np.int( np.clip(ymin, 0, frame.numberOfLines-1))
+    ymin = int( np.clip(ymin, 0, frame.numberOfLines-1))
 
 
     ####sensing stop 
     ymax = np.ceil( (limits[1] - frame.sensingStart).total_seconds() * frame.PRF) + 1
     print('Line stop: ', ymax)
-    ymax = np.int( np.clip(ymax, 1, frame.numberOfLines)) 
+    ymax = int( np.clip(ymax, 1, frame.numberOfLines)) 
 
     print('Line limits: ', ymin, ymax)
     print('Original Line Limits: ', 0, frame.numberOfLines)
 
-    if (ymax-ymin) <= 1:
+    if (ymax-ymin) < 0:
         raise Exception('Azimuth limits appear to not overlap with the scene')
 
 
@@ -185,18 +185,18 @@ def cropFrame(frame, limits, outdir, israw=False):
     ####starting range
     xmin = np.floor( (limits[2] - frame.startingRange)/frame.instrument.rangePixelSize)
     print('Pixel start: ', xmin)
-    xmin = np.int(np.clip(xmin, 0, (frame.image.width//factor)-1))
+    xmin = int(np.clip(xmin, 0, (frame.image.filename//factor)-1))
 
     ####far range
     xmax = np.ceil( (limits[3] - frame.startingRange)/frame.instrument.rangePixelSize)+1
     print('Pixel stop: ', xmax)
 
-    xmax = np.int(np.clip(xmax, 1, frame.image.width//factor))
+    xmax = int(np.clip(xmax, 1, frame.image.filename//factor))
 
     print('Pixel limits: ', xmin, xmax)
-    print('Original Pixel Limits: ', 0, frame.image.width//factor)
+    print('Original Pixel Limits: ', 0, frame.image.filename//factor)
 
-    if (xmax - xmin) <= 1:
+    if (xmax - xmin) < 0:
         raise Exception('Range limits appear to not overlap with the scene')
 
     outframe.startingRange = frame.startingRange + xmin * frame.instrument.rangePixelSize
