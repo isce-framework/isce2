@@ -101,5 +101,5 @@ if __name__ == '__main__':
     ds = None
 
     # Generating the ISCE xml and vrt of this coarse DEM
-    gdal2isce_xml(coarse_dem_envi+'.vrt')
+    gdal2isce_xml(coarse_dem_envi)
 
