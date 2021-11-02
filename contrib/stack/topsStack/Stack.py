@@ -1532,8 +1532,12 @@ class run(object):
 
         ionParamUsrObj = ionParamUsr(self.param_ion)
         ionParamUsrObj.configure()
+        
+        ion_in = os.path.join(self.work_dir,'ion')
+        ion_out = os.path.join(self.work_dir,'ion_dates')
+        hgt = os.path.join(self.work_dir,'merged/geom_reference/hgt.rdr')
 
-        cmd = 'invertIon.py --idir ion --odir ion_dates --nrlks1 {} --nalks1 {} --nrlks2 {} --nalks2 {} --merged_geom merged/geom_reference/hgt.rdr --interp --msk_overlap'.format(ionParamUsrObj.ION_numberRangeLooks, ionParamUsrObj.ION_numberAzimuthLooks, self.rangeLooks, self.azimuthLooks)
+        cmd = 'invertIon.py --idir {} --odir {} --nrlks1 {} --nalks1 {} --nrlks2 {} --nalks2 {} --merged_geom {} --interp --msk_overlap'.format(ion_in,ion_out,ionParamUsrObj.ION_numberRangeLooks, ionParamUsrObj.ION_numberAzimuthLooks, self.rangeLooks, self.azimuthLooks,hgt)
 
         self.runf.write(self.text_cmd + cmd + '\n')
 
