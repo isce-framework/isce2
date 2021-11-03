@@ -12,3 +12,5 @@ try:
 except ImportError:
     # this means ISCE support not available. Don't raise error. Allow standalone use
     pass
+
+__version__ = '1.4.0'

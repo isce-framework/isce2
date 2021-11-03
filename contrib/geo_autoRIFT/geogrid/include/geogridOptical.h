@@ -26,17 +26,14 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#ifndef GEOGRID_H
-#define GEOGRID_H
+#ifndef GEOGRIDOPTICAL_H
+#define GEOGRIDOPTICAL_H
 
 #include <iostream>
 
-extern "C"
-{
-#include "orbit.h"
-};
 
-struct geoGrid
+
+struct geoGridOptical
 {
     //DEM related inputs
     std::string demname;    //DEM
@@ -51,7 +48,7 @@ struct geoGrid
     std::string csmaxxname;     //Chip size maximum in x
     std::string csmaxyname;     //Chip size maximum in y
     std::string ssmname;     //Stable surface mask
-    int epsgcode;
+    int epsgDem, epsgDat;
     double chipSizeX0;
     double gridSpacingX;
 
@@ -60,19 +57,13 @@ struct geoGrid
     double ymin, ymax;
 
     //Radar image related inputs
-    cOrbit *orbit;
-    double sensingStart;
-    double prf;
-    int nLines;
-    double startingRange;
-    double dr;
+    double startingX, startingY;
+    double XSize, YSize;
+    int nLines, nPixels;
     double dt;
-    int nPixels;
-    int lookSide;
     int nodata_out;
-    double incidenceAngle;
     int pOff, lOff, pCount, lCount;
-    double grd_res, azm_res;
+    double X_res, Y_res;
     
     //dt-varying search range rountine parameters
     double dt_unity;
@@ -89,28 +80,14 @@ struct geoGrid
     std::string ro2vx_name;
     std::string ro2vy_name;
 
-
     //Functions
     void computeBbox(double *);
-    void geogrid();
+    void geogridOptical();
+    void cross_C(double r_u[3], double r_v[3], double r_w[3]);
+    double dot_C(double r_v[3], double r_w[3]);
+    double norm_C(double a[3]);
+    void unitvec_C(double v[3], double u[3]);
 };
 
-struct geoGridPoint
-{
-    //Map coordinates
-    double pos[3];
-    
-    //DEM slope info
-    double slope[2];
-
-    //Velocity related info
-    double vel[3];
-    double schrng[3];
-
-    //Outputs
-    double range;
-    double aztime;
-    double los[3];
-};
 
 #endif
