@@ -26,7 +26,7 @@
  *~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include "geogrid.h"
+#include "geogridOptical.h"
 #include <gdal.h>
 #include <gdal_priv.h>
 #include <iostream>
@@ -34,27 +34,22 @@
 #include <cmath>
 
 
-extern "C"
-{
-#include "linalg3.h"
-#include "geometry.h"
-}
 
-void geoGrid::geogrid()
+
+void geoGridOptical::geogridOptical()
 {
     //Some constants 
     double deg2rad = M_PI/180.0;
 
     //For now print inputs that were obtained
 
-    std::cout << "\nRadar parameters: \n";
-    std::cout << "Range: " << startingRange << "  " << dr << "\n";
-    std::cout << "Azimuth: " << sensingStart << "  " << prf << "\n";
+    std::cout << "\nOptical Image parameters: \n";
+    std::cout << "X-direction coordinate: " << startingX << "  " << XSize << "\n";
+    std::cout << "Y-direction coordinate: " << startingY << "  " << YSize << "\n";
     std::cout << "Dimensions: " << nPixels << " " << nLines << "\n";
-    std::cout << "Incidence Angle: " << incidenceAngle/deg2rad << "\n";
 
     std::cout << "\nMap inputs: \n";
-    std::cout << "EPSG: " << epsgcode << "\n";
+    std::cout << "EPSG: " << epsgDem << "\n";
     std::cout << "Smallest Allowable Chip Size in m: " << chipSizeX0 << "\n";
     std::cout << "Grid spacing in m: " << gridSpacingX << "\n";
     std::cout << "Repeat Time: " << dt << "\n";
@@ -311,45 +306,25 @@ void geoGrid::geogrid()
 
     //Create GDAL Transformers 
     OGRSpatialReference demSRS(nullptr);
-    if (demSRS.importFromEPSG(epsgcode) != 0)
+    if (demSRS.importFromEPSG(epsgDem) != 0)
     {
-        std::cout << "Could not create OGR spatial reference for EPSG code: " << epsgcode << "\n";
+        std::cout << "Could not create OGR spatial reference for DEM EPSG code: " << epsgDem << "\n";
         GDALClose(demDS);
         GDALDestroyDriverManager();
         exit(102);
     }
 
-    OGRSpatialReference llhSRS(nullptr);
-    if (llhSRS.importFromEPSG(4326) != 0)
+    OGRSpatialReference datSRS(nullptr);
+    if (datSRS.importFromEPSG(epsgDat) != 0)
     {
-        std::cout << "Could not create OGR spatil reference for EPSG code: 4326 \n";
-        GDALClose(demDS);
-        GDALDestroyDriverManager();
+        std::cout << "Could not create OGR spatil reference for Data EPSG code: " << epsgDat << "\n";
         exit(103);
     }
 
-    OGRCoordinateTransformation *fwdTrans = OGRCreateCoordinateTransformation( &demSRS, &llhSRS);
-    OGRCoordinateTransformation *invTrans = OGRCreateCoordinateTransformation( &llhSRS, &demSRS);
+    OGRCoordinateTransformation *fwdTrans = OGRCreateCoordinateTransformation( &demSRS, &datSRS);
+    OGRCoordinateTransformation *invTrans = OGRCreateCoordinateTransformation( &datSRS, &demSRS);
 
-    //WGS84 ellipsoid only
-    cEllipsoid wgs84;
-    wgs84.a = 6378137.0;
-    wgs84.e2 = 0.0066943799901;
-
-    //Initial guess for solution
-    double tmid = sensingStart + 0.5 * nLines / prf;
-    double satxmid[3];
-    double satvmid[3];
-
-    if (interpolateWGS84Orbit(orbit, tmid, satxmid, satvmid) != 0)
-    {
-        std::cout << "Error with orbit interpolation for setup. \n";
-        GDALClose(demDS);
-        GDALDestroyDriverManager();
-        exit(104);
-    }
-//    std::cout << "Center Satellite Velocity: " << satvmid[0] << " " << satvmid[1] << " " << satvmid[2] << "\n";
-//    std::cout << satxmid[0] << " " << satxmid[1] << " " << satxmid[2] << "\n";
+    
 
     std::vector<double> demLine(pCount);
     std::vector<double> sxLine(pCount);
@@ -379,13 +354,11 @@ void geoGrid::geogrid()
     
     double raster1a[pCount];
     double raster1b[pCount];
-    double raster1c[pCount];
+//    double raster1c[pCount];
     
     double raster2a[pCount];
     double raster2b[pCount];
-    double raster2c[pCount];
-    
-
+//    double raster2c[pCount];
     
     GDALRasterBand *poBand1 = NULL;
     GDALRasterBand *poBand2 = NULL;
@@ -402,9 +375,6 @@ void geoGrid::geogrid()
     GDALRasterBand *poBand1RO2VY = NULL;
     GDALRasterBand *poBand2RO2VX = NULL;
     GDALRasterBand *poBand2RO2VY = NULL;
-    GDALRasterBand *poBand3RO2VX = NULL;
-    GDALRasterBand *poBand3RO2VY = NULL;
-    
     
     GDALDataset *poDstDS = NULL;
     GDALDataset *poDstDSOff = NULL;
@@ -414,17 +384,12 @@ void geoGrid::geogrid()
     GDALDataset *poDstDSMsk = NULL;
     GDALDataset *poDstDSRO2VX = NULL;
     GDALDataset *poDstDSRO2VY = NULL;
-
     
 
     double nodata;
-//    double nodata_out;
-    if (vxname != "")
-    {
-        int* pbSuccess = NULL;
-        nodata = vxDS->GetRasterBand(1)->GetNoDataValue(pbSuccess);
-    }
-//    nodata_out = -2000000000;
+    int* pbSuccess = NULL;
+    nodata = demDS->GetRasterBand(1)->GetNoDataValue(pbSuccess);
+    
     
     const char *pszFormat = "GTiff";
     char **papszOptions = NULL;
@@ -608,7 +573,7 @@ void geoGrid::geogrid()
         
         str = ro2vx_name;
         const char * pszDstFilenameRO2VX = str.c_str();
-        poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 3, GDT_Float64,
+        poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 2, GDT_Float64,
                                          papszOptions );
         
         poDstDSRO2VX->SetGeoTransform( adfGeoTransform );
@@ -620,10 +585,10 @@ void geoGrid::geogrid()
     //    GDALRasterBand *poBand3Los;
         poBand1RO2VX = poDstDSRO2VX->GetRasterBand(1);
         poBand2RO2VX = poDstDSRO2VX->GetRasterBand(2);
-        poBand3RO2VX = poDstDSRO2VX->GetRasterBand(3);
+    //    poBand3Los = poDstDSLos->GetRasterBand(3);
         poBand1RO2VX->SetNoDataValue(nodata_out);
         poBand2RO2VX->SetNoDataValue(nodata_out);
-        poBand3RO2VX->SetNoDataValue(nodata_out);
+    //    poBand3Los->SetNoDataValue(nodata_out);
         
 
         GDALDriver *poDriverRO2VY;
@@ -634,7 +599,7 @@ void geoGrid::geogrid()
         
         str = ro2vy_name;
         const char * pszDstFilenameRO2VY = str.c_str();
-        poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 3, GDT_Float64,
+        poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 2, GDT_Float64,
                                          papszOptions );
         
         poDstDSRO2VY->SetGeoTransform( adfGeoTransform );
@@ -646,11 +611,10 @@ void geoGrid::geogrid()
     //    GDALRasterBand *poBand3Alt;
         poBand1RO2VY = poDstDSRO2VY->GetRasterBand(1);
         poBand2RO2VY = poDstDSRO2VY->GetRasterBand(2);
-        poBand3RO2VY = poDstDSRO2VY->GetRasterBand(3);
+    //    poBand3Alt = poDstDSAlt->GetRasterBand(3);
         poBand1RO2VY->SetNoDataValue(nodata_out);
         poBand2RO2VY->SetNoDataValue(nodata_out);
-        poBand3RO2VY->SetNoDataValue(nodata_out);
-        
+    //    poBand3Alt->SetNoDataValue(nodata_out);
         
     }
     
@@ -661,20 +625,17 @@ void geoGrid::geogrid()
     
     
     // ground range and azimuth pixel size
-//    double grd_res, azm_res;
-    
-//    double incang = 38.0*deg2rad;
-    double incang = incidenceAngle;
-    grd_res = dr / std::sin(incang);
-    azm_res = norm_C(satvmid) / prf;
-    std::cout << "Ground range pixel size: " << grd_res << "\n";
-    std::cout << "Azimuth pixel size: " << azm_res << "\n";
+
+    X_res = std::abs(XSize);
+    Y_res = std::abs(YSize);
+    std::cout << "X-direction pixel size: " << X_res << "\n";
+    std::cout << "Y-direction pixel size: " << Y_res << "\n";
 //    int ChipSizeX0 = 240;
     double ChipSizeX0 = chipSizeX0;
-    int ChipSizeX0_PIX_grd = std::ceil(ChipSizeX0 / grd_res / 4) * 4;
-    int ChipSizeX0_PIX_azm = std::ceil(ChipSizeX0 / azm_res / 4) * 4;
+    int ChipSizeX0_PIX_X = std::ceil(ChipSizeX0 / X_res / 4) * 4;
+    int ChipSizeX0_PIX_Y = std::ceil(ChipSizeX0 / Y_res / 4) * 4;
     
-    
+    double xind, yind;
     
     for (int ii=0; ii<lCount; ii++)
     {
@@ -890,31 +851,38 @@ void geoGrid::geogrid()
         
         
         
-        
-        int rgind;
-        int azind;
+    
         
         for (int jj=0; jj<pCount; jj++)
         {
-            double xyz[3];
-            double llh[3];
-            double targllh0[3];
-            double llhi[3];
-            double drpos[3];
+            double xyzs[3];
+            
+            double targxyz0[3];
+            double targutm0[3];
+            
+            double targutm[3];
+
             double slp[3];
             double vel[3];
+            double normal[3];
+            double cross[3];
+            double cross_check;
+            
             double schrng1[3];
             double schrng2[3];
             
+            double xdiff[3], xunit[3];
+            double ydiff[3], yunit[3];
+            
 
             //Setup ENU with DEM
-            llh[0] = geoTrans[0] + (jj+pOff+0.5)*geoTrans[1];
-            llh[1] = y;
-            llh[2] = demLine[jj];
+            xyzs[0] = geoTrans[0] + (jj+pOff+0.5)*geoTrans[1];
+            xyzs[1] = y;
+            xyzs[2] = demLine[jj];
             
             for(int pp=0; pp<3; pp++)
             {
-                targllh0[pp] = llh[pp];
+                targxyz0[pp] = xyzs[pp];
             }
             
             if (dhdxname != "")
@@ -946,239 +914,66 @@ void geoGrid::geogrid()
             
 
             //Convert from DEM coordinates to LLH inplace
-            fwdTrans->Transform(1, llh, llh+1, llh+2);
-
-            //Bringing it into ISCE
-            if (GDAL_VERSION_MAJOR == 2)
+            fwdTrans->Transform(1, xyzs, xyzs+1, xyzs+2);
+            
+            for(int pp=0; pp<3; pp++)
             {
-                llhi[0] = deg2rad * llh[1];
-                llhi[1] = deg2rad * llh[0];
-            }
-            else
-            {
-                llhi[0] = deg2rad * llh[0];
-                llhi[1] = deg2rad * llh[1];
+                targutm0[pp] = xyzs[pp];
             }
             
-            llhi[2] = llh[2];
+            xind = std::round((targutm0[0] - startingX) / XSize) + 0.;
+            yind = std::round((targutm0[1] - startingY) / YSize) + 0.;
 
-            //Convert to ECEF
-            latlon_C(&wgs84, xyz, llhi, LLH_2_XYZ);
             
-//            if ((ii == (lCount+1)/2)&(jj == pCount/2)){
-//                std::cout << xyz[0] << " " << xyz[1] << " " << xyz[2] << "\n";
-//            }
             
-            //Start the geo2rdr algorithm
-            double satx[3];
-            double satv[3];
-            double tprev;
             
-            double tline = tmid;
-            double rngpix;
-            double los[3];
-            double alt[3];
-            double normal[3];
-            double cross[3];
-            double cross_check;
-            
-            double dopfact;
-            double height;
-            double vhat[3], that[3], chat[3], nhat[3], delta[3], targVec[3], targXYZ[3], diffvec[3], temp[3], satvc[3], altc[3];
-            double vmag;
-            double major, minor;
-            double satDist;
-            double alpha, beta, gamma;
-            double radius, hgt, zsch;
-            double a, b, costheta, sintheta;
-            double rdiff;
-            
-            for(int kk=0; kk<3; kk++) 
-            {
-                satx[kk]  = satxmid[kk];
-            }
-
-            for(int kk=0; kk<3; kk++)
-            {
-                satv[kk]  = satvmid[kk];
-            }
-
-            //Iterations
-            for (int kk=0; kk<51;kk++)
-            {
-                tprev = tline;
-                
-                for(int pp=0; pp<3; pp++)
-                {
-                    drpos[pp] = xyz[pp] - satx[pp];
-                }
-                
-                rngpix = norm_C(drpos);
-                double fn = dot_C(drpos, satv);
-                double fnprime = -dot_C(satv, satv);
-                
-                tline = tline - fn/fnprime;
-                
-                if (interpolateWGS84Orbit(orbit, tline, satx, satv) != 0)
-                {
-                    std::cout << "Error with orbit interpolation. \n";
-                    GDALClose(demDS);
-                    GDALDestroyDriverManager();
-                    exit(106);
-                }
-
-            }
-//            if ((ii==600)&&(jj==600))
-//            {
-//                std::cout << "\n" << lOff+ii << " " << pOff+jj << " " << demLine[jj] << "\n";
-//            }
-            rgind = std::round((rngpix - startingRange) / dr) + 0.;
-            azind = std::round((tline - sensingStart) * prf) + 0.;
             
             
             //*********************Slant-range vector
             
-            
-            unitvec_C(drpos, los);
-            
             for(int pp=0; pp<3; pp++)
             {
-                llh[pp]  = xyz[pp] + los[pp] * dr;
+                targutm[pp] = targutm0[pp];
             }
+            targutm[0] += XSize;
             
-            latlon_C(&wgs84, llh, llhi, XYZ_2_LLH);
-            
-            //Bringing it from ISCE into LLH
-            if (GDAL_VERSION_MAJOR == 2)
-            {
-                llh[0] = llhi[1] / deg2rad;
-                llh[1] = llhi[0] / deg2rad;
-            }
-            else
-            {
-                llh[0] = llhi[0] / deg2rad;
-                llh[1] = llhi[1] / deg2rad;
-            }
-            
-            llh[2] = llhi[2];
             
             //Convert from LLH inplace to DEM coordinates
-            invTrans->Transform(1, llh, llh+1, llh+2);
+            invTrans->Transform(1, targutm, targutm+1, targutm+2);
             
             for(int pp=0; pp<3; pp++)
             {
-                drpos[pp]  = llh[pp] - targllh0[pp];
+                xdiff[pp]  = targutm[pp] - targxyz0[pp];
             }
-            unitvec_C(drpos, los);
+            unitvec_C(xdiff, xunit);
+            
+            
+            
             
             //*********************Along-track vector
             
-            tline = tline + 1/prf;
-            
-            if (interpolateWGS84Orbit(orbit, tline, satx, satv) != 0)
-            {
-                std::cout << "Error with orbit interpolation. \n";
-                GDALClose(demDS);
-                GDALDestroyDriverManager();
-                exit(106);
-            }
-            //run the topo algorithm for new tline
-            dopfact = 0.0;
-            height = demLine[jj];
-            unitvec_C(satv, vhat);
-            vmag = norm_C(satv);
-            
-            //Convert position and velocity to local tangent plane
-            major = wgs84.a;
-            minor = major * std::sqrt(1 - wgs84.e2);
-            
-            //Setup ortho normal system right below satellite
-            satDist = norm_C(satx);
-            temp[0] = (satx[0] / major);
-            temp[1] = (satx[1] / major);
-            temp[2] = (satx[2] / minor);
-            alpha = 1 / norm_C(temp);
-            radius = alpha * satDist;
-            hgt = (1.0 - alpha) * satDist;
-            
-            //Setup TCN basis - Geocentric
-            unitvec_C(satx, nhat);
             for(int pp=0; pp<3; pp++)
             {
-                nhat[pp]  = -nhat[pp];
+                targutm[pp] = targutm0[pp];
             }
-            cross_C(nhat,satv,temp);
-            unitvec_C(temp, chat);
-            cross_C(chat,nhat,temp);
-            unitvec_C(temp, that);
+            targutm[1] += YSize;
             
-            
-            //Solve the range doppler eqns iteratively
-            //Initial guess
-            zsch = height;
-            
-            for (int kk=0; kk<10;kk++)
-            {
-                a = satDist;
-                b = (radius + zsch);
-                
-                costheta = 0.5 * (a / rngpix + rngpix / a - (b / a) * (b / rngpix));
-                sintheta = std::sqrt(1-costheta*costheta);
-                
-                gamma = rngpix * costheta;
-                alpha = dopfact - gamma * dot_C(nhat,vhat) / dot_C(vhat,that);
-                beta = -lookSide * std::sqrt(rngpix * rngpix * sintheta * sintheta - alpha * alpha);
-                for(int pp=0; pp<3; pp++)
-                {
-                    delta[pp] = alpha * that[pp] + beta * chat[pp] + gamma * nhat[pp];
-                }
-                
-                for(int pp=0; pp<3; pp++)
-                {
-                    targVec[pp] = satx[pp] + delta[pp];
-                }
-                
-                latlon_C(&wgs84, targVec, llhi, XYZ_2_LLH);
-                llhi[2] = height;
-                latlon_C(&wgs84, targXYZ, llhi, LLH_2_XYZ);
-                
-                zsch = norm_C(targXYZ) - radius;
-                
-                for(int pp=0; pp<3; pp++)
-                {
-                    diffvec[pp] = satx[pp] - targXYZ[pp];
-                }
-                rdiff  = rngpix - norm_C(diffvec);
-            }
-            
-            //Bringing it from ISCE into LLH
-            
-            if (GDAL_VERSION_MAJOR == 2)
-            {
-                llh[0] = llhi[1] / deg2rad;
-                llh[1] = llhi[0] / deg2rad;
-            }
-            else
-            {
-                llh[0] = llhi[0] / deg2rad;
-                llh[1] = llhi[1] / deg2rad;
-            }
-            
-            llh[2] = llhi[2];
             
             //Convert from LLH inplace to DEM coordinates
-            invTrans->Transform(1, llh, llh+1, llh+2);
+            invTrans->Transform(1, targutm, targutm+1, targutm+2);
             
             for(int pp=0; pp<3; pp++)
             {
-                alt[pp]  = llh[pp] - targllh0[pp];
+                ydiff[pp]  = targutm[pp] - targxyz0[pp];
             }
-            unitvec_C(alt, temp);
+            unitvec_C(ydiff, yunit);
             
             
+            
+            
+            //*********************Local normal vector
             if (dhdxname != "")
             {
-                //*********************Local normal vector
                 unitvec_C(slp, normal);
                 for(int pp=0; pp<3; pp++)
                 {
@@ -1205,7 +1000,7 @@ void geoGrid::geogrid()
             }
             
             
-            if ((rgind > nPixels-1)|(rgind < 1-1)|(azind > nLines-1)|(azind < 1-1))
+            if ((xind > nPixels-1)|(xind < 1-1)|(yind > nLines-1)|(yind < 1-1))
             {
                 raster1[jj] = nodata_out;
                 raster2[jj] = nodata_out;
@@ -1222,16 +1017,16 @@ void geoGrid::geogrid()
                 
                 raster1a[jj] = nodata_out;
                 raster1b[jj] = nodata_out;
-                raster1c[jj] = nodata_out;
+//                raster1c[jj] = nodata_out;
                 raster2a[jj] = nodata_out;
                 raster2b[jj] = nodata_out;
-                raster2c[jj] = nodata_out;
+//                raster2c[jj] = nodata_out;
                 
             }
             else
             {
-                raster1[jj] = rgind;
-                raster2[jj] = azind;
+                raster1[jj] = xind;
+                raster2[jj] = yind;
                 
                 if (dhdxname != "")
                 {
@@ -1245,22 +1040,22 @@ void geoGrid::geogrid()
                         }
                         else
                         {
-                            raster11[jj] = std::round(dot_C(vel,los)*dt/dr/365.0/24.0/3600.0*1);
-                            raster22[jj] = std::round(dot_C(vel,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1);
+                            raster11[jj] = std::round(dot_C(vel,xunit)*dt/XSize/365.0/24.0/3600.0*1);
+                            raster22[jj] = std::round(dot_C(vel,yunit)*dt/YSize/365.0/24.0/3600.0*1);
                         }
                       
                     }
                     
-                    cross_C(los,temp,cross);
+                    cross_C(xunit,yunit,cross);
                     unitvec_C(cross, cross);
                     cross_check = std::abs(std::acos(dot_C(normal,cross))/deg2rad-90.0);
                     
                     if (cross_check > 1.0)
                     {
-                        raster1a[jj] = normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[1]-normal[1]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                        raster1b[jj] = -normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[1]-normal[1]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                        raster2a[jj] = -normal[2]/(dt/dr/365.0/24.0/3600.0)*(normal[2]*temp[0]-normal[0]*temp[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
-                        raster2b[jj] = normal[2]/(dt/norm_C(alt)/365.0/24.0/3600.0)*(normal[2]*los[0]-normal[0]*los[2])/((normal[2]*los[0]-normal[0]*los[2])*(normal[2]*temp[1]-normal[1]*temp[2])-(normal[2]*temp[0]-normal[0]*temp[2])*(normal[2]*los[1]-normal[1]*los[2]));
+                        raster1a[jj] = normal[2]/(dt/XSize/365.0/24.0/3600.0)*(normal[2]*yunit[1]-normal[1]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                        raster1b[jj] = -normal[2]/(dt/YSize/365.0/24.0/3600.0)*(normal[2]*xunit[1]-normal[1]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                        raster2a[jj] = -normal[2]/(dt/XSize/365.0/24.0/3600.0)*(normal[2]*yunit[0]-normal[0]*yunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
+                        raster2b[jj] = normal[2]/(dt/YSize/365.0/24.0/3600.0)*(normal[2]*xunit[0]-normal[0]*xunit[2])/((normal[2]*xunit[0]-normal[0]*xunit[2])*(normal[2]*yunit[1]-normal[1]*yunit[2])-(normal[2]*yunit[0]-normal[0]*yunit[2])*(normal[2]*xunit[1]-normal[1]*xunit[2]));
                     }
                     else
                     {
@@ -1269,14 +1064,6 @@ void geoGrid::geogrid()
                         raster2a[jj] = nodata_out;
                         raster2b[jj] = nodata_out;
                     }
-                    
-                    for(int pp=0; pp<3; pp++)
-                    {
-                        targXYZ[pp] -= xyz[pp];
-                    }
-                    raster1c[jj] = dr/dt*365.0*24.0*3600.0*1;
-                    raster2c[jj] = norm_C(targXYZ)/dt*365.0*24.0*3600.0*1;
-                    
                     
                     if (srxname != "")
                     {
@@ -1287,15 +1074,15 @@ void geoGrid::geogrid()
                         }
                         else
                         {
-                            sr_raster11[jj] = std::abs(std::round(dot_C(schrng1,los)*dt/dr/365.0/24.0/3600.0*1));
-                            sr_raster22[jj] = std::abs(std::round(dot_C(schrng1,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
-                            if (std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1)) > sr_raster11[jj])
+                            sr_raster11[jj] = std::abs(std::round(dot_C(schrng1,xunit)*dt/XSize/365.0/24.0/3600.0*1));
+                            sr_raster22[jj] = std::abs(std::round(dot_C(schrng1,yunit)*dt/YSize/365.0/24.0/3600.0*1));
+                            if (std::abs(std::round(dot_C(schrng2,xunit)*dt/XSize/365.0/24.0/3600.0*1)) > sr_raster11[jj])
                             {
-                                sr_raster11[jj] = std::abs(std::round(dot_C(schrng2,los)*dt/dr/365.0/24.0/3600.0*1));
+                                sr_raster11[jj] = std::abs(std::round(dot_C(schrng2,xunit)*dt/XSize/365.0/24.0/3600.0*1));
                             }
-                            if (std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1)) > sr_raster22[jj])
+                            if (std::abs(std::round(dot_C(schrng2,yunit)*dt/YSize/365.0/24.0/3600.0*1)) > sr_raster22[jj])
                             {
-                                sr_raster22[jj] = std::abs(std::round(dot_C(schrng2,temp)*dt/norm_C(alt)/365.0/24.0/3600.0*1));
+                                sr_raster22[jj] = std::abs(std::round(dot_C(schrng2,yunit)*dt/YSize/365.0/24.0/3600.0*1));
                             }
                             if (sr_raster11[jj] == 0)
                             {
@@ -1321,8 +1108,8 @@ void geoGrid::geogrid()
                     }
                     else
                     {
-                        csmin_raster11[jj] = csminxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
-                        csmin_raster22[jj] = csminyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                        csmin_raster11[jj] = csminxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_X;
+                        csmin_raster22[jj] = csminyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_Y;
                     }
                 }
                 
@@ -1336,8 +1123,8 @@ void geoGrid::geogrid()
                     }
                     else
                     {
-                        csmax_raster11[jj] = csmaxxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
-                        csmax_raster22[jj] = csmaxyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                        csmax_raster11[jj] = csmaxxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_X;
+                        csmax_raster22[jj] = csmaxyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_Y;
                     }
                 }
                 
@@ -1356,7 +1143,12 @@ void geoGrid::geogrid()
                 
                 
                 
-
+//                raster1a[jj] = los[0]*dt/dr/365.0/24.0/3600.0;
+//                raster1b[jj] = los[1]*dt/dr/365.0/24.0/3600.0;
+//                raster1c[jj] = los[2]*dt/dr/365.0/24.0/3600.0;
+//                raster2a[jj] = temp[0]*dt/norm_C(alt)/365.0/24.0/3600.0;
+//                raster2b[jj] = temp[1]*dt/norm_C(alt)/365.0/24.0/3600.0;
+//                raster2c[jj] = temp[2]*dt/norm_C(alt)/365.0/24.0/3600.0;
             }
             
             
@@ -1417,15 +1209,14 @@ void geoGrid::geogrid()
                                  raster1a, pCount, 1, GDT_Float64, 0, 0 );
             poBand2RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster1b, pCount, 1, GDT_Float64, 0, 0 );
-            poBand3RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
-                                 raster1c, pCount, 1, GDT_Float64, 0, 0 );
+    //        poBand3Los->RasterIO( GF_Write, 0, ii, pCount, 1,
+    //                             raster1c, pCount, 1, GDT_Float64, 0, 0 );
             poBand1RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster2a, pCount, 1, GDT_Float64, 0, 0 );
             poBand2RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster2b, pCount, 1, GDT_Float64, 0, 0 );
-            poBand3RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
-                                 raster2c, pCount, 1, GDT_Float64, 0, 0 );
-            
+    //        poBand3Alt->RasterIO( GF_Write, 0, ii, pCount, 1,
+    //                             raster2c, pCount, 1, GDT_Float64, 0, 0 );
         }
         
         
@@ -1471,7 +1262,6 @@ void geoGrid::geogrid()
         
         /* Once we're done, close properly the dataset */
         GDALClose( (GDALDatasetH) poDstDSRO2VY );
-        
     }
     
     
@@ -1515,11 +1305,43 @@ void geoGrid::geogrid()
     GDALDestroyDriverManager();
     
 }
-void geoGrid::computeBbox(double *wesn)
+
+void geoGridOptical::computeBbox(double *wesn)
 {
     std::cout << "\nEstimated bounding box: \n" 
               << "West: " << wesn[0] << "\n"
               << "East: " << wesn[1] << "\n"
               << "South: " << wesn[2] << "\n"
               << "North: " << wesn[3] << "\n";
+}
+
+double geoGridOptical::dot_C(double r_v[3], double r_w[3])
+{
+    double dot;
+    dot = r_v[0]*r_w[0] + r_v[1]*r_w[1] + r_v[2]*r_w[2];
+    return dot;
+}
+
+void geoGridOptical::cross_C(double r_u[3], double r_v[3], double r_w[3])
+{
+    r_w[0] = r_u[1]*r_v[2] - r_u[2]*r_v[1];
+    r_w[1] = r_u[2]*r_v[0] - r_u[0]*r_v[2];
+    r_w[2] = r_u[0]*r_v[1] - r_u[1]*r_v[0];
+}
+
+double geoGridOptical::norm_C(double r_v[3])
+{
+    double norm;
+    norm = std::sqrt(r_v[0]*r_v[0] + r_v[1]*r_v[1] + r_v[2]*r_v[2]);
+    return norm;
+}
+
+
+void geoGridOptical::unitvec_C(double r_v[3], double r_w[3])
+{
+    double norm;
+    norm = std::sqrt(r_v[0]*r_v[0] + r_v[1]*r_v[1] + r_v[2]*r_v[2]);
+    r_w[0] = r_v[0] / norm;
+    r_w[1] = r_v[1] / norm;
+    r_w[2] = r_v[2] / norm;
 }

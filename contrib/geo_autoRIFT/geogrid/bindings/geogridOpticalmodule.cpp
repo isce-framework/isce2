@@ -30,8 +30,8 @@
 
 #include <Python.h>
 #include <string>
-#include "geogrid.h"
-#include "geogridmodule.h"
+#include "geogridOptical.h"
+#include "geogridOpticalmodule.h"
 
 static const char * const __doc__ = "Python extension for geogrid";
 
@@ -39,7 +39,7 @@ PyModuleDef moduledef = {
     //header
     PyModuleDef_HEAD_INIT,
     //name of the module
-    "geogrid",
+    "geogridOptical",
     //module documentation string
     __doc__,
     //size of the per-interpreter state of the module;
@@ -49,7 +49,7 @@ PyModuleDef moduledef = {
 
 //Initialization function for the module
 PyMODINIT_FUNC
-PyInit_geogrid()
+PyInit_geogridOptical()
 {
     PyObject* module = PyModule_Create(&moduledef);
     if (!module)
@@ -59,13 +59,13 @@ PyInit_geogrid()
     return module;
 }
 
-PyObject* createGeoGrid(PyObject* self, PyObject *args)
+PyObject* createGeoGridOptical(PyObject* self, PyObject *args)
 {
-    geoGrid* ptr = new geoGrid;
+    geoGridOptical* ptr = new geoGridOptical;
     return Py_BuildValue("K", (uint64_t) ptr);
 }
 
-PyObject* destroyGeoGrid(PyObject *self, PyObject *args)
+PyObject* destroyGeoGridOptical(PyObject *self, PyObject *args)
 {
     uint64_t ptr;
     if (!PyArg_ParseTuple(args, "K", &ptr))
@@ -73,9 +73,9 @@ PyObject* destroyGeoGrid(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (((geoGrid*)(ptr))!=NULL)
+    if (((geoGridOptical*)(ptr))!=NULL)
     {
-        delete ((geoGrid*)(ptr));
+        delete ((geoGridOptical*)(ptr));
     }
     return Py_BuildValue("i", 0);
 }
@@ -83,26 +83,16 @@ PyObject* destroyGeoGrid(PyObject *self, PyObject *args)
 PyObject* setEPSG(PyObject *self, PyObject *args)
 {
     uint64_t ptr;
-    int code;
-    if (!PyArg_ParseTuple(args, "Ki", &ptr, &code))
+    int code1, code2;
+    if (!PyArg_ParseTuple(args, "Kii", &ptr, &code1, &code2))
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->epsgcode = code;
+    ((geoGridOptical*)(ptr))->epsgDem = code1;
+    ((geoGridOptical*)(ptr))->epsgDat = code2;
     return Py_BuildValue("i", 0);
 }
 
-PyObject* setIncidenceAngle(PyObject *self, PyObject *args)
-{
-    uint64_t ptr;
-    double incidenceAngle;
-    if (!PyArg_ParseTuple(args, "Kd", &ptr, &incidenceAngle))
-    {
-        return NULL;
-    }
-    ((geoGrid*)(ptr))->incidenceAngle = incidenceAngle;
-    return Py_BuildValue("i", 0);
-}
 
 PyObject* setChipSizeX0(PyObject *self, PyObject *args)
 {
@@ -112,7 +102,7 @@ PyObject* setChipSizeX0(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->chipSizeX0 = chipSizeX0;
+    ((geoGridOptical*)(ptr))->chipSizeX0 = chipSizeX0;
     return Py_BuildValue("i", 0);
 }
 
@@ -124,7 +114,7 @@ PyObject* setGridSpacingX(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->gridSpacingX = gridSpacingX;
+    ((geoGridOptical*)(ptr))->gridSpacingX = gridSpacingX;
     return Py_BuildValue("i", 0);
 }
 
@@ -136,11 +126,11 @@ PyObject* setRepeatTime(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->dt = repeatTime;
+    ((geoGridOptical*)(ptr))->dt = repeatTime;
     return Py_BuildValue("i", 0);
 }
 
-PyObject* setRadarImageDimensions(PyObject *self, PyObject *args)
+PyObject* setOpticalImageDimensions(PyObject *self, PyObject *args)
 {
     uint64_t ptr;
     int wid, len;
@@ -149,12 +139,12 @@ PyObject* setRadarImageDimensions(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->nPixels = wid;
-    ((geoGrid*)(ptr))->nLines = len;
+    ((geoGridOptical*)(ptr))->nPixels = wid;
+    ((geoGridOptical*)(ptr))->nLines = len;
     return Py_BuildValue("i", 0);
 }
 
-PyObject* setRangeParameters(PyObject *self, PyObject *args)
+PyObject* setXParameters(PyObject *self, PyObject *args)
 {
     uint64_t ptr;
     double r0, rspace;
@@ -163,12 +153,12 @@ PyObject* setRangeParameters(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->startingRange = r0;
-    ((geoGrid*)(ptr))->dr = rspace;
+    ((geoGridOptical*)(ptr))->startingX = r0;
+    ((geoGridOptical*)(ptr))->XSize = rspace;
     return Py_BuildValue("i", 0);
 }
 
-PyObject* setAzimuthParameters(PyObject *self, PyObject *args)
+PyObject* setYParameters(PyObject *self, PyObject *args)
 {
     uint64_t ptr;
     double t0, prf;
@@ -177,8 +167,8 @@ PyObject* setAzimuthParameters(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->sensingStart = t0;
-    ((geoGrid*)(ptr))->prf = prf;
+    ((geoGridOptical*)(ptr))->startingY = t0;
+    ((geoGridOptical*)(ptr))->YSize = prf;
     return Py_BuildValue("i", 0);
 }
 
@@ -191,8 +181,8 @@ PyObject* setXLimits(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->xmin = x0;
-    ((geoGrid*)(ptr))->xmax = x1;
+    ((geoGridOptical*)(ptr))->xmin = x0;
+    ((geoGridOptical*)(ptr))->xmax = x1;
     return Py_BuildValue("i", 0);
 }
 
@@ -205,8 +195,8 @@ PyObject* setYLimits(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->ymin = x0;
-    ((geoGrid*)(ptr))->ymax = x1;
+    ((geoGridOptical*)(ptr))->ymin = x0;
+    ((geoGridOptical*)(ptr))->ymax = x1;
     return Py_BuildValue("i", 0);
 }
 
@@ -219,7 +209,7 @@ PyObject* setDEM(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->demname = std::string(name);
+    ((geoGridOptical*)(ptr))->demname = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -233,8 +223,8 @@ PyObject* setVelocities(PyObject *self, PyObject* args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->vxname = std::string(vx);
-    ((geoGrid*)(ptr))->vyname = std::string(vy);
+    ((geoGridOptical*)(ptr))->vxname = std::string(vx);
+    ((geoGridOptical*)(ptr))->vyname = std::string(vy);
     return Py_BuildValue("i", 0);
 }
 
@@ -248,8 +238,8 @@ PyObject* setSearchRange(PyObject *self, PyObject* args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->srxname = std::string(srx);
-    ((geoGrid*)(ptr))->sryname = std::string(sry);
+    ((geoGridOptical*)(ptr))->srxname = std::string(srx);
+    ((geoGridOptical*)(ptr))->sryname = std::string(sry);
     return Py_BuildValue("i", 0);
 }
 
@@ -263,8 +253,8 @@ PyObject* setChipSizeMin(PyObject *self, PyObject* args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->csminxname = std::string(csminx);
-    ((geoGrid*)(ptr))->csminyname = std::string(csminy);
+    ((geoGridOptical*)(ptr))->csminxname = std::string(csminx);
+    ((geoGridOptical*)(ptr))->csminyname = std::string(csminy);
     return Py_BuildValue("i", 0);
 }
 
@@ -278,8 +268,8 @@ PyObject* setChipSizeMax(PyObject *self, PyObject* args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->csmaxxname = std::string(csmaxx);
-    ((geoGrid*)(ptr))->csmaxyname = std::string(csmaxy);
+    ((geoGridOptical*)(ptr))->csmaxxname = std::string(csmaxx);
+    ((geoGridOptical*)(ptr))->csmaxyname = std::string(csmaxy);
     return Py_BuildValue("i", 0);
 }
 
@@ -292,7 +282,7 @@ PyObject* setStableSurfaceMask(PyObject *self, PyObject* args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->ssmname = std::string(ssm);
+    ((geoGridOptical*)(ptr))->ssmname = std::string(ssm);
     return Py_BuildValue("i", 0);
 }
 
@@ -306,8 +296,8 @@ PyObject* setSlopes(PyObject *self, PyObject* args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->dhdxname = std::string(sx);
-    ((geoGrid*)(ptr))->dhdyname = std::string(sy);
+    ((geoGridOptical*)(ptr))->dhdxname = std::string(sx);
+    ((geoGridOptical*)(ptr))->dhdyname = std::string(sy);
     return Py_BuildValue("i", 0);
 }
 
@@ -320,7 +310,7 @@ PyObject* setWindowLocationsFilename(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->pixlinename = std::string(name);
+    ((geoGridOptical*)(ptr))->pixlinename = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -333,7 +323,7 @@ PyObject* setWindowOffsetsFilename(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->offsetname = std::string(name);
+    ((geoGridOptical*)(ptr))->offsetname = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -346,7 +336,7 @@ PyObject* setWindowSearchRangeFilename(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->searchrangename = std::string(name);
+    ((geoGridOptical*)(ptr))->searchrangename = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -359,7 +349,7 @@ PyObject* setWindowChipSizeMinFilename(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->chipsizeminname = std::string(name);
+    ((geoGridOptical*)(ptr))->chipsizeminname = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -372,7 +362,7 @@ PyObject* setWindowChipSizeMaxFilename(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->chipsizemaxname = std::string(name);
+    ((geoGridOptical*)(ptr))->chipsizemaxname = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -385,7 +375,7 @@ PyObject* setWindowStableSurfaceMaskFilename(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->stablesurfacemaskname = std::string(name);
+    ((geoGridOptical*)(ptr))->stablesurfacemaskname = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -398,7 +388,7 @@ PyObject* setRO2VXFilename(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->ro2vx_name = std::string(name);
+    ((geoGridOptical*)(ptr))->ro2vx_name = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
@@ -411,23 +401,10 @@ PyObject* setRO2VYFilename(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->ro2vy_name = std::string(name);
+    ((geoGridOptical*)(ptr))->ro2vy_name = std::string(name);
     return Py_BuildValue("i", 0);
 }
 
-
-PyObject* setLookSide(PyObject *self, PyObject *args)
-{
-    uint64_t ptr;
-    int side;
-    if (!PyArg_ParseTuple(args, "Ki", &ptr, &side))
-    {
-        return NULL;
-    }
-
-    ((geoGrid*)(ptr))->lookSide = side;
-    return Py_BuildValue("i", 0);
-}
 
 PyObject* setNodataOut(PyObject *self, PyObject *args)
 {
@@ -438,22 +415,11 @@ PyObject* setNodataOut(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    ((geoGrid*)(ptr))->nodata_out = nodata;
+    ((geoGridOptical*)(ptr))->nodata_out = nodata;
     return Py_BuildValue("i", 0);
 }
 
 
-PyObject* setOrbit(PyObject *self, PyObject *args)
-{
-    uint64_t ptr, orb;
-    if (!PyArg_ParseTuple(args, "KK", &ptr, &orb))
-    {
-        return NULL;
-    }
-
-    ((geoGrid*)(ptr))->orbit = (cOrbit*)(orb);
-    return Py_BuildValue("i", 0);
-}
 
 PyObject* getXOff(PyObject *self, PyObject *args)
 {
@@ -465,7 +431,7 @@ PyObject* getXOff(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->pOff;
+    var = ((geoGridOptical*)(ptr))->pOff;
     return Py_BuildValue("i",var);
 }
 
@@ -479,7 +445,7 @@ PyObject* getYOff(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->lOff;
+    var = ((geoGridOptical*)(ptr))->lOff;
     return Py_BuildValue("i",var);
 }
 
@@ -493,7 +459,7 @@ PyObject* getXCount(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->pCount;
+    var = ((geoGridOptical*)(ptr))->pCount;
     return Py_BuildValue("i",var);
 }
 
@@ -507,7 +473,7 @@ PyObject* getYCount(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->lCount;
+    var = ((geoGridOptical*)(ptr))->lCount;
     return Py_BuildValue("i",var);
 }
 
@@ -521,7 +487,7 @@ PyObject* getXPixelSize(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->grd_res;
+    var = ((geoGridOptical*)(ptr))->X_res;
     return Py_BuildValue("d",var);
 }
 
@@ -535,7 +501,7 @@ PyObject* getYPixelSize(PyObject *self, PyObject *args)
         return NULL;
     }
     
-    var = ((geoGrid*)(ptr))->azm_res;
+    var = ((geoGridOptical*)(ptr))->Y_res;
     return Py_BuildValue("d",var);
 }
 
@@ -547,7 +513,7 @@ PyObject* setDtUnity(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->dt_unity = dt_unity;
+    ((geoGridOptical*)(ptr))->dt_unity = dt_unity;
     return Py_BuildValue("i", 0);
 }
 
@@ -559,7 +525,7 @@ PyObject* setMaxFactor(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->max_factor = max_factor;
+    ((geoGridOptical*)(ptr))->max_factor = max_factor;
     return Py_BuildValue("i", 0);
 }
 
@@ -571,7 +537,7 @@ PyObject* setUpperThreshold(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->upper_thld = upper_thld;
+    ((geoGridOptical*)(ptr))->upper_thld = upper_thld;
     return Py_BuildValue("i", 0);
 }
 
@@ -583,12 +549,12 @@ PyObject* setLowerThreshold(PyObject *self, PyObject *args)
     {
         return NULL;
     }
-    ((geoGrid*)(ptr))->lower_thld = lower_thld;
+    ((geoGridOptical*)(ptr))->lower_thld = lower_thld;
     return Py_BuildValue("i", 0);
 }
 
 
-PyObject* geogrid(PyObject* self, PyObject* args)
+PyObject* geogridOptical(PyObject* self, PyObject* args)
 {
     uint64_t ptr;
     if (!PyArg_ParseTuple(args, "K", &ptr))
@@ -596,6 +562,6 @@ PyObject* geogrid(PyObject* self, PyObject* args)
         return NULL;
     }
 
-    ((geoGrid*)(ptr))->geogrid();
+    ((geoGridOptical*)(ptr))->geogridOptical();
     return Py_BuildValue("i", 0);
 }

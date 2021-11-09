@@ -27,20 +27,20 @@
  */
 
 
-#ifndef geogridmodule_h
-#define geogridmodule_h
+#ifndef geogridOpticalmodule_h
+#define geogridOpticalmodule_h
 
 #include <Python.h>
 #include <stdint.h>
 
 extern "C"
 {
-        PyObject * createGeoGrid(PyObject*, PyObject*);
-        PyObject * destroyGeoGrid(PyObject*, PyObject*);
-        PyObject * geogrid(PyObject *, PyObject *);
-        PyObject * setRadarImageDimensions(PyObject *, PyObject *);
-        PyObject * setRangeParameters(PyObject *, PyObject *);
-        PyObject * setAzimuthParameters(PyObject*, PyObject *);
+        PyObject * createGeoGridOptical(PyObject*, PyObject*);
+        PyObject * destroyGeoGridOptical(PyObject*, PyObject*);
+        PyObject * geogridOptical(PyObject *, PyObject *);
+        PyObject * setOpticalImageDimensions(PyObject *, PyObject *);
+        PyObject * setXParameters(PyObject *, PyObject *);
+        PyObject * setYParameters(PyObject*, PyObject *);
         PyObject * setRepeatTime(PyObject *, PyObject *);
     
         PyObject * setDEM(PyObject *, PyObject *);
@@ -50,8 +50,6 @@ extern "C"
         PyObject * setChipSizeMax(PyObject*, PyObject*);
         PyObject * setStableSurfaceMask(PyObject*, PyObject*);
         PyObject * setSlopes(PyObject*, PyObject*);
-        PyObject * setOrbit(PyObject *, PyObject *);
-        PyObject * setLookSide(PyObject *, PyObject *);
         PyObject * setNodataOut(PyObject *, PyObject *);
     
         PyObject * setDtUnity(PyObject *, PyObject *);
@@ -68,7 +66,6 @@ extern "C"
         PyObject * setRO2VXFilename(PyObject *, PyObject *);
         PyObject * setRO2VYFilename(PyObject *, PyObject *);
         PyObject * setEPSG(PyObject *, PyObject *);
-        PyObject * setIncidenceAngle(PyObject *, PyObject *);
         PyObject * setChipSizeX0(PyObject *, PyObject *);
         PyObject * setGridSpacingX(PyObject *, PyObject *);
         PyObject * setXLimits(PyObject *, PyObject *);
@@ -83,16 +80,15 @@ extern "C"
 
 static PyMethodDef geogrid_methods[] =
 {
-        {"createGeoGrid_Py", createGeoGrid, METH_VARARGS, " "},
-        {"destroyGeoGrid_Py", destroyGeoGrid, METH_VARARGS, " "},
-        {"geogrid_Py", geogrid, METH_VARARGS, " "},
-        {"setRadarImageDimensions_Py", setRadarImageDimensions, METH_VARARGS, " "},
-        {"setRangeParameters_Py", setRangeParameters, METH_VARARGS, " "},
-        {"setAzimuthParameters_Py", setAzimuthParameters, METH_VARARGS, " "},
+        {"createGeoGridOptical_Py", createGeoGridOptical, METH_VARARGS, " "},
+        {"destroyGeoGridOptical_Py", destroyGeoGridOptical, METH_VARARGS, " "},
+        {"geogridOptical_Py", geogridOptical, METH_VARARGS, " "},
+        {"setOpticalImageDimensions_Py", setOpticalImageDimensions, METH_VARARGS, " "},
+        {"setXParameters_Py", setXParameters, METH_VARARGS, " "},
+        {"setYParameters_Py", setYParameters, METH_VARARGS, " "},
         {"setRepeatTime_Py", setRepeatTime, METH_VARARGS, " "},
         {"setDEM_Py", setDEM, METH_VARARGS, " "},
         {"setEPSG_Py", setEPSG, METH_VARARGS, " "},
-        {"setIncidenceAngle_Py", setIncidenceAngle, METH_VARARGS, " "},
         {"setChipSizeX0_Py", setChipSizeX0, METH_VARARGS, " "},
         {"setGridSpacingX_Py", setGridSpacingX, METH_VARARGS, " "},
         {"setVelocities_Py", setVelocities, METH_VARARGS, " "},
@@ -101,8 +97,6 @@ static PyMethodDef geogrid_methods[] =
         {"setChipSizeMax_Py", setChipSizeMax, METH_VARARGS, " "},
         {"setStableSurfaceMask_Py", setStableSurfaceMask, METH_VARARGS, " "},
         {"setSlopes_Py", setSlopes, METH_VARARGS, " "},
-        {"setOrbit_Py", setOrbit, METH_VARARGS, " "},
-        {"setLookSide_Py", setLookSide, METH_VARARGS, " "},
         {"setNodataOut_Py", setNodataOut, METH_VARARGS, " "},
         {"setDtUnity_Py", setDtUnity, METH_VARARGS, " "},
         {"setMaxFactor_Py", setMaxFactor, METH_VARARGS, " "},
@@ -126,5 +120,5 @@ static PyMethodDef geogrid_methods[] =
         {"setRO2VYFilename_Py", setRO2VYFilename, METH_VARARGS, " "},
         {NULL, NULL, 0, NULL}
 };
-#endif //geoGridmodule_h
+#endif //geoGridOpticalmodule_h
 

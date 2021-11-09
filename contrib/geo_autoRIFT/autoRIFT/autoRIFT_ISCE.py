@@ -65,7 +65,14 @@ CHIP_SIZE_0X = Component.Parameter('ChipSize0X',
         default = 32,
         type = int,
         mandatory = False,
-        doc = 'Minimum acceptable size (in X direction) of the reference data window to be used for correlation')
+        doc = 'Minimum acceptable size (in X direction) of the reference data window to be used for correlation without resampling the grid; if a chip size greater than this value is provided, need to resize the sampling grid')
+
+GRID_SPACING_X = Component.Parameter('GridSpacingX',
+        public_name='GRID_SPACING_X',
+        default = 32,
+        type = int,
+        mandatory = False,
+        doc = 'Spacing (in X direction) of the sampling grid')
 
 SCALE_CHIP_SIZE_Y = Component.Parameter('ScaleChipSizeY',
         public_name='SCALE_CHIP_SIZE_Y',
@@ -132,7 +139,7 @@ FRAC_VALID = Component.Parameter('FracValid',
 
 FRAC_SEARCH = Component.Parameter('FracSearch',
         public_name = 'FRAC_SEARCH',
-        default = 0.25,
+        default = 0.20,
         type = float,
         mandatory=False,
         doc = 'Fraction of search')
@@ -157,6 +164,13 @@ MAD_SCALAR = Component.Parameter('MadScalar',
         type = int,
         mandatory=False,
         doc = 'Mad Scalar')
+
+COLFILT_CHUNK_SIZE = Component.Parameter('colfiltChunkSize',
+        public_name = 'COLFILT_CHUNK_SIZE',
+        default = 4,
+        type = int,
+        mandatory=False,
+        doc = 'column filter chunk size')
 
 BUFF_DISTANCE_C = Component.Parameter('BuffDistanceC',
         public_name = 'BUFF_DISTANCE_C',
@@ -214,6 +228,7 @@ class autoRIFT_ISCE(autoRIFT, Component):
                       CHIP_SIZE_MIN_X,
                       CHIP_SIZE_MAX_X,
                       CHIP_SIZE_0X,
+                      GRID_SPACING_X,
                       SCALE_CHIP_SIZE_Y,
                       SEARCH_LIMIT_X,
                       SEARCH_LIMIT_Y,
@@ -227,6 +242,7 @@ class autoRIFT_ISCE(autoRIFT, Component):
                       FILT_WIDTH,
                       ITER,
                       MAD_SCALAR,
+                      COLFILT_CHUNK_SIZE,
                       BUFF_DISTANCE_C,
                       COARSE_COR_CUTOFF,
                       OVER_SAMPLE_RATIO,

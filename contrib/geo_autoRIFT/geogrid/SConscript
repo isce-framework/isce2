@@ -26,13 +26,28 @@ if not os.path.exists(initFile):
 	fout.write("#!/usr/bin/env python3")
 	fout.close()
 
+
 listFiles = ['Geogrid.py','GeogridOptical.py',initFile]
 envgeogrid.Install(install,listFiles)
 envgeogrid.Alias('install',install)
 Export('envgeogrid')
+
+
+
+
 bindingsScons = 'bindings/SConscript'
 SConscript(bindingsScons,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/bindings')
 includeScons = 'include/SConscript'
 SConscript(includeScons)
 srcScons = 'src/SConscript'
 SConscript(srcScons,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/src')
+
+
+
+bindingsScons1 = 'bindings/SConscript1'
+SConscript(bindingsScons1,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/bindings')
+includeScons1 = 'include/SConscript1'
+SConscript(includeScons1)
+srcScons1 = 'src/SConscript1'
+SConscript(srcScons1,variant_dir = envgeogrid['PRJ_SCONS_BUILD'] + '/' + package + '/'  + project + '/src')
+
