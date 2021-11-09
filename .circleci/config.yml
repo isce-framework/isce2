@@ -101,7 +101,8 @@ jobs:
               echo "PRJ_SCONS_BUILD = /root/project/build" > SConfigISCE
               echo "PRJ_SCONS_INSTALL = /root/project/install/isce" >> SConfigISCE
               echo "LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib" >> SConfigISCE
-              echo "CPPPATH = /opt/conda/include/python3.8 /opt/conda/lib/python3.8/site-packages/numpy/core/include /opt/conda/include /usr/include" >> SConfigISCE
+              python_inc="$(echo /opt/conda/include/python3.* /opt/conda/lib/python3.*/site-packages/numpy/core/include)"
+              echo "CPPPATH = $python_inc /opt/conda/include /usr/include" >> SConfigISCE
               echo "FORTRANPATH =  /usr/include /opt/conda/include" >> SConfigISCE
               echo "FORTRAN = /bin/gfortran" >> SConfigISCE
               echo "CC = /bin/gcc" >> SConfigISCE
