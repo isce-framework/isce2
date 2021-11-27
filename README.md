@@ -293,7 +293,7 @@ run the following command while in the top directory of the ISCE source (the
 directory containing the SConstruct file):
 
 ```bash
-> rm -rf config.log .sconfig.dblite .sconf_temp
+> rm -rf config.log .sconfig.dblite .sconf_temp .sconsign.dblite
 ```
 
 and then try "scons install" again.
