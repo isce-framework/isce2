@@ -86,19 +86,25 @@ def download_waterMask(bbox, dem_file, fill_value=-1):
         out_dir = os.path.dirname(dem_file)
         if not bbox:
             bbox = dem2bbox(dem_file)
+    print('bounding box in (S, N, W, E): {}'.format(bbox))
 
     sw = createManager('wbd')
     sw.configure()
     #inps.waterBodyGeo = sw.defaultName(inps.bbox)
     sw.outputFile = os.path.join(out_dir, sw.defaultName(bbox))
-    sw._noFilling = False
-    sw._fillingValue = fill_value
-    sw.stitch(bbox[0:2], bbox[2:])
+    if os.path.isfile(sw.outputFile):
+        print('wbd file already exists at: {}'.format(sw.outputFile))
+        print('skip re-downloading and continue')
+    else:
+        sw._noFilling = False
+        sw._fillingValue = fill_value
+        sw.stitch(bbox[0:2], bbox[2:])
     return sw.outputFile
 
 
 def geo2radar(geo_file, rdr_file, lat_file, lon_file):
     #inps.waterBodyRadar = inps.waterBodyGeo + '.rdr'
+    print('converting water mask file to radar coordinates ...')
     sw = SWBDStitcher()
     sw.toRadar(geo_file, lat_file, lon_file, rdr_file)
     return rdr_file
