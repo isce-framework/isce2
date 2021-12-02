@@ -184,7 +184,7 @@ def createParser():
     parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
     
-    parser.add_argument('-U', '--update_stack', dest='updateStack', action='store_true', default=False,
+    parser.add_argument('-U', '--updateStack', dest='updateStack', action='store_true', default=False,
                         help='Update existing stack with new SLCs')
 
     return parser
