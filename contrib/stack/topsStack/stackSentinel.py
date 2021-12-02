@@ -183,6 +183,9 @@ def createParser():
 
     parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
+    
+    parser.add_argument('-U', '--update_stack', dest='updateStack', action='store_true', default=False,
+                        help='Update existing stack with new SLCs')
 
     return parser
 
@@ -422,7 +425,7 @@ def get_dates(inps):
 
     return dateList, inps.reference_date, secondaryList, safe_dict
 
-def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should be changed to able to account for the existed aquisitions -- Minyan Zhong
+def selectNeighborPairs(dateList, num_connections, updateStack):
 
     pairs = []
     if num_connections == 'all':
