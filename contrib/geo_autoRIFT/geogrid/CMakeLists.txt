@@ -19,7 +19,7 @@ target_include_directories(geogridOptical PRIVATE
     )
 target_link_libraries(geogridOptical PRIVATE
     GDAL::GDAL
-    #isce2::combinedLib
+    isce2::combinedLib
     )
 
 InstallSameDir(
