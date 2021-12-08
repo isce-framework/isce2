@@ -88,7 +88,7 @@ Geo2rdr::Geo2rdr() {
 }
 
 void Geo2rdr::geo2rdr() {
-    
+
     double *lat, *lon, *dem, *rgm, *azt, *rgoff, *azoff;
     double xyz_mid[3], vel_mid[3], llh[3], xyz[3], satx[3], satv[3], dr[3];
     double tend, tline, tprev, rngend, rngpix, tmid, temp, dtaz, dmrg, fdop, fdopder, fnprime;
@@ -137,7 +137,7 @@ void Geo2rdr::geo2rdr() {
     }
 
     // OpenMP replacement for clock() (clock reports cumulative thread time, not single thread
-    // time, so clock() on 4 threads would report 4 x the true runtime) 
+    // time, so clock() on 4 threads would report 4 x the true runtime)
     timer_start = omp_get_wtime();
     cnt = 0;
     printf("Geo2rdr executing on %d threads...\n",  omp_get_max_threads());
@@ -259,12 +259,20 @@ void Geo2rdr::geo2rdr() {
         wd.width = demWidth;
         wd.firstWrite = true; // Flag to ignore write instructions
         pthread_create(&writeThread, &attr, writeToFile, (void*)&wd); // Fires empty thread
-       
-        int totalPixels = demLength * demWidth;
-        //int linesPerRun = min(demLength, nLinesPossible(demLength, demWidth));
-        int linesPerRun = demLength;
-        while ((linesPerRun*demWidth) > 2e8) linesPerRun--;
-        int pixPerRun = linesPerRun * demWidth;
+
+        size_t totalPixels = demLength * demWidth;
+        // adjust the lines per run by the available gpu memory
+        int linesPerRun = std::min(demLength, nLinesPossible(demLength, demWidth));
+        // ! To best parallelize the computation, use the max available gpu memory is the best option
+        // ! the following adjustment is not needed
+        // adjust further by the max pixels per run, prefavorbly as a user configurable parameter
+        // temp set as 2^20
+        // size_t maxPixPerRun = 1 << 20;
+        // size_t pixPerRun = std::min((size_t)linesPerRun*demWidth, maxPixPerRun);
+        // linesPerRun = pixPerRun/demWidth *demWidth;
+
+        // recalculate run info
+        size_t pixPerRun = linesPerRun * demWidth;
         int nRuns = demLength / linesPerRun;
         int remPix = totalPixels - (nRuns * pixPerRun);
         int remLines = remPix / demWidth;
@@ -273,7 +281,7 @@ void Geo2rdr::geo2rdr() {
         if (remPix > 0) printf(" (with %d lines in a final partial block)", remLines);
         printf("\n");
 
-        lat = new double[pixPerRun]; 
+        lat = new double[pixPerRun];
         lon = new double[pixPerRun];
         dem = new double[pixPerRun];
         size_t nb_pixels = pixPerRun * sizeof(double);
@@ -291,14 +299,14 @@ void Geo2rdr::geo2rdr() {
             outputArrays[2] = (double *)malloc(nb_pixels); // h_rgoff
             outputArrays[3] = (double *)malloc(nb_pixels); // h_azoff
 
-            runGPUGeo(i, pixPerRun, gpu_inputs_d, gpu_inputs_i, lat, lon, dem, 
+            runGPUGeo(i, pixPerRun, gpu_inputs_d, gpu_inputs_i, lat, lon, dem,
                         gpu_orbNvec, gpu_orbSvs, gpu_polyOrd, gpu_polyMean, gpu_polyNorm,
                         gpu_polyCoef, prf, outputArrays);
             for (int j=0; j<4; j++) writeArrays[j] = outputArrays[j]; // Copying pointers
             if (i != 0) printf("  Waiting for previous asynchronous write-out to finish...\n");
             pthread_attr_destroy(&attr);
-            pthread_join(writeThread, &thread_stat); // Waits for async thread to finish 
-            
+            pthread_join(writeThread, &thread_stat); // Waits for async thread to finish
+
             printf("  Writing run %d out asynchronously to image files...\n", i);
             wd.accessors = (void**)accObjs;
             wd.rg = writeArrays[0];
@@ -381,14 +389,14 @@ void Geo2rdr::geo2rdr() {
             pixel = latAccObj->getLineSequential((char *)lat);
             pixel = lonAccObj->getLineSequential((char *)lon);
             pixel = hgtAccObj->getLineSequential((char *)dem);
-            
+
             if ((line%1000) == 0) printf("Processing line: %d %d\n", line, numOutsideImage);
 
             #pragma omp parallel for private(pixel, rngpix, tline, tprev, stat, fnprime, fdop, \
                                              fdopder, isOutside, xyz, llh, satx, satv, dr) \
                                      reduction(+:numOutsideImage,conv,cnt)
             for (pixel=0; pixel<demWidth; pixel++) {
-               
+
                 isOutside = false; // Flag to determine if point is outside image
 
                 llh[0] = lat[pixel] * (M_PI / 180.);
@@ -426,7 +434,7 @@ void Geo2rdr::geo2rdr() {
                         break; // Point converged
                     }
                 }
-                
+
                 if ((tline < tstart) || (tline > tend)) isOutside = true;
 
                 for (int i=0; i<3; i++) dr[i] = xyz[i] - satx[i];

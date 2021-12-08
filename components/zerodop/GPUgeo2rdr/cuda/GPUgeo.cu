@@ -4,6 +4,7 @@
 //
 
 #include <cuda_runtime.h>
+#include <cassert>
 #include <math.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -65,7 +66,7 @@ struct Poly1d {
 __constant__ double d_inpts_double[9];
 __constant__ int d_inpts_int[3];
 
-// Mem usage: 27 doubles (216 bytes) per call 
+// Mem usage: 27 doubles (216 bytes) per call
 __device__ int interpolateOrbit(struct Orbit *orb, double t, double *xyz, double *vel) {
     double h[4], hdot[4], f0[4], f1[4], g0[4], g1[4];
     double sum = 0.0;
@@ -197,7 +198,7 @@ __global__ void runGeo(struct Orbit orb, struct Poly1d fdvsrng, struct Poly1d fd
     if (pixel < NPIXELS) { // The number of pixels in a run changes based on if it's a full run or a partial run
         /* * * * * * * * * * * * * * * * * * * * * * * * * * * * *
          *   Input mapping
-         * 
+         *
          * int[0] = demLength
          * int[1] = demWidth
          * int[2] = bistatic
@@ -212,7 +213,7 @@ __global__ void runGeo(struct Orbit orb, struct Poly1d fdvsrng, struct Poly1d fd
          * double[7] = dmrg
          * double[8] = dtaz
          * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-        
+
         double xyz[3], llh[3], satx[3], satv[3], dr[3];
         double rngpix, tline, tprev, fnprime, fdop, fdopder;
         int stat, i, j;
@@ -231,7 +232,7 @@ __global__ void runGeo(struct Orbit orb, struct Poly1d fdvsrng, struct Poly1d fd
         llh2xyz(&elp,xyz,llh);
 
         tline = .5 * (d_inpts_double[2] + d_inpts_double[3]);
-        stat = interpolateOrbit(&orb, tline, satx, satv); // Originally we got xyz_mid and vel_mid, then copied into satx/satv, 
+        stat = interpolateOrbit(&orb, tline, satx, satv); // Originally we got xyz_mid and vel_mid, then copied into satx/satv,
                                                           // but since these are all independent here it's fine
         if (stat != 0) isOutside = true; // Should exit, but this is next-best thing...
 
@@ -294,11 +295,17 @@ int nLinesPossible(int length, int width) {
     size_t freeByte, totalByte;
     int linesPerRun;
     cudaMemGetInfo(&freeByte, &totalByte);
-    printf("tb %ld\n", totalByte);
-    totalByte = size_t((double(totalByte) / 5.e8) * 5.e8); // Round down to nearest .5 GB
-    printf("tba %ld\n", totalByte);
-    printf("Device has roughly %.4f GB of memory, ", double(totalByte)/1.e9);
-    linesPerRun = totalByte / (556 * width);
+    printf("Available free gpu memory in bytes %ld\n", freeByte);
+    // use 100Mb as a rounding unit , may be adjusted
+    size_t memoryRoundingUnit = 1024ULL * 1024ULL * 100;
+    // use 2*memoryRoundingUnit as an overhead for safety
+    freeByte = (freeByte / memoryRoundingUnit -2) * memoryRoundingUnit;
+    assert(freeByte >0);
+    // printf("GPU Memory to be used %ld\n", freeByte);
+    // printf("Device has roughly %.4f GB of memory, ", double(totalByte)/1.e9);
+    // determine the allowed max lines per run, 556 is per pixel memory usage (estimated)
+    linesPerRun = freeByte / (7*sizeof(double) * width);
+    assert(linesPerRun>0);
     printf("and can process roughly %d lines (each with %d pixels) per run.\n", linesPerRun, width);
     return linesPerRun;
 }
@@ -319,9 +326,9 @@ void freePoly1d(struct Poly1d *poly) {
     free(poly->coeffs);
 }
 
-void runGPUGeo(int iter, int numPix, double *h_inpts_dbl, int *h_inpts_int, double *h_lat, double *h_lon, double *h_dem, int h_orbNvec, double *h_orbSvs, 
+void runGPUGeo(int iter, int numPix, double *h_inpts_dbl, int *h_inpts_int, double *h_lat, double *h_lon, double *h_dem, int h_orbNvec, double *h_orbSvs,
                 int h_polyOrd, double h_polyMean, double h_polyNorm, double *h_polyCoeffs, double h_polyPRF, double **accArr) {
-   
+
     double iStartCpy, iStartRun, iEndRun, iEndCpy;
     int i;
 
