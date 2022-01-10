@@ -237,7 +237,8 @@ class Track(object):
             indx = self.findOverlapLine(sortedList[i-1][1],sortedList[i][1],endLine,width,i-1,i)
             #if indx is not None than indx is the new start line
             #otherwise we use startLine  computed from acquisition time
-            if (indx is not None) and (indx + sortedList[i-1][0] != sortedList[i][0]):
+            #no need to do this for ALOS; otherwise there will be problems when there are multiple prfs and the data are interpolated. C. Liang, 20-dec-2021
+            if (self._frames[0].instrument.platform._mission != 'ALOS') and (indx is not None) and (indx + sortedList[i-1][0] != sortedList[i][0]):
                 startLine.append(indx + sortedList[i-1][0])
                 outputs.append(sortedList[i][1])
                 self.logger.info("Changing starting line for frame %d from %d to %d"%(i,endLine,indx))
