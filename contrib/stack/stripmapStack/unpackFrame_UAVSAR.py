@@ -47,8 +47,6 @@ def unpack(metaFile, slcDir, dopFile, stackSegment, parse=False):
     with shelve.open(pickName) as db:
         db['frame'] = obj.frame
 
-    return
-
 
 if __name__ == '__main__':
     '''

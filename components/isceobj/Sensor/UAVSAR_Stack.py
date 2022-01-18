@@ -312,7 +312,7 @@ class UAVSAR_Stack(Component):
         drho = instrument.getRangePixelSize()  #full res value, not spacing in the dop file
         prf = instrument.getPulseRepetitionFrequency()
         self.logger.info("extractDoppler: rho0, drho, prf = {}, {}, {}".format(rho0, drho, prf))
-        dopfile = self.dopplerFile if hasattr(self, 'dopplerFile') else self.metadata['dop']
+        dopfile = getattr(self, 'dopplerFile', self.metadata['dop'])
         with open(dopfile,'r') as f:
             x = f.readlines()  #first line is a header
 
