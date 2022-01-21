@@ -1,35 +1,44 @@
 #!/usr/bin/env python3
 
-import numpy as np
-import argparse
+
 import os
+import sys
+import argparse
+import datetime
+import numpy as np
+
 import isce
 import isceobj
-import datetime
-import sys
 import s1a_isce_utils as ut
+
 
 def createParser():
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
+
+    # inputs
     parser.add_argument('-m', '--reference', type=str, dest='reference', required=True,
             help='Directory with the reference image')
     parser.add_argument('-s', '--secondary', type=str, dest='secondary', required=True,
             help='Directory with the secondary image')
     parser.add_argument('-g', '--geom_referenceDir', type=str, dest='geom_referenceDir', default='geom_reference',
             help='Directory for geometry files of the reference')
-    parser.add_argument('-c', '--coregSLCdir', type=str, dest='coregdir', default='coreg_secondarys',
-            help='Directory with coregistered SLC data')
     parser.add_argument('-a', '--azimuth_misreg', type=str, dest='misreg_az', default='',
             help='A text file that contains zimuth misregistration in subpixels')
     parser.add_argument('-r', '--range_misreg', type=str, dest='misreg_rng', default='',
             help='A text file that contains range misregistration in meters')
+    parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
+            help='Allow App to use GPU when available')
+
+    # outputs
+    parser.add_argument('-c', '--coregSLCdir', type=str, dest='coregdir', default='coreg_secondarys',
+            help='Directory with coregistered SLC data, to store the generated azimuth/range_*.off files.')
     parser.add_argument('-v', '--overlap', dest='overlap', action='store_true', default=False,
             help='Flatten the interferograms with offsets if needed')
     parser.add_argument('-o', '--overlap_dir', type=str, dest='overlapDir', default='overlap',
             help='overlap directory name')
-    parser.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
-            help='Allow App to use GPU when available')
+
     return parser
+
 
 def cmdLineParse(iargs=None):
     '''
@@ -37,6 +46,7 @@ def cmdLineParse(iargs=None):
     '''
     parser = createParser()
     return parser.parse_args(args=iargs)
+
 
 def runGeo2rdrCPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     from zerodop.geo2rdr import createGeo2rdr
@@ -96,12 +106,12 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     from zerodop.GPUgeo2rdr.GPUgeo2rdr import PyGeo2rdr
     from isceobj.Planet.Planet import Planet
     from iscesys import DateTimeUtil as DTU
-    
+
     latImage = isceobj.createImage()
     latImage.load(rdict['lat'] + '.xml')
     latImage.setAccessMode('READ')
     latImage.createImage()
-    
+
     lonImage = isceobj.createImage()
     lonImage.load(rdict['lon'] + '.xml')
     lonImage.setAccessMode('READ')
@@ -120,7 +130,7 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     #####Run Geo2rdr
     planet = Planet(pname='Earth')
     grdr = PyGeo2rdr()
-    
+
     grdr.setRangePixelSpacing(info.rangePixelSize)
     grdr.setPRF(1.0 / info.azimuthTimeInterval)
     grdr.setRadarWavelength(info.radarWavelength)
@@ -134,7 +144,7 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
 
         grdr.setOrbitVector(count, td, pos[0], pos[1], pos[2], vel[0], vel[1], vel[2])
         count += 1
-    
+
     grdr.setOrbitMethod(0)
     grdr.setWidth(info.numberOfSamples)
     grdr.setLength(info.numberOfLines)
@@ -146,11 +156,11 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     grdr.setEllipsoidEccentricitySquared(planet.ellipsoid.e2)
     grdr.createPoly(0, 0., 1.)
     grdr.setPolyCoeff(0, 0.)
-    
+
     grdr.setDemLength(demImage.getLength())
     grdr.setDemWidth(demImage.getWidth())
     grdr.setBistaticFlag(0)
-    
+
     rangeOffsetImage = isceobj.createImage()
     rangeOffsetImage.setFilename(rdict['rangeOffName'])
     rangeOffsetImage.setAccessMode('write')
@@ -158,7 +168,7 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     rangeOffsetImage.setCaster('write', 'DOUBLE')
     rangeOffsetImage.setWidth(demImage.width)
     rangeOffsetImage.createImage()
-    
+
     azimuthOffsetImage = isceobj.createImage()
     azimuthOffsetImage.setFilename(rdict['azOffName'])
     azimuthOffsetImage.setAccessMode('write')
@@ -166,7 +176,7 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     azimuthOffsetImage.setCaster('write', 'DOUBLE')
     azimuthOffsetImage.setWidth(demImage.width)
     azimuthOffsetImage.createImage()
-    
+
     grdr.setLatAccessor(latImage.getImagePointer())
     grdr.setLonAccessor(lonImage.getImagePointer())
     grdr.setHgtAccessor(demImage.getImagePointer())
@@ -174,24 +184,24 @@ def runGeo2rdrGPU(info, rdict, misreg_az=0.0, misreg_rg=0.0):
     grdr.setRgAccessor(0)
     grdr.setAzOffAccessor(azimuthOffsetImage.getImagePointer())
     grdr.setRgOffAccessor(rangeOffsetImage.getImagePointer())
-    
+
     grdr.geo2rdr()
-    
+
     rangeOffsetImage.finalizeImage()
     rangeOffsetImage.renderHdr()
-    
+
     azimuthOffsetImage.finalizeImage()
     azimuthOffsetImage.renderHdr()
     latImage.finalizeImage()
     lonImage.finalizeImage()
     demImage.finalizeImage()
-    
+
     return
-    pass
+
 
 def main(iargs=None):
     '''
-    Estimate offsets for the overlap regions of the bursts.
+    Estimate offsets for (the overlap regions of) the bursts.
     '''
     inps = cmdLineParse(iargs)
 
@@ -203,7 +213,7 @@ def main(iargs=None):
         run_GPU = True
     except:
         pass
-    
+
     if inps.useGPU and not run_GPU:
         print("GPU mode requested but no GPU ISCE code found")
 
@@ -214,24 +224,22 @@ def main(iargs=None):
     else:
         print('CPU mode')
         runGeo2rdr = runGeo2rdrCPU
-    
+
 
     referenceSwathList = ut.getSwathList(inps.reference)
     secondarySwathList = ut.getSwathList(inps.secondary)
-
-    swathList = list(sorted(set(referenceSwathList+secondarySwathList)))
+    swathList = list(sorted(set(referenceSwathList + secondarySwathList)))
 
     for swath in swathList:
         ##Load secondary metadata
         secondary = ut.loadProduct(os.path.join(inps.secondary, 'IW{0}.xml'.format(swath)))
         reference = ut.loadProduct(os.path.join(inps.reference, 'IW{0}.xml'.format(swath)))
-    
+
         ### output directory
         if inps.overlap:
             outdir = os.path.join(inps.coregdir, inps.overlapDir, 'IW{0}'.format(swath))
         else:
             outdir = os.path.join(inps.coregdir, 'IW{0}'.format(swath))
-
         os.makedirs(outdir, exist_ok=True)
 
         if os.path.exists(str(inps.misreg_az)):
@@ -239,7 +247,7 @@ def main(iargs=None):
                 misreg_az = float(f.readline())
         else:
             misreg_az = 0.0
-        
+
         if os.path.exists(str(inps.misreg_rng)):
             with open(inps.misreg_rng, 'r') as f:
                 misreg_rg = float(f.readline())
@@ -252,51 +260,45 @@ def main(iargs=None):
         if inps.overlap:
             maxBurst = maxBurst - 1
             geomDir = os.path.join(inps.geom_referenceDir, inps.overlapDir, 'IW{0}'.format(swath))   
-       
         else:
             geomDir = os.path.join(inps.geom_referenceDir, 'IW{0}'.format(swath))
-      
-    
+
         secondaryBurstStart = minBurst + burstoffset
-    
+
         for mBurst in range(minBurst, maxBurst):
-        
             ###Corresponding secondary burst
             sBurst = secondaryBurstStart + (mBurst - minBurst)
             burstTop = secondary.bursts[sBurst]
             if inps.overlap:
                 burstBot = secondary.bursts[sBurst+1]
-        
+
             print('Overlap pair {0}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst))
             if inps.overlap:
                 ####Generate offsets for top burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'lon': os.path.join(geomDir,'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'hgt': os.path.join(geomDir,'hgt_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'rangeOffName': os.path.join(outdir, 'range_top_%02d_%02d.off'%(mBurst+1,mBurst+2)),
-                     'azOffName': os.path.join(outdir, 'azimuth_top_%02d_%02d.off'%(mBurst+1,mBurst+2))}
-        
+                         'lon': os.path.join(geomDir,'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
+                         'hgt': os.path.join(geomDir,'hgt_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
+                         'rangeOffName': os.path.join(outdir, 'range_top_%02d_%02d.off'%(mBurst+1,mBurst+2)),
+                         'azOffName': os.path.join(outdir, 'azimuth_top_%02d_%02d.off'%(mBurst+1,mBurst+2))}
                 runGeo2rdr(burstTop, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
-        
+
                 print('Overlap pair {0}: Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst+1, sBurst+1))
                 ####Generate offsets for bottom burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'lon': os.path.join(geomDir, 'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'hgt': os.path.join(geomDir, 'hgt_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
-                     'rangeOffName': os.path.join(outdir, 'range_bot_%02d_%02d.off'%(mBurst+1,mBurst+2)),
-                     'azOffName': os.path.join(outdir, 'azimuth_bot_%02d_%02d.off'%(mBurst+1,mBurst+2))}
-
+                         'lon': os.path.join(geomDir, 'lon_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
+                         'hgt': os.path.join(geomDir, 'hgt_%02d_%02d.rdr'%(mBurst+1,mBurst+2)),
+                         'rangeOffName': os.path.join(outdir, 'range_bot_%02d_%02d.off'%(mBurst+1,mBurst+2)),
+                         'azOffName': os.path.join(outdir, 'azimuth_bot_%02d_%02d.off'%(mBurst+1,mBurst+2))}
                 runGeo2rdr(burstBot, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
 
             else:
                 print('Burst {1} of reference matched with Burst {2} of secondary'.format(mBurst-minBurst, mBurst, sBurst))
                 ####Generate offsets for top burst
                 rdict = {'lat': os.path.join(geomDir,'lat_%02d.rdr'%(mBurst+1)),
-                     'lon': os.path.join(geomDir,'lon_%02d.rdr'%(mBurst+1)),
-                     'hgt': os.path.join(geomDir,'hgt_%02d.rdr'%(mBurst+1)),
-                     'rangeOffName': os.path.join(outdir, 'range_%02d.off'%(mBurst+1)),
-                     'azOffName': os.path.join(outdir, 'azimuth_%02d.off'%(mBurst+1))}
-
+                         'lon': os.path.join(geomDir,'lon_%02d.rdr'%(mBurst+1)),
+                         'hgt': os.path.join(geomDir,'hgt_%02d.rdr'%(mBurst+1)),
+                         'rangeOffName': os.path.join(outdir, 'range_%02d.off'%(mBurst+1)),
+                         'azOffName': os.path.join(outdir, 'azimuth_%02d.off'%(mBurst+1))}
                 runGeo2rdr(burstTop, rdict, misreg_az=misreg_az, misreg_rg=misreg_rg)
 
 
@@ -307,6 +309,3 @@ if __name__ == '__main__':
     '''
     # Main Driver
     main()
-
-
-

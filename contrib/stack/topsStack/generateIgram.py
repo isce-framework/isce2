@@ -3,17 +3,18 @@
 # Author: Piyush Agram
 # Heresh Fattahi: Adopted for stack
 
+import os
+import argparse
+import copy
+import numpy as np
+from osgeo import gdal
+
 import isce
 import isceobj
-import numpy as np
 from isceobj.Util.Poly2D import Poly2D
-import argparse
-import os
-import copy
 from isceobj.Sensor.TOPS import createTOPSSwathSLCProduct 
 from mroipac.correlation.correlation import Correlation
 import s1a_isce_utils as ut
-from osgeo import gdal
 
 
 def createParser():
@@ -49,25 +50,24 @@ def cmdLineParse(iargs = None):
     return parser.parse_args(args=iargs)
 
 
-def multiply(masname, slvname, outname, rngname1, rngname2, fact, referenceFrame,
-        flatten=False):
+def multiply(referencename, secondaryname, outname, rngname1, rngname2, fact, referenceFrame, flatten=False):
 
     print('multiply')
-    masImg = isceobj.createSlcImage()
-    masImg.load( masname + '.xml')
+    referenceImg = isceobj.createSlcImage()
+    referenceImg.load(referencename + '.xml')
 
-    width = masImg.getWidth()
-    length = masImg.getLength()
+    width = referenceImg.getWidth()
+    length = referenceImg.getLength()
 
-    ds = gdal.Open(masname + '.vrt', gdal.GA_ReadOnly)
+    ds = gdal.Open(referencename + '.vrt', gdal.GA_ReadOnly)
     reference = ds.GetRasterBand(1).ReadAsArray()
     ds = None
-    ds = gdal.Open(slvname + '.vrt', gdal.GA_ReadOnly)
+    ds = gdal.Open(secondaryname + '.vrt', gdal.GA_ReadOnly)
     secondary = ds.GetRasterBand(1).ReadAsArray()
     ds = None
-    print('read') 
-    #reference = np.memmap(masname, dtype=np.complex64, mode='r', shape=(length,width))
-    #secondary = np.memmap(slvname, dtype=np.complex64, mode='r', shape=(length, width))
+    print('read')
+    #reference = np.memmap(referencename, dtype=np.complex64, mode='r', shape=(length,width))
+    #secondary = np.memmap(secondaryname, dtype=np.complex64, mode='r', shape=(length, width))
 
     if os.path.exists(rngname1):
         rng1 = np.memmap(rngname1, dtype=np.float32, mode='r', shape=(length,width))
@@ -137,7 +137,7 @@ def main(iargs=None):
 
         os.makedirs(ifgdir, exist_ok=True)
 
-    ####Load relevant products
+        ####Load relevant products
         if inps.overlap:
             topReference = ut.loadProduct(os.path.join(inps.reference , 'overlap','IW{0}_top.xml'.format(swath)))
             botReference = ut.loadProduct(os.path.join(inps.reference ,'overlap', 'IW{0}_bottom.xml'.format(swath)))
@@ -189,25 +189,21 @@ def main(iargs=None):
                 secondaryname = os.path.splitext(secondaryname)[0] + inps.secondary_suffix + os.path.splitext(secondaryname)[1]
 
             if inps.overlap:
-                rdict = { 'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
-                     'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
-                     'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))}
-
+                rdict = {'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
+                         'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),
+                         'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_top_%02d_%02d.off'%(ii,ii+1))}
                 intname = os.path.join(ifgdir, '%s_top_%02d_%02d.int'%(inps.intprefix,ii,ii+1))
-        
+
             else:
-
-                rdict = {'rangeOff1' : os.path.join(inps.reference, IWstr, 'range_%02d.off'%(ii)),
-                     'rangeOff2' : os.path.join(inps.secondary, IWstr, 'range_%02d.off'%(ii)),
-                     'azimuthOff1': os.path.join(inps.secondary, IWstr, 'azimuth_%02d.off'%(ii))}
-            
+                rdict = {'rangeOff1'  : os.path.join(inps.reference, IWstr, 'range_%02d.off'%(ii)),
+                         'rangeOff2'  : os.path.join(inps.secondary, IWstr, 'range_%02d.off'%(ii)),
+                         'azimuthOff1': os.path.join(inps.secondary, IWstr, 'azimuth_%02d.off'%(ii))}
                 intname = os.path.join(ifgdir, '%s_%02d.int'%(inps.intprefix,ii))
-
 
             ut.adjustCommonValidRegion(reference,secondary)
             fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
             intimage = multiply(referencename, secondaryname, intname,
-                        rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
+                                rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
 
             burst = copy.deepcopy(reference)
             burst.image = intimage
@@ -220,28 +216,24 @@ def main(iargs=None):
                 reference = botReference.bursts[ii-minReference]
                 secondary = botCoreg.bursts[ii-minSecondary]
 
-
-                referencename =  reference.image.filename
+                referencename = reference.image.filename
                 secondaryname = secondary.image.filename
-#            rdict = {'rangeOff' : os.path.join(coregdir, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
-#                   'azimuthOff': os.path.join(coregdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
+                #rdict = {'rangeOff' : os.path.join(coregdir, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
+                #         'azimuthOff': os.path.join(coregdir, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
 
-                rdict = { 'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
-                     'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
-                    'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
-
-
+                rdict = {'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
+                         'rangeOff2' : os.path.join(inps.secondary, 'overlap', IWstr, 'range_bot_%02d_%02d.off'%(ii,ii+1)),
+                         'azimuthOff': os.path.join(inps.secondary, 'overlap', IWstr, 'azimuth_bot_%02d_%02d.off'%(ii,ii+1))}
                 print ('rdict: ', rdict)
 
                 ut.adjustCommonValidRegion(reference,secondary)
                 intname = os.path.join(ifgdir, '%s_bot_%02d_%02d.int'%(inps.intprefix,ii,ii+1))
                 fact = 4 * np.pi * secondary.rangePixelSize / secondary.radarWavelength
 
-            #intimage = multiply(referencename, secondaryname, intname,
-            #        rdict['rangeOff'], fact, reference, flatten=True)
-
+                #intimage = multiply(referencename, secondaryname, intname,
+                #                    rdict['rangeOff'], fact, reference, flatten=True)
                 intimage = multiply(referencename, secondaryname, intname,
-                        rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
+                                    rdict['rangeOff1'], rdict['rangeOff2'], fact, reference, flatten=inps.flatten)
 
                 burst = copy.deepcopy(reference)
                 burst.burstNumber = ii
@@ -254,7 +246,6 @@ def main(iargs=None):
             topIfg.reference = topCoreg.reference
         else:
             topIfg.reference = topReference.reference
-
         print('Type: ',type(topIfg.reference))
 
         if inps.overlap:
