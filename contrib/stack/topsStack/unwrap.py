@@ -30,19 +30,20 @@
 
 
 # giangi: taken Piyush code for snaphu and adapted
-import isce
-import sys
-import isceobj
-from contrib.Snaphu.Snaphu import Snaphu
-from isceobj.Constants import SPEED_OF_LIGHT
-import argparse
 import os
-import pickle
-from osgeo import gdal
+import sys
+import time
+import argparse
 import numpy as np
-#import shelve
-import s1a_isce_utils as ut
+from osgeo import gdal
+
+import isce
+import isceobj
+from isceobj.Constants import SPEED_OF_LIGHT
 from isceobj.Util.ImageUtil import ImageLib as IML
+from contrib.Snaphu.Snaphu import Snaphu
+import s1a_isce_utils as ut
+
 
 def createParser():
     '''
@@ -93,12 +94,6 @@ def extractInfo(xmlName, inps):
     '''
     from isceobj.Planet.Planet import Planet
     from isceobj.Util.geo.ellipsoid import Ellipsoid
-
-   # with open(pckfile, 'rb') as f:
-   #    frame = pickle.load(f)
-
-    #with shelve.open(pckfile,flag='r') as db:
-    #    frame = db['swath']
 
     frame = ut.loadProduct(xmlName)
 
@@ -319,23 +314,23 @@ def main(iargs=None):
     '''
     The main driver.
     '''
-
+    start_time = time.time()
     inps = cmdLineParse(iargs)
     print ('unwrapping method : ' , inps.method)
-    
+
     if inps.method == 'snaphu':
-       if inps.nomcf: 
-           fncall =  runUnwrap
-       else:
-           fncall = runUnwrapMcf
-       swathList = ut.getSwathList(inps.reference) 
-       #metadata = extractInfo(inps.reference+'.xml', inps)
-       xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
-       metadata = extractInfo(xmlFile, inps)
-       fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
+        if inps.nomcf: 
+            fncall =  runUnwrap
+        else:
+            fncall = runUnwrapMcf
+        swathList = ut.getSwathList(inps.reference) 
+        #metadata = extractInfo(inps.reference+'.xml', inps)
+        xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
+        metadata = extractInfo(xmlFile, inps)
+        fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
 
     elif inps.method == 'icu':
-       runUnwrapIcu(inps.intfile, inps.unwfile)
+        runUnwrapIcu(inps.intfile, inps.unwfile)
 
     if inps.rmfilter:
         filtfile = os.path.abspath(inps.intfile)
@@ -343,6 +338,10 @@ def main(iargs=None):
         intfile = intfile[0] + intfile[1]
 
         remove_filter(intfile, filtfile, inps.unwfile)
+
+    # time usage
+    m, s = divmod(time.time() - start_time, 60)
+    print('time used: {:02.0f} mins {:02.1f} secs.'.format(m, s))
 
 
 if __name__ == '__main__':
