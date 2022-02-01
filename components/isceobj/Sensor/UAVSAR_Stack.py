@@ -146,14 +146,11 @@ class UAVSAR_Stack(Component):
         frame.setSensingStart(tStart)
         frame.setSensingStop(tStop)
         frame.setSensingMid(tMid)
-        frame.setNumberOfLines(
-            int(self.metadata['slc_1_1x1_mag.set_rows']))
-        frame.setNumberOfSamples(
-            int(self.metadata['slc_1_1x1_mag.set_cols']))
+        frame.setNumberOfLines(int(self.metadata['slc_{}_1x1_mag.set_rows'.format(self.segment_index)]))
+        frame.setNumberOfSamples(int(self.metadata['slc_{}_1x1_mag.set_cols'.format(self.segment_index)]))
         frame.setPolarization(self.metadata['Polarization'])
-        frame.C0 = self.metadata['slc_1_1x1_mag.col_addr']
-        frame.S0 = self.metadata[
-            'Segment {} Data Starting Azimuth'.format(self.segment_index)]
+        frame.C0 = self.metadata['slc_{}_1x1_mag.col_addr'.format(self.segment_index)]
+        frame.S0 = self.metadata['Segment {} Data Starting Azimuth'.format(self.segment_index)]
         frame.nearLookAngle = self.metadata['Minimum Look Angle']
         frame.farLookAngle = self.metadata['Maximum Look Angle']
         frame.setStartingRange(self.startingRange)
@@ -175,8 +172,7 @@ class UAVSAR_Stack(Component):
         #of values in degrees at each corner (without rdf unit specified)
         llC = []
         for ic in range(1,5):
-            key = 'Segment {0} Data Approximate Corner {1}'.format(
-                      self.segment_index, ic)
+            key = 'Segment {0} Data Approximate Corner {1}'.format(self.segment_index, ic)
             self.logger.info("key = {}".format(key))
             self.logger.info("metadata[key] = {}".format(self.metadata[key], type(self.metadata[key])))
             llC.append(list(map(float, self.metadata[key].split(','))))
@@ -316,9 +312,9 @@ class UAVSAR_Stack(Component):
         drho = instrument.getRangePixelSize()  #full res value, not spacing in the dop file
         prf = instrument.getPulseRepetitionFrequency()
         self.logger.info("extractDoppler: rho0, drho, prf = {}, {}, {}".format(rho0, drho, prf))
-        dopfile = self.metadata['dop']
-        f = open(dopfile,'r')
-        x = f.readlines()  #first line is a header
+        dopfile = getattr(self, 'dopplerFile', self.metadata['dop'])
+        with open(dopfile,'r') as f:
+            x = f.readlines()  #first line is a header
 
         import numpy
         z = numpy.array(
@@ -337,21 +333,20 @@ class UAVSAR_Stack(Component):
         res2 = fit[1][0]  #sum of squared residuals
         self.logger.info("coeffs = {}".format(coefs))
         self.logger.info("rms residual = {}".format(numpy.sqrt(res2/len(dop))))
-        o = open("dop.txt", 'w')
-        for i, d in zip(rhoi, dop):
-            val = polyval(coefs,i)
-            res = d-val
-            o.write("{0} {1} {2} {3}\n".format(i, d, val, res))
-            dopfile = self.metadata['dop']
+        with open("dop.txt", 'w') as o:
+            for i, d in zip(rhoi, dop):
+                val = polyval(coefs,i)
+                res = d-val
+                o.write("{0} {1} {2} {3}\n".format(i, d, val, res))
 
         self.dopplerVals = {'Near':polyval(coefs, 0)}  #need this temporarily in this module
 
         self.logger.info("UAVSAR_Stack.extractDoppler: self.dopplerVals = {}".format(self.dopplerVals))
         self.logger.info("UAVSAR_Stack.extractDoppler: prf = {}".format(prf))
 
-#The doppler file values are in units rad/m.  divide by 2*pi rad/cycle to convert
-#to cycle/m.  Then multiply by velocity to get Hz and divide by prf for dimensionless
-#doppler coefficients
+        #The doppler file values are in units rad/m.  divide by 2*pi rad/cycle to convert
+        #to cycle/m.  Then multiply by velocity to get Hz and divide by prf for dimensionless
+        #doppler coefficients
         dop_scale = self.velocity/2.0/math.pi
         coefs =  [x*dop_scale for x in coefs]
         #Set the coefs in frame._dopplerVsPixel because that is where DefaultDopp looks for them
@@ -361,14 +356,14 @@ class UAVSAR_Stack(Component):
 
     @property
     def terrainHeight(self):
-#The peg point incorporates the actual terrainHeight
+        #The peg point incorporates the actual terrainHeight
         return 0.0
 
     @property
     def platformHeight(self):
         h = self.metadata['Global Average Altitude']
-#Reduce the platform height by the terrain height because the
-#peg radius of curvature includes the terrain height
+        #Reduce the platform height by the terrain height because the
+        #peg radius of curvature includes the terrain height
         h -= self.metadata['Global Average Terrain Height']
         return h
 
