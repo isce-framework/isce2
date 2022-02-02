@@ -386,7 +386,14 @@ def subband(self, ionParam):
     from isceobj.Util.Poly2D import Poly2D
     from contrib.alos2proc.alos2proc import rg_filter
 
-    from isceobj.TopsProc.runFineResamp import resampSecondary
+    # decide whether to use CPU or GPU
+    hasGPU = self.useGPU and self._insar.hasGPU()
+    if hasGPU:
+        from isceobj.TopsProc.runFineResamp import resampSecondaryGPU as resampSecondary
+        print('Using GPU for fineresamp')
+    else:
+        from isceobj.TopsProc.runFineResamp import resampSecondaryCPU as resampSecondary
+
     from isceobj.TopsProc.runFineResamp import getRelativeShifts
     from isceobj.TopsProc.runFineResamp import adjustValidSampleLine
     from isceobj.TopsProc.runFineResamp import getValidLines
@@ -424,8 +431,8 @@ def subband(self, ionParam):
         ##############################################################
         #for resampling
         relShifts = getRelativeShifts(reference, secondary, minBurst, maxBurst, secondaryBurstStart)
-        print('Shifts IW-{0}: '.format(swath), relShifts) 
-   
+        print('Shifts IW-{0}: '.format(swath), relShifts)
+
         ####Can corporate known misregistration here
         apoly = Poly2D()
         apoly.initPoly(rangeOrder=0,azimuthOrder=0,coeffs=[[0.]])
@@ -445,8 +452,8 @@ def subband(self, ionParam):
 
         #only process common bursts
         for ii in range(minBurst, maxBurst):
-            jj = secondaryBurstStart + ii - minBurst 
-    
+            jj = secondaryBurstStart + ii - minBurst
+
             masBurst = reference.bursts[ii]
             slvBurst = secondary.bursts[jj]
 
@@ -469,10 +476,10 @@ def subband(self, ionParam):
                 #removing window
                 rangeSamplingRate = SPEED_OF_LIGHT / (2.0 * burst.rangePixelSize)
                 if burst.rangeWindowType == 'Hamming':
-                    removeHammingWindow(burst.image.filename, tmpFilename, burst.rangeProcessingBandwidth, rangeSamplingRate, burst.rangeWindowCoefficient, virtual=virtual)  
+                    removeHammingWindow(burst.image.filename, tmpFilename, burst.rangeProcessingBandwidth, rangeSamplingRate, burst.rangeWindowCoefficient, virtual=virtual)
                 else:
                     raise Exception('Range weight window type: {} is not supported yet!'.format(burst.rangeWindowType))
-                
+
                 #subband
                 rg_filter(tmpFilename,
                           #burst.numberOfSamples,
@@ -550,7 +557,7 @@ def subband(self, ionParam):
                                              minAz=minAz, maxAz=maxAz,
                                              minRng=minRg, maxRng=maxRg)
                 slvBurstResamp2.image.filename = outimg.filename
-                
+
                 #forming interferogram
                 referencename = masBurst2.image.filename
                 secondaryname = slvBurstResamp2.image.filename
@@ -835,7 +842,7 @@ def snaphuUnwrap(self, xmlDirname, wrapName, corrfile, unwrapName, nrlks, nalks,
         ifg = self._insar.loadProduct( os.path.join(xmlDirname, 'IW{0}.xml'.format(swath)))
         wavelength = ifg.bursts[0].radarWavelength
 
-        ####tmid 
+        ####tmid
         tstart = ifg.bursts[0].sensingStart
         tend   = ifg.bursts[-1].sensingStop
         tmid = tstart + 0.5*(tend - tstart)
@@ -856,7 +863,7 @@ def snaphuUnwrap(self, xmlDirname, wrapName, corrfile, unwrapName, nrlks, nalks,
     azimuthLooks = nalks
     azfact = 0.8
     rngfact = 0.8
-    corrLooks = rangeLooks * azimuthLooks/(azfact*rngfact) 
+    corrLooks = rangeLooks * azimuthLooks/(azfact*rngfact)
     maxComponents = 20
 
     snp = Snaphu()
@@ -1089,7 +1096,7 @@ def fit_surface(x, y, z, wgt, order):
     a = a1 * np.matlib.repmat(np.sqrt(wgt), 1, n)
     b = z * np.sqrt(wgt)
     c = np.linalg.lstsq(a, b, rcond=-1)[0]
-    
+
     #type: <class 'numpy.ndarray'>
     return c
 
@@ -1247,7 +1254,7 @@ def computeIonosphere(lowerUnw, upperUnw, cor, fl, fu, adjFlag, corThresholdAdj,
     #fl = SPEED_OF_LIGHT / ionParam.radarWavelengthLower
     #fu = SPEED_OF_LIGHT / ionParam.radarWavelengthUpper
     f0 = (fl + fu) / 2.0
-    
+
     #dispersive
     if dispersive == 0:
         ionos = fl * fu * (lowerUnw * fu - upperUnw * fl) / f0 / (fu**2 - fl**2)
@@ -1330,7 +1337,7 @@ def cal_cross_ab_ramp(swathList, width, numberRangeLooks, passDirection):
     numberRangeLooks: number of range looks in the processing of ionosphere estimation
     passDirection:    descending/ascending
     '''
-    
+
     #below is from processing chile_d156_160725(S1A)-160929(S1B)
     #empirical polynomial
     deg = 3
@@ -1359,7 +1366,7 @@ def cal_cross_ab_ramp(swathList, width, numberRangeLooks, passDirection):
         #         here I just simply ignore this case
         offset = swath_offset[swathList[0]-1]
         x = offset / tnp + width / tnp * np.arange(width2) / (width2 - 1.0)
-        
+
     #calculate ramp
     y_fit = x * 0.0
     for i in range(deg+1):
@@ -1373,7 +1380,7 @@ def ionSwathBySwath(self, ionParam):
     This routine merge, unwrap and compute ionosphere swath by swath, and then
     adjust phase difference between adjacent swaths caused by relative range timing
     error between adjacent swaths.
-    
+
     This routine includes the following steps in the merged-swath processing:
     merge(self, ionParam)
     unwrap(self, ionParam)
@@ -1510,7 +1517,7 @@ def ionSwathBySwath(self, ionParam):
         #img.bands = 2
         #img.filename = corfile
         #img.renderHdr()
-        
+
         #img = isceobj.Image.createUnwImage()
         img = isceobj.createOffsetImage()
         img.setFilename(corfile)
@@ -1603,7 +1610,7 @@ def ionSwathBySwath(self, ionParam):
         else:
             print('number of samples available for adjustment in the overlap area: {}'.format(index[0].size))
             #diff = np.mean((ionosList[1] - adjdata)[index], dtype=np.float64)
-            
+
             #use weighted mean instead
             wgt = corList[1][index]**14
             diff = np.sum((ionosList[1] - adjdata)[index] * wgt / np.sum(wgt, dtype=np.float64), dtype=np.float64)
@@ -1694,7 +1701,7 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
     '''
 
     Vs = np.linalg.norm(burst.orbit.interpolateOrbit(burst.sensingMid, method='hermite').getVelocity())
-    Ks =   2 * Vs * burst.azimuthSteeringRate / burst.radarWavelength 
+    Ks =   2 * Vs * burst.azimuthSteeringRate / burst.radarWavelength
 
     #firstcolumn, lastcolumn: index starts from 1
     rng = multilookIndex(firstcolumn-1, lastcolumn-1, nrlks) * burst.rangePixelSize + burst.startingRange
@@ -1712,7 +1719,7 @@ def computeDopplerOffset(burst, firstline, lastline, firstcolumn, lastcolumn, nr
     #center doppler frequency due to squint
     dopplerOffset2 = (f_etac[None,:] / Ka[None,:]) / (burst.azimuthTimeInterval * nalks)
     dopplerOffset = dopplerOffset1 + dopplerOffset2
- 
+
     return (dopplerOffset, Ka)
 
 
@@ -1776,7 +1783,7 @@ def grd2ion(self, ionParam):
                 offset = ratio * dopplerOffset
 
                 #   0              1               2              3
-                #firstlineAdj, lastlineAdj, firstcolumnAdj, lastcolumnAdj, 
+                #firstlineAdj, lastlineAdj, firstcolumnAdj, lastcolumnAdj,
                 #after multiplication, index starts from 1
                 firstline = np.int(np.around((burstValidBox[i][j][0] - 1) / ionParam.numberAzimuthLooks + 1))
                 lastline = np.int(np.around(burstValidBox[i][j][1] / ionParam.numberAzimuthLooks))
@@ -1794,7 +1801,7 @@ def grd2ion(self, ionParam):
                     index = index0 + offset[:, k]
                     value = burstImage[:, k]
                     f = interp1d(index, value, kind='cubic', fill_value="extrapolate")
-                    
+
                     index_min = np.int(np.around(np.amin(index)))
                     index_max = np.int(np.around(np.amax(index)))
                     flag = index0 * 0.0
@@ -1879,7 +1886,7 @@ def adaptive_gaussian(ionos, wgt, size_max, size_min):
     std_mv = np.mean(std[np.nonzero(std!=0)], dtype=np.float64)
     diff_max = np.amax(np.absolute(std - std_mv)) + std_mv + 1
     std[np.nonzero(std==0)] = diff_max
-    
+
     index = np.nonzero(np.ones((length, width))) + ((np.argmin(np.absolute(std - std_mv), axis=2)).reshape(length*width), )
     out = flt[index]
     out = out.reshape((length, width))
@@ -1961,7 +1968,7 @@ def filt_gaussian(self, ionParam):
         ion_fit *= 0
 
     ion -= ion_fit * (ion!=0)
-    
+
     #minimize the effect of low coherence pixels
     #cor[np.nonzero( (cor<0.85)*(cor!=0) )] = 0.00001
     #filt = adaptive_gaussian(ion, cor, size_max, size_min)
@@ -2175,7 +2182,7 @@ def ion2grd(self, ionParam):
         if azshiftFlag == 2:
             f2 = interp1d(indexRange2, dion[i, :], kind='cubic', fill_value="extrapolate")
             dionOneRangeLook[i, :] = f2(indexRange)
- 
+
     #use the satellite height of the mid burst of first swath of reference acquistion
     swathList = self._insar.getValidSwathList(self.swaths)
     reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swathList[0])))
@@ -2296,7 +2303,7 @@ def ion2grd(self, ionParam):
 def multilook(data, nalks, nrlks):
     '''
     doing multiple looking
-    
+
     ATTENTION:
     NO AVERAGING BY DIVIDING THE NUMBER OF TOTAL SAMPLES IS DONE.
     '''
@@ -2383,7 +2390,7 @@ def esd(self, ionParam):
 
         if nBurst <= 1:
             continue
-    
+
         ####Load relevant products
         reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
         secondary = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
@@ -2392,21 +2399,21 @@ def esd(self, ionParam):
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = reference.bursts[ii] 
+            masBurst = reference.bursts[ii]
             slvBurst = secondary.bursts[jj]
             adjustValidLineSample(masBurst,slvBurst)
         overlapBox = get_overlap_box(reference, minBurst, maxBurst)
-        
+
         #using esd to calculate mis-registration
         misreg = np.array([])
         totalSamples = 0
         for ii in range(minBurst+1, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurstTop = reference.bursts[ii-1] 
+            masBurstTop = reference.bursts[ii-1]
             slvBurstTop = secondary.bursts[jj-1]
 
-            masBurstCur = reference.bursts[ii] 
+            masBurstCur = reference.bursts[ii]
             slvBurstCur = secondary.bursts[jj]
 
             #get info
@@ -2464,7 +2471,7 @@ def esd(self, ionParam):
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = reference.bursts[ii] 
+            masBurst = reference.bursts[ii]
             slvBurst = secondary.bursts[jj]
 
             ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
@@ -2504,7 +2511,7 @@ def esd_noion(self, ionParam):
 
         if nBurst <= 1:
             continue
-    
+
         ####Load relevant products
         reference = self._insar.loadProduct( os.path.join(self._insar.referenceSlcProduct, 'IW{0}.xml'.format(swath)))
         secondary = self._insar.loadProduct( os.path.join(self._insar.fineCoregDirname, 'IW{0}.xml'.format(swath)))
@@ -2513,21 +2520,21 @@ def esd_noion(self, ionParam):
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = reference.bursts[ii] 
+            masBurst = reference.bursts[ii]
             slvBurst = secondary.bursts[jj]
             adjustValidLineSample(masBurst,slvBurst)
         overlapBox = get_overlap_box(reference, minBurst, maxBurst)
-        
+
         #using esd to calculate mis-registration
         misreg = np.array([])
         totalSamples = 0
         for ii in range(minBurst+1, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurstTop = reference.bursts[ii-1] 
+            masBurstTop = reference.bursts[ii-1]
             slvBurstTop = secondary.bursts[jj-1]
 
-            masBurstCur = reference.bursts[ii] 
+            masBurstCur = reference.bursts[ii]
             slvBurstCur = secondary.bursts[jj]
 
             #get info
@@ -2589,12 +2596,12 @@ def esd_noion(self, ionParam):
         for ii in range(minBurst, maxBurst):
             jj = ii - minBurst
             ####Process the top bursts
-            masBurst = reference.bursts[ii] 
+            masBurst = reference.bursts[ii]
             slvBurst = secondary.bursts[jj]
 
             #ionname = os.path.join(ionParam.ionDirname, ionParam.ionBurstDirname, 'IW{0}'.format(swath), '%s_%02d.ion'%('burst',ii+1))
             #ion = np.fromfile(ionname, dtype=np.float32).reshape(masBurst.numberOfLines, masBurst.numberOfSamples)
-            
+
             (dopplerOffset, Ka) = computeDopplerOffset(masBurst, 1, masBurst.numberOfLines, 1, masBurst.numberOfSamples, nrlks=1, nalks=1)
             centerFrequency = dopplerOffset * Ka[None,:] * (masBurst.azimuthTimeInterval)
 
