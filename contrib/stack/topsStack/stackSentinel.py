@@ -425,7 +425,7 @@ def get_dates(inps):
 
     return dateList, inps.reference_date, secondaryList, safe_dict
 
-def selectNeighborPairs(dateList, num_connections, updateStack):
+def selectNeighborPairs(dateList, num_connections):
 
     pairs = []
     if num_connections == 'all':
@@ -750,7 +750,7 @@ def main(iargs=None):
         print('')
         sys.exit(1)
 
-    acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack = checkCurrentStatus(inps)
+    acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, inps.updateStack = checkCurrentStatus(inps)
 
 
 
@@ -759,9 +759,9 @@ def main(iargs=None):
         print('Updating an existing stack ...')
         print('')
         dates4NewPairs = sorted(secondaryDates + [stackReferenceDate])[1:]
-        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,updateStack)   # will be change later
+        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,inps.updateStack)   # will be change later
     else:
-        pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack)
+        pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,inps.updateStack)
 
 
     print ('*****************************************')
@@ -770,19 +770,19 @@ def main(iargs=None):
     print ('*****************************************')
     if inps.workflow == 'interferogram':
 
-        interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs)
 
     elif inps.workflow == 'offset':
 
-        offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs)
 
     elif inps.workflow == 'correlation':
 
-        correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs)
 
     elif inps.workflow == 'slc':
 
-        slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=True)
+        slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, mergeSLC=True)
 
 if __name__ == "__main__":
 
