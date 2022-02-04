@@ -445,11 +445,11 @@ def selectNeighborPairs(dateList, num_connections, updateStack):
 ########################################
 # Below are few workflow examples.
 
-def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=False):
+def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, mergeSLC=False):
     #############################
     i=0
 
-    if not updateStack:
+    if not inps.updateStack:
         i += 1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_unpack_topo_reference'.format(i))
@@ -538,9 +538,9 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_di
 
     return i
 
-def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
+def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs):
 
-    i = slcStack(inps, acquisitionDates,stackReferenceDate, secondaryDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates,stackReferenceDate, secondaryDates, safe_dict)
 
     # default value of virtual_merge
     virtual_merge = 'True' if not inps.virtualMerge else inps.virtualMerge
@@ -565,9 +565,9 @@ def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates,
     runObj.finalize()
 
 
-def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
+def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs):
 
-    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict)
 
     # default value of virtual_merge
     virtual_merge = 'True' if not inps.virtualMerge else inps.virtualMerge
@@ -604,9 +604,9 @@ def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDate
     runObj.finalize()
 
 
-def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
+def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs):
 
-    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack)
+    i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict)
 
     # default value of virtual_merge
     virtual_merge = 'False' if not inps.virtualMerge else inps.virtualMerge
@@ -754,7 +754,7 @@ def main(iargs=None):
 
 
 
-    if updateStack:
+    if inps.updateStack:
         print('')
         print('Updating an existing stack ...')
         print('')
