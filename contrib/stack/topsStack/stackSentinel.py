@@ -425,7 +425,7 @@ def get_dates(inps):
 
     return dateList, inps.reference_date, secondaryList, safe_dict
 
-def selectNeighborPairs(dateList, num_connections):
+def selectNeighborPairs(dateList, num_connections, updateStack):
 
     pairs = []
     if num_connections == 'all':
