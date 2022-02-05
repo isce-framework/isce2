@@ -75,6 +75,18 @@ def createParser():
     parser.add_argument('--rmfilter', action='store_true', default=False,
             help='remove the effect of filtering from final unwrapped interferograms')
 
+
+    parser.add_argument('-nrow', dest='nrow', type=int, default=1,
+            help='Number of Row Tiles for snaphu unwrapping (Updated snaphu-2.4.3)')
+    parser.add_argument('-ncol', dest='ncol', type=int, default=1,
+            help='Number of Column Tile for snaphu unwrapping (Updated snaphu-2.4.3')
+    parser.add_argument('-ro','--rowovrlp',dest='rowovrlp', type=int, default=200,
+            help='Number of Row overlap for snaphu tile')
+    parser.add_argument('-co','--colovrlp',dest='colovrlp', type=int, default=200,
+            help='Number of Column Overlap for snaphu tile')
+    parser.add_argument('-nt','--nthreads',dest='nthreads', type=int, default=1,
+            help='Number of threads for snaphu')
+
     return parser
 
 
@@ -152,6 +164,13 @@ def extractInfo(xmlName, inps):
     data['rglooks'] = inps.rglooks
     data['azlooks'] = inps.azlooks
 
+
+    data['nrow']=inps.nrow
+    data['ncol']=inps.ncol
+    data['rowovrlp']=inps.rowovrlp
+    data['colovrlp']=inps.colovrlp
+    data['nthreads']=inps.nthreads
+
     return data
 
 def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = None, defomax = None, initOnly = None):
@@ -185,6 +204,12 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     corrLooks = config['corrlooks']
     maxComponents = 20
 
+    nrow=config['nrow']
+    ncol=config['ncol']
+    rowovrlp=config['rowovrlp']
+    colovrlp=config['colovrlp']
+    nth=config['nthreads']
+
     snp = Snaphu()
     snp.setInitOnly(initOnly)
     snp.setInput(wrapName)
@@ -202,6 +227,15 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     snp.setRangeLooks(rangeLooks)
     snp.setAzimuthLooks(azimuthLooks)
     snp.setCorFileFormat('FLOAT_DATA')
+
+
+    snp.setNTileRow(nrow) # parallel code?
+    snp.setNTileCol(ncol) # parallel code?
+    snp.setRowOverlap(rowovrlp)
+    snp.setColOverlap(colovrlp)
+    snp.setNThreads(nth)
+
+
     snp.prepare()
     snp.unwrap()
 
@@ -332,6 +366,7 @@ def main(iargs=None):
        #metadata = extractInfo(inps.reference+'.xml', inps)
        xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
        metadata = extractInfo(xmlFile, inps)
+
        fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
 
     elif inps.method == 'icu':

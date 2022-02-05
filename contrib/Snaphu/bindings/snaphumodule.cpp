@@ -355,3 +355,77 @@ PyObject *setCorFileFormat_C(PyObject *self, PyObject *args)
     infile->corrfileformat = flag;
     return Py_BuildValue("i",0);
 }
+
+
+//////////////////////////////////////////////
+// Author: Jun-Yan Chen, 20210711 
+// 
+// Adding Object for TileRow and TileCol
+// Change file: snaphumodule.cpp, snaphumodule.h,
+//              Snaphu.py
+//
+PyObject *setNTileRow_C(PyObject *self, PyObject *args)
+{
+    int nrow;
+    if(!PyArg_ParseTuple(args,"i", &nrow))
+    {
+        return NULL;
+    }
+    params->ntilerow = nrow;
+
+    return Py_BuildValue("i",0);
+}
+
+PyObject *setNTileCol_C(PyObject *self, PyObject *args)
+{
+    int ncol;
+    if(!PyArg_ParseTuple(args,"i", &ncol))
+    {
+        return NULL;
+    }
+    params->ntilecol = ncol;
+
+    return Py_BuildValue("i",0);
+}
+
+
+PyObject *setRowOverlap_C(PyObject *self, PyObject *args)
+{
+    int flag;
+    if(!PyArg_ParseTuple(args,"i", &flag))
+    {
+        return NULL;
+    }
+    params->rowovrlp = flag;
+
+    return Py_BuildValue("i",0);
+}
+
+PyObject *setColOverlap_C(PyObject *self, PyObject *args)
+{
+    int flag;
+    if(!PyArg_ParseTuple(args,"i", &flag))
+    {
+        return NULL;
+    }
+    params->colovrlp = flag;
+
+    return Py_BuildValue("i",0);
+}
+
+PyObject *setNThreads_C(PyObject *self, PyObject *args)
+{
+    int flag;
+    if(!PyArg_ParseTuple(args,"i", &flag))
+    {
+        return NULL;
+    }
+    params->nthreads = flag;
+
+    return Py_BuildValue("i",0);
+}
+
+
+
+
+

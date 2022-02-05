@@ -143,7 +143,7 @@
 {\
    for ( ; excq_first != NULL; excq_first = excq_last )\
      {\
-	excq_last            = excq_first -> q_next;\
+        excq_last            = excq_first -> q_next;\
         excq_first -> q_next = sentinel_node;\
      }\
 }
@@ -233,17 +233,17 @@ if ( i == ( b -> p_first ) )\
 {\
    if (n_bad_pricein + n_bad_relabel == 0) \
      {\
-	cut_off_factor = CUT_OFF_COEF2 * pow ( (double)n, CUT_OFF_POWER2 );\
+        cut_off_factor = CUT_OFF_COEF2 * pow ( (double)n, CUT_OFF_POWER2 );\
         cut_off_factor = GREATEROF ( cut_off_factor, CUT_OFF_MIN );\
         cut_off        = cut_off_factor * epsilon;\
         cut_on         = cut_off * CUT_OFF_GAP;\
       }\
      else\
        {\
-	cut_off_factor *= CUT_OFF_INCREASE;\
+        cut_off_factor *= CUT_OFF_INCREASE;\
         cut_off        = cut_off_factor * epsilon;\
         cut_on         = cut_off * CUT_OFF_GAP;\
-	}\
+        }\
 }
 
 #define TIME_FOR_UPDATE \
@@ -285,10 +285,10 @@ if ( a != b )\
 \
      if ( a != sb )\
        {\
-	  b -> sister = sa;\
-	  a -> sister = sb;\
-	  sa -> sister = b;\
-	  sb -> sister = a;\
+          b -> sister = sa;\
+          a -> sister = sb;\
+          sa -> sister = b;\
+          sb -> sister = a;\
         }\
 \
      d_cap       = cap[a-arcs];\
@@ -340,7 +340,7 @@ double epsilon,              /* optimality bound */
        dn,                   /* cost multiplier - number of nodes  + 1 */
        mmc,                  /* multiplied maximal cost */
        cut_off_factor,       /* multiplier to produce cut_on and cut_off
-				from n and epsilon */
+                                from n and epsilon */
        cut_on,               /* the bound for returning suspended arcs */
        cut_off;              /* the bound for suspending arcs */
 
@@ -351,11 +351,11 @@ long   n_rel,                /* number of relabels from last price update */
        n_src;                /* current number of nodes with excess */
 
 int   flag_price = 0,        /* if = 1 - signal to start price-in ASAP - 
-				maybe there is infeasibility because of
-				susoended arcs */
+                                maybe there is infeasibility because of
+                                susoended arcs */
       flag_updt = 0;         /* if = 1 - update failed some sources are 
-				unreachable: either the problem is
-				unfeasible or you have to return 
+                                unreachable: either the problem is
+                                unfeasible or you have to return 
                                 suspended arcs */
 
 long  empty_push_bound;      /* maximal possible number of zero pushes
@@ -509,35 +509,35 @@ FOR_ALL_ARCS_a_FROM_i
 
     if ( OPEN ( ra ) )
       {
-	j = a -> head;
-	j_rank = j -> rank;
+        j = a -> head;
+        j_rank = j -> rank;
 
-	if ( j_rank > i_rank )
-	  {
-	    if ( ( rc = REDUCED_COST ( j, i, ra ) ) < 0 ) 
-	        j_new_rank = i_rank;
-	    else
-	      {
-		dr = rc / epsilon;
-		j_new_rank = ( dr < dlinf ) ? i_rank + (long)dr + 1
-		                            : linf;
-	      }
+        if ( j_rank > i_rank )
+          {
+            if ( ( rc = REDUCED_COST ( j, i, ra ) ) < 0 ) 
+                j_new_rank = i_rank;
+            else
+              {
+                dr = rc / epsilon;
+                j_new_rank = ( dr < dlinf ) ? i_rank + (long)dr + 1
+                                            : linf;
+              }
 
-	    if ( j_rank > j_new_rank )
-	      {
-		j -> rank = j_new_rank;
-		j -> current = ra;
+            if ( j_rank > j_new_rank )
+              {
+                j -> rank = j_new_rank;
+                j -> current = ra;
 
-		if ( j_rank < linf )
-		  {
-		    b_old = buckets + j_rank;
-		    REMOVE_FROM_BUCKET ( j, b_old )
-		  }
+                if ( j_rank < linf )
+                  {
+                    b_old = buckets + j_rank;
+                    REMOVE_FROM_BUCKET ( j, b_old )
+                  }
 
-		b_new = buckets + j_new_rank;
-		INSERT_TO_BUCKET ( j, b_new )  
-	      }
-	  }
+                b_new = buckets + j_new_rank;
+                INSERT_TO_BUCKET ( j, b_new )  
+              }
+          }
       }
   } /* end of scanning arcs */
 
@@ -566,8 +566,8 @@ FOR_ALL_NODES_i
 
     if ( i -> excess < 0 )
       {
-	INSERT_TO_BUCKET ( i, buckets );
-	i -> rank = 0;
+        INSERT_TO_BUCKET ( i, buckets );
+        i -> rank = 0;
       }
     else
       {
@@ -585,15 +585,15 @@ for ( b = buckets; b != l_bucket; b ++ )
 
     while ( NONEMPTY_BUCKET ( b ) )
        {
-	 GET_FROM_BUCKET ( i, b )
+         GET_FROM_BUCKET ( i, b )
 
-	 up_node_scan ( i );
+         up_node_scan ( i );
 
-	 if ( i -> excess > 0 )
-	   {
-	     remain -= (double)(i -> excess);
+         if ( i -> excess > 0 )
+           {
+             remain -= (double)(i -> excess);
              if ( remain <= 0  ) break; 
-	   }
+           }
 
        } /* end of scanning the bucket */
 
@@ -613,10 +613,10 @@ FOR_ALL_NODES_i
     if ( i -> rank >= 0 )
     {
       if ( i -> rank < linf )
-	REMOVE_FROM_BUCKET ( i, (buckets + i -> rank) );
+        REMOVE_FROM_BUCKET ( i, (buckets + i -> rank) );
 
       if ( i -> price > price_min )
-	i -> price -= dp;
+        i -> price -= dp;
     }
   }
 
@@ -648,18 +648,18 @@ for (
     )
   {
     if ( OPEN ( a )
-	 &&
-	 ( ( dp = ( ( a -> head ) -> price ) - dn*( a -> cost ) ) > p_max )
+         &&
+         ( ( dp = ( ( a -> head ) -> price ) - dn*( a -> cost ) ) > p_max )
        )
       {
-	if ( i_price < dp )
-	  {
-	    i -> current = a;
-	    return ( 1 );
-	  }
+        if ( i_price < dp )
+          {
+            i -> current = a;
+            return ( 1 );
+          }
 
-	p_max = dp;
-	a_max = a;
+        p_max = dp;
+        a_max = a;
       }
   } /* 1/2 arcs are scanned */
 
@@ -671,18 +671,18 @@ for (
     )
   {
     if ( OPEN ( a )
-	 &&
-	 ( ( dp = ( ( a -> head ) -> price ) - dn*( a -> cost ) ) > p_max )
+         &&
+         ( ( dp = ( ( a -> head ) -> price ) - dn*( a -> cost ) ) > p_max )
        )
       {
-	if ( i_price < dp )
-	  {
-	    i -> current = a;
-	    return ( 1 );
-	  }
+        if ( i_price < dp )
+          {
+            i -> current = a;
+            return ( 1 );
+          }
 
-	p_max = dp;
-	a_max = a;
+        p_max = dp;
+        a_max = a;
       }
   } /* 2/2 arcs are scanned */
 
@@ -697,25 +697,25 @@ else
   { /* node can't be relabelled */
     if ( i -> suspended == i -> first )
       {
-	if ( i -> excess == 0 )
-	  {
-	    i -> price = price_min;
-	  }
-	else
-	  {
-	    if ( n_ref == 1 )
-	      {
-		err_end ( UNFEASIBLE );
-	      }
-	    else
-	      {
-		err_end ( PRICE_OFL );
-	      }
-	  }
+        if ( i -> excess == 0 )
+          {
+            i -> price = price_min;
+          }
+        else
+          {
+            if ( n_ref == 1 )
+              {
+                err_end ( UNFEASIBLE );
+              }
+            else
+              {
+                err_end ( PRICE_OFL );
+              }
+          }
       }
     else /* node can't be relabelled because of suspended arcs */
       {
-	flag_price = 1;
+        flag_price = 1;
       }
    }
 
@@ -770,36 +770,36 @@ while ( 1 )
     {
       b = j -> current;
       if ( ADMISSIBLE ( j, b -> head, b ) || relabel ( j ) )
-	{ /* exit from j exists */
+        { /* exit from j exists */
 
-	  df = LESSEROF ( i -> excess, a -> r_cap );
-	  if (j_exc == 0) n_src++;
-	  INCREASE_FLOW ( i, j, a, df )
+          df = LESSEROF ( i -> excess, a -> r_cap );
+          if (j_exc == 0) n_src++;
+          INCREASE_FLOW ( i, j, a, df )
 n_push ++;
 
-	  if ( OUT_OF_EXCESS_Q ( j ) )
-	    {
-	      INSERT_TO_EXCESS_Q ( j );
-	    }
-	}
+          if ( OUT_OF_EXCESS_Q ( j ) )
+            {
+              INSERT_TO_EXCESS_Q ( j );
+            }
+        }
       else 
-	{ 
-	  /* push back */ 
-	  ra = a -> sister;
-	  df = LESSEROF ( j -> excess, ra -> r_cap );
-	  if ( df > 0 )
-	    {
-	      INCREASE_FLOW ( j, i, ra, df );
-	      if (j->excess == 0) n_src--;
+        { 
+          /* push back */ 
+          ra = a -> sister;
+          df = LESSEROF ( j -> excess, ra -> r_cap );
+          if ( df > 0 )
+            {
+              INCREASE_FLOW ( j, i, ra, df );
+              if (j->excess == 0) n_src--;
 n_push ++;
-	    }
+            }
 
-	  if ( empty_push ++ >= empty_push_bound )
-	    {
-	      flag_price = 1;
-	      return;
-	    }
-	}
+          if ( empty_push ++ >= empty_push_bound )
+            {
+              flag_price = 1;
+              return;
+            }
+        }
     }
   else /* j_exc < 0 */
     { 
@@ -808,17 +808,17 @@ n_push ++;
 n_push ++;
 
       if ( j -> excess >= 0 )
-	{
-	  if ( j -> excess > 0 )
-	    {
+        {
+          if ( j -> excess > 0 )
+            {
               n_src++;
-	      relabel ( j );
-	      INSERT_TO_EXCESS_Q ( j );
-	    }
-	  total_excess += j_exc;
-	}
+              relabel ( j );
+              INSERT_TO_EXCESS_Q ( j );
+            }
+          total_excess += j_exc;
+        }
       else
-	total_excess -= df;
+        total_excess -= df;
 
     }
   
@@ -852,7 +852,7 @@ arc      *a,                   /* current arc from i */
 double   rc;                   /* reduced cost */
 
 int      n_in_bad,             /* number of priced_in arcs with
-				  negative reduced cost */
+                                  negative reduced cost */
          bad_found;            /* if 1 we are at the second scan
                                   if 0 we are at the first scan */
 
@@ -870,40 +870,40 @@ FOR_ALL_NODES_i
     for ( a = ( i -> first ) - 1, a_stop = ( i -> suspended ) - 1; 
     a != a_stop; a -- )
       {
-	rc = REDUCED_COST ( i, a -> head, a );
+        rc = REDUCED_COST ( i, a -> head, a );
 
-	    if ( (rc < 0) && ( a -> r_cap > 0) )
-	      { /* bad case */
-		if ( bad_found == 0 )
-		  {
-		    bad_found = 1;
-		    UPDATE_CUT_OFF;
-		    goto restart;
+            if ( (rc < 0) && ( a -> r_cap > 0) )
+              { /* bad case */
+                if ( bad_found == 0 )
+                  {
+                    bad_found = 1;
+                    UPDATE_CUT_OFF;
+                    goto restart;
 
-		  }
-		df = a -> r_cap;
-		INCREASE_FLOW ( i, a -> head, a, df );
+                  }
+                df = a -> r_cap;
+                INCREASE_FLOW ( i, a -> head, a, df );
 
                 ra = a -> sister;
-		j  = a -> head;
+                j  = a -> head;
 
-		b = -- ( i -> first );
-		EXCHANGE ( a, b );
+                b = -- ( i -> first );
+                EXCHANGE ( a, b );
 
-		if ( SUSPENDED ( j, ra ) )
-		  {
-		    rb = -- ( j -> first );
-		    EXCHANGE ( ra, rb );
-		  }
+                if ( SUSPENDED ( j, ra ) )
+                  {
+                    rb = -- ( j -> first );
+                    EXCHANGE ( ra, rb );
+                  }
 
-		    n_in_bad ++; 
-	      }
-	    else
-	    if ( ( rc < cut_on ) && ( rc > -cut_on ) )
-	      {
-		b = -- ( i -> first );
-		EXCHANGE ( a, b );
-	      }
+                    n_in_bad ++; 
+              }
+            else
+            if ( ( rc < cut_on ) && ( rc > -cut_on ) )
+              {
+                b = -- ( i -> first );
+                EXCHANGE ( a, b );
+              }
       }
   }
 
@@ -918,16 +918,16 @@ if ( n_in_bad != 0 )
     RESET_EXCESS_Q;
 
       FOR_ALL_NODES_i 
-	{
-	  i -> current = i -> first;
-	  i_exc = i -> excess;
-	  if ( i_exc > 0 )
-	    { /* i  is a source */
-	      total_excess += i_exc;
-	      n_src++;
-	      INSERT_TO_EXCESS_Q ( i );
-	    }
-	}
+        {
+          i -> current = i -> first;
+          i_exc = i -> excess;
+          if ( i_exc > 0 )
+            { /* i  is a source */
+              total_excess += i_exc;
+              n_src++;
+              INSERT_TO_EXCESS_Q ( i );
+            }
+        }
 
     INSERT_TO_EXCESS_Q ( dummy_node );
   }
@@ -979,9 +979,9 @@ FOR_ALL_NODES_i
     i_exc = i -> excess;
     if ( i_exc > 0 )
       { /* i  is a source */
-	total_excess += i_exc;
+        total_excess += i_exc;
         n_src++;
-	INSERT_TO_EXCESS_Q ( i )
+        INSERT_TO_EXCESS_Q ( i )
       }
   }
 
@@ -994,12 +994,12 @@ while ( 1 )
   {
     if ( EMPTY_EXCESS_Q )
       {
-	if ( n_ref > PRICE_OUT_START ) 
-	  {
-	    price_in ();
-	  }
-	  
-	if ( EMPTY_EXCESS_Q ) break;
+        if ( n_ref > PRICE_OUT_START ) 
+          {
+            price_in ();
+          }
+          
+        if ( EMPTY_EXCESS_Q ) break;
       }
 
     REMOVE_FROM_EXCESS_Q ( i );
@@ -1011,51 +1011,51 @@ while ( 1 )
        discharge ( i );
 
        if ( TIME_FOR_UPDATE || flag_price )
-	 {
-	   if ( i -> excess > 0 )
-	     {
-	       INSERT_TO_EXCESS_Q ( i );
-	     }
+         {
+           if ( i -> excess > 0 )
+             {
+               INSERT_TO_EXCESS_Q ( i );
+             }
 
-	   if ( flag_price && ( n_ref > PRICE_OUT_START ) )
-	     {
-	       pr_in_int = 0;
-	       price_in ();
-	       flag_price = 0;
-	     }
+           if ( flag_price && ( n_ref > PRICE_OUT_START ) )
+             {
+               pr_in_int = 0;
+               price_in ();
+               flag_price = 0;
+             }
 
-	   price_update();
+           price_update();
 
-	   while ( flag_updt )
-	     {
-	       if ( n_ref == 1 )
-		 {
-		   err_end ( UNFEASIBLE );
-		 }
-	       else
-		 {
-		   flag_updt = 0;
-		   UPDATE_CUT_OFF;
-		   n_bad_relabel++;
+           while ( flag_updt )
+             {
+               if ( n_ref == 1 )
+                 {
+                   err_end ( UNFEASIBLE );
+                 }
+               else
+                 {
+                   flag_updt = 0;
+                   UPDATE_CUT_OFF;
+                   n_bad_relabel++;
 
-		   pr_in_int = 0;
-		   price_in ();
+                   pr_in_int = 0;
+                   price_in ();
 
-		   price_update ();
-		 }
-	     }
+                   price_update ();
+                 }
+             }
 
-	   n_rel = 0;
+           n_rel = 0;
 
-	   if ( n_ref > PRICE_OUT_START && 
-	       (pr_in_int ++ > time_for_price_in) 
-	       )
-	     {
-	       pr_in_int = 0;
-	       price_in ();
-	     }
+           if ( n_ref > PRICE_OUT_START && 
+               (pr_in_int ++ > time_for_price_in) 
+               )
+             {
+               pr_in_int = 0;
+               price_in ();
+             }
 
-	 } /* time for update */
+         } /* time for update */
      }
   } /* end of main loop */
 
@@ -1093,7 +1093,7 @@ int    cc;              /* return code: 1 - flow is epsilon optimal
 long   df;              /* cycle capacity */
 
 int    nnc,             /* number of negative cycles cancelled during
-			   one iteration */
+                           one iteration */
        snc;             /* total number of negative cycle cancelled */
 
 n_prefine ++;
@@ -1130,89 +1130,89 @@ FOR_ALL_NODES_i
     /* deapth first search */
     while ( 1 )
       {
-	i -> inp = GREY;
+        i -> inp = GREY;
 
-	/* scanning arcs from node i starting from current */
-	FOR_ALL_CURRENT_ARCS_a_FROM_i 
-	  {
-	    if ( OPEN ( a ) )
-	      {
-		j = a -> head;
-		if ( REDUCED_COST ( i, j, a ) < 0 )
-		  {
-		    if ( j -> inp == WHITE )
-		      { /* fresh node  - step forward */
-			i -> current = a;
-			j -> b_next  = i;
-			i = j;
-			a = j -> current;
+        /* scanning arcs from node i starting from current */
+        FOR_ALL_CURRENT_ARCS_a_FROM_i 
+          {
+            if ( OPEN ( a ) )
+              {
+                j = a -> head;
+                if ( REDUCED_COST ( i, j, a ) < 0 )
+                  {
+                    if ( j -> inp == WHITE )
+                      { /* fresh node  - step forward */
+                        i -> current = a;
+                        j -> b_next  = i;
+                        i = j;
+                        a = j -> current;
                         a_stop = (j+1) -> suspended;
-			break;
-		      }
+                        break;
+                      }
 
-		    if ( j -> inp == GREY )
-		      { /* cycle detected */
-			cc = 0;
-			nnc++;
+                    if ( j -> inp == GREY )
+                      { /* cycle detected */
+                        cc = 0;
+                        nnc++;
 
-			i -> current = a;
-			is = ir = i;
-			df = BIGGEST_FLOW;
+                        i -> current = a;
+                        is = ir = i;
+                        df = BIGGEST_FLOW;
 
-			while ( 1 )
-			  {
-			    ar = ir -> current;
-			    if ( ar -> r_cap <= df )
-			      {
-				df = ar -> r_cap;
-			        is = ir;
-			      }
-			    if ( ir == j ) break;
-			    ir = ir -> b_next;
-			  } 
-
-
-			ir = i;
-
-			while ( 1 )
-			  {
-			    ar = ir -> current;
- 			    INCREASE_FLOW( ir, ar -> head, ar, df)
-
-			    if ( ir == j ) break;
-			    ir = ir -> b_next;
-			  } 
+                        while ( 1 )
+                          {
+                            ar = ir -> current;
+                            if ( ar -> r_cap <= df )
+                              {
+                                df = ar -> r_cap;
+                                is = ir;
+                              }
+                            if ( ir == j ) break;
+                            ir = ir -> b_next;
+                          } 
 
 
-			if ( is != i )
-			  {
-			    for ( ir = i; ir != is; ir = ir -> b_next )
-			      ir -> inp = WHITE;
-			    
-			    i = is;
-			    a = (is -> current) + 1;
+                        ir = i;
+
+                        while ( 1 )
+                          {
+                            ar = ir -> current;
+                            INCREASE_FLOW( ir, ar -> head, ar, df)
+
+                            if ( ir == j ) break;
+                            ir = ir -> b_next;
+                          } 
+
+
+                        if ( is != i )
+                          {
+                            for ( ir = i; ir != is; ir = ir -> b_next )
+                              ir -> inp = WHITE;
+                            
+                            i = is;
+                            a = (is -> current) + 1;
                             a_stop = (is+1) -> suspended;
-			    break;
-			  }
+                            break;
+                          }
 
-		      }                     
-		  }
-		/* if j-color is BLACK - continue search from i */
-	      }
-	  } /* all arcs from i are scanned */
+                      }                     
+                  }
+                /* if j-color is BLACK - continue search from i */
+              }
+          } /* all arcs from i are scanned */
 
-	if ( a == a_stop )
-	  {
-	    /* step back */
-	    i -> inp = BLACK;
+        if ( a == a_stop )
+          {
+            /* step back */
+            i -> inp = BLACK;
 n_prscan1++;
-	    j = i -> b_next;
-	    STACKQ_PUSH ( i );
+            j = i -> b_next;
+            STACKQ_PUSH ( i );
 
-	    if ( j == NULL ) break;
-	    i = j;
-	    i -> current ++;
-	  }
+            if ( j == NULL ) break;
+            i = j;
+            i -> current ++;
+          }
 
       } /* end of deapth first search */
   } /* all nodes are scanned */
@@ -1236,29 +1236,29 @@ n_prscan2++;
     i_rank = i -> rank;
     FOR_ALL_ARCS_a_FROM_i 
       {
-	if ( OPEN ( a ) )
-	  {
-	    j  = a -> head;
-	    rc = REDUCED_COST ( i, j, a );
+        if ( OPEN ( a ) )
+          {
+            j  = a -> head;
+            rc = REDUCED_COST ( i, j, a );
 
 
-	    if ( rc < 0 ) /* admissible arc */
-	      {
-		dr = ( - rc - 0.5 ) / epsilon;
-		if (( j_rank = dr + i_rank ) < dlinf )
-		  {
-		    if ( j_rank > j -> rank )
-		      j -> rank = j_rank;
-		  }
-	      }
-	  }
+            if ( rc < 0 ) /* admissible arc */
+              {
+                dr = ( - rc - 0.5 ) / epsilon;
+                if (( j_rank = dr + i_rank ) < dlinf )
+                  {
+                    if ( j_rank > j -> rank )
+                      j -> rank = j_rank;
+                  }
+              }
+          }
       } /* all arcs from i are scanned */
 
     if ( i_rank > 0 )
       {
-	if ( i_rank > bmax ) bmax = i_rank;
-	b = buckets + i_rank;
-	INSERT_TO_BUCKET ( i, b )
+        if ( i_rank > bmax ) bmax = i_rank;
+        b = buckets + i_rank;
+        INSERT_TO_BUCKET ( i, b )
       }
   } /* end of while-cycle: all nodes are scanned
            - longest distancess are computed */
@@ -1274,53 +1274,53 @@ for ( b = buckets + bmax; b != buckets; b -- )
 
     while ( NONEMPTY_BUCKET( b ) )
       {
-	GET_FROM_BUCKET ( i, b );
+        GET_FROM_BUCKET ( i, b );
 
-	n_prscan++;
-	FOR_ALL_ARCS_a_FROM_i 
-	  {
-	    if ( OPEN ( a ) )
-	      {
-		j = a -> head;
-        	j_rank = j -> rank;
-        	if ( j_rank < i_rank )
-	          {
-		    rc = REDUCED_COST ( i, j, a );
+        n_prscan++;
+        FOR_ALL_ARCS_a_FROM_i 
+          {
+            if ( OPEN ( a ) )
+              {
+                j = a -> head;
+                j_rank = j -> rank;
+                if ( j_rank < i_rank )
+                  {
+                    rc = REDUCED_COST ( i, j, a );
  
-		    if ( rc < 0 ) 
-		        j_new_rank = i_rank;
-		    else
-		      {
-			dr = rc / epsilon;
-			j_new_rank = ( dr < dlinf ) ? i_rank - ( (long)dr + 1 )
-			                            : 0;
-		      }
-		    if ( j_rank < j_new_rank )
-		      {
-			if ( cc == 1 )
-			  {
-			    j -> rank = j_new_rank;
+                    if ( rc < 0 ) 
+                        j_new_rank = i_rank;
+                    else
+                      {
+                        dr = rc / epsilon;
+                        j_new_rank = ( dr < dlinf ) ? i_rank - ( (long)dr + 1 )
+                                                    : 0;
+                      }
+                    if ( j_rank < j_new_rank )
+                      {
+                        if ( cc == 1 )
+                          {
+                            j -> rank = j_new_rank;
 
-			    if ( j_rank > 0 )
-			      {
-				b_old = buckets + j_rank;
-				REMOVE_FROM_BUCKET ( j, b_old )
-				}
+                            if ( j_rank > 0 )
+                              {
+                                b_old = buckets + j_rank;
+                                REMOVE_FROM_BUCKET ( j, b_old )
+                                }
 
-			    b_new = buckets + j_new_rank;
-			    INSERT_TO_BUCKET ( j, b_new )  
-			  }
-			else
-			  {
-			   df = a -> r_cap;
-			    INCREASE_FLOW ( i, j, a, df ) 
-			  }
-		      }
-		  }
-	      } /* end if opened arc */
-	  } /* all arcs are scanned */
+                            b_new = buckets + j_new_rank;
+                            INSERT_TO_BUCKET ( j, b_new )  
+                          }
+                        else
+                          {
+                           df = a -> r_cap;
+                            INCREASE_FLOW ( i, j, a, df ) 
+                          }
+                      }
+                  }
+              } /* end if opened arc */
+          } /* all arcs are scanned */
 
-	    i -> price -= dp;
+            i -> price -= dp;
 
       } /* end of while-cycle: the bucket is scanned */
   } /* end of for-cycle: all buckets are scanned */
@@ -1339,13 +1339,13 @@ FOR_ALL_NODES_i
   {
     FOR_ALL_ARCS_a_FROM_i 
       {
-	if ( REDUCED_COST ( i, a -> head, a ) < -epsilon )
-	  {
-	    if ( ( df = a -> r_cap ) > 0 )
-	      {
-		INCREASE_FLOW ( i, a -> head, a, df )
-	      }
-	  }
+        if ( REDUCED_COST ( i, a -> head, a ) < -epsilon )
+          {
+            if ( ( df = a -> r_cap ) > 0 )
+              {
+                INCREASE_FLOW ( i, a -> head, a, df )
+              }
+          }
 
       }
   }
@@ -1411,47 +1411,47 @@ FOR_ALL_NODES_i
     /* deapth first search */
     while ( 1 )
       {
-	i -> inp = GREY;
+        i -> inp = GREY;
 
-	/* scanning arcs from node i */
-	FOR_ALL_ARCS_a_FROM_i 
-	  {
-	    if ( OPEN ( a ) )
-	      {
-		j = a -> head;
-		if ( REDUCED_COST ( i, j, a ) < 0 )
-		  {
-		    if ( j -> inp == WHITE )
-		      { /* fresh node  - step forward */
-			i -> current = a;
-			j -> b_next  = i;
-			i = j;
-			a = j -> current;
+        /* scanning arcs from node i */
+        FOR_ALL_ARCS_a_FROM_i 
+          {
+            if ( OPEN ( a ) )
+              {
+                j = a -> head;
+                if ( REDUCED_COST ( i, j, a ) < 0 )
+                  {
+                    if ( j -> inp == WHITE )
+                      { /* fresh node  - step forward */
+                        i -> current = a;
+                        j -> b_next  = i;
+                        i = j;
+                        a = j -> current;
                         a_stop = (j+1) -> suspended;
-			break;
-		      }
+                        break;
+                      }
 
-		    if ( j -> inp == GREY )
-		      { /* cycle detected; should not happen */
-			cc = 0;
-		      }                     
-		  }
-		/* if j-color is BLACK - continue search from i */
-	      }
-	  } /* all arcs from i are scanned */
+                    if ( j -> inp == GREY )
+                      { /* cycle detected; should not happen */
+                        cc = 0;
+                      }                     
+                  }
+                /* if j-color is BLACK - continue search from i */
+              }
+          } /* all arcs from i are scanned */
 
-	if ( a == a_stop )
-	  {
-	    /* step back */
-	    i -> inp = BLACK;
-	    n_prscan1++;
-	    j = i -> b_next;
-	    STACKQ_PUSH ( i );
+        if ( a == a_stop )
+          {
+            /* step back */
+            i -> inp = BLACK;
+            n_prscan1++;
+            j = i -> b_next;
+            STACKQ_PUSH ( i );
 
-	    if ( j == NULL ) break;
-	    i = j;
-	    i -> current ++;
-	  }
+            if ( j == NULL ) break;
+            i = j;
+            i -> current ++;
+          }
 
       } /* end of deapth first search */
   } /* all nodes are scanned */
@@ -1470,29 +1470,29 @@ while ( NONEMPTY_STACKQ )
     i_rank = i -> rank;
     FOR_ALL_ARCS_a_FROM_i 
       {
-	if ( OPEN ( a ) )
-	  {
-	    j  = a -> head;
-	    rc = REDUCED_COST ( i, j, a );
+        if ( OPEN ( a ) )
+          {
+            j  = a -> head;
+            rc = REDUCED_COST ( i, j, a );
 
 
-	    if ( rc < 0 ) /* admissible arc */
-	      {
-		dr = - rc;
-		if (( j_rank = dr + i_rank ) < dlinf )
-		  {
-		    if ( j_rank > j -> rank )
-		      j -> rank = j_rank;
-		  }
-	      }
-	  }
+            if ( rc < 0 ) /* admissible arc */
+              {
+                dr = - rc;
+                if (( j_rank = dr + i_rank ) < dlinf )
+                  {
+                    if ( j_rank > j -> rank )
+                      j -> rank = j_rank;
+                  }
+              }
+          }
       } /* all arcs from i are scanned */
 
     if ( i_rank > 0 )
       {
-	if ( i_rank > bmax ) bmax = i_rank;
-	b = buckets + i_rank;
-	INSERT_TO_BUCKET ( i, b )
+        if ( i_rank > bmax ) bmax = i_rank;
+        b = buckets + i_rank;
+        INSERT_TO_BUCKET ( i, b )
       }
   } /* end of while-cycle: all nodes are scanned
            - longest distancess are computed */
@@ -1508,48 +1508,48 @@ for ( b = buckets + bmax; b != buckets; b -- )
 
     while ( NONEMPTY_BUCKET( b ) )
       {
-	GET_FROM_BUCKET ( i, b )
+        GET_FROM_BUCKET ( i, b )
 
-	  n_prscan++;
-	FOR_ALL_ARCS_a_FROM_i 
-	  {
-	    if ( OPEN ( a ) )
-	      {
-		j = a -> head;
-        	j_rank = j -> rank;
-        	if ( j_rank < i_rank )
-	          {
-		    rc = REDUCED_COST ( i, j, a );
+          n_prscan++;
+        FOR_ALL_ARCS_a_FROM_i 
+          {
+            if ( OPEN ( a ) )
+              {
+                j = a -> head;
+                j_rank = j -> rank;
+                if ( j_rank < i_rank )
+                  {
+                    rc = REDUCED_COST ( i, j, a );
  
-		    if ( rc < 0 ) 
-		        j_new_rank = i_rank;
-		    else
-		      {
-			dr = rc;
-			j_new_rank = ( dr < dlinf ) ? i_rank - ( (long)dr + 1 )
-			                            : 0;
-		      }
-		    if ( j_rank < j_new_rank )
-		      {
-			if ( cc == 1 )
-			  {
-			    j -> rank = j_new_rank;
+                    if ( rc < 0 ) 
+                        j_new_rank = i_rank;
+                    else
+                      {
+                        dr = rc;
+                        j_new_rank = ( dr < dlinf ) ? i_rank - ( (long)dr + 1 )
+                                                    : 0;
+                      }
+                    if ( j_rank < j_new_rank )
+                      {
+                        if ( cc == 1 )
+                          {
+                            j -> rank = j_new_rank;
 
-			    if ( j_rank > 0 )
-			      {
-				b_old = buckets + j_rank;
-				REMOVE_FROM_BUCKET ( j, b_old )
-				}
+                            if ( j_rank > 0 )
+                              {
+                                b_old = buckets + j_rank;
+                                REMOVE_FROM_BUCKET ( j, b_old )
+                                }
 
-			    b_new = buckets + j_new_rank;
-			    INSERT_TO_BUCKET ( j, b_new )  
-			  }
-		      }
-		  }
-	      } /* end if opened arc */
-	  } /* all arcs are scanned */
+                            b_new = buckets + j_new_rank;
+                            INSERT_TO_BUCKET ( j, b_new )  
+                          }
+                      }
+                  }
+              } /* end if opened arc */
+          } /* all arcs are scanned */
 
-	    i -> price -= dp;
+            i -> price -= dp;
 
       } /* end of while-cycle: the bucket is scanned */
   } /* end of for-cycle: all buckets are scanned */
@@ -1581,17 +1581,17 @@ FOR_ALL_NODES_i
   {
     FOR_ALL_ARCS_a_FROM_i 
       {
-	rc = REDUCED_COST ( i, a -> head, a );
+        rc = REDUCED_COST ( i, a -> head, a );
 
-	if (((rc > cut_off) && (CLOSED(a -> sister)))
+        if (((rc > cut_off) && (CLOSED(a -> sister)))
              ||
              ((rc < n_cut_off) && (CLOSED(a)))
            )
-	  { /* suspend the arc */
-	    b = ( i -> first ) ++ ;
+          { /* suspend the arc */
+            b = ( i -> first ) ++ ;
 
-	    EXCHANGE ( a, b );
-	  }
+            EXCHANGE ( a, b );
+          }
       }
   }
 
@@ -1635,7 +1635,7 @@ for ( a = arcs, na = 0; a != sentinel_arc ; a ++, na ++ )
       cs = a -> cost;
 
       if ( cap[na]  > 0 && ( flow = cap[na] - (a -> r_cap) ) != 0 )
-	obj_internal += cs * (double) flow; 
+        obj_internal += cs * (double) flow; 
 
       /*       a -> cost = cs;  */
     }
@@ -1658,12 +1658,12 @@ for ( a = arcs, na = 0; a != sentinel_arc ; a ++, na ++ )
 /*  for ( a = arcs; a != sentinel_arc ; a ++ ) */
 /*      { */
 /*        if ( a -> r_cap > 0 && a -> cost < 0 ) */
-/*  	{ */
-/*  	  df = a -> r_cap; */
-/*  	  i  = ( a -> sister ) -> head; */
+/*      { */
+/*        df = a -> r_cap; */
+/*        i  = ( a -> sister ) -> head; */
 /*            j  = a -> head; */
-/*  	  INCREASE_FLOW ( i, j, a, df ); */
-/*  	} */
+/*        INCREASE_FLOW ( i, j, a, df ); */
+/*      } */
 /*      } */
 /*  } */
 
@@ -1677,7 +1677,7 @@ for ( a = arcs, na = 0; a != sentinel_arc ; a ++, na ++ )
 /*    FOR_ALL_NODES_i */
 /*      FOR_ALL_ARCS_a_FROM_i */
 /*        if (OPEN(a) && (REDUCED_COST(i, a->head, a) < 0)) */
-/*  	assert(0); */
+/*      assert(0); */
 
 /*    return(1); */
 /*  } */
@@ -1710,7 +1710,7 @@ do{  /* scaling loop */
 
     if ( n_ref >= PRICE_OUT_START )
       {
-	price_out ( );
+        price_out ( );
       }
 
     if ( update_epsilon () ) break;
@@ -1719,14 +1719,14 @@ do{  /* scaling loop */
       {
         if ( ! price_refine () ) break;
 
-	if ( n_ref >= PRICE_OUT_START )
-	  {
-	    if ( price_in () ) 
-	      { 
-		break; 
-	      }
-	  }
-	if ((cc = update_epsilon ())) break;
+        if ( n_ref >= PRICE_OUT_START )
+          {
+            if ( price_in () ) 
+              { 
+                break; 
+              }
+          }
+        if ((cc = update_epsilon ())) break;
       }
   } while ( cc == 0 );
 
@@ -1739,7 +1739,7 @@ finishup ( obj_ad );
 /* SolveCS2-- formerly main() */
 
 void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol, 
-	      long cs2scalefactor, short ***flowsptr)
+              long cs2scalefactor, short ***flowsptr)
 {
 
   /*  double t; */
@@ -1756,8 +1756,6 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
   double cost,  c_max;
   short *cap;  /* cap changed to short by CWC */
 
-  long row_index, col_index;  /* report out-of-bounds index by Cunren, 18-aug-2020 */
-
   short **rowcost, **colcost;
   short **rowflow, **colflow;
   
@@ -1771,7 +1769,7 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
   colcost=&(mstcosts[nrow-1]);
   f_sc=cs2scalefactor;
   cs2mcfparse( residue,rowcost,colcost,nNrow,nNcol,
-	       &n,&m,&ndp,&arp,&nmin,&c_max,&cap );
+               &n,&m,&ndp,&arp,&nmin,&c_max,&cap );
 
   /* free memory that is no longer needed */
   Free2DArray((void **)residue,nrow-1);
@@ -1787,7 +1785,7 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
   
   /* get memory for flow arrays */
   (*flowsptr)=(short **)Get2DRowColZeroMem(nrow,ncol,
-					   sizeof(short *),sizeof(short));
+                                           sizeof(short *),sizeof(short));
   rowflow=(*flowsptr);
   colflow=&((*flowsptr)[nrow-1]);
 
@@ -1800,95 +1798,55 @@ void SolveCS2(signed char **residue, short **mstcosts, long nrow, long ncol,
 
       /* if finite (non-zero) flow */
       if ( cap[ N_ARC (a) ]  > 0 &&  (cap[ N_ARC (a) ] - ( a -> r_cap ) ) ){
-	
-	/* get to, from nodes and flow amount */
-	from=ni;
-	to=N_NODE( a -> head );
-	flow=cap[ N_ARC (a) ] - ( a -> r_cap );
+        
+        /* get to, from nodes and flow amount */
+        from=ni;
+        to=N_NODE( a -> head );
+        flow=cap[ N_ARC (a) ] - ( a -> r_cap );
       
-	if(flow>LARGESHORT || flow<-LARGESHORT){
-	  fprintf(sp0,"Flow will overflow short data type\nAbort\n");
-	  exit(ABNORMAL_EXIT);
-	}
+        if(flow>LARGESHORT || flow<-LARGESHORT){
+          fprintf(sp0,"Flow will overflow short data type\nAbort\n");
+          exit(ABNORMAL_EXIT);
+        }
 
         /* node indices are indexed from 1, not 0 */
         /* node indices are in column major order, not row major */
         /* handle flow to/from ground first */
         if((from==ground) || (to==ground)){
-	  if(to==ground){
-	    num=to;
-	    to=from;
-	    from=num;
-	    flow=-flow;
-	  }
-	  if(!((to-1) % nNrow)){
-      row_index = 0;
-      col_index = (int )((to-1)/nNrow);
-      if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
-        colflow[row_index][col_index]+=flow;
-      else
-	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	  }else if(to<=nNrow){
-      row_index = to-1;
-      col_index = 0;
-      if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
-        rowflow[row_index][col_index]+=flow;
-      else
-	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	  }else if(to>=(ground-nNrow-1)){
-      row_index = (to-1) % nNrow;
-      col_index = nNcol;
-      if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
-        rowflow[row_index][col_index]-=flow;
-      else
-	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	  }else if(!(to % nNrow)){
-      row_index = nNrow;
-      col_index = (int )((to/nNrow)-1);
-      if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
-        colflow[row_index][col_index]-=flow;
-      else
-	      fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	  }else{
-	    fprintf(sp0,"Unassigned ground arc parsing cs2 solution\nAbort\n");
-	    exit(ABNORMAL_EXIT);
-	  }
+          if(to==ground){
+            num=to;
+            to=from;
+            from=num;
+            flow=-flow;
+          }
+          if(!((to-1) % nNrow)){
+            colflow[0][(int )((to-1)/nNrow)]+=flow;
+          }else if(to<=nNrow){
+            rowflow[to-1][0]+=flow;
+          }else if(to>=(ground-nNrow-1)){
+            rowflow[(to-1) % nNrow][nNcol]-=flow;
+          }else if(!(to % nNrow)){
+            colflow[nNrow][(int )((to/nNrow)-1)]-=flow;
+          }else{
+            fprintf(sp0,"Unassigned ground arc parsing cs2 solution\nAbort\n");
+            exit(ABNORMAL_EXIT);
+          }
         }else if(from==(to+1)){    
-	  num=from+(int )((from-1)/nNrow);
-    row_index = (num-1) % (nNrow+1);
-    col_index = (int )(num-1)/(nNrow+1);
-    if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
-      colflow[row_index][col_index]-=flow;
-    else
-	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	}else if(from==(to-1)){
-	  num=from+(int )((from-1)/nNrow)+1;
-    row_index = (num-1) % (nNrow+1);
-    col_index = (int )(num-1)/(nNrow+1);
-    if (0 <= row_index && row_index <= nrow-1 && 0 <= col_index && col_index <= ncol-2)
-      colflow[row_index][col_index]+=flow;
-    else
-	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	}else if(from==(to-nNrow)){
-	  num=from+nNrow;
-    row_index = (num-1) % nNrow;
-    col_index = (int )((num-1)/nNrow);
-    if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
-      rowflow[row_index][col_index]+=flow;
-    else
-	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	}else if(from==(to+nNrow)){
-	  num=from;
-    row_index = (num-1) % nNrow;
-    col_index = (int )((num-1)/nNrow);
-    if (0 <= row_index && row_index <= nrow-2 && 0 <= col_index && col_index <= ncol-1)
-      rowflow[row_index][col_index]-=flow;
-    else
-	    fprintf(sp0,"Warning: out-of-bounds index in computing flow\n");
-	}else{
-	  fprintf(sp0,"Non-grid arc parsing cs2 solution\nAbort\n");
-	  exit(ABNORMAL_EXIT);
-	}
+          num=from+(int )((from-1)/nNrow);
+          colflow[(num-1) % (nNrow+1)][(int )(num-1)/(nNrow+1)]-=flow;
+        }else if(from==(to-1)){
+          num=from+(int )((from-1)/nNrow)+1;
+          colflow[(num-1) % (nNrow+1)][(int )(num-1)/(nNrow+1)]+=flow;
+        }else if(from==(to-nNrow)){
+          num=from+nNrow;
+          rowflow[(num-1) % nNrow][(int )((num-1)/nNrow)]+=flow;
+        }else if(from==(to+nNrow)){
+          num=from;
+          rowflow[(num-1) % nNrow][(int )((num-1)/nNrow)]-=flow;
+        }else{
+          fprintf(sp0,"Non-grid arc parsing cs2 solution\nAbort\n");
+          exit(ABNORMAL_EXIT);
+        }
       } /* end if flow on arc */
 
     } /* end for loop over arcs of node */
