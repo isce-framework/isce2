@@ -64,6 +64,7 @@ def setup(self):
     #1: use mean value of a burst
     #2: use full burst
     ionParam.azshiftFlag = 1
+    ionParam.maskedAreas = None
 
     #better NOT try changing the following two parameters, since they are related
     #to the filtering parameters above
@@ -1043,8 +1044,8 @@ def multilook_unw(self, ionParam, mergedDirname):
     lowerint = np.fromfile(lowerIntName, dtype=np.complex64).reshape(lengthNew, widthNew)
     upperint = np.fromfile(upperIntName, dtype=np.complex64).reshape(lengthNew, widthNew)
     cor = np.zeros((lengthNew*2, widthNew), dtype=np.float32)
-    cor[0:length*2:2, :] = np.sqrt( (np.absolute(lowerint)+np.absolute(upperint))/2.0 )
-    cor[1:length*2:2, :] = cal_coherence(lowerint*np.conjugate(upperint), win=3, edge=4)
+    cor[0:lengthNew*2:2, :] = np.sqrt( (np.absolute(lowerint)+np.absolute(upperint))/2.0 )
+    cor[1:lengthNew*2:2, :] = cal_coherence(lowerint*np.conjugate(upperint), win=3, edge=4)
     cor.astype(np.float32).tofile(corName)
 
 

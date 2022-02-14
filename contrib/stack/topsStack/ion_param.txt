@@ -1,0 +1,26 @@
+###ionospheric correction module parameters
+###the values below are the default values used by the module
+###remove # to set the parameters
+
+#maximum window size for filtering ionosphere phase:         200
+#minimum window size for filtering ionosphere phase:         100
+#maximum window size for filtering ionosphere azimuth shift: 150
+#minimum window size for filtering ionosphere azimuth shift: 75
+
+###seperated islands or areas usually affect ionosphere estimation and it's better to mask them
+###out. check ion/date1_date2/ion_cal/raw_no_projection.ion for areas to be masked out.
+###The parameter is a 2-D list. Each element in the 2-D list is a four-element list: [firstLine,
+###lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the
+###four elements is specified as -1, the program will use firstLine/lastLine/firstColumn/
+###lastColumn instead. For exmple, if you want to mask the following two areas out, you can
+###specify a 2-D list like:
+###[[100, 200, 100, 200],[1000, 1200, 500, 600]]
+#areas masked out in ionospheric phase estimation: None
+
+###better NOT try changing the following two parameters, since they are related
+###to the filtering parameters above
+#total number of azimuth looks in the ionosphere processing:             50
+#total number of range looks in the ionosphere processing:               200
+###the above numbers should be integer multiples of the below numbers
+#number of azimuth looks at first stage for ionosphere phase unwrapping: 10
+#number of range looks at first stage for ionosphere phase unwrapping:   40

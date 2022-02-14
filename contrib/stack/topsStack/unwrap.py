@@ -201,7 +201,12 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     snp.setDefoMaxCycles(defomax)
     snp.setRangeLooks(rangeLooks)
     snp.setAzimuthLooks(azimuthLooks)
-    snp.setCorFileFormat('FLOAT_DATA')
+
+    corImg = isceobj.createImage()
+    corImg.load(corfile + '.xml')
+    if corImg.bands == 1:
+        snp.setCorFileFormat('FLOAT_DATA')
+
     snp.prepare()
     snp.unwrap()
 
@@ -333,6 +338,17 @@ def main(iargs=None):
        xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
        metadata = extractInfo(xmlFile, inps)
        fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
+
+       #mask out wired values from snaphu
+       intImage = isceobj.createImage()
+       intImage.load(inps.intfile+'.xml')
+       width = intImage.width
+       length = intImage.length
+
+       flag = np.fromfile(inps.intfile, dtype=np.complex64).reshape(length, width)
+       unw=np.memmap(inps.unwfile, dtype='float32', mode='r+', shape=(length*2, width))
+       (unw[0:length*2:2, :])[np.nonzero(flag==0)]=0
+       (unw[1:length*2:2, :])[np.nonzero(flag==0)]=0
 
     elif inps.method == 'icu':
        runUnwrapIcu(inps.intfile, inps.unwfile)

@@ -360,10 +360,12 @@ def main(iargs=None):
         if inps.isaligned:
             reference = ifg.reference
 
-            # checking inconsistent number of bursts in the secondary acquisitions
-            if reference.numberOfBursts != ifg.numberOfBursts:
-                raise ValueError('{} has different number of bursts ({}) than the reference ({})'.format(
-                    inps.reference, ifg.numberOfBursts, reference.numberOfBursts))
+            #this does not make sense, number of burst in reference is not necessarily number of bursts in interferogram.
+            #so comment it out.
+            # # checking inconsistent number of bursts in the secondary acquisitions
+            # if reference.numberOfBursts != ifg.numberOfBursts:
+            #     raise ValueError('{} has different number of bursts ({}) than the reference ({})'.format(
+            #         inps.reference, ifg.numberOfBursts, reference.numberOfBursts))
 
         else:
             reference = ifg

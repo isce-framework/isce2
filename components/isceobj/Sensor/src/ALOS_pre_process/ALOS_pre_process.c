@@ -409,7 +409,7 @@ char   	date[8];
 	    //line number of first line of this prf file
 	    line_number_first = (rspi_new.SC_clock_start[i] - rspi_pre[0].SC_clock_start[0]) * d2s / (1.0 / rspi_pre[0].prf[0]);
 	    //unit: pri of first prf of first image
-	    num_lines_out = (rspi_pre[image_i].frame_counter_end[i] - rspi_pre[image_i].frame_counter_start[i] + 1) * (1.0/rspi_pre[image_i].prf[i]) / (1.0/rspi_pre[0].prf[0]);
+	    num_lines_out = (int)((rspi_pre[image_i].frame_counter_end[i] - rspi_pre[image_i].frame_counter_start[i] + 1) * (1.0/rspi_pre[image_i].prf[i]) / (1.0/rspi_pre[0].prf[0]));
 
         if((fabs(roundfi(line_number_first)-line_number_first)<0.1) && (rspi_pre[image_i].prf[i]==rspi_pre[0].prf[0]))
         	continue;
@@ -469,7 +469,7 @@ char   	date[8];
 	    //append prf i
 	    for(i = 1; i < rspi_new.nPRF; i++){
             //number of lines to be appended between frames if there are gaps
-            num_lines_append = (rspi_new.SC_clock_start[i] - rspi_new.SC_clock_start[0]) * d2s / (1.0/rspi_pre[0].prf[0]) - rspi_new.num_lines[0];
+            num_lines_append = roundfi((rspi_new.SC_clock_start[i] - rspi_new.SC_clock_start[0]) * d2s / (1.0/rspi_pre[0].prf[0])) - rspi_new.num_lines[0];
             if(num_lines_append >= 1){
             	for(j = 0; j < num_lines_append; j++){
             		for(k = 0; k < 2*rspi_new.num_bins[i]; k++)
@@ -485,7 +485,7 @@ char   	date[8];
 	        	die("can't open", rspi_new.input_file[i]);
             num_lines_append = 0;
             for(j = 0; j < rspi_new.num_lines[i]; j++){
-                if((rspi_new.SC_clock_start[i] + j * (1.0/rspi_pre[0].prf[0]) / d2s -  rspi_new.SC_clock_start[0]) * d2s / (1.0/rspi_pre[0].prf[0]) >= rspi_new.num_lines[0]){
+                if(roundfi((rspi_new.SC_clock_start[i] + j * (1.0/rspi_pre[0].prf[0]) / d2s -  rspi_new.SC_clock_start[0]) * d2s / (1.0/rspi_pre[0].prf[0])) >= rspi_new.num_lines[0]){
 			        if(fread((char *)data, 2*sizeof(char)*rspi_new.num_bins[i], 1, next_prf_fp) != 1)
 			        	die("can't read data from", rspi_new.input_file[i]);
 			        if(fwrite((char *)data, 2*sizeof(char)*rspi_new.num_bins[i], 1, first_prf_fp) != 1)

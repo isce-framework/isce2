@@ -184,6 +184,13 @@ def createParser():
     parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
 
+    parser.add_argument('--param_ion', dest='param_ion', type=str, default=None, 
+                        help='ionosphere estimation parameter file. if provided, will do ionosphere estimation.')
+
+    parser.add_argument('--num_connections_ion', dest='num_connections_ion', type=str, default = '3',
+                        help='number of interferograms between each date and subsequent dates for ionosphere estimation (default: %(default)s).')
+
+
     return parser
 
 def cmdLineParse(iargs = None):
@@ -439,6 +446,158 @@ def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should
     return pairs
 
 
+def selectNeighborPairsIonosphere(safe_dict, num_connections):
+    '''
+    safe_dict: returned by def get_dates(inps):
+    num_connetions: number of subsequent dates to pair up with a date
+
+    This routine first groups the Dates. Dates of same starting ranges is put in a group.
+    Pairs within a same group are returned in pairs_same_starting_ranges
+    Pairs connecting different groups are returned in pairs_diff_starting_ranges
+    '''
+
+    #get starting ranges
+    for date in safe_dict:
+        safe_dict[date].get_starting_ranges()
+
+    #get sorted dataList
+    dateList = [key for key in safe_dict.keys()]
+    dateList.sort()
+    ndate = len(dateList)
+
+    #starting ranges sorted by date
+    starting_ranges = [safe_dict[date].startingRanges for date in dateList]
+
+    #get unique starting ranges sorted by date
+    starting_ranges_unique = []
+    for i in range(ndate):
+        if starting_ranges[i] not in starting_ranges_unique:
+            starting_ranges_unique.append(starting_ranges[i])
+    ndate_unique = len(starting_ranges_unique)
+ 
+    #put dates of same starting ranges in a list
+    #result is a 2-D list, each D is sorted by date
+    starting_ranges_unique_dates = [[] for i in range(ndate_unique)]
+    for k in range(ndate_unique):
+        for i in range(ndate):
+            if starting_ranges_unique[k] == safe_dict[dateList[i]].startingRanges:
+                starting_ranges_unique_dates[k].append(dateList[i])
+    #print(starting_ranges_unique_dates)
+
+    if num_connections == 'all':
+        num_connections = ndate - 1
+    else:
+        num_connections = int(num_connections)
+
+    #1. form all possible pairs, to be used in 3
+    pairs_same_starting_ranges_0 = []
+    pairs_diff_starting_ranges_0 = []
+    for i in range(ndate-1):
+        for j in range(i+1, i+num_connections+1):
+            if j >= ndate:
+                continue
+            same_starting_ranges = False
+            for k in range(ndate_unique):
+                if dateList[i] in starting_ranges_unique_dates[k] and dateList[j] in starting_ranges_unique_dates[k]:
+                    same_starting_ranges = True
+                    break
+            if same_starting_ranges == True:
+                pairs_same_starting_ranges_0.append((dateList[i],dateList[j]))
+            else:
+                pairs_diff_starting_ranges_0.append((dateList[i],dateList[j]))
+
+    #2. form pairs of same starting ranges
+    pairs_same_starting_ranges = []
+    for k in range(ndate_unique):
+        ndate_unique_k = len(starting_ranges_unique_dates[k])
+        for i in range(ndate_unique_k):
+            for j in range(i+1, i+num_connections+1):
+                if j >= ndate_unique_k:
+                    continue
+                pairs_same_starting_ranges.append((starting_ranges_unique_dates[k][i],starting_ranges_unique_dates[k][j]))
+
+    #3. select pairs of diff starting ranges formed in 1 to connect the different starting ranges
+    pairs_diff_starting_ranges = []
+    for k in range(ndate_unique-1):
+        cnt = 0
+        for pair in pairs_diff_starting_ranges_0:
+            if (pair[0] in starting_ranges_unique_dates[k] and pair[1] in starting_ranges_unique_dates[k+1]) or \
+               (pair[1] in starting_ranges_unique_dates[k] and pair[0] in starting_ranges_unique_dates[k+1]):
+               pairs_diff_starting_ranges.append(pair)
+            cnt += 1
+            if cnt >= num_connections:
+                break
+
+    return pairs_same_starting_ranges, pairs_diff_starting_ranges
+
+
+def excludeExistingPairsIonosphere(pairs_same_starting_ranges, pairs_diff_starting_ranges, work_dir):
+    '''
+    This routine searches for existing pairs for ionosphere estimation and exclude them from
+    pairs_same_starting_ranges and pairs_diff_starting_ranges.
+    '''
+
+    if os.path.isdir(os.path.join(work_dir, 'ion')):
+        print('previous ionosphere estimation directory found')
+        print('exclude already processed pairs for ionosphere estimation')
+
+        pairs = [os.path.basename(p) for p in glob.glob(os.path.join(work_dir, 'ion', '*')) if os.path.isdir(p)]
+        pairs.sort()
+        pairs = [tuple(p.split('_')) for p in pairs]
+
+        pairs_same_starting_ranges_update = [p for p in pairs_same_starting_ranges if p not in pairs]
+        pairs_diff_starting_ranges_update = [p for p in pairs_diff_starting_ranges if p not in pairs]
+    else:
+        pairs_same_starting_ranges_update = pairs_same_starting_ranges
+        pairs_diff_starting_ranges_update = pairs_diff_starting_ranges
+
+    return pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update
+
+
+def getDatesIonosphere(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update):
+    '''
+    This routine gets all dates associated with ionosphere estimation from
+    pairs_same_starting_ranges_update and pairs_diff_starting_ranges_update
+    '''
+
+    dateListIon = []
+    for pairs in (pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update):
+        for p in pairs:
+            if p[0] not in dateListIon:
+                dateListIon.append(p[0])
+            if p[1] not in dateListIon:
+                dateListIon.append(p[1])
+
+    dateListIon.sort()
+
+    return dateListIon
+
+
+def checkCurrentStatusIonosphere(inps):
+
+    #can run get_dates multiples times anywhere. it is only associated with inps parameters and safe files, not others
+    acquisitionDates, stackReferenceDate, secondaryDates, safe_dict = get_dates(inps)
+
+    pairs_same_starting_ranges, pairs_diff_starting_ranges = selectNeighborPairsIonosphere(safe_dict, inps.num_connections_ion)
+    pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update = excludeExistingPairsIonosphere(pairs_same_starting_ranges, pairs_diff_starting_ranges, inps.work_dir)
+    dateListIon = getDatesIonosphere(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
+
+    #report pairs of different swath starting ranges.
+    pdiff = 'ionosphere phase estimation pairs with different swath starting ranges\n'
+    for p in pairs_diff_starting_ranges:
+        pdiff += '{}_{}\n'.format(p[0], p[1])
+
+    pdiff += '\nionosphere phase estimation pairs with different platforms\n'
+    for p in pairs_same_starting_ranges+pairs_diff_starting_ranges:
+        if safe_dict[p[0]].platform != safe_dict[p[1]].platform:
+            pdiff += '{}_{}\n'.format(p[0], p[1])
+
+    with open('pairs_diff_starting_ranges.txt', 'w') as f:
+        f.write(pdiff)
+
+    return dateListIon, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict
+
+
 ########################################
 # Below are few workflow examples.
 
@@ -561,6 +720,8 @@ def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates,
     runObj.filter_coherence(pairs)
     runObj.finalize()
 
+    return i
+
 
 def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
@@ -600,6 +761,8 @@ def interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDate
     runObj.unwrap(pairs)
     runObj.finalize()
 
+    return i
+
 
 def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack):
 
@@ -620,6 +783,61 @@ def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe
     runObj.configure(inps, 'run_{:02d}_dense_offsets'.format(i))
     runObj.denseOffsets(pairs)
     runObj.finalize()
+
+    return i
+
+
+def ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i):
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_subband_and_resamp'.format(i))
+    runObj.subband_and_resamp(dateListIon, stackReferenceDate)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_generateIgram_ion'.format(i))
+    runObj.generateIgram_ion(pairs_same_starting_ranges_update+pairs_diff_starting_ranges_update, stackReferenceDate)
+    runObj.finalize()
+
+    i += 1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_mergeBurstsIon'.format(i))
+    runObj.mergeBurstsIon(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_unwrap_ion'.format(i))
+    runObj.unwrap_ion(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_look_ion'.format(i))
+    runObj.look_ion(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_computeIon'.format(i))
+    runObj.computeIon(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_filtIon'.format(i))
+    runObj.filtIon(pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update)
+    runObj.finalize()
+
+    i+=1
+    runObj = run()
+    runObj.configure(inps, 'run_{:02d}_invertIon'.format(i))
+    runObj.invertIon()
+    runObj.finalize()
+
+    return i
 
 
 def checkCurrentStatus(inps):
@@ -767,19 +985,26 @@ def main(iargs=None):
     print ('*****************************************')
     if inps.workflow == 'interferogram':
 
-        interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        i = interferogramStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'offset':
 
-        offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        i = offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'correlation':
 
-        correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
+        i = correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, pairs, updateStack)
 
     elif inps.workflow == 'slc':
 
-        slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=True)
+        i = slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe_dict, updateStack, mergeSLC=True)
+
+
+    #do ionosphere estimation
+    if inps.param_ion is not None:
+        dateListIon, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict = checkCurrentStatusIonosphere(inps)
+        i = ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i)
+
 
 if __name__ == "__main__":
 
