@@ -35,7 +35,7 @@ import sys
 
 COMPILER_OPTIONS ={'COMPILER_OPTIMIZATION':'-O2','COMPILER_WARNING':'-Wall'}
 LINKER_OPTIONS ={'LINKFLAGS':'-fopenmp'} # some systems don't need it, but ubuntu does
-GFORTRANFLAGS = ['-ffixed-line-length-none' ,'-fno-second-underscore',    '-fPIC','-fno-range-check', '-fallow-argument-mismatch']
+GFORTRANFLAGS = ['-ffixed-line-length-none' ,'-fno-second-underscore',    '-fPIC','-fno-range-check']
 GCCFLAGS = ['-fPIC']
 if 'DEVELOPER' in os.environ:
     GFORTRANFLAGS.append('-fbounds-check')
