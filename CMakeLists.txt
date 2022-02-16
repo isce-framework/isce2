@@ -41,12 +41,17 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_LIST_DIR}")
 endif()
 
 if(NOT DEFINED PYTHON_MODULE_DIR)
-    set(PYTHON_MODULE_DIR packages CACHE PATH
-        "Python module directory (relative to install prefix)")
+    set(PYTHON_MODULE_DIR packages CACHE PATH "Python module directory")
 endif()
 if(NOT DEFINED ISCE2_PKG)
     set(ISCE2_PKG ${PYTHON_MODULE_DIR}/isce2 CACHE PATH
-        "ISCE 2 python package install dir (relative to install prefix)")
+        "ISCE 2 python package install dir")
+endif()
+
+if(IS_ABSOLUTE "${ISCE2_PKG}")
+    set(ISCE2_PKG_FULL "${ISCE2_PKG}")
+else()
+    set(ISCE2_PKG_FULL "${CMAKE_INSTALL_PREFIX}/${ISCE2_PKG}")
 endif()
 
 include(isce2_buildflags)
