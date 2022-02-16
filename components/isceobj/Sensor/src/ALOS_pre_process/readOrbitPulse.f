@@ -144,7 +144,8 @@ c      print *,val
       end
 
       integer*4 function unpackBytes(i1, i2, i3, i4)
-      integer*4                      i1, i2, i3, i4
-      unpackBytes = iand(i1, 255)*256*256*256 + iand(i2, 255)*256*256 +
-     $              iand(i3, 255)*256         + iand(i4, 255)
+      integer*1                      i1, i2, i3, i4, i255
+      i255 = 255  ! needed to keep gfortran >9 happy
+      unpackBytes = iand(i1, i255)*256*256*256 + iand(i2, i255)*256*256 +
+     $              iand(i3, i255)*256         + iand(i4, i255)
       end function
