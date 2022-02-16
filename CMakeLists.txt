@@ -100,3 +100,9 @@ else()
 endif()
 install(CODE "execute_process(COMMAND
     ${CMAKE_COMMAND} -E create_symlink ${symsrc} ${symdest})")
+
+# Enable native packaging using CPack
+if(NOT CPACK_PACKAGE_CONTACT)
+    set(CPACK_PACKAGE_CONTACT "Ryan Burns <rtburns@jpl.nasa.gov>")
+endif()
+include(CPack)
