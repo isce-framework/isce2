@@ -32,11 +32,12 @@ install(PROGRAMS ${files}
 
 # Symlink apps into PREFIX/bin so they are on the $PATH
 install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory \
-    ${CMAKE_INSTALL_PREFIX}/bin)"
+    ${CMAKE_INSTALL_FULL_BINDIR})"
     )
+
 foreach(file ${files})
     install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink \
-        ${CMAKE_INSTALL_PREFIX}/${ISCE2_PKG}/applications/${file} \
-        ${CMAKE_INSTALL_PREFIX}/bin/${file})"
+        ${ISCE2_PKG_FULL}/applications/${file} \
+        ${CMAKE_INSTALL_FULL_BINDIR}/${file})"
         )
 endforeach()
