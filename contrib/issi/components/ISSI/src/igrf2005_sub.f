@@ -17,6 +17,7 @@ c----------------------------------------------------------------
       INTEGER           EGNR,AGNR,OGNR
       REAL              LATI,LONGI
       COMMON/GENER/     UMR,ERA,AQUAD,BQUAD
+      character*80 PATH
 C
       CALL INITIZE
       ibbb=0
@@ -53,11 +54,12 @@ C 2005.00 04/25/05 CALL FELDI and DO 1111 I=1,7 (Alexey Petrov)
 C 2005.01 11/10/05 added igrf_dip and geodip (MLAT) 
 C 2005.02 11/10/05 updated to IGRF-10 version
 C 2006.00 12/21/06 GH2(120) -> GH2(144)
+c 2022/01/23 added path to be consistent with igrf_bvector (Eric Fielding)
 C
 C*********************************************************************
 
         subroutine igrf_sub(xlat,xlong,year,height,
-     &          xl,icode,dip,dec)
+     &          xl,icode,dip,dec,path)
 c----------------------------------------------------------------
 c   INPUT:
 c	xlat	geodatic latitude in degrees
@@ -65,6 +67,7 @@ c	xlong	geodatic longitude in degrees
 c	year	decimal year (year+month/12.0-0.5 or year+day-of-year/365 
 c		or 366 if leap year) 
 c	height	height in km
+c       path    the path to the data files
 c   OUTPUT:
 c	xl	L value
 c	icode	=1  L is correct; =2  L is not correct;
@@ -76,6 +79,7 @@ c----------------------------------------------------------------
       INTEGER           EGNR,AGNR,OGNR
       REAL              LATI,LONGI
       COMMON/GENER/     UMR,ERA,AQUAD,BQUAD
+      character*80 PATH
 C
       CALL INITIZE
 	ibbb=0
@@ -86,7 +90,7 @@ C
 c
 C----------------CALCULATE PROFILES-----------------------------------
 c
-        CALL FELDCOF(YEAR,DIMO)
+        CALL FELDCOF(YEAR,DIMO,PATH)
         CALL FELDG(LATI,LONGI,HEIGHT,BNORTH,BEAST,BDOWN,BABS)
         CALL SHELLG(LATI,LONGI,HEIGHT,DIMO,XL,ICODE,BAB1)
         DIP=ASIN(BDOWN/BABS)/UMR
