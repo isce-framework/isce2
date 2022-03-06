@@ -187,6 +187,9 @@ def createParser():
     parser.add_argument('--param_ion', dest='param_ion', type=str, default=None, 
                         help='ionosphere estimation parameter file. if provided, will do ionosphere estimation.')
 
+    parser.add_argument('-annualCon', '--annual_connections', dest='annual_connections', action='store_true',
+                        default=False, help='Generate one year interferograms')
+
     parser.add_argument('--num_connections_ion', dest='num_connections_ion', type=str, default = '3',
                         help='number of interferograms between each date and subsequent dates for ionosphere estimation (default: %(default)s).')
 
@@ -429,7 +432,7 @@ def get_dates(inps):
 
     return dateList, inps.reference_date, secondaryList, safe_dict
 
-def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should be changed to able to account for the existed aquisitions -- Minyan Zhong
+def selectNeighborPairs(dateList, num_connections, updateStack=False, annual_connections=False):  # should be changed to able to account for the existed aquisitions -- Minyan Zhong
 
     pairs = []
     if num_connections == 'all':
@@ -443,8 +446,28 @@ def selectNeighborPairs(dateList, num_connections, updateStack=False):  # should
             if j<len(dateList):
                 pairs.append((dateList[i],dateList[j]))
 
+    if annual_connections:
+        one_year = find_one_year_interferograms(dateList)
+        pairs += one_year
+
     return pairs
 
+def find_one_year_interferograms(date_list):
+    dates = np.array([datetime.datetime.strptime(date, '%Y%m%d') for date in date_list])
+
+    ifg_ind = []
+    for i, date in enumerate(dates):
+        range_1 = date + datetime.timedelta(days=365) - datetime.timedelta(days=5)
+        range_2 = date + datetime.timedelta(days=365) + datetime.timedelta(days=5)
+        index = np.where((dates >= range_1) * (dates <= range_2))[0]
+        if len(index) >= 1:
+            date_diff = list(dates[index] - (date + datetime.timedelta(days=365)))
+            ind = date_diff.index(np.nanmin(date_diff))
+            ind_date = index[ind]
+            date2 = date_list[ind_date]
+            ifg_ind.append((date_list[i], date2))
+
+    return ifg_ind
 
 def selectNeighborPairsIonosphere(safe_dict, num_connections):
     '''
@@ -974,9 +997,9 @@ def main(iargs=None):
         print('Updating an existing stack ...')
         print('')
         dates4NewPairs = sorted(secondaryDates + [stackReferenceDate])[1:]
-        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,updateStack)   # will be change later
+        pairs = selectNeighborPairs(dates4NewPairs, inps.num_connections,updateStack, inps.annual_connections)   # will be change later
     else:
-        pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack)
+        pairs = selectNeighborPairs(acquisitionDates, inps.num_connections,updateStack, inps.annual_connections)
 
 
     print ('*****************************************')

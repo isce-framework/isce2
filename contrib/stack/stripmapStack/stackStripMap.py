@@ -50,6 +50,9 @@ def createParser():
     parser.add_argument('-b', '--baseline_threshold', dest='dbThr', type=float, default=5000.0,
             help='Baseline threshold (max bperp in meters)')
 
+    parser.add_argument('-annualCon', '--annual_connections', dest='annual_connections', action='store_true',
+                        default=False, help='Generate one year interferograms')
+
     parser.add_argument('-a', '--azimuth_looks', dest='alks', type=str, default='10',
             help='Number of looks in azimuth (automaticly computed as AspectR*looks when '
                  '"S" or "sensor" is defined to give approximately square multi-look pixels)')
@@ -335,9 +338,9 @@ def main(iargs=None):
     os.makedirs(runDir, exist_ok=True)
 
     if inps.sensor and inps.sensor.lower().startswith('uavsar'):    # don't try to calculate baselines for UAVSAR_STACK data
-        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False)
+        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=False, annual_connections=inps.annual_connections)
     else:
-        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True)
+        pairs = selectPairs(inps,stackReferenceDate, secondaryDates, acquisitionDates,doBaselines=True, annual_connections=inps.annual_connections)
     print ('number of pairs: ', len(pairs))
 
     ###If only a summary is requested quit after this

@@ -740,7 +740,7 @@ def baselineStack(inps,stackReference,acqDates,doBaselines=True):
 
     return baselineDict, timeDict
 
-def selectPairs(inps,stackReference, secondaryDates, acuisitionDates,doBaselines=True):
+def selectPairs(inps,stackReference, secondaryDates, acuisitionDates,doBaselines=True, annual_connections=False):
 
     baselineDict, timeDict = baselineStack(inps, stackReference, acuisitionDates,doBaselines)
     for secondary in secondaryDates:
@@ -754,9 +754,29 @@ def selectPairs(inps,stackReference, secondaryDates, acuisitionDates,doBaselines
             if (db < inps.dbThr) and (dt < inps.dtThr):
                 pairs.append((acuisitionDates[i],acuisitionDates[j]))
 
+    if annual_connections:
+        one_year = find_one_year_interferograms(dateList)
+        pairs += one_year
+
     plotNetwork(baselineDict, timeDict, pairs,os.path.join(inps.workDir,'pairs.pdf'))
     return pairs 
 
+def find_one_year_interferograms(date_list):
+    dates = np.array([datetime.datetime.strptime(date, '%Y%m%d') for date in date_list])
+
+    ifg_ind = []
+    for i, date in enumerate(dates):
+        range_1 = date + datetime.timedelta(days=365) - datetime.timedelta(days=5)
+        range_2 = date + datetime.timedelta(days=365) + datetime.timedelta(days=5)
+        index = np.where((dates >= range_1) * (dates <= range_2))[0]
+        if len(index) >= 1:
+            date_diff = list(dates[index] - (date + datetime.timedelta(days=365)))
+            ind = date_diff.index(np.nanmin(date_diff))
+            ind_date = index[ind]
+            date2 = date_list[ind_date]
+            ifg_ind.append((date_list[i], date2))
+
+    return ifg_ind
 
 def plotNetwork(baselineDict, timeDict, pairs,save_name='pairs.png'):
     import matplotlib
