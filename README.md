@@ -58,7 +58,7 @@ TERRASARX, UAVSAR and SAOCOM1A.
 
 * gcc >= 4.8+  (with C++11 support)
 * fftw >= 3.2.2 (with single precision support)
-* Python >= 3.5  (3.6 preferred)
+* Python < 3.10  (3.6 preferred)
 * scons >= 2.0.1
 * curl - for automatic DEM downloads
 * GDAL and its Python bindings >= 2.2
