@@ -118,6 +118,24 @@ If you are interested in a particular region instead of the whole image, you may
 --startpixelac $startPixelAcross --startpixeldw $startPixelDown --nwa $numberOfWindowsAcross --nwd $numberOfWindowsDown
 ```
 
+If you prefer to provide the location of the last pixel instead of the number of windows, you may use
+
+```
+--startpixelac $startPixelAcross --startpixeldw $startPixelDown --endpixelac $endPixelAcross --endpixeldw $endPixelDown
+```
+
+The program will calculate the number of windows based on the skip size and the window size. 
+
+If you prefer to provide the locations for the center of the starting/ending window, rather than those of the first/last pixels, you may add *--use-center 1* together with the above options, e.g., 
+
+```
+--startpixelac $startPixelAcross --startpixeldw $startPixelDown --use-center 1 --nwa $numberOfWindowsAcross --nwd $numberOfWindowsDown
+```
+
+Here, *($startPixelDown, $startPixelAcross)* is the coordinate of the first window center, and will be fixed if you vary the window size or search range. 
+
+But please note, the provided starting/ending pixels may go beyond the original reference/secondary image range. The program will still run but the offset results on the edge may be incorrect.
+
 PyCuAmpcor supports two types of gross offset fields,
 * static (--gross=0), i.e., a constant shift between reference and secondary images. The static gross offsets can be passed by *--rr $rgshift --aa $azshift*. Note that the margin as well as the starting pixel may be adjusted.
 * dynamic (--gross=1), i.e., shifts between reference windows and secondary windows are varying in different locations. This is helpful to reduce the search range if you have a prior knowledge of the estimated offset fields, e.g., the velocity model of glaciers. You may prepare a BIP input file of the varying gross offsets (same format as the output offset fields), and use the option *--gross-file $grossOffsetFilename*. If you need the coordinates of reference windows, you may run *cuDenseOffsets.py* at first to find out the location of the starting pixel and the total number of windows. The coordinate for the starting pixel of the (iDown, iAcross) window will be (startPixelDown+iDown\*skipDown, startPixelAcross+iAcross\*skipAcross).
