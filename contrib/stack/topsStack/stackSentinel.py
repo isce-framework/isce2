@@ -230,6 +230,7 @@ def get_dates(inps):
 
     if inps.bbox is not None:
         bbox = [float(val) for val in inps.bbox.split()]
+        bbox_poly = np.array([[bbox[2],bbox[0]],[bbox[3],bbox[0]],[bbox[3],bbox[1]],[bbox[2],bbox[1]]])
 
     if inps.exclude_dates is not None:
         excludeList = inps.exclude_dates.split(',')
@@ -278,7 +279,6 @@ def get_dates(inps):
     f = open('SAFE_files.txt','w')
     safe_count=0
     safe_dict={}
-    bbox_poly = np.array([[bbox[2],bbox[0]],[bbox[3],bbox[0]],[bbox[3],bbox[1]],[bbox[2],bbox[1]]])
 
     for safe in SAFE_files:
         safeObj=sentinelSLC(safe)

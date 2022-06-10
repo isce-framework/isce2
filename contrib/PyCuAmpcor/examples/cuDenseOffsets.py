@@ -42,7 +42,9 @@ def createParser():
     parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
                         help='Secondary image')
     parser.add_argument('--fix-xml','--fix-image-xml', dest='fixImageXml', action='store_true',
-                        help='Fix the image file path in the XML file. Enable this if input files havee been moved.')
+                        help='Fix the image file path in the XML file. Enable this if input files have been moved.')
+    parser.add_argument('--fix-vrt','--fix-image-vrt', dest='fixImageVrt', action='store_true',
+                        help='Fix the image file path in the VRT file. Enable this if input files have VRT pointing to non-existing burst files')
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
@@ -165,6 +167,12 @@ def estimateOffsetField(reference, secondary, inps=None):
             img.filename = fname
             img.setAccessMode('READ')
             img.renderHdr()
+
+    if inps.fixImageVrt:
+        for fname in [reference, secondary]:
+            fname = os.path.abspath(fname)
+            img = IML.loadImage(fname)[0]
+            img.renderVRT()
 
     ###Loading the secondary image object
     sim = isceobj.createSlcImage()
