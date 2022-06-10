@@ -253,9 +253,9 @@ def get_dates(inps):
             SAFE_files.append(str.replace(line,'\n','').strip())
 
     else:
-        SAFE_files = glob.glob(os.path.join(inps.slc_dirname,'S1*_IW_SLC*zip')) # changed to zip file by Minyan Zhong
+        SAFE_files = sorted(glob.glob(os.path.join(inps.slc_dirname, 'S1*_IW_SLC*zip'))) # changed to zip file by Minyan Zhong
         if SAFE_files == []:
-            SAFE_files = glob.glob(os.path.join(inps.slc_dirname,'S1*_IW_SLC*SAFE'))
+            SAFE_files = sorted(glob.glob(os.path.join(inps.slc_dirname, 'S1*_IW_SLC*SAFE')))
 
     if len(SAFE_files) == 0:
         raise Exception('No SAFE file found')
@@ -434,7 +434,7 @@ def get_dates(inps):
     return dateList, inps.reference_date, secondaryList, safe_dict
 
 
-def selectNeighborPairs(dateList, secondaryDates, num_connections, updateStack=False):
+def selectNeighborPairs(dateList, stackReferenceDate, secondaryDates, num_connections, updateStack=False):
     """Select nearest neighbor acquisitions to form seqential pairs."""
 
     pairs = []

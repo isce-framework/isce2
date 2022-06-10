@@ -283,50 +283,41 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
     Take looks.
     '''
 
+    # default output filename
+    if outname is None:
+        spl = os.path.splitext(infile)
+        ext = '.{0}alks_{1}rlks'.format(alks, rlks)
+        outname = spl[0] + ext + spl[1]
+
     if multilook_tool=="gdal":
-
         from osgeo import gdal
+        print(f"multilooking using gdal for {infile} ...")
 
-        print("multi looking using gdal ...")
-        if outname is None:
-            spl = os.path.splitext(infile)
-            ext = '.{0}alks_{1}rlks'.format(alks, rlks)
-            outname = spl[0] + ext + spl[1]
-        
-        print(infile)
         ds = gdal.Open(infile + ".vrt", gdal.GA_ReadOnly)
 
         xSize = ds.RasterXSize
         ySize = ds.RasterYSize
+        outXSize = int(xSize / int(rlks))
+        outYSize = int(ySize / int(alks))
+        srcXSize = outXSize * int(rlks)
+        srcYSize = outYSize * int(alks)
 
-        outXSize = xSize/int(rlks)
-        outYSize = ySize/int(alks)
+        options_str = f'-of ENVI -outsize {outXSize} {outYSize} -srcwin 0 0 {srcXSize} {srcYSize} '
+        options_str += f'-a_nodata {no_data}' if no_data else ''
+        gdal.Translate(outname, ds, options=options_str)
+        # repeat as a workaround solution to avoid the GDAL
+        # The issue happens for version (3.3.3 and 3.4), and not for version 2.3
+        gdal.Translate(outname, ds, options=options_str)
 
-        if no_data:
-            gdalTranslateOpts = gdal.TranslateOptions(format="ENVI", width=outXSize, height=outYSize, noData=no_data)
-        else:
-            gdalTranslateOpts = gdal.TranslateOptions(format="ENVI", width=outXSize, height=outYSize)
-
-        gdal.Translate(outname, ds, options=gdalTranslateOpts)       
-        ds = None
-
-        
-        ds = gdal.Open(outname, gdal.GA_ReadOnly)
-        gdal.Translate(outname+".vrt", ds, options=gdal.TranslateOptions(format="VRT"))
-        ds = None
+        # generate VRT file
+        gdal.Translate(outname + ".vrt", outname, options='-of VRT')
 
     else:
         from mroipac.looks.Looks import Looks
-
-        print('Multilooking {0} ...'.format(infile))
+        print(f'multilooking using isce2 for {infile} ...')
 
         inimg = isceobj.createImage()
         inimg.load(infile + '.xml')
-
-        if outname is None:
-            spl = os.path.splitext(inimg.filename)
-            ext = '.{0}alks_{1}rlks'.format(alks, rlks)
-            outname = spl[0] + ext + spl[1]
 
         lkObj = Looks()
         lkObj.setDownLooks(alks)

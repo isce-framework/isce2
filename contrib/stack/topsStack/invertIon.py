@@ -192,10 +192,10 @@ if __name__ == '__main__':
     else:
         dateZero = dates[0]
 
-    print('all pairs:\n{}'.format(' '.join(pairsAll)))
-    print('all dates:\n{}'.format(' '.join(datesAll)))
-    print('used pairs:\n{}'.format(' '.join(pairs)))
-    print('used dates:\n{}'.format(' '.join(dates)))
+    print(f'all pairs ({len(pairsAll)}):\n{pairsAll}')
+    print(f'all dates ({len(datesAll)}):\n{datesAll}')
+    print(f'used pairs ({len(pairs)}):\n{pairs}')
+    print(f'used dates ({len(dates)}):\n{dates}')
 
 
 ####################################################################################
