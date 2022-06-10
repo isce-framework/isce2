@@ -134,7 +134,7 @@ def get_group(dir0):
         fields = zips[i].split('_')
         tbef = datetime.datetime.strptime(fields[-5], datefmt)
         taft = datetime.datetime.strptime(fields[-4], datefmt)
-        
+
         if i == 0:
             #create new group
             tbef0 = tbef
@@ -225,7 +225,7 @@ def check_redundancy(group, threshold=1):
 def check_version(group):
     print('\nchecking different slice versions of an acquisition')
 
-    acquistion_removed_indices = [] 
+    acquistion_removed_indices = []
     ngroup = len(group)
     for i in range(ngroup):
         ngroupi = len(group[i])
@@ -367,7 +367,7 @@ def check_different_starting_ranges(group):
 def check_small_number_of_acquisitions_with_same_starting_ranges(group, threshold=1):
     '''
     for the same subswath starting ranges,
-    if the number of acquistions < threshold, remove these acquistions 
+    if the number of acquistions < threshold, remove these acquistions
     '''
 
     print('\nchecking small-number of acquistions with same starting ranges')
@@ -375,7 +375,7 @@ def check_small_number_of_acquisitions_with_same_starting_ranges(group, threshol
     ngroup = len(group)
 
     starting_ranges = [x[0].startingRanges for x in group]
-    
+
     #get unique starting_ranges
     starting_ranges_unique = []
     for i in range(ngroup):
@@ -418,14 +418,18 @@ def cmdLineParse():
     '''
     Command line parser.
     '''
-
-    parser = argparse.ArgumentParser( description='select Sentinel-1A/B acquistions good for ionosphere correction. not used slices are moved to folder: not_used')
+    EXAMPLE = """example:
+        s1_select_ion.py -dir data/slc -sn 33.55 37.12 -nr 10
+        s1_select_ion.py -dir data/slc -sn -36.0 -30.0 -nr 6
+    """
+    parser = argparse.ArgumentParser(description='Select Sentinel-1A/B acquistions good for ionosphere correction. Not used slices are moved to folder: not_used',
+                                     formatter_class=argparse.RawTextHelpFormatter, epilog=EXAMPLE)
     parser.add_argument('-dir', dest='dir', type=str, required=True,
             help = 'directory containing the "S1*_IW_SLC_*.zip" files')
-    parser.add_argument('-sn', dest='sn', type=str, required=True,
-            help='south/north bound of area of interest, format: south/north')
+    parser.add_argument('-sn', dest='sn', type=float, nargs=2, required=True,
+            help='south/north bound of area of interest. Input format: south north')
     parser.add_argument('-nr', dest='nr', type=int, default=10,
-            help = 'minimum number of acquisitions for same starting ranges. default: 10')
+            help = 'minimum number of acquisitions for same starting ranges. Default: %(default)s.')
 
     if len(sys.argv) <= 1:
         print('')
@@ -438,7 +442,9 @@ def cmdLineParse():
 if __name__ == '__main__':
 
     inps = cmdLineParse()
-    s,n=[float(x) for x in inps.sn.split('/')]
+    # s,n=[float(x) for x in inps.sn.split('/')]
+    s,n = inps.sn
+    print('south/north range: ', s, n)
 
     #group the slices
     group = get_group(inps.dir)
