@@ -534,16 +534,42 @@ def selectNeighborPairsIonosphere(safe_dict, num_connections):
                 pairs_same_starting_ranges.append((starting_ranges_unique_dates[k][i],starting_ranges_unique_dates[k][j]))
 
     #3. select pairs of diff starting ranges formed in 1 to connect the different starting ranges
+    cnt_both_ends = True
     pairs_diff_starting_ranges = []
-    for k in range(ndate_unique-1):
-        cnt = 0
+    cnt_dict = {}
+    for pair in pairs_diff_starting_ranges_0:
+        for k in range(ndate_unique):
+            if pair[0] in starting_ranges_unique_dates[k]: pair1_group=k+1
+            if pair[1] in starting_ranges_unique_dates[k]: pair2_group=k+1
+        if pair1_group != pair2_group:
+            idx = sorted([pair1_group, pair2_group])
+            if '{}-{}'.format(*idx) not in cnt_dict.keys():
+                cnt_dict['{}-{}'.format(*idx)] = 0
+            if cnt_dict['{}-{}'.format(*idx)] < num_connections:
+                cnt_dict['{}-{}'.format(*idx)] += 1
+                print('  adding from beginning {}({}) {}({})  (diff starting ranges group# {}--{}  cnt: {})'.format(
+                    pair[0], pair1_group, pair[1], pair2_group, *idx, cnt_dict['{}-{}'.format(*idx)]))
+                pairs_diff_starting_ranges.append(pair)
+    if cnt_both_ends:
+        cnt_dict = {}
+        pairs_diff_starting_ranges_0.reverse()
         for pair in pairs_diff_starting_ranges_0:
-            if (pair[0] in starting_ranges_unique_dates[k] and pair[1] in starting_ranges_unique_dates[k+1]) or \
-               (pair[1] in starting_ranges_unique_dates[k] and pair[0] in starting_ranges_unique_dates[k+1]):
-               pairs_diff_starting_ranges.append(pair)
-            cnt += 1
-            if cnt >= num_connections:
-                break
+            for k in range(ndate_unique):
+                if pair[0] in starting_ranges_unique_dates[k]: pair1_group=k+1
+                if pair[1] in starting_ranges_unique_dates[k]: pair2_group=k+1
+            if pair1_group != pair2_group:
+                idx = sorted([pair1_group, pair2_group])
+                if '{}-{}'.format(*idx) not in cnt_dict.keys():
+                    cnt_dict['{}-{}'.format(*idx)] = 0
+                if cnt_dict['{}-{}'.format(*idx)] < num_connections:
+                    cnt_dict['{}-{}'.format(*idx)] += 1
+                    print('  adding from end {}({}) {}({})  (diff starting ranges group# {}--{}  cnt: {})'.format(
+                        pair[0], pair1_group, pair[1], pair2_group, *idx, cnt_dict['{}-{}'.format(*idx)]))
+                    pairs_diff_starting_ranges.append(pair)
+        pairs_diff_starting_ranges = sorted(list(set(pairs_diff_starting_ranges)))
+
+    if pairs_diff_starting_ranges != []:
+        print(' number of connections across different starting ranges: {}\n'.format(len(pairs_diff_starting_ranges)))
 
     return pairs_same_starting_ranges, pairs_diff_starting_ranges
 
