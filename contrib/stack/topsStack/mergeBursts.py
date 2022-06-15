@@ -11,6 +11,7 @@ import datetime
 import logging
 import argparse
 import numpy as np
+from osgeo import gdal
 
 import isce
 import isceobj
@@ -290,10 +291,15 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
         outname = spl[0] + ext + spl[1]
 
     if multilook_tool=="gdal":
-        from osgeo import gdal
-        print(f"multilooking using gdal for {infile} ...")
+        # remove existing *.hdr files, to avoid the following gdal error:
+        # ERROR 1: Input and output dataset sizes or band counts do not match in GDALDatasetCopyWholeRaster()
+        fbase = os.path.splitext(outname)[0]
+        print(f'remove {fbase}*.hdr')
+        for fname in glob.glob(f'{fbase}*.hdr'):
+            os.remove(fname)
 
-        ds = gdal.Open(infile + ".vrt", gdal.GA_ReadOnly)
+        print(f"multilooking {rlks} x {alks} using gdal for {infile} ...")
+        ds = gdal.Open(infile+'.vrt', gdal.GA_ReadOnly)
 
         xSize = ds.RasterXSize
         ySize = ds.RasterYSize
@@ -305,16 +311,12 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
         options_str = f'-of ENVI -outsize {outXSize} {outYSize} -srcwin 0 0 {srcXSize} {srcYSize} '
         options_str += f'-a_nodata {no_data}' if no_data else ''
         gdal.Translate(outname, ds, options=options_str)
-        # repeat as a workaround solution to avoid the GDAL
-        # The issue happens for version (3.3.3 and 3.4), and not for version 2.3
-        gdal.Translate(outname, ds, options=options_str)
-
         # generate VRT file
-        gdal.Translate(outname + ".vrt", outname, options='-of VRT')
+        gdal.Translate(outname+".vrt", outname, options='-of VRT')
 
     else:
         from mroipac.looks.Looks import Looks
-        print(f'multilooking using isce2 for {infile} ...')
+        print(f'multilooking {rlks} x {alks} using isce2 for {infile} ...')
 
         inimg = isceobj.createImage()
         inimg.load(infile + '.xml')
@@ -328,6 +330,20 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
 
     return outname
 
+
+def progress_cb(complete, message, cb_data):
+    '''Emit progress report in numbers for 10% intervals and dots for 3%
+    Link: https://stackoverflow.com/questions/68025043/adding-a-progress-bar-to-gdal-translate
+    '''
+    if int(complete*100) % 10 == 0:
+        msg = f'{complete*100:.0f}'
+        print(msg, end='', flush=True)
+        if msg == '100':
+            print(' ')
+    elif int(complete*100) % 3 == 0:
+        print(f'{cb_data}', end='', flush=True)
+
+    return
 
 
 def main(iargs=None):
@@ -399,11 +415,12 @@ def main(iargs=None):
     mergeBurstsVirtual(frames, referenceFrames, fileList, inps.outfile+suffix, validOnly=inps.validOnly)
 
     if (not virtual):
-        print('writing merged file to disk ...')
-        cmd = 'gdal_translate -of ENVI -co INTERLEAVE=BIL ' + inps.outfile + suffix + '.vrt ' + inps.outfile + suffix 
-        os.system(cmd)
+        print('writing merged file to disk via gdal.Translate ...')
+        gdal.Translate(inps.outfile+suffix, inps.outfile+suffix+'.vrt',
+                       options='-of ENVI -co INTERLEAVE=BIL',
+                       callback=progress_cb,
+                       callback_data='.')
 
-    print(inps.multilook)
     if inps.multilook:
         multilook(inps.outfile+suffix,
                   outname=inps.outfile, 
