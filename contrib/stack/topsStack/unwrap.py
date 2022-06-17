@@ -211,7 +211,7 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
     outImage.setWidth(width)
     outImage.setLength(length)
     outImage.setAccessMode('read')
-   # outImage.createImage()
+    # outImage.createImage()
     outImage.renderHdr()
     outImage.renderVRT()
     #outImage.finalizeImage()
@@ -225,10 +225,10 @@ def runUnwrap(infile, outfile, corfile, config, costMode = None,initMethod = Non
         connImage.setLength(length)
         connImage.setAccessMode('read')
         connImage.setDataType('BYTE')
-    #    connImage.createImage()
+        # connImage.createImage()
         connImage.renderHdr()
         connImage.renderVRT()
-     #   connImage.finalizeImage()
+        # connImage.finalizeImage()
 
     return
 
@@ -241,15 +241,9 @@ def runUnwrapMcf(infile, outfile, corfile, config, defomax=2):
 def runUnwrapIcu(infile, outfile):
     from mroipac.icu.Icu import Icu
     #Setup images
-    #ampImage
-   # ampImage = obj.insar.resampAmpImage.copy(access_mode='read')
-   # width = self.ampImage.getWidth()
-
     img = isceobj.createImage()
     img.load(infile + '.xml')
-
-
-    width      = img.getWidth()
+    width = img.getWidth()
 
     #intImage
     intImage = isceobj.createIntImage()
@@ -329,21 +323,20 @@ def main(iargs=None):
         else:
             fncall = runUnwrapMcf
         swathList = ut.getSwathList(inps.reference) 
-        #metadata = extractInfo(inps.reference+'.xml', inps)
         xmlFile = os.path.join(inps.reference , 'IW{0}.xml'.format(swathList[0]))
         metadata = extractInfo(xmlFile, inps)
         fncall(inps.intfile, inps.unwfile, inps.cohfile, metadata, defomax=inps.defomax)
 
-       #mask out wired values from snaphu
-       intImage = isceobj.createImage()
-       intImage.load(inps.intfile+'.xml')
-       width = intImage.width
-       length = intImage.length
+        #mask out wired values from snaphu
+        intImage = isceobj.createImage()
+        intImage.load(inps.intfile+'.xml')
+        width = intImage.width
+        length = intImage.length
 
-       flag = np.fromfile(inps.intfile, dtype=np.complex64).reshape(length, width)
-       unw=np.memmap(inps.unwfile, dtype='float32', mode='r+', shape=(length*2, width))
-       (unw[0:length*2:2, :])[np.nonzero(flag==0)]=0
-       (unw[1:length*2:2, :])[np.nonzero(flag==0)]=0
+        flag = np.fromfile(inps.intfile, dtype=np.complex64).reshape(length, width)
+        unw=np.memmap(inps.unwfile, dtype='float32', mode='r+', shape=(length*2, width))
+        (unw[0:length*2:2, :])[np.nonzero(flag==0)]=0
+        (unw[1:length*2:2, :])[np.nonzero(flag==0)]=0
 
     elif inps.method == 'icu':
         runUnwrapIcu(inps.intfile, inps.unwfile)
