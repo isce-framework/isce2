@@ -72,7 +72,7 @@ def main(iargs=None):
     #######################################
     slc_files = glob.glob(os.path.join(inps.input, '*_s'+inps.segment+'_1x1.slc'))
     for file in slc_files:
-        imgDate = get_Date(file)
+        imgDate = get_Date(os.path.basename(file))
         print (imgDate)
         annFile = file.replace('_s'+inps.segment+'_1x1.slc','')+'.ann'
         print (annFile)
