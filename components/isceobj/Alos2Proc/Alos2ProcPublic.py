@@ -222,8 +222,8 @@ def readOffset(filename):
     offsets = OffsetField()
     for linex in lines:
         #linexl = re.split('\s+', linex)
-        #detect blank lines with only spaces and tabs
-        if linex.strip() == '':
+        #detect blank lines with only spaces and tabs, lines with invalid numbers
+        if (linex.strip() == '') or ('*' in linex):
             continue
 
         linexl = linex.split()

@@ -185,8 +185,10 @@ class ALOS(Sensor):
 
         productLevel = float(self.leaderFile.sceneHeaderRecord.metadata[
             'Product level code'])
-        if productLevel == 1.0:
-            self.updateRawParameters()
+
+        #this proves to be not accurate. Adjusting first frame is OK, but adjusting following frames would cause discontinuities between frames. C. Liang, 20-dec-2021
+        # if productLevel == 1.0:
+        #     self.updateRawParameters()
         pass
 
     def _populatePlatform(self):
