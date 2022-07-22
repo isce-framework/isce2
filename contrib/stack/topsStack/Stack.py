@@ -260,20 +260,19 @@ class config(object):
         #self.f.write('ww : 256\n')
         #self.f.write('wh : 128\n')
 
-    def write_wrapper_config2run_file(self, configName, line_cnt, last_line = False, numProcess = 1):
+    def write_wrapper_config2run_file(self, configName, line_cnt = 1, last_line = False, numProcess = 1):
         # dispassionate list of commands for single process
         if numProcess == 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
         # aggregate background commands between wait blocks for speed gains
         elif numProcess > 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt == numProcess:
+            if line_cnt % numProcess == 0:
                 self.runf.write('wait\n\n')
                 line_cnt = 0
             # last line of file, wait for any background processes to complete
             if last_line:
                 self.runf.write('wait\n')
-        return line_cnt
 
     def finalize(self):
         self.f.close()
@@ -320,7 +319,7 @@ class run(object):
             configObj.finalize()
             
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
 
     def unpackStackReferenceSLC(self, safe_dict):
@@ -341,7 +340,7 @@ class run(object):
         configObj.finalize()
 
         line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName, line_cnt)
         del configObj
 
     def unpackSecondarysSLC(self,  stackReferenceDate, secondaryList, safe_dict):
@@ -361,7 +360,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def averageBaseline(self, stackReferenceDate, secondaryList):
@@ -378,7 +377,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def gridBaseline(self, stackReferenceDate, secondaryList):
@@ -395,7 +394,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
         # also add the reference in itself to be consistent with the SLC dir
         configName = os.path.join(self.config_path,'config_baselinegrid_reference')
@@ -408,7 +407,7 @@ class run(object):
         configObj.finalize()
 
         line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName, line_cnt)
         del configObj
 
 
@@ -443,7 +442,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
     def resample_with_carrier(self, secondaryList, fullBurst='False'):
@@ -473,7 +472,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
             del configObj
 
 
@@ -524,7 +523,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
             ########################
 
@@ -563,7 +562,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
 
@@ -597,7 +596,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
@@ -622,7 +621,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
 
 
@@ -645,7 +644,7 @@ class run(object):
         configObj.finalize()
 
         line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName, line_cnt)
         del configObj
 
         geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
@@ -673,7 +672,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
 
     def mergeSLC(self, aquisitionDates, virtual='True'):
@@ -697,7 +696,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
 
 
             geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
@@ -722,7 +721,7 @@ class run(object):
                 configObj.finalize()
                 
                 g_line_cnt += 1
-                g_line_cnt = configObj.write_wrapper_config2run_file(configName, g_line_cnt)
+                configObj.write_wrapper_config2run_file(configName, g_line_cnt)
                 del configObj
 
     def filter_coherence(self, pairs):
@@ -749,7 +748,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
 
@@ -775,7 +774,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
+            configObj.write_wrapper_config2run_file(configName, line_cnt, pair == pairs[-1], self.numProcess)
             del configObj
 
     def denseOffsets(self, pairs):
@@ -795,7 +794,7 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
 
     def finalize(self):
