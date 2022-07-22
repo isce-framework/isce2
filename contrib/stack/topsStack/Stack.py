@@ -267,12 +267,8 @@ class config(object):
         # aggregate background commands between wait blocks for speed gains
         elif numProcess > 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt % numProcess == 0:
+            if line_cnt % numProcess == 0 or last_line:
                 self.runf.write('wait\n\n')
-                line_cnt = 0
-            # last line of file, wait for any background processes to complete
-            if last_line:
-                self.runf.write('wait\n')
 
     def finalize(self):
         self.f.close()
