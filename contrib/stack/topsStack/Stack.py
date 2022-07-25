@@ -648,13 +648,23 @@ class run(object):
     def configure(self,inps, runName):
         for k in inps.__dict__.keys():
             setattr(self, k, inps.__dict__[k])
-        self.runDir = os.path.join(self.work_dir, 'run_files')
+         
+        # MG: Introduce this line to seperate stack and ifgstack run/config files
+        try:
+            if self.ifg_process:
+                run_name = 'run_ifg_files'
+                config_name = 'configs_ifgs'
+        except:
+            run_name = 'run_files'
+            config_name = 'configs'
+        
+        self.runDir = os.path.join(self.work_dir, run_name)
         os.makedirs(self.runDir, exist_ok=True)
 
         self.run_outname = os.path.join(self.runDir, runName)
         print ('writing ', self.run_outname)
 
-        self.config_path = os.path.join(self.work_dir,'configs')
+        self.config_path = os.path.join(self.work_dir, config_name)
         os.makedirs(self.config_path, exist_ok=True)
 
         self.runf= open(self.run_outname,'w')
