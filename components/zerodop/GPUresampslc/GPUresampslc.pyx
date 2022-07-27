@@ -126,7 +126,7 @@ cdef class PyPoly2d:
         newpoly.c_poly2d = poly
         newpoly.owner = False
         return newpoly
-    
+
     def setCoeff(self, int a, int b, double c):
         self.c_poly2d.setCoeff(a,b,c)
     def getCoeff(self, int a, int b):
@@ -163,15 +163,15 @@ cdef extern from "ResampSlc.h":
         void clearPolys()
         void resetPolys()
         void resamp()
-        
+
 
 cdef class PyResampSlc:
     cdef ResampSlc *c_resamp
 
     def __cinit__(self):
         self.c_resamp = new ResampSlc()
-    def __dealloc__(self):
-        del self.c_resamp
+    #def __dealloc__(self):
+    #    del self.c_resamp
 
     @property
     def slcInAccessor(self):
@@ -335,7 +335,7 @@ cdef class PyResampSlc:
         cdef PyPoly2d poly = PyPoly2d.boundTo(self.c_resamp.releaseDoppler())
         poly.owner = True
         return poly
-    
+
     def resamp_slc(self):
         self.c_resamp.resamp()
 

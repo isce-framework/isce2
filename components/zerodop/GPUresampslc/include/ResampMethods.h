@@ -14,7 +14,7 @@ using std::vector;
 struct ResampMethods {
     vector<float> fintp;
     float f_delay;
-    
+
     ResampMethods();
     void prepareMethods(int);
     complex<float> interpolate_cx(vector<vector<complex<float> > >&,int,int,double,double,int,int,int);

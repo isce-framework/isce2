@@ -89,7 +89,7 @@ if (( "$slc_stack_path" == "" ) || ( "$reference_date" == "" ) || ( "$lambda" ==
 endif
 
 # make sure the slash is added in case the variable is not empty
-set slc_stack_path = `echo ${slc_stack_path}/`
+set slc_stack_path = `echo ${slc_stack_path}`
 echo 
 echo -------------------------------                                                                                                             
 echo Stack path is: $slc_stack_path

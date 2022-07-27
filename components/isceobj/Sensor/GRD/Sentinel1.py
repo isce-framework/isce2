@@ -406,7 +406,7 @@ class Sentinel1(Component):
         lat = []
         lon = []
 
-        for child in glist.getchildren():
+        for child in glist:
             lat.append( float(child.find('latitude').text))
             lon.append( float(child.find('longitude').text))
 
@@ -502,7 +502,7 @@ class Sentinel1(Component):
         frameOrbit = Orbit()
         frameOrbit.configure()
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('time').text)
             pos = []
             vel = []
@@ -543,7 +543,7 @@ class Sentinel1(Component):
         tstart = self.product.sensingStart - margin
         tend = self.product.sensingStop + margin
 
-        for child in node.getchildren():
+        for child in node:
             timestamp = self.convertToDateTime(child.find('UTC').text[4:])
 
             if (timestamp >= tstart) and (timestamp < tend):
@@ -606,7 +606,7 @@ class Sentinel1(Component):
         pixels = []
         data = None
 
-        for ii, child in enumerate(node.getchildren()):
+        for ii, child in enumerate(node):
             pixnode = child.find('pixel')
             nump = int(pixnode.attrib['count'])
 
@@ -685,7 +685,7 @@ class Sentinel1(Component):
         noise_range_lut_indices = np.zeros((num_vectors,))
         noise_range_lut_values = np.zeros((num_vectors, self.product.numberOfSamples))
 
-        for ii, child in enumerate(node.getchildren()):
+        for ii, child in enumerate(node):
             print("Processing range noise vector {}/{}".format(ii + 1, num_vectors))
             pixnode = child.find('pixel')
 
@@ -711,7 +711,7 @@ class Sentinel1(Component):
             noise_azimuth_lut_indices = defaultdict(list)
             noise_azimuth_lut_values = defaultdict(list)
 
-            for block_i, child in enumerate(node.getchildren()):
+            for block_i, child in enumerate(node):
                 print("Processing azimuth noise vector {}/{}".format(block_i + 1, num_vectors))
                 linenode = child.find('line')
                 signode = child.find("noiseAzimuthLut")
@@ -861,7 +861,7 @@ class Sentinel1(Component):
         data = []
 
 
-        for ii, child in enumerate(node.getchildren()):
+        for ii, child in enumerate(node):
             t0 = self.convertToDateTime(child.find('azimuthTime').text)
 
             lines.append( (t0-self.product.sensingStart).total_seconds()/self.product.azimuthTimeInterval)

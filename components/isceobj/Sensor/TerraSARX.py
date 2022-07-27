@@ -117,8 +117,7 @@ class TerraSARX(Sensor):
             raise IOError(strerr)
 
         self._xml_root = ElementTree(file=fp).getroot()
-        a = self._xml_root.getchildren()
-        for z in a:
+        for z in self._xml_root:
             if z.tag == 'generalHeader':
                 self.generalHeader.set_from_etnode(z)
             if z.tag == 'productComponents':
@@ -407,7 +406,7 @@ class _GeneralHeader(object):
         self.fileName = node.attrib['fileName']
         self.fileVersion = node.attrib['fileVersion']
         self.status = node.attrib['status']
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'itemName':
                 self.itemName = z.text
             if z.tag == 'mission':
@@ -478,7 +477,7 @@ class _ProductComponents(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'annotation':
                 self.annotation.append(_Annotation())
                 self.annotation[-1].set_from_etnode(z)
@@ -520,7 +519,7 @@ class _Annotation(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'type':
                 self.type = z.text
             if z.tag == 'file':
@@ -547,7 +546,7 @@ class _ImageData(object):
 
     def set_from_etnode(self,node):
         self.layerIndex = int(node.attrib['layerIndex'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.type = z.text
             if z.tag == 'file':
@@ -576,7 +575,7 @@ class _QuickLooks(object):
 
     def set_from_etnode(self,node):
         self.layerIndex = int(node.attrib['layerIndex'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.type = z.text
             if z.tag == 'file':
@@ -602,7 +601,7 @@ class _CompositeQuickLook(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'file':
                 self.file.set_from_etnode(z)
         return
@@ -622,7 +621,7 @@ class _BrowseImage(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'file':
                 self.file.set_from_etnode(z)
         return
@@ -642,7 +641,7 @@ class _MapPlot(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'file':
                 self.file.set_from_etnode(z)
         return
@@ -673,7 +672,7 @@ class _ProductInfo(object):
         self.sceneInfo = _SceneInfo()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'generationInfo':
                 self.generationInfo.set_from_etnode(z)
             if z.tag == 'missionInfo':
@@ -719,7 +718,7 @@ class _GenerationInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'logicalProductID':
                 self.logicalProductID = z.text
             if z.tag == 'receivingStation':
@@ -767,7 +766,7 @@ class _QualityInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'qualityInspection':
                 self.qualityInspection = z.text
             if z.tag == 'qualityRemark':
@@ -797,7 +796,7 @@ class _MissionInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'mission':
                 self.mission = z.text
             if z.tag == 'orbitPhase':
@@ -839,7 +838,7 @@ class _PolarisationList(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.polLayer = z.text
 
@@ -857,7 +856,7 @@ class _ImagingModeStripMap(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'azimuthBeamID':
                 self.azimuthBeamID = z.text
         return
@@ -875,7 +874,7 @@ class _ImagingModeSpecificInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'stripMap':
                 self.stripMap.set_from_etnode(z)
         return
@@ -900,7 +899,7 @@ class _AcquisitionInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'sensor':
                 self.sensor = z.text
             if z.tag == 'imagingMode':
@@ -947,7 +946,7 @@ class _ProductVariantInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'productType':
                 self.productType = z.text
             if z.tag == 'productVariant':
@@ -981,7 +980,7 @@ class _ImageRaster(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'numberOfRows':
                 self.numberOfRows = int(z.text)
             if z.tag == 'numberOfColumns':
@@ -1029,7 +1028,7 @@ class _ImageDataInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'imageRaster':
                 self.imageRaster.set_from_etnode(z)
         return
@@ -1051,7 +1050,7 @@ class _SceneInfoTime(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = z.text
             if z.tag == 'timeGPS':
@@ -1078,7 +1077,7 @@ class _SceneInfoRangeTime(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'firstPixel':
                 self.firstPixel = float(z.text)
             if z.tag == 'lastPixel':
@@ -1106,7 +1105,7 @@ class _SceneInfoSceneCornerCoord(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'refRow':
                 self.refRow = int(z.text)
             if z.tag == 'refColumn':
@@ -1155,7 +1154,7 @@ class _SceneCenterCoord(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'refRow':
                 self.refRow = int(z.text)
             if z.tag == 'refColumn':
@@ -1204,7 +1203,7 @@ class _SceneInfo(object):
 
     def set_from_etnode(self,node):
         iCorner = -1
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'sceneID':
                 self.sceneID = z.text
             if z.tag == 'start':
@@ -1249,7 +1248,7 @@ class _ProductSpecific(object):
         self.complexImageInfo = _ComplexImageInfo()
         return
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'complexImageInfo':
                 self.complexImageInfo.set_from_etnode(z)
         return
@@ -1269,7 +1268,7 @@ class _ComplexImageInfo(object):
         self.quicklookDataStartWith = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'commonPRF':
                 self.commonPRF = float(z.text)
             if z.tag == 'commonRSF':
@@ -1315,7 +1314,7 @@ class _ProjectedSpacingRange(object):
         self.slantRange = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'groundNear':
                 self.groundNear = float(z.text)
             if z.tag == 'groundFar':
@@ -1348,7 +1347,7 @@ class _Platform(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'referenceData':
                 self.referenceData.set_from_etnode(z)
             if z.tag == 'orbit':
@@ -1377,7 +1376,7 @@ class _SARAntennaPosition(object):
 
     def set_from_etnode(self,node):
         self.DRAoffset = node.attrib['DRAoffset']
-        for w in node.getchildren():
+        for w in node:
             if w.tag == 'x':
                 self.x = float(w.text)
             if w.tag == 'y':
@@ -1405,7 +1404,7 @@ class _GPSAntennaPosition(object):
     def set_from_etnode(self,node):
         self.GPSreceiver = node.attrib['GPSreceiver']
         self.unit = node.attrib['unit']
-        for w in node.getchildren():
+        for w in node:
             if w.tag == 'x':
                 self.x = float(w.text)
             if w.tag == 'y':
@@ -1436,7 +1435,7 @@ class _PlatformReferenceData(object):
 
     def set_from_etnode(self,node):
         iGPSAnt = -1
-        for x in node.getchildren():
+        for x in node:
             if x.tag == 'SARAntennaMechanicalBoresight':
                 self.SARAntennaMechanicalBoresight = float(x.text)
             if x.tag == 'SARAntennaPosition':
@@ -1464,7 +1463,7 @@ class _FirstStateTime(object):
         self.firstStateTimeGPSFraction = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'firstStateTimeUTC':
                 self.firstStateTimeUTC = z.text
             if z.tag == 'firstStateTimeGPS':
@@ -1490,7 +1489,7 @@ class _LastStateTime(object):
         self.lastStateTimeGPSFraction = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'lastStateTimeUTC':
                 self.lastStateTimeUTC = z.text
             if z.tag == 'lastStateTimeGPS':
@@ -1529,7 +1528,7 @@ class _OrbitHeader(object):
         self.dataGapIndicator = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'generationSystem':
                 self.generationSystem = z.text
                 self.generationSystemVersion = z.attrib['version']
@@ -1619,7 +1618,7 @@ class _StateVec(object):
         self.maneuver = node.attrib['maneuver']
         self.num = int(node.attrib['num'])
         self.qualInd = int(node.attrib['qualInd'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = datetime.datetime.strptime(z.text,"%Y-%m-%dT%H:%M:%S.%f")
             if z.tag == 'timeGPS':
@@ -1667,7 +1666,7 @@ class _Orbit(object):
         self.stateVec = ()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'orbitHeader':
                 self.orbitHeader.set_from_etnode(z)
             if z.tag == 'stateVec':
@@ -1704,7 +1703,7 @@ class _AttitudeData(object):
         self.maneuver = node.attrib['maneuver']
         self.num = int(node.attrib['num'])
         self.qualInd = int(node.attrib['qualInd'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = z.text
             if z.tag == 'timeGPS':
@@ -1749,7 +1748,7 @@ class _FirstAttitudeTime(object):
         self.firstAttitudeTimeGPSFraction = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'firstAttitudeTimeUTC':
                 self.firstAttitudeTimeUTC = z.text
             if z.tag == 'firstAttitudeTimeGPS':
@@ -1775,7 +1774,7 @@ class _LastAttitudeTime(object):
         self.lastAttitudeTimeGPSFraction = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'lastAttitudeTimeUTC':
                 self.lastAttitudeTimeUTC = z.text
             if z.tag == 'lastAttitudeTimeGPS':
@@ -1801,7 +1800,7 @@ class _AttitudeDataRefFrame(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'FromFrame':
                 self.FromFrame = z.text
             if z.tag == 'ToFrame':
@@ -1837,7 +1836,7 @@ class _AttitudeHeader(object):
         self.steeringLawIndicator = None
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'generationSystem':
                 self.generationSystem = z.text
                 self.generationSystemVersion = z.attrib['version']
@@ -1915,7 +1914,7 @@ class _Attitude(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'attitudeHeader':
                 self.attitudeHeader.set_from_etnode(z)
             if z.tag == 'attitudeData':
@@ -1944,7 +1943,7 @@ class _Instrument(object):
         self.settings = _InstrumentSettings()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'instrumentInfoCoordinateType':
                 self.instrumentInfoCoordinateType = z.text
             if z.tag == 'radarParameters':
@@ -1970,7 +1969,7 @@ class _RadarParameters(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'centerFrequency':
                 self.centerFrequency = float(z.text)
         return
@@ -1991,7 +1990,7 @@ class _RxGainSetting(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'startTimeUTC':
                 self.startTimeUTC = z.text
             if z.tag == 'stopTimeUTC':
@@ -2025,7 +2024,7 @@ class _DataSegment(object):
 
     def set_from_etnode(self,node):
         self.segmentID = int(node.attrib['segmentID'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'startTimeUTC':
                 self.startTimeUTC = z.text
             if z.tag == 'stopTimeUTC':
@@ -2062,7 +2061,7 @@ class _SettingRecord(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'dataSegment':
                 self.dataSegment.set_from_etnode(z)
             if z.tag == 'PRF':
@@ -2124,7 +2123,7 @@ class _InstrumentSettings(object):
         self.settingRecord = ()
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.polLayer = z.text
             if z.tag == 'DRAoffset':
@@ -2212,7 +2211,7 @@ class _Processing(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'geometry':
                 self.geometry.set_from_etnode(z)
             if z.tag == 'doppler':
@@ -2246,7 +2245,7 @@ class _ProcessingGeometry(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'geometryCoordinateType':
                 self.geometryCoordinateType = z.text
             if z.tag == 'velocityParameter':
@@ -2282,7 +2281,7 @@ class _VelocityParameter(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = z.text
             if z.tag == 'velocityParameterPolynomial':
@@ -2309,7 +2308,7 @@ class _VelocityParameterPolynomial(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -2352,7 +2351,7 @@ class _ZeroDopplerVelocity(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'velocity':
                 self.velocity = float(z.text)
         return
@@ -2372,7 +2371,7 @@ class _DopplerRate(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = z.text
             if z.tag == 'dopplerRatePolynomial':
@@ -2399,7 +2398,7 @@ class _DopplerRatePolynomial(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -2444,7 +2443,7 @@ class _ProcessingDoppler(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'dopplerBasebandEstimationMethod':
                 self.dopplerBasebandEstimationMethod = z.text
             if z.tag == 'dopplerGeometricEstimationMethod':
@@ -2485,7 +2484,7 @@ class _ProcessingDopplerCentroid(object):
 
     def set_from_etnode(self,node):
         self.layerIndex = int(node.attrib['layerIndex'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.polLayer = z.text
             if z.tag == 'DRAoffset':
@@ -2548,7 +2547,7 @@ class _DopplerEstimate(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'timeUTC':
                 self.timeUTC = z.text
             if z.tag == 'dopplerAtMidRange':
@@ -2603,7 +2602,7 @@ class _BasebandDoppler(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -2648,7 +2647,7 @@ class _GeometricDoppler(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -2694,7 +2693,7 @@ class _CombinedDoppler(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -2746,7 +2745,7 @@ class _ProcessingParameter(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'beamID':
                 self.beamID = z.text
             if z.tag == 'processingInfoCoordinateType':
@@ -2811,7 +2810,7 @@ class _RangeCompression(object):
         return
 
     def set_from_etnode(self,node):
-       for z in node.getchildren():
+       for z in node:
             if z.tag == 'segmentInfo':
                 self.segmentInfo.set_from_etnode(z)
             if z.tag == 'chirps':
@@ -2836,7 +2835,7 @@ class _RCSegmentInfo(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.polLayer = z.text
             if z.tag == 'dataSegment':
@@ -2861,7 +2860,7 @@ class _RCDataSegment(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'startTimeUTC':
                 self.startTimeUTC = z.text
             if z.tag == 'stopTimeUTC':
@@ -2888,7 +2887,7 @@ class _RCChirps(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'referenceChirp':
                 self.referenceChirp.set_from_etnode(z)
         return
@@ -2916,7 +2915,7 @@ class _RCReferenceChirp(object):
 
     def set_from_etnode(self,node):
         self.pulseCode = int(node.attrib['pulseCode'])
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'pulseType':
                 self.pulseType = z.text
             if z.tag == 'chirpDesignator':
@@ -2969,7 +2968,7 @@ class _RCChirpAmplitude(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -3014,7 +3013,7 @@ class _RCChirpPhase(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'validityRangeMin':
                 self.validityRangeMin = float(z.text)
             if z.tag == 'validityRangeMax':
@@ -3057,7 +3056,7 @@ class _CorrectedInstrumentDelay(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'polLayer':
                 self.polLayer = z.text
             if z.tag == 'DRAoffset':
@@ -3110,7 +3109,7 @@ class _File(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'location':
                 self.location.set_from_etnode(z)
             if z.tag == 'size':
@@ -3135,7 +3134,7 @@ class _FileLocation(object):
         return
 
     def set_from_etnode(self,node):
-        for z in node.getchildren():
+        for z in node:
             if z.tag == 'host':
                 self.host = z.text
             if z.tag == 'path':

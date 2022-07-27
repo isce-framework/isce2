@@ -54,7 +54,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 #endif
 
     // normalize the correlation surface
-    cuCorrNormalize(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw, stream);
+    corrNormalizerRaw->execute(r_corrBatchRaw, r_referenceBatchRaw, r_secondaryBatchRaw, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the normalized correlation surface
@@ -155,7 +155,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 #endif
 
     // normalize the correlation surface
-    cuCorrNormalize(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn, stream);
+    corrNormalizerOverSampled->execute(r_corrBatchZoomIn, r_referenceBatchOverSampled, r_secondaryBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the oversampled correlation surface (normalized)
@@ -549,9 +549,22 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
             stream);
         cuCorrFreqDomain_OverSampled = new cuFreqCorrelator(
             param->searchWindowSizeHeight, param->searchWindowSizeWidth,
-            param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
+            param->numberWindowDownInChunk * param->numberWindowAcrossInChunk,
             stream);
     }
+
+    corrNormalizerRaw = std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
+        param->searchWindowSizeHeightRaw,
+        param->searchWindowSizeWidthRaw,
+        param->numberWindowDownInChunk * param->numberWindowAcrossInChunk
+        ));
+
+    corrNormalizerOverSampled =
+        std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
+        param->searchWindowSizeHeight,
+        param->searchWindowSizeWidth,
+        param->numberWindowDownInChunk * param->numberWindowAcrossInChunk
+        ));
 
 
 #ifdef CUAMPCOR_DEBUG

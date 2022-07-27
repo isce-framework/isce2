@@ -156,8 +156,8 @@ By default, ESD is always performed.
 <!-- <<PHASE UNWRAPPING>>
              Phase unwrapping can be optionally turned off.
              Following unwrappers are currently available:
-             grass, icu, snaphu, snaphu_mcf-->
-<!--<property name="unwrap">True</property>-->
+             grass, icu, snaphu, snaphu_mcf, downsample_snaphu-->
+<!--<property name="do unwrap">True</property>-->
 <!--<property name="unwrapper name">snaphu_mcf</property>-->
 <!-- 2 Stage unwrapping option requires the following tags:-->
 <!--<property name="do unwrap">True</property> -->
@@ -199,6 +199,16 @@ By default, ESD is always performed.
 #1: use mean value of a burst
 #2: use full burst
 <property name="correct phase error caused by ionosphere azimuth shift">1</property>
+
+#seperated islands or areas usually affect ionosphere estimation and it's better to mask them
+#out. check ion/ion_cal/raw_no_projection.ion for areas to be masked out.
+#The parameter is a 2-D list. Each element in the 2-D list is a four-element list: [firstLine,
+#lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the
+#four elements is specified as -1, the program will use firstLine/lastLine/firstColumn/
+#lastColumn instead. For exmple, if you want to mask the following two areas out, you can
+#specify a 2-D list like:
+#[[100, 200, 100, 200],[1000, 1200, 500, 600]]
+<property name="areas masked out in ionospheric phase estimation">None</property>
 
 #better NOT try changing the following two parameters, since they are related
 #to the filtering parameters above

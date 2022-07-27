@@ -276,8 +276,8 @@ class Radarsat2_GRD(Component):
         glist = (self.getxmlelement('imageAttributes/geographicInformation/geolocationGrid'))
         lat = []
         lon = []
-        for child in glist.getchildren():
-            for grandchild in child.getchildren():
+        for child in glist:
+            for grandchild in child:
                 string = ElementTree.tostring(grandchild, encoding = 'unicode', method = 'xml')
                 string = string.split("<")[1]
                 string = string.split(">")[0]
@@ -303,7 +303,7 @@ class Radarsat2_GRD(Component):
             if node.tag == 'stateVector':
                 sv = StateVector()
                 sv.configure()
-                for z in node.getchildren():
+                for z in node:
                     if z.tag == 'timeStamp':
                         timeStamp = self.convertToDateTime(z.text)
                     elif z.tag == 'xPosition':
@@ -346,16 +346,16 @@ class Radarsat2_GRD(Component):
             if not node.tag == 'imageTiePoint':
                 continue
     
-            for z in node.getchildren():
+            for z in node:
                 if z.tag == 'imageCoordinate':
-                    for zz in z.getchildren():
+                    for zz in z:
                         if zz.tag == 'line':
                             line = float(zz.text)
                         elif zz.tag == 'pixel':
                             pixel = float(zz.text)
         
                 if z.tag == 'geodeticCoordinate':
-                    for zz in z.getchildren():
+                    for zz in z:
                         if zz.tag == 'latitude':
                             lat = float(zz.text)
                         elif zz.tag == 'longitude':
@@ -424,8 +424,8 @@ class Radarsat2_GRD(Component):
         lines = []
         data = []
 
-        for child in node.getchildren():
-            for child in node.getchildren():
+        for child in node:
+            for child in node:
                 string = ElementTree.tostring(child, encoding = 'unicode', method = 'xml')
                 string = string.split("<")[1]
                 string = string.split(">")[0]

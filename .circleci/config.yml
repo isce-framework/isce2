@@ -2,43 +2,29 @@ version: 2.1
 jobs:
   test-cmake:
     docker:
-        - image: hysds/pge-base:latest
-          user: root
+      - image: ubuntu:20.04
     steps:
       - checkout:
           path: /root/project/src
-
-      - run:
-          name: Install development tools
-          command: |
-            set -ex
-            pwd
-            yum update -y
-            yum groupinstall -y "development tools"
 
       - run:
           name: Install ISCE requirements
           command: |
             set -ex
             pwd
-            mkdir config build install
-            . /opt/conda/bin/activate root
-            conda install -y cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 libgcc libstdcxx-ng cmake astropy
-            yum install -y x11-devel motif-devel jq gcc-gfortran opencv opencv-devel opencv-python
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y cmake cython3 git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libopencv-dev python3-gdal python3-h5py python3-numpy python3-scipy
 
       - run:
           name: Build and Install ISCE
           command: |
             set -ex
             cd /root/project/src
-            . /opt/conda/bin/activate root
             mkdir build
             cd build
-            INSTALLPATH=/opt/conda
-            MODPATH=$(python3 -c "import site; print(site.getsitepackages()[0])")
-            # convert to relative path
-            MODPATH=$(realpath --relative-to=$INSTALLPATH $MODPATH)
-            cmake .. -DCMAKE_INSTALL_PREFIX=$INSTALLPATH -DPYTHON_MODULE_DIR=$MODPATH
+            MODPATH=$(python3 -c "import site; print(site.getsitepackages()[-1])")
+            cmake .. -DCMAKE_INSTALL_PREFIX=install -DPYTHON_MODULE_DIR=$MODPATH
             make install VERBOSE=y
 
       - run:
@@ -46,29 +32,23 @@ jobs:
           command: |
             set -ex
             cd /root/project/src/build
-            . /opt/conda/bin/activate root
             ctest --output-on-failure
             ISCE2DIR=$(python3 -c "import os, isce2; print(os.path.dirname(isce2.__file__))" | tail -n 1)
             export PATH=$ISCE2DIR/applications:$PATH
             topsApp.py --help --steps
             stripmapApp.py --help --steps
             python3 -c "import isce"
+            # Create dummy ref/secondary configs for topsApp
+            ln -s ../examples/input_files/reference_TOPS_SENTINEL1.xml reference.xml
+            ln -s reference.xml secondary.xml
+            topsApp.py --steps --end=preprocess ../examples/input_files/topsApp.xml
 
   test:
     docker:
-        - image: hysds/pge-base:latest
-          user: root
+      - image: ubuntu:20.04
     steps:
       - checkout:
           path: /root/project/src 
-
-      - run:
-          name: Install development tools
-          command: |
-            set -ex
-            pwd
-            yum update -y
-            yum groupinstall -y "development tools"
 
       - run:
           name: Install ISCE requirements
@@ -76,17 +56,9 @@ jobs:
             set -ex
             pwd
             mkdir config build install
-            . /opt/conda/bin/activate root
-            conda install --yes cython gdal h5py libgdal pytest numpy fftw scipy scons hdf4 hdf5 libgcc libstdcxx-ng cmake astropy
-            yum install -y uuid-devel x11-devel motif-devel jq gcc-gfortran opencv opencv-devel opencv-python
-            ln -s /opt/conda/bin/cython /opt/conda/bin/cython3
-            cd /opt/conda/lib
-            unlink libuuid.so
-            unlink libuuid.so.1
-            ln -s /lib64/libuuid.so.1.3.0 libuuid.so
-            ln -s /lib64/libuuid.so.1.3.0 libuuid.so.1
-            cd /lib64
-            test -f libgfortran.so || ln -sv libgfortran.so.*.* libgfortran.so
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update
+            apt-get install -y scons cython3 git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libmotif-dev libopencv-dev libx11-dev python3-gdal python3-h5py python3-numpy python3-scipy
 
       - run:
           name: Build SConfigISCE and setup dirs
@@ -96,9 +68,10 @@ jobs:
               cd config
               echo "PRJ_SCONS_BUILD = /root/project/build" > SConfigISCE
               echo "PRJ_SCONS_INSTALL = /root/project/install/isce" >> SConfigISCE
-              echo "LIBPATH = /usr/lib64 /usr/lib /opt/conda/lib" >> SConfigISCE
-              echo "CPPPATH = /opt/conda/include/python3.8 /opt/conda/lib/python3.8/site-packages/numpy/core/include /opt/conda/include /usr/include" >> SConfigISCE
-              echo "FORTRANPATH =  /usr/include /opt/conda/include" >> SConfigISCE
+              echo "LIBPATH = /usr/lib64 /usr/lib /usr/lib/x86_64-linux-gnu" >> SConfigISCE
+              python_inc="/usr/include/python3.8 /usr/lib/python3/dist-packages/numpy/core/include"
+              echo "CPPPATH = $python_inc /usr/include /usr/include/gdal /usr/include/opencv4" >> SConfigISCE
+              echo "FORTRANPATH =  /usr/include" >> SConfigISCE
               echo "FORTRAN = /bin/gfortran" >> SConfigISCE
               echo "CC = /bin/gcc" >> SConfigISCE
               echo "CXX = /bin/g++" >> SConfigISCE
@@ -106,7 +79,7 @@ jobs:
               echo "X11LIBPATH = /usr/lib64" >> SConfigISCE
               echo "MOTIFINCPATH = /usr/include" >> SConfigISCE
               echo "X11INCPATH = /usr/include" >> SConfigISCE
-              echo "RPATH = /opt/conda/lib /usr/lib64 /usr/lib" >> SConfigISCE
+              echo "RPATH = /usr/lib64 /usr/lib" >> SConfigISCE
               cat SConfigISCE
 
       - run:
@@ -114,10 +87,7 @@ jobs:
           command: |
             set -ex
             pwd
-            . /opt/conda/bin/activate root
             cd src
-            export PATH="/opt/conda/bin:$PATH"
-            export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
             SCONS_CONFIG_DIR=/root/project/config scons install --skipcheck
 
       - run:
@@ -125,11 +95,9 @@ jobs:
           command: |
               set -ex
               pwd
-              . /opt/conda/bin/activate root
               ISCE_HOME=/root/project/install/isce
-              export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:/opt/conda/bin:$PATH"
+              export PATH="$ISCE_HOME/bin:$ISCE_HOME/applications:$PATH"
               export PYTHONPATH="/root/project/install:$PYTHONPATH"
-              export LD_LIBRARY_PATH="/opt/conda/lib:$LD_LIBRARY_PATH"
               topsApp.py --help --steps
               stripmapApp.py --help --steps
               python3 -c "import isce"

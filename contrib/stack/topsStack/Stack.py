@@ -1,11 +1,11 @@
-  #!/usr/bin/env python3
+#!/usr/bin/env python3
 ########################
 #Author: Heresh Fattahi
 
 #######################
 
-import os, glob , sys
-import  datetime
+import os, glob, sys
+import datetime
 
 
 noMCF = 'False'
@@ -260,6 +260,88 @@ class config(object):
         #self.f.write('ww : 256\n')
         #self.f.write('wh : 128\n')
 
+    def subband_and_resamp(self, function):
+        self.f.write('##########################' + '\n')
+        self.f.write(function + '\n')
+        self.f.write('subband_and_resamp : ' + '\n')
+        self.f.write('reference : ' + self.reference + '\n')
+        self.f.write('secondary : ' + self.secondary + '\n')
+        self.f.write('coregdir : ' + self.coregdir + '\n')
+        self.f.write('azimuth_misreg : ' + self.azimuth_misreg + '\n')
+        self.f.write('range_misreg : ' + self.range_misreg + '\n')
+
+    def subband(self, function):
+        self.f.write('##########################' + '\n')
+        self.f.write(function + '\n')
+        self.f.write('subband : ' + '\n')
+        self.f.write('directory : ' + self.reference + '\n')
+
+    def generateIgram_ion(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('generateIgram : ' + '\n')
+        self.f.write('reference : ' + self.reference + '\n')
+        self.f.write('reference_suffix : ' + self.reference_suffix + '\n')
+        self.f.write('secondary : ' + self.secondary + '\n')
+        self.f.write('secondary_suffix : ' + self.secondary_suffix + '\n')
+        self.f.write('interferogram : ' + self.interferogram + '\n')
+        self.f.write('flatten : ' + self.flatten + '\n')
+        self.f.write('interferogram_prefix : ' + self.interferogram_prefix +'\n')
+        self.f.write('overlap : ' + self.overlap + '\n')
+
+    def mergeBurstsIon(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('mergeBurstsIon : ' + '\n')
+        self.f.write('reference : ' + self.reference + '\n')
+        self.f.write('stack : ' + self.stack + '\n')
+        self.f.write('dirname : ' + self.dirname + '\n')
+        self.f.write('name_pattern : ' + self.name_pattern + '\n')
+        self.f.write('outfile : ' + self.outfile + '\n')
+        self.f.write('nrlks : ' + '{}'.format(self.nrlks) + '\n')
+        self.f.write('nalks : ' + '{}'.format(self.nalks) + '\n')
+        self.f.write('nrlks0 : ' + '{}'.format(self.nrlks0) +'\n')
+        self.f.write('nalks0 : ' + '{}'.format(self.nalks0) + '\n')
+        if self.rvalid is not None:
+            self.f.write('rvalid : ' + '{}'.format(self.rvalid) + '\n')
+        if self.swath is not None:
+            self.f.write('swath : ' + self.swath + '\n')
+
+    def coherenceIon(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('coherenceIon : ' + '\n')
+        self.f.write('lower : ' + self.lower + '\n')
+        self.f.write('upper : ' + self.upper + '\n')
+        self.f.write('coherence : ' + self.coherence + '\n')
+        if self.nrlks is not None:
+            self.f.write('nrlks : ' + '{}'.format(self.nrlks) + '\n')
+        if self.nalks is not None:
+            self.f.write('nalks : ' + '{}'.format(self.nalks) + '\n')
+
+    def lookUnwIon(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('lookUnwIon : ' + '\n')
+        self.f.write('unw : ' + self.unw + '\n')
+        self.f.write('cor : ' + self.cor + '\n')
+        self.f.write('output : ' + self.output + '\n')
+        self.f.write('nrlks : ' + '{}'.format(self.nrlks) + '\n')
+        self.f.write('nalks : ' + '{}'.format(self.nalks) + '\n')
+
+    def filtIon(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('filtIon : ' + '\n')
+        self.f.write('input : ' + self.input + '\n')
+        self.f.write('coherence : ' + self.coherence + '\n')
+        self.f.write('output : ' + self.output + '\n')
+        self.f.write('win_min : ' + '{}'.format(self.win_min) + '\n')
+        self.f.write('win_max : ' + '{}'.format(self.win_max) + '\n')
+
+
+
+
     def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
         # dispassionate list of commands for single process
         if numProcess == 1:
@@ -274,6 +356,287 @@ class config(object):
 
     def finalize(self):
         self.f.close()
+
+
+class ionParamUsr(object):
+    '''A class containing parameters for ionosphere estimation specified by user
+       while considerBurstProperties is not availavle for stack processing,
+       ionParam still has parameters associated with considerBurstProperties for bookkeeping.
+    '''
+
+    def __init__(self, usrInput):
+        # usrInput: usrInput txt file
+        self.usrInput = usrInput
+
+    def configure(self):
+        #default values same as topsApp.py
+        #only ION_applyIon is removed, compared with topsApp.py
+        self.ION_doIon = False
+        self.ION_considerBurstProperties = False
+
+        self.ION_ionHeight = 200.0
+        self.ION_ionFit = True
+        self.ION_ionFilteringWinsizeMax = 200
+        self.ION_ionFilteringWinsizeMin = 100
+        self.ION_ionshiftFilteringWinsizeMax = 150
+        self.ION_ionshiftFilteringWinsizeMin = 75
+        self.ION_azshiftFlag = 1
+
+        self.ION_maskedAreas = None
+
+        self.ION_numberAzimuthLooks = 50
+        self.ION_numberRangeLooks = 200
+        self.ION_numberAzimuthLooks0 = 10
+        self.ION_numberRangeLooks0 = 40
+
+
+        #get above parameters from usr input
+        with open(self.usrInput, 'r') as f:
+            lines = f.readlines()
+        
+        for x in lines:
+            x = x.strip()
+            if x == '' or x.strip().startswith('#'):
+                continue
+            else:
+                x2 = x.split(':')
+                if 'do ionosphere correction' == x2[0].strip():
+                    self.ION_doIon = eval(x2[1].strip().capitalize())
+                if 'consider burst properties in ionosphere computation' == x2[0].strip():
+                    self.ION_considerBurstProperties = eval(x2[1].strip().capitalize())
+
+                if 'height of ionosphere layer in km' == x2[0].strip():
+                    self.ION_ionHeight = float(x2[1].strip())
+                if 'apply polynomial fit before filtering ionosphere phase' == x2[0].strip():
+                    self.ION_ionFit = eval(x2[1].strip().capitalize())
+                if 'maximum window size for filtering ionosphere phase' == x2[0].strip():
+                    self.ION_ionFilteringWinsizeMax = int(x2[1].strip())
+                if 'minimum window size for filtering ionosphere phase' == x2[0].strip():
+                    self.ION_ionFilteringWinsizeMin = int(x2[1].strip())
+                if 'maximum window size for filtering ionosphere azimuth shift' == x2[0].strip():
+                    self.ION_ionshiftFilteringWinsizeMax = int(x2[1].strip())
+                if 'minimum window size for filtering ionosphere azimuth shift' == x2[0].strip():
+                    self.ION_ionshiftFilteringWinsizeMin = int(x2[1].strip())
+                if 'correct phase error caused by ionosphere azimuth shift' == x2[0].strip():
+                    self.ION_azshiftFlag = int(x2[1].strip())
+
+                if 'areas masked out in ionospheric phase estimation' == x2[0].strip():
+                    if x2[1].strip().capitalize() == 'None':
+                        self.ION_maskedAreas = None
+                    else:
+                        self.ION_maskedAreas = []
+                        x3 = x2[1].replace('[', '').replace(']', '').split(',')
+                        if len(x3)%4 != 0:
+                            raise Exception('there must be four elements for each area.')
+                        else:
+                            narea = int(len(x3)/4)
+                            for i in range(narea):
+                                self.ION_maskedAreas.append([int(x3[i*4+0].strip()), int(x3[i*4+1].strip()), int(x3[i*4+2].strip()), int(x3[i*4+3].strip())])
+
+                if 'total number of azimuth looks in the ionosphere processing' == x2[0].strip():
+                    self.ION_numberAzimuthLooks = int(x2[1].strip())
+                if 'total number of range looks in the ionosphere processing' == x2[0].strip():
+                    self.ION_numberRangeLooks = int(x2[1].strip())
+                if 'number of azimuth looks at first stage for ionosphere phase unwrapping' == x2[0].strip():
+                    self.ION_numberAzimuthLooks0 = int(x2[1].strip())
+                if 'number of range looks at first stage for ionosphere phase unwrapping' == x2[0].strip():
+                    self.ION_numberRangeLooks0 = int(x2[1].strip())
+
+    def print(self):
+        '''print parameters'''
+
+        print()
+
+        print('ionosphere estimation parameters:')
+        print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print("do ionosphere correction (ION_doIon): {}".format(self.ION_doIon))
+        print("consider burst properties in ionosphere computation (ION_considerBurstProperties): {}".format(self.ION_considerBurstProperties))
+
+        print("height of ionosphere layer in km (ION_ionHeight): {}".format(self.ION_ionHeight))
+        print("apply polynomial fit before filtering ionosphere phase (ION_ionFit): {}".format(self.ION_ionFit))
+        print("maximum window size for filtering ionosphere phase (ION_ionFilteringWinsizeMax): {}".format(self.ION_ionFilteringWinsizeMax))
+        print("minimum window size for filtering ionosphere phase (ION_ionFilteringWinsizeMin): {}".format(self.ION_ionFilteringWinsizeMin))
+        print("maximum window size for filtering ionosphere azimuth shift (ION_ionshiftFilteringWinsizeMax): {}".format(self.ION_ionshiftFilteringWinsizeMax))
+        print("minimum window size for filtering ionosphere azimuth shift (ION_ionshiftFilteringWinsizeMin): {}".format(self.ION_ionshiftFilteringWinsizeMin))
+        print("correct phase error caused by ionosphere azimuth shift (ION_azshiftFlag): {}".format(self.ION_azshiftFlag))
+        print("areas masked out in ionospheric phase estimation (ION_maskedAreas): {}".format(self.ION_maskedAreas))
+
+        print("total number of azimuth looks in the ionosphere processing (ION_numberAzimuthLooks): {}".format(self.ION_numberAzimuthLooks))
+        print("total number of range looks in the ionosphere processing (ION_numberRangeLooks): {}".format(self.ION_numberRangeLooks))
+        print("number of azimuth looks at first stage for ionosphere phase unwrapping (ION_numberAzimuthLooks0): {}".format(self.ION_numberAzimuthLooks0))
+        print("number of range looks at first stage for ionosphere phase unwrapping (ION_numberRangeLooks0): {}".format(self.ION_numberRangeLooks0))
+        
+        print()
+
+
+class ionParam(object):
+    '''A class containing parameters for ionosphere estimation
+       while considerBurstProperties is not availavle for stack processing,
+       ionParam still has parameters associated with considerBurstProperties for bookkeeping.
+    '''
+
+    def __init__(self, usrInput=None, safeObjFirst=None, safeObjSecondary=None):
+        # usrInput: usrInput parameter object
+        # safeObjFirst: sentinelSLC object defined in Stack.py of first date
+        # safeObjSecond: sentinelSLC object defined in Stack.py of second date
+        self.usrInput = usrInput
+        self.safeObjFirst = safeObjFirst
+        self.safeObjSecondary = safeObjSecondary
+
+    def configure(self):
+        #all paramters have default values, update the relevant parameters using
+        #self.usrInput, self.safeObjFirst, self.safeObjSecondary
+        #when they are not None
+
+        ###################################################################
+        #users are supposed to change parameters of this section ONLY
+        #SECTION 1. PROCESSING CONTROL PARAMETERS
+        #1. suggested default values of the parameters
+        self.doIon = False
+        self.considerBurstProperties = False
+
+        #ionospheric layer height (m)
+        self.ionHeight = 200.0 * 1000.0
+        #before filtering ionosphere, if applying polynomial fitting
+        #False: no fitting
+        #True: with fitting
+        self.ionFit = True
+        #window size for filtering ionosphere
+        self.ionFilteringWinsizeMax = 200
+        self.ionFilteringWinsizeMin = 100
+        #window size for filtering azimuth shift caused by ionosphere
+        self.ionshiftFilteringWinsizeMax = 150
+        self.ionshiftFilteringWinsizeMin = 75
+        #correct phase error caused by non-zero center frequency and azimuth shift caused by ionosphere
+        #0: no correction
+        #1: use mean value of a burst
+        #2: use full burst
+        self.azshiftFlag = 1
+        self.maskedAreas = None
+
+        #better NOT try changing the following two parameters, since they are related
+        #to the filtering parameters above
+        #number of azimuth looks in the processing of ionosphere estimation
+        self.numberAzimuthLooks = 50
+        #number of range looks in the processing of ionosphere estimation
+        self.numberRangeLooks = 200
+        #number of azimuth looks of the interferogram to be unwrapped
+        self.numberAzimuthLooks0 = 5*2
+        #number of range looks of the interferogram to be unwrapped
+        self.numberRangeLooks0 = 20*2
+
+
+        #2. accept the above parameters from topsApp.py
+        if self.usrInput is not None:
+            self.doIon = self.usrInput.ION_doIon
+            self.considerBurstProperties = self.usrInput.ION_considerBurstProperties
+
+            self.ionHeight = self.usrInput.ION_ionHeight * 1000.0
+            self.ionFit = self.usrInput.ION_ionFit
+            self.ionFilteringWinsizeMax = self.usrInput.ION_ionFilteringWinsizeMax
+            self.ionFilteringWinsizeMin = self.usrInput.ION_ionFilteringWinsizeMin
+            self.ionshiftFilteringWinsizeMax = self.usrInput.ION_ionshiftFilteringWinsizeMax
+            self.ionshiftFilteringWinsizeMin = self.usrInput.ION_ionshiftFilteringWinsizeMin
+            self.azshiftFlag = self.usrInput.ION_azshiftFlag
+            self.maskedAreas = self.usrInput.ION_maskedAreas
+
+            self.numberAzimuthLooks = self.usrInput.ION_numberAzimuthLooks
+            self.numberRangeLooks = self.usrInput.ION_numberRangeLooks
+            self.numberAzimuthLooks0 = self.usrInput.ION_numberAzimuthLooks0
+            self.numberRangeLooks0 = self.usrInput.ION_numberRangeLooks0
+
+
+        #3. check parameters
+        #check number of looks
+        if not ((self.numberAzimuthLooks % self.numberAzimuthLooks0 == 0) and \
+           (1 <= self.numberAzimuthLooks0 <= self.numberAzimuthLooks)):
+            raise Exception('numberAzimuthLooks must be integer multiples of numberAzimuthLooks0')
+        if not ((self.numberRangeLooks % self.numberRangeLooks0 == 0) and \
+           (1 <= self.numberRangeLooks0 <= self.numberRangeLooks)):
+            raise Exception('numberRangeLooks must be integer multiples of numberRangeLooks0')
+        ###################################################################
+
+
+        #SECTION 2. DIRECTORIES AND FILENAMES
+        #directories
+        self.ionDirname = 'ion'
+        self.lowerDirname = 'lower'
+        self.upperDirname = 'upper'
+        self.ioncalDirname = 'ion_cal'
+        self.ionBurstDirname = 'ion_burst'
+        #these are same directory names as topsApp.py/TopsProc.py
+        #self.referenceSlcProduct = 'reference'
+        #self.secondarySlcProduct = 'secondary'
+        #self.fineCoregDirname = 'fine_coreg'
+        self.fineIfgDirname = 'fine_interferogram'
+        self.mergedDirname = 'merged'
+        #filenames
+        self.ionRawNoProj = 'raw_no_projection.ion'
+        self.ionCorNoProj = 'raw_no_projection.cor'
+        self.ionRaw = 'raw.ion'
+        self.ionCor = 'raw.cor'
+        self.ionFilt = 'filt.ion'
+        self.ionShift = 'azshift.ion'
+        self.warning = 'warning.txt'
+
+        #SECTION 3. DATA PARAMETERS
+        #earth's radius (m)
+        self.earthRadius = 6371 * 1000.0
+        #reference range (m) for moving range center frequency to zero, center of center swath
+        self.rgRef = 875714.0
+        #range bandwidth (Hz) for splitting, range processingBandwidth: [5.650000000000000e+07, 4.830000000000000e+07, 4.278991840322842e+07]
+        self.rgBandwidthForSplit = 40.0 * 10**6
+        self.rgBandwidthSub = self.rgBandwidthForSplit / 3.0
+
+        #SECTION 4. DEFINE WAVELENGTHS AND DETERMINE IF CALCULATE IONOSPHERE WITH MERGED INTERFEROGRAM
+        #Sentinel-1A/B radar wavelengths are the same.
+        self.radarWavelength = 0.05546576
+        self.passDirection = None
+
+        #self.safeObjFirst, self.safeObjSecondary should have already get these parameters
+        #use the 1/3, 1/3, 1/3 scheme for splitting
+        from isceobj.Constants import SPEED_OF_LIGHT
+        if self.safeObjFirst is not None:
+            #use this to determine which polynomial to use to calculate a ramp when calculating ionosphere for cross A/B interferogram
+            self.passDirection = self.safeObjFirst.passDirection.lower()
+            self.radarWavelength = self.safeObjFirst.radarWavelength
+        self.radarWavelengthLower = SPEED_OF_LIGHT / (SPEED_OF_LIGHT / self.radarWavelength - self.rgBandwidthForSplit / 3.0)
+        self.radarWavelengthUpper = SPEED_OF_LIGHT / (SPEED_OF_LIGHT / self.radarWavelength + self.rgBandwidthForSplit / 3.0)
+
+        
+        self.calIonWithMerged = False
+        self.rampRemovel = 0
+        #update the above two parameters depending on self.safeObjFirst and self.safeObjSecondary 
+        if (self.safeObjFirst is not None) and (self.safeObjSecondary is not None):
+            #determine if calculate ionosphere using merged interferogram
+            #check if already got parameters needed
+            if hasattr(self.safeObjFirst, 'startingRanges') ==  False:
+                self.safeObjFirst.get_starting_ranges()
+            if hasattr(self.safeObjSecondary, 'startingRanges') ==  False:
+                self.safeObjSecondary.get_starting_ranges()
+            if self.safeObjFirst.startingRanges == self.safeObjSecondary.startingRanges:
+                self.calIonWithMerged = False
+            else:
+                self.calIonWithMerged = True
+            #for cross Sentinel-1A/B interferogram, always not using merged interferogram
+            if self.safeObjFirst.platform != self.safeObjSecondary.platform:
+                self.calIonWithMerged = False
+            #there is no need to process swath by swath when there is only one swath
+            #ionSwathBySwath only works when number of swaths >=2
+            #CONSIDER THIS LATTER!!!
+            #if len(swathList) == 1:
+            #    self.calIonWithMerged = True
+
+            #determine if remove an empirical ramp
+            if self.safeObjFirst.platform == self.safeObjSecondary.platform:
+                self.rampRemovel = 0
+            else:
+                #estimating ionospheric phase for cross Sentinel-1A/B interferogram
+                #an empirical ramp will be removed from the estimated ionospheric phase
+                if self.safeObjFirst.platform == 'S1A' and self.safeObjSecondary.platform == 'S1B':
+                    self.rampRemovel = 1
+                else:
+                    self.rampRemovel = -1
 
 
 class run(object):
@@ -795,6 +1158,390 @@ class run(object):
             line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
             del configObj
 
+
+    def subband_and_resamp(self, dateListIon, stackReferenceDate):
+
+        line_cnt = 0
+        for date in dateListIon:
+            configName = os.path.join(self.config_path,'config_subband_and_resamp_{}'.format(date))
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.reference = os.path.join(self.work_dir, 'reference')
+            configObj.secondary = os.path.join(self.work_dir, 'secondarys', date)
+            configObj.coregdir = os.path.join(self.work_dir, 'coreg_secondarys', date)
+            configObj.azimuth_misreg = os.path.join(self.work_dir, 'misreg', 'azimuth', 'dates', '{}.txt'.format(date))
+            configObj.range_misreg = os.path.join(self.work_dir, 'misreg', 'range', 'dates', '{}.txt'.format(date))
+            if date == stackReferenceDate:
+                configObj.subband('[Function-1]')
+            else:
+                configObj.subband_and_resamp('[Function-1]')
+            configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
+
+
+    def generateIgram_ion(self, pairs, stackReferenceDate):
+
+        line_cnt = 0
+        for p in pairs:
+            configName = os.path.join(self.config_path,'config_generateIgram_ion_{}_{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+            if p[0] == stackReferenceDate:
+                configObj.reference = os.path.join(self.work_dir, 'reference')
+            else:
+                configObj.reference = os.path.join(self.work_dir, 'coreg_secondarys', p[0])
+            if p[1] == stackReferenceDate:
+                configObj.secondary = os.path.join(self.work_dir, 'reference')
+            else:
+                configObj.secondary = os.path.join(self.work_dir, 'coreg_secondarys', p[1])
+            configObj.flatten = 'False'
+            configObj.interferogram_prefix = 'fine'
+            configObj.overlap = 'False'
+
+            configObj.reference_suffix = '_lower'
+            configObj.secondary_suffix = '_lower'
+            configObj.interferogram = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'interferograms')
+            configObj.generateIgram_ion('[Function-1]')
+
+            configObj.reference_suffix = '_upper'
+            configObj.secondary_suffix = '_upper'
+            configObj.interferogram = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'interferograms')
+            configObj.generateIgram_ion('[Function-2]')
+            configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            del configObj
+
+
+    def mergeBurstsIon(self, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update):
+        import numpy as np
+
+        swath_list = sorted(self.swath_num.split())
+        nswath = len(swath_list)
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        if nswath == 1:
+            pairs1 = pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update
+            pairs2 = []
+        else:
+            pairs1 = pairs_same_starting_ranges_update
+            pairs2 = pairs_diff_starting_ranges_update
+
+        line_cnt = 0
+        for p in pairs1+pairs2:
+            configName = os.path.join(self.config_path,'config_mergeBurstsIon_{}-{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+
+            if p in pairs1:
+                for subband, function in zip(['lower', 'upper'], ['[Function-1]', '[Function-2]']):
+                    configObj.reference = os.path.join(self.work_dir, 'reference')
+                    configObj.stack = os.path.join(self.work_dir, 'stack')
+                    configObj.dirname = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'interferograms')
+                    configObj.name_pattern = 'fine_*.int'
+                    configObj.outfile = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged', 'fine.int')
+                    configObj.nrlks = ionParamUsrObj.ION_numberRangeLooks
+                    configObj.nalks = ionParamUsrObj.ION_numberAzimuthLooks
+                    configObj.nrlks0 = ionParamUsrObj.ION_numberRangeLooks0
+                    configObj.nalks0 = ionParamUsrObj.ION_numberAzimuthLooks0
+                    configObj.rvalid = None
+                    configObj.swath = None
+                    configObj.mergeBurstsIon(function)
+
+                configObj.lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine.int')
+                configObj.upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged', 'fine.int')
+                configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine.cor')
+                configObj.nrlks = None
+                configObj.nalks = None
+                configObj.coherenceIon('[Function-3]')
+
+            if p in pairs2:
+                num = 2 * nswath
+                subbandAll = ['lower' for i in range(nswath)] + ['upper' for i in range(nswath)]
+                swathAll = swath_list + swath_list
+                functionAll = ['[Function-{}]'.format(i+1) for i in range(num)]
+                for subband, swath, function in zip(subbandAll, swathAll, functionAll):
+                    configObj.reference = os.path.join(self.work_dir, 'reference')
+                    configObj.stack = os.path.join(self.work_dir, 'stack')
+                    configObj.dirname = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'interferograms')
+                    configObj.name_pattern = 'fine_*.int'
+                    configObj.outfile = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.nrlks = ionParamUsrObj.ION_numberRangeLooks
+                    configObj.nalks = ionParamUsrObj.ION_numberAzimuthLooks
+                    configObj.nrlks0 = ionParamUsrObj.ION_numberRangeLooks0
+                    configObj.nalks0 = ionParamUsrObj.ION_numberAzimuthLooks0
+                    configObj.rvalid = np.int32(np.around(ionParamUsrObj.ION_numberRangeLooks/8.0))
+                    configObj.swath = swath
+                    configObj.mergeBurstsIon(function)
+
+                swathAll = swath_list
+                functionAll = ['[Function-{}]'.format(num+i+1) for i in range(nswath)]
+                for swath, function in zip(swathAll, functionAll):
+                    configObj.lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine.cor')
+                    configObj.nrlks = None
+                    configObj.nalks = None
+                    configObj.coherenceIon(function)
+
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def unwrap_ion(self, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update):
+        import numpy as np
+
+        swath_list = sorted(self.swath_num.split())
+        nswath = len(swath_list)
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        if nswath == 1:
+            pairs1 = pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update
+            pairs2 = []
+        else:
+            pairs1 = pairs_same_starting_ranges_update
+            pairs2 = pairs_diff_starting_ranges_update
+
+        line_cnt = 0
+        for p in pairs1+pairs2:
+            configName = os.path.join(self.config_path,'config_unwrap_ion_{}-{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+
+            if p in pairs1:
+                for subband, function in zip(['lower', 'upper'], ['[Function-1]', '[Function-2]']):
+                    configObj.ifgName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged', 'fine.int')
+                    configObj.unwName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged', 'fine.unw')
+                    configObj.cohName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine.cor')
+                    configObj.noMCF = 'False'
+                    configObj.reference = os.path.join(self.work_dir, 'reference')
+                    configObj.defoMax = '2'
+                    configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
+                    configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
+                    configObj.rmfilter = False
+                    configObj.unwMethod = 'snaphu'
+                    configObj.unwrap(function)
+
+            if p in pairs2:
+                num = 2 * nswath
+                subbandAll = ['lower' for i in range(nswath)] + ['upper' for i in range(nswath)]
+                swathAll = swath_list + swath_list
+                functionAll = ['[Function-{}]'.format(i+1) for i in range(num)]
+                for subband, swath, function in zip(subbandAll, swathAll, functionAll):
+                    configObj.ifgName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.unwName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged_IW{}'.format(swath), 'fine.unw')
+                    configObj.cohName = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine.cor')
+                    configObj.noMCF = 'False'
+                    configObj.reference = os.path.join(self.work_dir, 'reference')
+                    configObj.defoMax = '2'
+                    configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
+                    configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
+                    configObj.rmfilter = False
+                    configObj.unwMethod = 'snaphu'
+                    configObj.unwrap(function)
+
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def look_ion(self, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update):
+        import numpy as np
+
+        swath_list = sorted(self.swath_num.split())
+        nswath = len(swath_list)
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        if nswath == 1:
+            pairs1 = pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update
+            pairs2 = []
+        else:
+            pairs1 = pairs_same_starting_ranges_update
+            pairs2 = pairs_diff_starting_ranges_update
+
+        line_cnt = 0
+        for p in pairs1+pairs2:
+            configName = os.path.join(self.config_path,'config_look_ion_{}-{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+
+            if p in pairs1:
+                for subband, function in zip(['lower', 'upper'], ['[Function-1]', '[Function-2]']):
+                    configObj.unw = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged', 'fine.unw')
+                    configObj.cor = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine.cor')
+                    configObj.output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged', 'fine_look.unw')
+                    configObj.nrlks = np.int32(np.around(ionParamUsrObj.ION_numberRangeLooks / ionParamUsrObj.ION_numberRangeLooks0))
+                    configObj.nalks = np.int32(np.around(ionParamUsrObj.ION_numberAzimuthLooks / ionParamUsrObj.ION_numberAzimuthLooks0))
+                    configObj.lookUnwIon(function)
+
+                configObj.lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine.int')
+                configObj.upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged', 'fine.int')
+                configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine_look.cor')
+                #configObj.nrlks = np.int32(np.around(ionParamUsrObj.ION_numberRangeLooks / ionParamUsrObj.ION_numberRangeLooks0))
+                #configObj.nalks = np.int32(np.around(ionParamUsrObj.ION_numberAzimuthLooks / ionParamUsrObj.ION_numberAzimuthLooks0))
+                configObj.coherenceIon('[Function-3]')
+
+            if p in pairs2:
+                num = 2 * nswath
+                subbandAll = ['lower' for i in range(nswath)] + ['upper' for i in range(nswath)]
+                swathAll = swath_list + swath_list
+                functionAll = ['[Function-{}]'.format(i+1) for i in range(num)]
+                for subband, swath, function in zip(subbandAll, swathAll, functionAll):
+                    configObj.unw = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged_IW{}'.format(swath), 'fine.unw')
+                    configObj.cor = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine.cor')
+                    configObj.output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), '{}'.format(subband), 'merged_IW{}'.format(swath), 'fine_look.unw')
+                    configObj.nrlks = np.int32(np.around(ionParamUsrObj.ION_numberRangeLooks / ionParamUsrObj.ION_numberRangeLooks0))
+                    configObj.nalks = np.int32(np.around(ionParamUsrObj.ION_numberAzimuthLooks / ionParamUsrObj.ION_numberAzimuthLooks0))
+                    configObj.lookUnwIon(function)
+
+                swathAll = swath_list
+                functionAll = ['[Function-{}]'.format(num+i+1) for i in range(nswath)]
+                for swath, function in zip(swathAll, functionAll):
+                    configObj.lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged_IW{}'.format(swath), 'fine.int')
+                    configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine_look.cor')
+                    #configObj.nrlks = np.int32(np.around(ionParamUsrObj.ION_numberRangeLooks / ionParamUsrObj.ION_numberRangeLooks0))
+                    #configObj.nalks = np.int32(np.around(ionParamUsrObj.ION_numberAzimuthLooks / ionParamUsrObj.ION_numberAzimuthLooks0))
+                    configObj.coherenceIon(function)
+
+
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def computeIon(self, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict):
+        import numpy as np
+
+        swath_list = sorted(self.swath_num.split())
+        nswath = len(swath_list)
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        if nswath == 1:
+            pairs1 = pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update
+            pairs2 = []
+        else:
+            pairs1 = pairs_same_starting_ranges_update
+            pairs2 = pairs_diff_starting_ranges_update
+
+
+        for p in pairs1+pairs2:
+            ionParamObj = ionParam(usrInput=ionParamUsrObj, safeObjFirst=safe_dict[p[0]], safeObjSecondary=safe_dict[p[1]])
+            ionParamObj.configure()
+
+            #do not use SentinelWrapper.py, as it does not support 2-d list masked_areas
+            #configName = os.path.join(self.config_path,'config_mergeBurstsIon_{}-{}'.format(p[0], p[1]))
+            #configObj = config(configName)
+            #configObj.configure(self)
+
+            if p in pairs1:
+                lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine_look.unw')
+                upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged', 'fine_look.unw')
+                coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged', 'fine_look.cor')
+                ionosphere = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'raw_no_projection.ion')
+                coherence_output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'raw_no_projection.cor')
+                masked_areas = ''
+                if ionParamObj.maskedAreas is not None:
+                    for m in ionParamObj.maskedAreas:
+                        masked_areas += ' --masked_areas {} {} {} {}'.format(m[0], m[1], m[2], m[3])
+
+                cmd = 'computeIon.py --lower {} --upper {} --coherence {} --ionosphere {} --coherence_output {}{}'.format(
+                    lower, upper, coherence, ionosphere, coherence_output, masked_areas)
+
+                self.runf.write(self.text_cmd + cmd + '\n')
+
+
+            if p in pairs2:
+                for swath in swath_list:
+                    lower = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine_look.unw')
+                    upper = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'upper', 'merged_IW{}'.format(swath), 'fine_look.unw')
+                    coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'lower', 'merged_IW{}'.format(swath), 'fine_look.cor')
+                    ionosphere = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal_IW{}'.format(swath), 'raw_no_projection.ion')
+                    coherence_output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal_IW{}'.format(swath), 'raw_no_projection.cor')
+                    masked_areas = ''
+                    if ionParamObj.maskedAreas is not None:
+                        for m in ionParamObj.maskedAreas:
+                            masked_areas += ' --masked_areas {} {} {} {}'.format(m[0], m[1], m[2], m[3])
+
+                    cmd = 'computeIon.py --lower {} --upper {} --coherence {} --ionosphere {} --coherence_output {}{}'.format(
+                        lower, upper, coherence, ionosphere, coherence_output, masked_areas)
+
+                    self.runf.write(self.text_cmd + cmd + '\n')
+
+                #merge swaths
+                reference = os.path.join(self.work_dir, 'reference')
+                stack = os.path.join(self.work_dir, 'stack')
+                input0 = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]))
+                output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal')
+                nrlks = ionParamObj.numberRangeLooks
+                nalks = ionParamObj.numberAzimuthLooks
+                remove_ramp = ionParamObj.rampRemovel
+
+                cmd = 'mergeSwathIon.py --reference {} --stack {} --input {} --output {} --nrlks {} --nalks {} --remove_ramp {}'.format(
+                    reference, stack, input0, output, nrlks, nalks, remove_ramp)
+                self.runf.write(self.text_cmd + cmd + '\n')
+
+
+    def filtIon(self, pairs):
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        line_cnt = 0
+        for p in pairs:
+            configName = os.path.join(self.config_path,'config_filtIon_{}_{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.input = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'raw_no_projection.ion')
+            configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'raw_no_projection.cor')
+            configObj.output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'filt.ion')
+            configObj.win_min = ionParamUsrObj.ION_ionFilteringWinsizeMin
+            configObj.win_max = ionParamUsrObj.ION_ionFilteringWinsizeMax
+            configObj.filtIon('[Function-1]')
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def invertIon(self):
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+        
+        ion_in = os.path.join(self.work_dir,'ion')
+        ion_out = os.path.join(self.work_dir,'ion_dates')
+        hgt = os.path.join(self.work_dir,'merged/geom_reference/hgt.rdr')
+
+        cmd = 'invertIon.py --idir {} --odir {} --nrlks1 {} --nalks1 {} --nrlks2 {} --nalks2 {} --merged_geom {} --interp --msk_overlap'.format(ion_in,ion_out,ionParamUsrObj.ION_numberRangeLooks, ionParamUsrObj.ION_numberAzimuthLooks, self.rangeLooks, self.azimuthLooks,hgt)
+
+        self.runf.write(self.text_cmd + cmd + '\n')
+
+
     def finalize(self):
         self.runf.close()
         #writeJobFile(self.run_outname)
@@ -837,6 +1584,35 @@ class sentinelSLC(object):
         self.SNWE=[min(lats),max(lats),min(lons),max(lons)]
 
 
+    def get_starting_ranges(self, safe=None):
+        import zipfile
+        import xml.etree.ElementTree as ET
+        from isceobj.Planet.AstronomicalHandbook import Const
+
+        #if safe file not set, use first slice in the safe list sorted by starting time
+        if safe is None:
+            safe = sorted(self.safe_file.split(), key=lambda x: x.split('_')[-5], reverse=False)[0]
+        zf = zipfile.ZipFile(safe, 'r')
+        anna = sorted([item for item in zf.namelist() if '.SAFE/annotation/s1' in item])
+        #dual polarization. for the same swath, the slant ranges of two polarizations should be the same.
+        if len(anna) == 6:
+            anna = anna[1:6:2]
+
+        startingRange = []
+        for k in range(3):
+            xmlstr = zf.read(anna[k])
+            root = ET.fromstring(xmlstr)
+            #startingRange computation exactly same as those in components/isceobj/Sensor/TOPS/Sentinel1.py used
+            #by topsApp.py and topsStack
+            startingRange.append(
+                float(root.find('imageAnnotation/imageInformation/slantRangeTime').text)*Const.c/2.0
+                )
+
+            if k == 0:
+                self.radarWavelength = Const.c / float(root.find('generalAnnotation/productInformation/radarFrequency').text)
+                self.passDirection = root.find('generalAnnotation/productInformation/pass').text
+
+        self.startingRanges = startingRange
 
 
     def getkmlQUAD(self,safe):
@@ -1033,7 +1809,7 @@ class sentinelSLC(object):
               orbit_start_date_time = datetime.datetime.strptime(fields[6].replace('V',''), datefmt)
               orbit_stop_date_time = datetime.datetime.strptime(fields[7].replace('.EOF',''), datefmt)
               if self.start_date_time >= orbit_start_date_time and self.stop_date_time < orbit_stop_date_time:
-                  print ("restituted orbit already exists.")
+                  print ("restituted or precise orbit already exists.")
                   self.orbit =  orbitFile
                   self.orbitType = 'restituted'
 

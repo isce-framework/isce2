@@ -14,7 +14,7 @@ Export('envPyCuAmpcor')
 if envPyCuAmpcor['GPU_ACC_ENABLED']:
     envPyCuAmpcor.Append(CPPPATH=envPyCuAmpcor['CUDACPPPATH'])
     envPyCuAmpcor.Append(LIBPATH=envPyCuAmpcor['CUDALIBPATH'])
-    envPyCuAmpcor.Append(LIBS=['cuda','cudart','cufft','cublas'])
+    envPyCuAmpcor.Append(LIBS=['cudart','cufft','cublas'])
     build = envPyCuAmpcor['PRJ_SCONS_BUILD'] + '/' + package + '/' + project
 
 #    includeScons = os.path.join('include','SConscript')

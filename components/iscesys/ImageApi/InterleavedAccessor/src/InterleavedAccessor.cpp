@@ -112,8 +112,8 @@ void  InterleavedAccessor::openFile(string filename, string accessMode, fstream 
         fd.open(filename.c_str(), ios_base::in);
         if(fd.fail())
         {
-            cout << "Error. Cannot open the file " << filename << " in " << accessMode << " mode." <<endl;
-            ERR_MESSAGE;
+            string errMsg = "Cannot open the file " + filename + " in " + accessMode + " mode.";
+            throw runtime_error(errMsg);
         }
 
     }
@@ -139,13 +139,13 @@ void  InterleavedAccessor::openFile(string filename, string accessMode, fstream 
     }
     else
     {
-        cout << "Error. Unrecognized open mode " << accessMode << " for file " << filename << endl;
-        ERR_MESSAGE;
+        string errMsg = "Unrecognized open mode " + accessMode + " for file " + filename;
+        throw runtime_error(errMsg);
     }
     if(!fd.good())
     {
-        cout << "Cannot open file " << filename << endl;
-        ERR_MESSAGE;
+        string errMsg = "Cannot open file " + filename;
+        throw runtime_error(errMsg);
     }
 }
 void InterleavedAccessor::getStream(char * dataLine,  int  & numEl)

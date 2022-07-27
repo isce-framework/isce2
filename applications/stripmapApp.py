@@ -646,7 +646,7 @@ class _RoiBase(Application, FrameMixin):
             #warn if there are any differences in content
             if g_count > 0:
                 print()
-                logger.warn((
+                logger.warning((
                     "Some filenames in stripmapApp.geocode_list configuration "+
                     "are different from those in StripmapProc. Using names given"+
                     " to stripmapApp."))

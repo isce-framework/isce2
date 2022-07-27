@@ -14,6 +14,7 @@
 #include "cuOverSampler.h"
 #include "cuSincOverSampler.h"
 #include "cuCorrFrequency.h"
+#include "cuCorrNormalizer.h"
 
 
 /**
@@ -63,6 +64,10 @@ private:
 
     // cross-correlation processor with frequency domain algorithm
     cuFreqCorrelator *cuCorrFreqDomain, *cuCorrFreqDomain_OverSampled;
+
+    // correlation surface normalizer
+    std::unique_ptr<cuNormalizeProcessor> corrNormalizerRaw;
+    std::unique_ptr<cuNormalizeProcessor> corrNormalizerOverSampled;
 
     // save offset results in different stages
     cuArrays<int2> *offsetInit;

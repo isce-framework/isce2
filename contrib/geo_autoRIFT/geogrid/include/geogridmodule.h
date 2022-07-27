@@ -53,7 +53,11 @@ extern "C"
         PyObject * setOrbit(PyObject *, PyObject *);
         PyObject * setLookSide(PyObject *, PyObject *);
         PyObject * setNodataOut(PyObject *, PyObject *);
-        PyObject * setUrlFlag(PyObject *, PyObject *);
+    
+        PyObject * setDtUnity(PyObject *, PyObject *);
+        PyObject * setMaxFactor(PyObject *, PyObject *);
+        PyObject * setUpperThreshold(PyObject*, PyObject *);
+        PyObject * setLowerThreshold(PyObject *, PyObject *);
 
         PyObject * setWindowLocationsFilename(PyObject *, PyObject *);
         PyObject * setWindowOffsetsFilename(PyObject *, PyObject *);
@@ -66,8 +70,15 @@ extern "C"
         PyObject * setEPSG(PyObject *, PyObject *);
         PyObject * setIncidenceAngle(PyObject *, PyObject *);
         PyObject * setChipSizeX0(PyObject *, PyObject *);
+        PyObject * setGridSpacingX(PyObject *, PyObject *);
         PyObject * setXLimits(PyObject *, PyObject *);
         PyObject * setYLimits(PyObject *, PyObject *);
+        PyObject * getXPixelSize(PyObject *, PyObject *);
+        PyObject * getYPixelSize(PyObject *, PyObject *);
+        PyObject * getXOff(PyObject *, PyObject *);
+        PyObject * getYOff(PyObject *, PyObject *);
+        PyObject * getXCount(PyObject *, PyObject *);
+        PyObject * getYCount(PyObject *, PyObject *);
 }
 
 static PyMethodDef geogrid_methods[] =
@@ -83,6 +94,7 @@ static PyMethodDef geogrid_methods[] =
         {"setEPSG_Py", setEPSG, METH_VARARGS, " "},
         {"setIncidenceAngle_Py", setIncidenceAngle, METH_VARARGS, " "},
         {"setChipSizeX0_Py", setChipSizeX0, METH_VARARGS, " "},
+        {"setGridSpacingX_Py", setGridSpacingX, METH_VARARGS, " "},
         {"setVelocities_Py", setVelocities, METH_VARARGS, " "},
         {"setSearchRange_Py", setSearchRange, METH_VARARGS, " "},
         {"setChipSizeMin_Py", setChipSizeMin, METH_VARARGS, " "},
@@ -92,9 +104,18 @@ static PyMethodDef geogrid_methods[] =
         {"setOrbit_Py", setOrbit, METH_VARARGS, " "},
         {"setLookSide_Py", setLookSide, METH_VARARGS, " "},
         {"setNodataOut_Py", setNodataOut, METH_VARARGS, " "},
-        {"setUrlFlag_Py", setUrlFlag, METH_VARARGS, " "},
+        {"setDtUnity_Py", setDtUnity, METH_VARARGS, " "},
+        {"setMaxFactor_Py", setMaxFactor, METH_VARARGS, " "},
+        {"setUpperThreshold_Py", setUpperThreshold, METH_VARARGS, " "},
+        {"setLowerThreshold_Py", setLowerThreshold, METH_VARARGS, " "},
         {"setXLimits_Py", setXLimits, METH_VARARGS, " "},
         {"setYLimits_Py", setYLimits, METH_VARARGS, " "},
+        {"getXPixelSize_Py", getXPixelSize, METH_VARARGS, " "},
+        {"getYPixelSize_Py", getYPixelSize, METH_VARARGS, " "},
+        {"getXOff_Py", getXOff, METH_VARARGS, " "},
+        {"getYOff_Py", getYOff, METH_VARARGS, " "},
+        {"getXCount_Py", getXCount, METH_VARARGS, " "},
+        {"getYCount_Py", getYCount, METH_VARARGS, " "},
         {"setWindowLocationsFilename_Py", setWindowLocationsFilename, METH_VARARGS, " "},
         {"setWindowOffsetsFilename_Py", setWindowOffsetsFilename, METH_VARARGS, " "},
         {"setWindowSearchRangeFilename_Py", setWindowSearchRangeFilename, METH_VARARGS, " "},

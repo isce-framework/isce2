@@ -5,17 +5,19 @@
 # Heresh Fattahi, updated for stack processing
 
 
-import numpy as np 
 import os
-import isce
-import isceobj
+import glob
 import datetime
 import logging
 import argparse
+import numpy as np
+from osgeo import gdal
+
+import isce
+import isceobj
 from isceobj.Util.ImageUtil import ImageLib as IML
 from isceobj.Util.decorators import use_api
 import s1a_isce_utils as ut
-import glob
 
 
 def createParser():
@@ -25,46 +27,45 @@ def createParser():
 
     parser = argparse.ArgumentParser( description='Generate offset field between two Sentinel swaths')
     parser.add_argument('-i', '--inp_reference', type=str, dest='reference', required=True,
-            help='Directory with the reference image')
+                        help='Directory with the reference image')
 
     parser.add_argument('-s', '--stack', type=str, dest='stack', default = None,
-                help='Directory with the stack xml files which includes the common valid region of the stack')
+                        help='Directory with the stack xml files which includes the common valid region of the stack')
 
     parser.add_argument('-d', '--dirname', type=str, dest='dirname', required=True,
-                help='directory with products to merge')
+                        help='directory with products to merge')
 
     parser.add_argument('-o', '--outfile', type=str, dest='outfile', required=True,
-            help='Output merged file')
+                        help='Output merged file')
 
     parser.add_argument('-m', '--method', type=str, dest='method', default='avg',
-            help = 'Method: top / bot/ avg')
+                        help='Method: top / bot/ avg')
 
-    parser.add_argument('-a', '--aligned', action='store_true', dest='isaligned',
-            default=False, help='Use reference information instead of coreg for merged grid.')
+    parser.add_argument('-a', '--aligned', action='store_true', dest='isaligned', default=False,
+                        help='Use reference information instead of coreg for merged grid.')
 
     parser.add_argument('-l', '--multilook', action='store_true', dest='multilook', default=False,
-                    help = 'Multilook the merged products. True or False')
+                        help='Multilook the merged products. True or False')
 
-    parser.add_argument('-A', '--azimuth_looks', type=str, dest='numberAzimuthLooks', default=3,
-            help = 'azimuth looks')
+    parser.add_argument('-A', '--azimuth_looks', type=str, dest='numberAzimuthLooks', default=3, help='azimuth looks')
 
-    parser.add_argument('-R', '--range_looks', type=str, dest='numberRangeLooks', default=9,
-            help = 'range looks')
+    parser.add_argument('-R', '--range_looks', type=str, dest='numberRangeLooks', default=9, help='range looks')
 
     parser.add_argument('-n', '--name_pattern', type=str, dest='namePattern', default='fine*int',
-                help = 'a name pattern of burst products that will be merged. default: fine. it can be lat, lon, los, burst, hgt, shadowMask, incLocal')
+                        help='a name pattern of burst products that will be merged. '
+                             'default: fine. it can be lat, lon, los, burst, hgt, shadowMask, incLocal')
 
     parser.add_argument('-v', '--valid_only', action='store_true', dest='validOnly', default=False,
-                help = 'True for SLC, int and coherence. False for geometry files (lat, lon, los, hgt, shadowMask, incLocal).')
+                        help='True for SLC, int and coherence. False for geometry files (lat, lon, los, hgt, shadowMask, incLocal).')
 
     parser.add_argument('-u', '--use_virtual_files', action='store_true', dest='useVirtualFiles', default=False,
-                    help = 'writing only a vrt of merged file. Default: True.')
+                        help='writing only a vrt of merged file. Default: True.')
 
     parser.add_argument('-M', '--multilook_tool', type=str, dest='multilookTool', default='isce',
-            help = 'The tool used for multi-looking')
+                        help='The tool used for multi-looking')
 
     parser.add_argument('-N', '--no_data_value', type=float, dest='noData', default=None,
-            help = 'no data value when gdal is used for multi-looking')
+                        help='no data value when gdal is used for multi-looking')
 
     return parser
 
@@ -102,7 +103,7 @@ def mergeBurstsVirtual(frame, referenceFrame, fileList, outfile, validOnly=True)
     rightSwath = max(refSwaths, key = lambda x: x.farRange)
 
 
-    totalWidth = int( np.round((rightSwath.farRange - leftSwath.nearRange)/leftSwath.dr + 1))
+    totalWidth  = int(np.round((rightSwath.farRange - leftSwath.nearRange)/leftSwath.dr + 1))
     totalLength = int(np.round((botSwath.sensingStop - topSwath.sensingStart).total_seconds()/topSwath.dt + 1 ))
 
 
@@ -194,7 +195,7 @@ def mergeBursts(frame, fileList, outfile,
             linecount = start
 
     outMap = IML.memmap(outfile, mode='write', nchannels=bands,
-            nxx=width, nyy=nLines, scheme=scheme, dataType=npType)
+                        nxx=width, nyy=nLines, scheme=scheme, dataType=npType)
 
     for index in range(frame.numberOfBursts):
         curBurst = frame.bursts[index]
@@ -283,50 +284,42 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
     Take looks.
     '''
 
+    # default output filename
+    if outname is None:
+        spl = os.path.splitext(infile)
+        ext = '.{0}alks_{1}rlks'.format(alks, rlks)
+        outname = spl[0] + ext + spl[1]
+
     if multilook_tool=="gdal":
+        # remove existing *.hdr files, to avoid the following gdal error:
+        # ERROR 1: Input and output dataset sizes or band counts do not match in GDALDatasetCopyWholeRaster()
+        fbase = os.path.splitext(outname)[0]
+        print(f'remove {fbase}*.hdr')
+        for fname in glob.glob(f'{fbase}*.hdr'):
+            os.remove(fname)
 
-        from osgeo import gdal
-
-        print("multi looking using gdal ...")
-        if outname is None:
-            spl = os.path.splitext(infile)
-            ext = '.{0}alks_{1}rlks'.format(alks, rlks)
-            outname = spl[0] + ext + spl[1]
-        
-        print(infile)
-        ds = gdal.Open(infile + ".vrt", gdal.GA_ReadOnly)
+        print(f"multilooking {rlks} x {alks} using gdal for {infile} ...")
+        ds = gdal.Open(infile+'.vrt', gdal.GA_ReadOnly)
 
         xSize = ds.RasterXSize
         ySize = ds.RasterYSize
+        outXSize = int(xSize / int(rlks))
+        outYSize = int(ySize / int(alks))
+        srcXSize = outXSize * int(rlks)
+        srcYSize = outYSize * int(alks)
 
-        outXSize = xSize/int(rlks)
-        outYSize = ySize/int(alks)
-
-        if no_data:
-            gdalTranslateOpts = gdal.TranslateOptions(format="ENVI", width=outXSize, height=outYSize, noData=no_data)
-        else:
-            gdalTranslateOpts = gdal.TranslateOptions(format="ENVI", width=outXSize, height=outYSize)
-
-        gdal.Translate(outname, ds, options=gdalTranslateOpts)       
-        ds = None
-
-        
-        ds = gdal.Open(outname, gdal.GA_ReadOnly)
-        gdal.Translate(outname+".vrt", ds, options=gdal.TranslateOptions(format="VRT"))
-        ds = None
+        options_str = f'-of ENVI -outsize {outXSize} {outYSize} -srcwin 0 0 {srcXSize} {srcYSize} '
+        options_str += f'-a_nodata {no_data}' if no_data else ''
+        gdal.Translate(outname, ds, options=options_str)
+        # generate VRT file
+        gdal.Translate(outname+".vrt", outname, options='-of VRT')
 
     else:
         from mroipac.looks.Looks import Looks
-
-        print('Multilooking {0} ...'.format(infile))
+        print(f'multilooking {rlks} x {alks} using isce2 for {infile} ...')
 
         inimg = isceobj.createImage()
         inimg.load(infile + '.xml')
-
-        if outname is None:
-            spl = os.path.splitext(inimg.filename)
-            ext = '.{0}alks_{1}rlks'.format(alks, rlks)
-            outname = spl[0] + ext + spl[1]
 
         lkObj = Looks()
         lkObj.setDownLooks(alks)
@@ -338,10 +331,21 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
     return outname
 
 
+def progress_cb(complete, message, cb_data):
+    '''Emit progress report in numbers for 10% intervals and dots for 3%
+    Link: https://stackoverflow.com/questions/68025043/adding-a-progress-bar-to-gdal-translate
+    '''
+    if int(complete*100) % 10 == 0:
+        msg = f'{complete*100:.0f}'
+        print(msg, end='', flush=True)
+        if msg == '100':
+            print(' ')
+    elif int(complete*100) % 3 == 0:
+        print(f'{cb_data}', end='', flush=True)
+
+    return
 
 
-
-#def runMergeBursts(self):
 def main(iargs=None):
     '''
     Merge burst products to make it look like stripmap.
@@ -349,7 +353,7 @@ def main(iargs=None):
     '''
     inps=cmdLineParse(iargs)
     virtual = inps.useVirtualFiles
-     
+
     swathList = ut.getSwathList(inps.reference)
     referenceFrames = [] 
     frames=[]
@@ -363,10 +367,12 @@ def main(iargs=None):
         if inps.isaligned:
             reference = ifg.reference
 
-            # checking inconsistent number of bursts in the secondary acquisitions
-            if reference.numberOfBursts != ifg.numberOfBursts:
-                raise ValueError('{} has different number of bursts ({}) than the reference ({})'.format(
-                    inps.reference, ifg.numberOfBursts, reference.numberOfBursts))
+            #this does not make sense, number of burst in reference is not necessarily number of bursts in interferogram.
+            #so comment it out.
+            # # checking inconsistent number of bursts in the secondary acquisitions
+            # if reference.numberOfBursts != ifg.numberOfBursts:
+            #     raise ValueError('{} has different number of bursts ({}) than the reference ({})'.format(
+            #         inps.reference, ifg.numberOfBursts, reference.numberOfBursts))
 
         else:
             reference = ifg
@@ -378,20 +384,21 @@ def main(iargs=None):
         if minBurst==maxBurst:
             print('Skipping processing of swath {0}'.format(swath))
             continue
-        
+
         if inps.stack:
             minStack = stack.bursts[0].burstNumber
             print('Updating the valid region of each burst to the common valid region of the stack')
             for ii in range(minBurst, maxBurst + 1):
-                ifg.bursts[ii-minBurst].firstValidLine = stack.bursts[ii-minStack].firstValidLine
+                ifg.bursts[ii-minBurst].firstValidLine   = stack.bursts[ii-minStack].firstValidLine
                 ifg.bursts[ii-minBurst].firstValidSample = stack.bursts[ii-minStack].firstValidSample
-                ifg.bursts[ii-minBurst].numValidLines = stack.bursts[ii-minStack].numValidLines
-                ifg.bursts[ii-minBurst].numValidSamples = stack.bursts[ii-minStack].numValidSamples
+                ifg.bursts[ii-minBurst].numValidLines    = stack.bursts[ii-minStack].numValidLines
+                ifg.bursts[ii-minBurst].numValidSamples  = stack.bursts[ii-minStack].numValidSamples
 
         frames.append(ifg)
         referenceFrames.append(reference)
         print('bursts: ', minBurst, maxBurst)
-        fileList.append([os.path.join(inps.dirname, 'IW{0}'.format(swath), namePattern[0] + '_%02d.%s'%(x,namePattern[1])) for x in range(minBurst, maxBurst+1)])
+        fileList.append([os.path.join(inps.dirname, 'IW{0}'.format(swath), namePattern[0] + '_%02d.%s'%(x,namePattern[1]))
+                         for x in range(minBurst, maxBurst+1)])
 
     mergedir = os.path.dirname(inps.outfile)
     os.makedirs(mergedir, exist_ok=True)
@@ -399,10 +406,7 @@ def main(iargs=None):
     suffix = '.full'
     if (inps.numberRangeLooks == 1) and (inps.numberAzimuthLooks==1):
         suffix=''
-
-
-    ####Virtual flag is ignored for multi-swath data
-    
+        ####Virtual flag is ignored for multi-swath data
         if (not virtual):
             print('User requested for multi-swath stitching.')
             print('Virtual files are the only option for this.')
@@ -411,16 +415,19 @@ def main(iargs=None):
     mergeBurstsVirtual(frames, referenceFrames, fileList, inps.outfile+suffix, validOnly=inps.validOnly)
 
     if (not virtual):
-        print('writing merged file to disk ...')
-        cmd = 'gdal_translate -of ENVI -co INTERLEAVE=BIL ' + inps.outfile + suffix + '.vrt ' + inps.outfile + suffix 
-        os.system(cmd)
+        print('writing merged file to disk via gdal.Translate ...')
+        gdal.Translate(inps.outfile+suffix, inps.outfile+suffix+'.vrt',
+                       options='-of ENVI -co INTERLEAVE=BIL',
+                       callback=progress_cb,
+                       callback_data='.')
 
-    print(inps.multilook)
     if inps.multilook:
-        multilook(inps.outfile+suffix, outname = inps.outfile, 
-            alks = inps.numberAzimuthLooks, rlks=inps.numberRangeLooks,
-            multilook_tool=inps.multilookTool, no_data=inps.noData)
-
+        multilook(inps.outfile+suffix,
+                  outname=inps.outfile, 
+                  alks=inps.numberAzimuthLooks,
+                  rlks=inps.numberRangeLooks,
+                  multilook_tool=inps.multilookTool,
+                  no_data=inps.noData)
     else:
         print('Skipping multi-looking ....')
 
@@ -428,5 +435,4 @@ if __name__ == '__main__' :
     '''
     Merge products burst-by-burst.
     '''
-
     main()

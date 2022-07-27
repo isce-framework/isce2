@@ -6,10 +6,10 @@
 
 #######################
 
-import os, imp, sys, glob
+import os, sys, glob
 import argparse
 import configparser
-import  datetime
+import datetime
 import numpy as np
 import isce
 import isceobj

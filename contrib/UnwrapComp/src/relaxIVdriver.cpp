@@ -3,6 +3,9 @@
 #include <RelaxIV.h>
 #include <relaxIVdriver.h>
 
+
+using namespace MCFClass_di_unipi_it;
+
 template<class T>
 inline T ABS( const T x )
 {
@@ -10,7 +13,72 @@ inline T ABS( const T x )
 }
 
 using namespace std;
-extern void SetParam( MCFClass *mcf );
+//extern void SetParam( MCFClass *mcf );
+
+template<class T>
+static inline void str2val( const char* const str , T &sthg )
+{
+ istringstream( str ) >> sthg;
+ }
+
+/*--------------------------------------------------------------------------*/
+// This function skips comment line in a input stream, where comment line is 
+// // marked by an initial '#' character
+//
+void SkipComments( ifstream &iParam , string &buf )
+ {
+  do {
+    iParam >> ws;
+      getline( iParam , buf );
+       }
+        while( buf[ 0 ] == '#' );
+        }
+
+
+
+
+void SetParam( MCFClass *mcf )
+{
+ ifstream iParam( "config.txt" ); 
+ if( ! iParam.is_open() )
+  return;
+
+ string buf;
+ int num;
+ SkipComments( iParam , buf );
+ str2val( buf.c_str(), num );        // get number of int parameters
+
+ for( int i = 0 ; i < num ; i++ ) {  // read all int parameters
+  int param , val;
+  
+  SkipComments( iParam , buf );
+  str2val( buf.c_str(), param );     // parameter name
+  
+  SkipComments( iParam , buf );
+  str2val( buf.c_str(), val );       // parameter value
+
+  mcf->SetPar( param , val );
+
+  }  // end( for( i ) )
+
+ SkipComments( iParam , buf );
+ str2val( buf.c_str() , num );       // get number of double parameters
+
+ for( int i = 0 ; i < num ; i++ ) {  // read all double parameters
+  int param;
+  double val;
+  SkipComments( iParam , buf );
+  str2val( buf.c_str(), param );     // parameter name
+  
+  SkipComments( iParam , buf );
+  str2val( buf.c_str() , val );      // parameter value
+  
+  mcf->SetPar( param , val );
+
+  }  // end( for( i ) )
+ }  // end( SetParam )
+
+
 vector<int> driver(char *fileName)
 {
  ifstream iFile(fileName);
@@ -27,7 +95,7 @@ vector<int> driver(char *fileName)
 
   // load the network - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  cout << "Loading Network :" << fileName  << endl;
+  cout << "Loading Network: " << fileName  << endl;
   mcf->LoadDMX( iFile );
 
   // set "reasonable" values for the epsilons, if any - - - - - - - - - - - -

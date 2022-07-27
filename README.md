@@ -42,6 +42,7 @@ TERRASARX, UAVSAR and SAOCOM1A.
    - [Running ISCE from the command line](#running-isce-from-the-command-line)
    - [Running ISCE in the Python interpreter](#running-isce-in-the-python-interpreter)
    - [Running ISCE with steps](#running-isce-with-steps)
+   - [Running ISCE stack processors](./contrib/stack/README.md)
    - [Notes on Digital Elevation Models (DEMs)](#notes-on-digital-elevation-models)
 4. [Input Files](#input-files)
 5. [Component Configurability](#component-configurability)
@@ -81,10 +82,9 @@ you want to try the unwrap 2 stage option:
 
 * RelaxIV (a minimum cost flow relaxation algorithm coded in C++ by
 Antonio Frangioni and Claudio Gentile at the University of Pisa,
-based on the Fortran code developed by by Dimitri Bertsekas while
-at MIT) available by request at http://www.di.unipi.it/~frangio.
-So that ISCE will compile it properly, the RelaxIV files should
-be placed in the directory: 'contrib/UnwrapComp/src/RelaxIV'.
+based on the Fortran code developed by Dimitri Bertsekas while
+at MIT) is available at https://github.com/frangio68/Min-Cost-Flow-Class.
+The RelaxIV files should be placed in the directory: 'contrib/UnwrapComp/src/RelaxIV' so that ISCE will compile it properly.
 
 * PULP: Use easy\_install or pip to install it or else clone it from,
 https://github.com/coin-or/pulp.  Make sure the path to the installed
@@ -294,7 +294,7 @@ run the following command while in the top directory of the ISCE source (the
 directory containing the SConstruct file):
 
 ```bash
-> rm -rf config.log .sconfig.dblite .sconf_temp
+> rm -rf config.log .sconfig.dblite .sconf_temp .sconsign.dblite
 ```
 
 and then try "scons install" again.
@@ -515,6 +515,8 @@ Someone with familiarity of the inner workings of ISCE can exploit
 this mode of interacting with the pickle object to discover much about
 the workflow states and also to edit the state to see its effect
 on a subsequent run with \-\-dostep or \-\-start.
+
+### Running [ISCE stack processors](./contrib/stack/README.md)
 
 ### Notes on Digital Elevation Models
 
@@ -875,14 +877,7 @@ Filename: reference\_offset1.xml:
 
 ## User community forums
 
-Sign up to participate in the ISCE user communities at the following website:
+Read helpful information and participate in discussion with
+the user/developer community on GitHub Discussions:
 
-[http://earthdef.caltech.edu/account/register](http://earthdef.caltech.edu/account/register)
-
-
-After you sign up read helpful information and participate in discussion with
-the user/developer community at the following website:
-
-[http://earthdef.caltech.edu/projects/isce_forum/boards](http://earthdef.caltech.edu/projects/isce_forum/boards)
-
-
+https://github.com/isce-framework/isce2/discussions

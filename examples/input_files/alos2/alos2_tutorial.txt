@@ -207,8 +207,8 @@ f*_*: folders containing the frame processing results.
 insar: users should be mostly interested in this folder. For the explanations of the files, please refer
 to the xml files in folder "explanations". You can find the differential interferograms without and with
 ionospheric correction if you have chosen to do ionospheric correction. For example,
-diff_150405-150503_5rlks_28alks.int: interferoram without ionospheric correction
-diff_150405-150503_5rlks_28alks_ori.int: interferogram with ionospheric correction
+diff_150405-150503_5rlks_28alks.int: interferoram with ionospheric correction
+diff_150405-150503_5rlks_28alks_ori.int: original interferogram without ionospheric correction
 
 ion: folder for computing ionospheric phase. subband interferograms are created in folders "lower" and 
 "upper", and final computations are done in "ion_cal".

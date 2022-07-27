@@ -44,7 +44,7 @@ def get_Date(RSAT2folder):
         tree = etree.parse(RSAT2file)
         root = tree.getroot()
         for attributes in root.iter('{http://www.rsi.ca/rs2/prod/xml/schemas}sourceAttributes'):
-            attribute_list = attributes.getchildren()
+            attribute_list = list(attributes)
         for attribute in attribute_list:
             if attribute.tag=='{http://www.rsi.ca/rs2/prod/xml/schemas}rawDataStartTime':
                 date = attribute.text

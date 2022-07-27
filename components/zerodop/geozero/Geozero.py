@@ -233,7 +233,8 @@ class Geocode(Component):
                            self.demCropAccessor,
                            self.geoAccessor,inband,
                            outband,int(complexFlag),
-                           int(self.interp_methods[self.method]))
+                           int(self.interp_methods[self.method]),
+                           int(self.lookSide))
 
         #####Supress cropped DEM output for other bands
         for kk in range(1,nBands):
@@ -247,7 +248,7 @@ class Geocode(Component):
             demCropAcc = 0
             geozero.geozero_Py(demAccessor, inputAccessor, demCropAcc,
                     self.geoAccessor, inband, outband,
-                    int(complexFlag), int(self.interp_methods[self.method]))
+                    int(complexFlag), int(self.interp_methods[self.method]), int(self.lookSide))
 
         combinedlibmodule.freeCOrbit(cOrbit)
         self.getState()
