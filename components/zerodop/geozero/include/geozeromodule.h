@@ -41,7 +41,7 @@ extern "C"
     #include "poly1d.h"
 
     void geozero_f(uint64_t *, uint64_t *, uint64_t *, uint64_t *, 
-        int*, int*, int*, int*);
+        int*, int*, int*, int*, int*);
     PyObject * geozero_C(PyObject *, PyObject *);
     void setEllipsoidMajorSemiAxis_f(double *);
     PyObject * setEllipsoidMajorSemiAxis_C(PyObject *, PyObject *);

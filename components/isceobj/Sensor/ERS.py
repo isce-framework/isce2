@@ -221,7 +221,7 @@ class ERS(Sensor):
             # Sometimes, the ICU on board clock is corrupt, if the time suggested by the on board clock is more than
             # 5 days from the satellite clock time, assume its bogus and use the low-precision scene centre time
             if (math.fabs(deltaSeconds) > 5*86400):
-                        self.logger.warn("ICU on board time appears to be corrupt, resorting to low precision clock")
+                        self.logger.warning("ICU on board time appears to be corrupt, resorting to low precision clock")
                         first_line_utc = centerLineTime - datetime.timedelta(microseconds=pulseInterval*(self.imageFile.length/2.0)*1e6)
             else:
                 satelliteClockTime = datetime.datetime.strptime(self.leaderFile.sceneHeaderRecord.metadata['Satellite clock time'],"%Y%m%d%H%M%S%f")
@@ -568,7 +568,7 @@ class ImageFile(object):
             lineCounter = imageData.metadata['Image format counter']
 
             if (lineCounter == 0):
-                self.logger.warn("Zero line counter at line %s" % (line+1))
+                self.logger.warning("Zero line counter at line %s" % (line+1))
                 lastLineCounter += 1
                 continue
 

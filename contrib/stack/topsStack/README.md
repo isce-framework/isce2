@@ -37,7 +37,7 @@ The following calibration auxliary (AUX_CAL) file is used for **antenna pattern 
 Run the command below to download the AUX_CAL file once and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
 
 ```
-wget https://aux.sentinel1.eo.esa.int/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE/ --no-check-certificate --recursive --level=1 --cut-dirs=4 -nH
+wget https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
 ```
 
 #### 1. Create your project folder somewhere ####
@@ -53,7 +53,7 @@ Download of DEM (need to use wgs84 version) using the ISCE DEM download script.
 
 ```
 mkdir DEM; cd DEM
-dem.py -a stitch -b 18 20 -100 -97 -r -s 1 –c
+dem.py -a stitch -b 18 20 -100 -97 -r -s 1 -c
 rm demLat*.dem demLat*.dem.xml demLat*.dem.vrt
 cd ..
 ```
@@ -165,3 +165,124 @@ stackSentinel.py -s ../SLC/ -d ../../MexicoCity/demLat_N18_N20_Lon_W100_W097.dem
 This workflow is basically similar to the previous one. The difference is that the interferograms are not unwrapped.
 
 #### 5. Execute the commands in run files (run_01*, run_02*, etc) in the "run_files" folder ####
+
+
+
+-----------------------------------
+### Ionospheric Phase Estimation
+
+Ionospheric phase estimation can be performed for each of the workflow introduced above. Generally, we should do ionospheric phase estimation for data acquired at low latitudes on ascending tracks. However, ionospheric phase estimation only works well in areas with high coherence since it requires phase unwrapping. Details about Sentinel-1 ionospheric correction can be found in
+
++ C. Liang, P. Agram, M. Simons, and E. J. Fielding, “Ionospheric correction of InSAR time series analysis of C-band Sentinel-1 TOPS data,” IEEE Transactions on Geoscience and Remote Sensing, vol. 57, no. 9, pp. 6755-6773, Sep. 2019.
+
+Ionospheric phase estimation has more requirements than regular InSAR processing. The most important two requirements include
+
+-	All the acquistions need to be connected in the entire network.
+
+-	The swath starting ranges need to be the same among all acquistions; otherwise a phase offset between adjacent swaths need to be estimated in order to maintain consistency among the swaths, which might not be accurate enough.
+
+#### 1. select the usable acquistions ####
+
+In stack ionospheric phase estimation, acquistions with same swath starting ranges are put in a group. A network is formed within a group. Extra pairs are also processed to connect the different groups so that all acquistions are connected. But we need to estimate a phase offset for these extra pairs, which might not be accurate. Therefore, for a particualr swath starting ranges, if there are only a few acquistions, it's better to just discard them so that we don't have to estimate the phase offsets.
+
+```
+s1_select_ion.py -dir data/slc -sn 33.550217/37.119545 -nr 10
+```
+
+Acquistions to be used need to fully cover the south/north bounds. After running this command, acquistion not to be used will be put in a folder named 'not_used'. It's OK to run this command multiple times.
+
+#### 2. generate configure and run files ####
+
+In stackSentinel.py, two options are for ionospheric phase estimation
+
+-	--param_ion
+-	--num_connections_ion
+
+An example --param_ion file 'ion_param.txt' is provided in the code directory. For example, we want to do ionospheric phase estimation when processing a stack of interferograms
+
+```
+stackSentinel.py -s ../data/slc -d ../data/dem/dem_1_arcsec/demLat_N32_N41_Lon_W113_W107.dem.wgs84 -b '33.550217 37.119545 -111.233932 -107.790451' -a ../data/s1_aux_cal -o ../data/orbit -C geometry -c 2 --param_ion ../code/ion_param.txt --num_connections_ion 3
+```
+
+If ionospheric phase estimation is enabled in stackSentinel.py, it will generate the following run files. Here ***ns*** means number of steps in the original stack processing, which depends on the type of stack (slc, correlation, interferogram, and offset).
+
+-	run_ns+1_subband_and_resamp
+-	run_ns+2_generateIgram_ion
+-	run_ns+3_mergeBurstsIon
+-	run_ns+4_unwrap_ion
+-	run_ns+5_look_ion
+-	run_ns+6_computeIon
+-	run_ns+7_filtIon
+-	run_ns+8_invertIon
+
+Note about **'areas masked out in ionospheric phase estimation'** in ion_param.txt. Seperated islands or areas usually lead to phase unwrapping errors and therefore significantly affect ionospheric phase estimation. It's better to mask them out. Check ion/date1_date2/ion_cal/raw_no_projection.ion for areas to be masked out. However, we don't have this file before processing the data. To quickly get this file, we can process a stack of two acquistions to get this file. NOTE that the reference of this two-acquisition stack should be the same as that of the full stack we want to process.
+
+**run_ns+1_subband_and_resamp**
+
+Two subband burst SLCs are generated for each burst. For secondary acquistions, the subband burst SLCs are also resampled to match reference burst SLCs. If the subband burst SLCs already exists, the program simply skips the burst.
+
+**run_ns+2_generateIgram_ion**
+
+Generate subband burst interferograms.
+
+**run_ns+3_mergeBurstsIon**
+
+Merge subband burst interferograms, and create a unique coherence file used in ionospheric phase estimation. This will be done swath by swath if the two acquistions of the pair has different swath starting ranges.
+
+**run_ns+4_unwrap_ion**
+
+Unwrap merged subband interferograms. This will be done swath by swath if the two acquistions of the pair has different swath starting ranges.
+
+**run_ns+5_look_ion**
+
+Take further looks on the unwrapped interferograms, and create the unique coherence file based on the further number of looks. This will be done swath by swath if the two acquistions of the pair has different swath starting ranges.
+
+**run_ns+6_computeIon**
+
+Compute ionospheric phase. This will be done swath by swath if the two acquistions of the pair has different swath starting ranges, and then the swath ionospheric phase will be merged.
+
+**run_ns+7_filtIon**
+
+Filter ionospheric phase.
+
+**run_ns+8_invertIon**
+
+Estimate ionospheric phase for each date. We highly recommend inspecting all pair ionospheric phases ion/date1_date2/ion_cal/filt.ion, and exclude those with anomalies in this command.
+
+Typical anomalies include dense fringes caused by phase unwrapping errors, and a range ramp as a result of errors in estimating phase offsets for pairs with different swath starting ranges (check pairs_diff_starting_ranges.txt).
+
+#### 3. run command files generated ####
+
+Run the commands sequentially.
+
+#### 4. check results ####
+
+Results from ionospheric phase estimation.
+
+-	reference and coreg_secondarys: now contains also subband burst SLCs
+-	ion: original ionospheric phase estimation results
+-	ion_dates: ionospheric phase for each acquistion
+-	ion/date1_date2/ion_cal/filt.ion: filtered ionospheric phase
+-	ion/date1_date2/ion_cal/raw_no_projection.ion: original ionospheric phase
+-	ion/date1_date2/lower/merged/fine_look.unw: unwrapped lower band interferogram
+-	ion/date1_date2/upper/merged/fine_look.unw: unwrapped upper band interferogram
+
+If ionospheric phase estimation processing is swath by swath because of different swath starting ranges, there will be swath processing directories including
+
+-	ion/date1_date2/ion_cal_IW*
+-	ion/date1_date2/lower/merged_IW*
+-	ion/date1_date2/upper/merged_IW*
+
+After processing, we can plot ionospheric phase estimation results using plotIonPairs.py and plotIonDates.py. For example
+
+```
+plotIonPairs.py -idir ion -odir ion_plot
+plotIonDates.py -idir ion_dates -odir ion_dates_plot
+```
+
+Relationships of the ionospheric phases:
+
+```
+ion_dates/date1.ion - ion_dates/date2.ion = ion/date1_date2/ion_cal/filt.ion
+ion_dates/date1.ion - ion_dates/date2.ion = ionospheric phase in merged/interferograms/date1_date2/filt_fine.unw
+```

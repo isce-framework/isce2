@@ -22,8 +22,14 @@ def createParser():
     parser.add_argument('-m', '--reference', dest='reference', type=str, required=True,
             help='Directory with reference acquisition')
 
+    parser.add_argument('-x', '--reference_suffix', dest='reference_suffix', type=str, default=None,
+            help='reference burst file name suffix')
+
     parser.add_argument('-s', '--secondary', dest='secondary', type=str, required=True,
             help='Directory with secondary acquisition')
+
+    parser.add_argument('-y', '--secondary_suffix', dest='secondary_suffix', type=str, default=None,
+            help='secondary burst file name suffix')
 
     parser.add_argument('-f', '--flatten', dest='flatten', action='store_true', default=False,
             help='Flatten the interferograms with offsets if needed')
@@ -176,6 +182,11 @@ def main(iargs=None):
 
             referencename = reference.image.filename
             secondaryname = secondary.image.filename
+
+            if inps.reference_suffix is not None:
+                referencename = os.path.splitext(referencename)[0] + inps.reference_suffix + os.path.splitext(referencename)[1]
+            if inps.secondary_suffix is not None:
+                secondaryname = os.path.splitext(secondaryname)[0] + inps.secondary_suffix + os.path.splitext(secondaryname)[1]
 
             if inps.overlap:
                 rdict = { 'rangeOff1' : os.path.join(inps.reference, 'overlap', IWstr, 'range_top_%02d_%02d.off'%(ii,ii+1)),

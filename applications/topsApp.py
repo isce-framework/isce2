@@ -519,6 +519,22 @@ ION_AZSHIFT_FLAG = Application.Parameter('ION_azshiftFlag',
     mandatory=False,
     doc='')
 
+#seperated islands or areas usually affect ionosphere estimation and it's better to mask them
+#out. check ion/ion_cal/raw_no_projection.ion for areas to be masked out.
+#The parameter is a 2-D list. Each element in the 2-D list is a four-element list: [firstLine,
+#lastLine, firstColumn, lastColumn], with line/column numbers starting with 1. If one of the
+#four elements is specified as -1, the program will use firstLine/lastLine/firstColumn/
+#lastColumn instead. For exmple, if you want to mask the following two areas out, you can
+#specify a 2-D list like:
+#[[100, 200, 100, 200],[1000, 1200, 500, 600]]
+ION_MASKED_AREAS = Application.Parameter('ION_maskedAreas',
+    public_name = 'areas masked out in ionospheric phase estimation',
+    default = None,
+    type = int,
+    mandatory = False,
+    container = list,
+    doc = 'areas masked out in ionospheric phase estimation')
+
 ION_NUMBER_AZIMUTH_LOOKS = Application.Parameter('ION_numberAzimuthLooks',
     public_name='total number of azimuth looks in the ionosphere processing',
     default=50,
@@ -674,6 +690,7 @@ class TopsInSAR(Application):
                       ION_IONSHIFT_FILTERING_WINSIZE_MAX,
                       ION_IONSHIFT_FILTERING_WINSIZE_MIN,
                       ION_AZSHIFT_FLAG,
+                      ION_MASKED_AREAS,
                       ION_NUMBER_AZIMUTH_LOOKS,
                       ION_NUMBER_RANGE_LOOKS,
                       ION_NUMBER_AZIMUTH_LOOKS0,
@@ -765,7 +782,7 @@ class TopsInSAR(Application):
             #warn if there are any differences in content
             if g_count > 0:
                 print()
-                logger.warn((
+                logger.warning((
                     "Some filenames in insarApp.geocode_list configuration "+
                     "are different from those in InsarProc. Using names given"+
                     " to insarApp."))

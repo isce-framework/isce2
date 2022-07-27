@@ -3,7 +3,7 @@
 import os
 
 Import('envGPUgeo2rdr')
-package = envGPUgeo2rdr['PACKAGE'] 
+package = envGPUgeo2rdr['PACKAGE']
 project = envGPUgeo2rdr['PROJECT']
 install = envGPUgeo2rdr['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
 build = envGPUgeo2rdr['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src'
@@ -11,7 +11,7 @@ build = envGPUgeo2rdr['PRJ_SCONS_BUILD'] + '/' + package + '/' + project + '/src
 if envGPUgeo2rdr['GPU_ACC_ENABLED']:
     envGPUgeo2rdr.AppendUnique(CPPPATH=envGPUgeo2rdr['CUDACPPPATH'])
     envGPUgeo2rdr.AppendUnique(LIBPATH=envGPUgeo2rdr['CUDALIBPATH'])
-    envGPUgeo2rdr.AppendUnique(LIBS=['cuda','cudart'])
+    envGPUgeo2rdr.AppendUnique(LIBS=['cudart'])
 
 
 ###Custom cython builder
@@ -24,7 +24,7 @@ def cythonPseudoBuilder(env,source,bld,inst):
     cppCode = env.Pyx2Cpp(source)
     listFiles = [source+'.cpp', 'Ellipsoid.cpp', 'Geo2rdr.cpp', 'GeoController.cpp', 'LinAlg.cpp', 'Orbit.cpp', 'Poly1d.cpp']
     env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
-    
+
     if (env['GPU_ACC_ENABLED']):
         listFiles.append('GPUgeo.cu')
         lib = env.LoadableModule(target = 'GPUgeo2rdr.abi3.so', source = listFiles, CPPDEFINES = 'GPU_ACC_ENABLED')

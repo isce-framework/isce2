@@ -19,7 +19,7 @@ ResampMethods::ResampMethods() {
 
 void ResampMethods::prepareMethods(int method) {
     if (method == SINC_METHOD) {
-        vector<double> filter((SINC_SUB*SINC_LEN)+1);
+        vector<double> filter(SINC_SUB*SINC_LEN);
         double ssum;
         int intplength, filtercoef;
         Interpolator interp;
@@ -28,16 +28,7 @@ void ResampMethods::prepareMethods(int method) {
 
         interp.sinc_coef(1.,SINC_LEN,SINC_SUB,0.,1,intplength,filtercoef,filter);
 
-        // Normalize filter
-        for (int i=0; i<SINC_SUB; i++) {
-            ssum = 0.;
-            for (int j=0; j<SINC_LEN; j++) {
-                ssum = ssum + filter[i+(j*SINC_SUB)];
-            }
-            for (int j=0; j<SINC_LEN; j++) {
-                filter[i+(j*SINC_SUB)] = filter[i+(j*SINC_SUB)] / ssum;
-            }
-        }
+        // note also the type conversion
         fintp.resize(SINC_SUB*SINC_LEN);
         for (int i=0; i<SINC_LEN; i++) {
             for (int j=0; j<SINC_SUB; j++) {

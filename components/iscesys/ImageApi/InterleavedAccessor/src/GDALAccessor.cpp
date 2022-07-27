@@ -69,21 +69,21 @@ GDALAccessor::openFile (string filename, string accessMode, GDALDataset ** fd)
     if (accessMode == "read" || accessMode == "READ")
     {
         std::cout << "GDAL open (R): " << filename << std::endl;
-	(*fd) = (GDALDataset *) GDALOpenShared (filename.c_str (), GA_ReadOnly);
-	if ((*fd) == NULL)
-	{
-	    cout << "Error. Cannot open the file " << filename << " in "
-		    << accessMode << " mode." << endl;
-	    ERR_MESSAGE
-	    ;
-	}
+        (*fd) = (GDALDataset *) GDALOpenShared (filename.c_str (), GA_ReadOnly);
+        if ((*fd) == NULL)
+        {
+            string errMsg = "Cannot open the file " + filename + " in "
+                            + accessMode + " mode.";
+            throw runtime_error(errMsg);
+            // ERR_MESSAGE;
+        }
     }
     else
     {
-	cout << "Error. Only read mode is available and not " << accessMode
-		<< " mode." << endl;
-	ERR_MESSAGE
-	;
+        string errMsg = "Error. Only read mode is available and not " + accessMode + " mode.";
+        throw runtime_error(errMsg);
+        // ERR_MESSAGE
+        // ;
     }
 
 }

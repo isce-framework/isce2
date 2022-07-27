@@ -63,11 +63,34 @@ class Geogrid(Component):
         ##Create and set parameters
         self.setState()
         
+        ##check parameters
+        self.checkState()
+        
         ##Run
         geogrid.geogrid_Py(self._geogrid)
+        self.get_center_latlon()
+        
+        ##Get parameters
+        self.getState()
 
         ##Clean up
         self.finalize()
+
+    def get_center_latlon(self):
+        '''
+        Get center lat/lon of the image.
+        '''
+        from osgeo import gdal
+        self.epsg = 4326
+        self.determineBbox()
+        if gdal.__version__[0] == '2':
+            self.cen_lat = (self._ylim[0] + self._ylim[1]) / 2
+            self.cen_lon = (self._xlim[0] + self._xlim[1]) / 2
+        else:
+            self.cen_lon = (self._ylim[0] + self._ylim[1]) / 2
+            self.cen_lat = (self._xlim[0] + self._xlim[1]) / 2
+        print("Scene-center lat/lon: " + str(self.cen_lat) + "  " + str(self.cen_lon))
+    
 
     def getProjectionSystem(self):
         '''
@@ -77,10 +100,7 @@ class Geogrid(Component):
             raise Exception('At least the DEM parameter must be set for geogrid')
 
         from osgeo import gdal, osr
-        if self.urlflag == 1:
-            ds = gdal.Open('/vsicurl/%s' %(self.demname))
-        else:
-            ds = gdal.Open(self.demname, gdal.GA_ReadOnly)
+        ds = gdal.Open(self.demname, gdal.GA_ReadOnly)
         srs = osr.SpatialReference()
         srs.ImportFromWkt(ds.GetProjection())
         srs.AutoIdentifyEPSG()
@@ -96,10 +116,7 @@ class Geogrid(Component):
         else:
             raise Exception('Non-standard coordinate system encountered')
         if not epsgstr:  #Empty string->use shell command gdalsrsinfo for last trial
-            if self.urlflag == 1:
-                cmd = 'gdalsrsinfo -o epsg /vsicurl/{0}'.format(self.demname)
-            else:
-                cmd = 'gdalsrsinfo -o epsg {0}'.format(self.demname)
+            cmd = 'gdalsrsinfo -o epsg {0}'.format(self.demname)
             epsgstr = subprocess.check_output(cmd, shell=True)
 #            pdb.set_trace()
             epsgstr = re.findall("EPSG:(\d+)", str(epsgstr))[0]
@@ -219,7 +236,6 @@ class Geogrid(Component):
         
         self.incidenceAngle = np.mean(thetas)
         
-
     def getDEM(self, bbox):
         '''
         Look up database and return values.
@@ -227,6 +243,16 @@ class Geogrid(Component):
         
         return "", "", "", "", ""
 
+    def getState(self):
+        from components.contrib.geo_autoRIFT.geogrid import geogrid
+        
+        self.pOff = geogrid.getXOff_Py(self._geogrid)
+        self.lOff = geogrid.getYOff_Py(self._geogrid)
+        self.pCount = geogrid.getXCount_Py(self._geogrid)
+        self.lCount = geogrid.getYCount_Py(self._geogrid)
+        self.X_res = geogrid.getXPixelSize_Py(self._geogrid)
+        self.Y_res = geogrid.getYPixelSize_Py(self._geogrid)
+    
     def setState(self):
         '''
         Create C object and populate.
@@ -242,10 +268,16 @@ class Geogrid(Component):
         geogrid.setRangeParameters_Py( self._geogrid, self.startingRange, self.rangePixelSize)
         geogrid.setAzimuthParameters_Py( self._geogrid, DTU.seconds_since_midnight(self.sensingStart), self.prf)
         geogrid.setRepeatTime_Py(self._geogrid, self.repeatTime)
+        
+        geogrid.setDtUnity_Py( self._geogrid, self.srs_dt_unity)
+        geogrid.setMaxFactor_Py( self._geogrid, self.srs_max_scale)
+        geogrid.setUpperThreshold_Py( self._geogrid, self.srs_max_search)
+        geogrid.setLowerThreshold_Py(self._geogrid, self.srs_min_search)
 
         geogrid.setEPSG_Py(self._geogrid, self.epsg)
         geogrid.setIncidenceAngle_Py(self._geogrid, self.incidenceAngle)
         geogrid.setChipSizeX0_Py(self._geogrid, self.chipSizeX0)
+        geogrid.setGridSpacingX_Py(self._geogrid, self.gridSpacingX)
         
         geogrid.setXLimits_Py(self._geogrid, self._xlim[0], self._xlim[1])
         geogrid.setYLimits_Py(self._geogrid, self._ylim[0], self._ylim[1])
@@ -280,12 +312,16 @@ class Geogrid(Component):
         geogrid.setRO2VYFilename_Py( self._geogrid, self.winro2vyname)
         geogrid.setLookSide_Py(self._geogrid, self.lookSide)
         geogrid.setNodataOut_Py(self._geogrid, self.nodata_out)
-        if self.urlflag is None:
-            self.urlflag = 0
-        geogrid.setUrlFlag_Py(self._geogrid, self.urlflag)
 
         self._orbit  = self.orbit.exportToC()
         geogrid.setOrbit_Py(self._geogrid, self._orbit)
+
+    def checkState(self):
+        '''
+        Create C object and populate.
+        '''
+        if self.repeatTime < 0:
+            raise Exception('Input image 1 must be older than input image 2')
 
     def finalize(self):
         '''
@@ -316,6 +352,7 @@ class Geogrid(Component):
         self.repeatTime = None
         self.incidenceAngle = None
         self.chipSizeX0 = None
+        self.gridSpacingX = None
 
         ##Input related parameters
         self.demname = None
@@ -330,8 +367,7 @@ class Geogrid(Component):
         self.csmaxxname = None
         self.csmaxyname = None
         self.ssmname = None
-        self.urlflag = None
-        
+
         ##Output related parameters
         self.winlocname = None
         self.winoffname = None
@@ -341,8 +377,12 @@ class Geogrid(Component):
         self.winssmname = None
         self.winro2vxname = None
         self.winro2vyname = None
-
-
+        
+        ##dt-varying search range scale (srs) rountine parameters
+        self.srs_dt_unity = 182
+        self.srs_max_scale = 5
+        self.srs_max_search = 20000
+        self.srs_min_search = 0
 
         ##Coordinate system
         self.epsg = None
@@ -353,3 +393,11 @@ class Geogrid(Component):
         ##Pointer to C 
         self._geogrid = None
         self._orbit = None
+
+        ##parameters for autoRIFT
+        self.pOff = None
+        self.lOff = None
+        self.pCount = None
+        self.lCount = None
+        self.X_res = None
+        self.Y_res = None

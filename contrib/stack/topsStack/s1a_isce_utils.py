@@ -5,11 +5,11 @@ import os
 #from isceobj.Sensor.TOPS.coregSwathSLCProduct import coregSwathSLCProduct
 
 class catalog(object):
-      def __init__(self):
-         pass
+    def __init__(self):
+        pass
 
-      def addItem(self,*args):
-          print(' '.join([str(x) for x in args]))
+    def addItem(self,*args):
+        print(' '.join([str(x) for x in args]))
           
 
 
@@ -29,22 +29,23 @@ def loadProduct(xmlname):
 
 
 def saveProduct( obj, xmlname):
-        '''
-        Save the product to an XML file using Product Manager.
-        '''
-       # import shelve
-       # import os
-       # with shelve.open(os.path.dirname(xmlname) + '/'+ os.path.basename(xmlname)  +'.data') as db:
-       #     db['data'] = obj
+    '''
+    Save the product to an XML file using Product Manager.
+    '''
+    import shelve
+    import os
+    with shelve.open(os.path.dirname(xmlname) + '/'+ os.path.basename(xmlname)  +'.data') as db:
+        db['data'] = obj
 
-        from iscesys.Component.ProductManager import ProductManager as PM
+    from iscesys.Component.ProductManager import ProductManager as PM
 
-        pm = PM()
-        pm.configure()
+    pm = PM()
+    pm.configure()
 
-        pm.dumpProduct(obj, xmlname)
+    pm.dumpProduct(obj, xmlname)
 
-        return None
+    return None
+
 
 def getRelativeShifts(mFrame, sFrame, minBurst, maxBurst, secondaryBurstStart):
     '''
@@ -152,30 +153,31 @@ def adjustValidSampleLine_V2(reference, secondary, minAz=0, maxAz=0, minRng=0, m
 
     if (minAz > 0) and (maxAz > 0):
 
-            reference.firstValidLine = secondary.firstValidLine - int(np.floor(maxAz) - 4)
-            lastValidLine = reference.firstValidLine - 8  + secondary.numValidLines
-            if lastValidLine < reference.numberOfLines:
-               reference.numValidLines = secondary.numValidLines - 8
-            else:
-               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
+        reference.firstValidLine = secondary.firstValidLine - int(np.floor(maxAz) - 4)
+        lastValidLine = reference.firstValidLine - 8  + secondary.numValidLines
+        if lastValidLine < reference.numberOfLines:
+            reference.numValidLines = secondary.numValidLines - 8
+        else:
+            reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     elif (minAz < 0) and  (maxAz < 0):
-            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = reference.firstValidLine + secondary.numValidLines  - 8
-            if lastValidLine < reference.numberOfLines:
-               reference.numValidLines = secondary.numValidLines - 8
-            else:
-               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
+        reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+        lastValidLine = reference.firstValidLine + secondary.numValidLines  - 8
+        if lastValidLine < reference.numberOfLines:
+            reference.numValidLines = secondary.numValidLines - 8
+        else:
+            reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     elif (minAz < 0) and (maxAz > 0):
-            reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
-            lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
-            if lastValidLine < reference.numberOfLines:
-               reference.numValidLines = secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
-            else:
-               reference.numValidLines = reference.numberOfLines - reference.firstValidLine
+        reference.firstValidLine = secondary.firstValidLine - int(np.floor(minAz) - 4)
+        lastValidLine = reference.firstValidLine + secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+        if lastValidLine < reference.numberOfLines:
+            reference.numValidLines = secondary.numValidLines + int(np.floor(minAz) - 8) - int(np.ceil(maxAz))
+        else:
+            reference.numValidLines = reference.numberOfLines - reference.firstValidLine
 
     return reference
+
 
 def adjustCommonValidRegion(reference,secondary):
     # valid lines between reference and secondary
@@ -264,13 +266,14 @@ def asBaseClass(inobj):
     else:
         raise Exception('Cannot be converted to TOPSSwathSLCProduct')
 
+
 def getSwathList(indir):
 
     swathList = []
     for x in [1,2,3]:
-       SW = os.path.join(indir,'IW{0}'.format(x))
-       if os.path.exists(SW):
-          swathList.append(x)
+        SW = os.path.join(indir,'IW{0}'.format(x))
+        if os.path.exists(SW):
+            swathList.append(x)
 
     return swathList
 

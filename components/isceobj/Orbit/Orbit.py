@@ -1003,7 +1003,6 @@ class Orbit(Component):
         Takes a lat, lon, height triplet and returns azimuth time and range.
         Assumes zero doppler for now.
         '''
-
         from isceobj.Planet.Planet import Planet
         from isceobj.Util.Poly2D import Poly2D
         if doppler is None:
@@ -1021,6 +1020,8 @@ class Orbit(Component):
         delta = (self.maxTime - self.minTime).total_seconds() * 0.5
         tguess = self.minTime + datetime.timedelta(seconds = delta)
         outOfBounds = False
+        # Start the previous guess tracking with dummy value
+        t_prev_guess = tguess + datetime.timedelta(seconds=10)
         for ii in range(51):
             try:
                 sv = self.interpolateOrbit(tguess, method='hermite')
@@ -1045,10 +1046,13 @@ class Orbit(Component):
             fnprime = c1 + c2 * dopfact
 
             tguess = tguess - datetime.timedelta(seconds = fn/fnprime)
+            if abs(tguess - t_prev_guess).total_seconds() < 5e-9:
+                break
+            else:
+                t_prev_guess = tguess
 
         if outOfBounds:
             raise Exception('Interpolation time out of bounds')
-
 
         return tguess, rng
 

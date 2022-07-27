@@ -46,15 +46,7 @@ void geoGrid::geogrid()
     double deg2rad = M_PI/180.0;
 
     //For now print inputs that were obtained
-    
-    if (urlflag == 1){
-        std::cout << "\nReading input images into memory directly from URL's\n";
-    }
-    else
-    {
-        std::cout << "\nReading input images locally from files\n";
-    }
-    
+
     std::cout << "\nRadar parameters: \n";
     std::cout << "Range: " << startingRange << "  " << dr << "\n";
     std::cout << "Azimuth: " << sensingStart << "  " << prf << "\n";
@@ -64,6 +56,7 @@ void geoGrid::geogrid()
     std::cout << "\nMap inputs: \n";
     std::cout << "EPSG: " << epsgcode << "\n";
     std::cout << "Smallest Allowable Chip Size in m: " << chipSizeX0 << "\n";
+    std::cout << "Grid spacing in m: " << gridSpacingX << "\n";
     std::cout << "Repeat Time: " << dt << "\n";
     std::cout << "XLimits: " << xmin << "  " << xmax << "\n";
     std::cout << "YLimits: " << ymin << "  " << ymax << "\n";
@@ -152,23 +145,7 @@ void geoGrid::geogrid()
     GDALDataset* ssmDS = NULL;
 
     double geoTrans[6];
-    
-    std::string url ("/vsicurl/");
-    if (urlflag == 1)
-    {
-        demname = url + demname;
-        dhdxname = url + dhdxname;
-        dhdyname = url + dhdyname;
-        vxname = url + vxname;
-        vyname = url + vyname;
-        srxname = url + srxname;
-        sryname = url + sryname;
-        csminxname = url + csminxname;
-        csminyname = url + csminyname;
-        csmaxxname = url + csmaxxname;
-        csmaxyname = url + csmaxyname;
-        ssmname = url + ssmname;
-    }
+
     demDS = reinterpret_cast<GDALDataset *>(GDALOpenShared(demname.c_str(), GA_ReadOnly));
     if (dhdxname != "")
     {
@@ -308,11 +285,16 @@ void geoGrid::geogrid()
 
 
     //Get offsets and size to read from DEM
-    int lOff = std::max( std::floor((ymax - geoTrans[3])/geoTrans[5]), 0.);
-    int lCount = std::min( std::ceil((ymin - geoTrans[3])/geoTrans[5]), demYSize-1.) - lOff;
-
-    int pOff = std::max( std::floor((xmin - geoTrans[0])/geoTrans[1]), 0.);
-    int pCount = std::min( std::ceil((xmax - geoTrans[0])/geoTrans[1]), demXSize-1.) - pOff;
+//    int lOff = std::max( std::floor((ymax - geoTrans[3])/geoTrans[5]), 0.);
+//    int lCount = std::min( std::ceil((ymin - geoTrans[3])/geoTrans[5]), demYSize-1.) - lOff;
+//
+//    int pOff = std::max( std::floor((xmin - geoTrans[0])/geoTrans[1]), 0.);
+//    int pCount = std::min( std::ceil((xmax - geoTrans[0])/geoTrans[1]), demXSize-1.) - pOff;
+    lOff = std::max( std::floor((ymax - geoTrans[3])/geoTrans[5]), 0.);
+    lCount = std::min( std::ceil((ymin - geoTrans[3])/geoTrans[5]), demYSize-1.) - lOff;
+    
+    pOff = std::max( std::floor((xmin - geoTrans[0])/geoTrans[1]), 0.);
+    pCount = std::min( std::ceil((xmax - geoTrans[0])/geoTrans[1]), demXSize-1.) - pOff;
 
 
     std::cout << "Xlimits : " << geoTrans[0] + pOff * geoTrans[1] <<  "  " 
@@ -397,11 +379,13 @@ void geoGrid::geogrid()
     
     double raster1a[pCount];
     double raster1b[pCount];
-//    double raster1c[pCount];
+    double raster1c[pCount];
     
     double raster2a[pCount];
     double raster2b[pCount];
-//    double raster2c[pCount];
+    double raster2c[pCount];
+    
+
     
     GDALRasterBand *poBand1 = NULL;
     GDALRasterBand *poBand2 = NULL;
@@ -418,6 +402,9 @@ void geoGrid::geogrid()
     GDALRasterBand *poBand1RO2VY = NULL;
     GDALRasterBand *poBand2RO2VX = NULL;
     GDALRasterBand *poBand2RO2VY = NULL;
+    GDALRasterBand *poBand3RO2VX = NULL;
+    GDALRasterBand *poBand3RO2VY = NULL;
+    
     
     GDALDataset *poDstDS = NULL;
     GDALDataset *poDstDSOff = NULL;
@@ -427,6 +414,7 @@ void geoGrid::geogrid()
     GDALDataset *poDstDSMsk = NULL;
     GDALDataset *poDstDSRO2VX = NULL;
     GDALDataset *poDstDSRO2VY = NULL;
+
     
 
     double nodata;
@@ -620,7 +608,7 @@ void geoGrid::geogrid()
         
         str = ro2vx_name;
         const char * pszDstFilenameRO2VX = str.c_str();
-        poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 2, GDT_Float64,
+        poDstDSRO2VX = poDriverRO2VX->Create( pszDstFilenameRO2VX, pCount, lCount, 3, GDT_Float64,
                                          papszOptions );
         
         poDstDSRO2VX->SetGeoTransform( adfGeoTransform );
@@ -632,10 +620,10 @@ void geoGrid::geogrid()
     //    GDALRasterBand *poBand3Los;
         poBand1RO2VX = poDstDSRO2VX->GetRasterBand(1);
         poBand2RO2VX = poDstDSRO2VX->GetRasterBand(2);
-    //    poBand3Los = poDstDSLos->GetRasterBand(3);
+        poBand3RO2VX = poDstDSRO2VX->GetRasterBand(3);
         poBand1RO2VX->SetNoDataValue(nodata_out);
         poBand2RO2VX->SetNoDataValue(nodata_out);
-    //    poBand3Los->SetNoDataValue(nodata_out);
+        poBand3RO2VX->SetNoDataValue(nodata_out);
         
 
         GDALDriver *poDriverRO2VY;
@@ -646,7 +634,7 @@ void geoGrid::geogrid()
         
         str = ro2vy_name;
         const char * pszDstFilenameRO2VY = str.c_str();
-        poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 2, GDT_Float64,
+        poDstDSRO2VY = poDriverRO2VY->Create( pszDstFilenameRO2VY, pCount, lCount, 3, GDT_Float64,
                                          papszOptions );
         
         poDstDSRO2VY->SetGeoTransform( adfGeoTransform );
@@ -658,10 +646,11 @@ void geoGrid::geogrid()
     //    GDALRasterBand *poBand3Alt;
         poBand1RO2VY = poDstDSRO2VY->GetRasterBand(1);
         poBand2RO2VY = poDstDSRO2VY->GetRasterBand(2);
-    //    poBand3Alt = poDstDSAlt->GetRasterBand(3);
+        poBand3RO2VY = poDstDSRO2VY->GetRasterBand(3);
         poBand1RO2VY->SetNoDataValue(nodata_out);
         poBand2RO2VY->SetNoDataValue(nodata_out);
-    //    poBand3Alt->SetNoDataValue(nodata_out);
+        poBand3RO2VY->SetNoDataValue(nodata_out);
+        
         
     }
     
@@ -672,7 +661,7 @@ void geoGrid::geogrid()
     
     
     // ground range and azimuth pixel size
-    double grd_res, azm_res;
+//    double grd_res, azm_res;
     
 //    double incang = 38.0*deg2rad;
     double incang = incidenceAngle;
@@ -945,11 +934,15 @@ void geoGrid::geogrid()
             {
                 schrng1[0] = srxLine[jj];
                 schrng1[1] = sryLine[jj];
-                schrng2[0] = -srxLine[jj];
-                schrng2[1] = sryLine[jj];
+            
+                schrng1[0] *= std::max(max_factor*((dt_unity-1)*max_factor+(max_factor-1)-(max_factor-1)*dt/24.0/3600.0)/((dt_unity-1)*max_factor),1.0);
+                schrng1[0] = std::min(std::max(schrng1[0],lower_thld),upper_thld);
+                schrng1[1] *= std::max(max_factor*((dt_unity-1)*max_factor+(max_factor-1)-(max_factor-1)*dt/24.0/3600.0)/((dt_unity-1)*max_factor),1.0);
+                schrng1[1] = std::min(std::max(schrng1[1],lower_thld),upper_thld);
+            
+                schrng2[0] = -schrng1[0];
+                schrng2[1] = schrng1[1];
             }
-            
-            
             
 
             //Convert from DEM coordinates to LLH inplace
@@ -1039,8 +1032,8 @@ void geoGrid::geogrid()
 //            {
 //                std::cout << "\n" << lOff+ii << " " << pOff+jj << " " << demLine[jj] << "\n";
 //            }
-            rgind = std::round((rngpix - startingRange) / dr) + 1.;
-            azind = std::round((tline - sensingStart) * prf) + 1.;
+            rgind = std::round((rngpix - startingRange) / dr) + 0.;
+            azind = std::round((tline - sensingStart) * prf) + 0.;
             
             
             //*********************Slant-range vector
@@ -1212,7 +1205,7 @@ void geoGrid::geogrid()
             }
             
             
-            if ((rgind > nPixels)|(rgind < 1)|(azind > nLines)|(azind < 1))
+            if ((rgind > nPixels-1)|(rgind < 1-1)|(azind > nLines-1)|(azind < 1-1))
             {
                 raster1[jj] = nodata_out;
                 raster2[jj] = nodata_out;
@@ -1229,10 +1222,10 @@ void geoGrid::geogrid()
                 
                 raster1a[jj] = nodata_out;
                 raster1b[jj] = nodata_out;
-//                raster1c[jj] = nodata_out;
+                raster1c[jj] = nodata_out;
                 raster2a[jj] = nodata_out;
                 raster2b[jj] = nodata_out;
-//                raster2c[jj] = nodata_out;
+                raster2c[jj] = nodata_out;
                 
             }
             else
@@ -1277,9 +1270,17 @@ void geoGrid::geogrid()
                         raster2b[jj] = nodata_out;
                     }
                     
+                    for(int pp=0; pp<3; pp++)
+                    {
+                        targXYZ[pp] -= xyz[pp];
+                    }
+                    raster1c[jj] = dr/dt*365.0*24.0*3600.0*1;
+                    raster2c[jj] = norm_C(targXYZ)/dt*365.0*24.0*3600.0*1;
+                    
+                    
                     if (srxname != "")
                     {
-                        if ((vxname != "")&(vel[0] == nodata))
+                        if ((schrng1[0] == nodata)|(schrng1[0] == 0))
                         {
                             sr_raster11[jj] = 0;
                             sr_raster22[jj] = 0;
@@ -1313,31 +1314,49 @@ void geoGrid::geogrid()
                 
                 if (csminxname != "")
                 {
-                    csmin_raster11[jj] = csminxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
-                    csmin_raster22[jj] = csminyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                    if (csminxLine[jj] == nodata)
+                    {
+                        csmin_raster11[jj] = nodata_out;
+                        csmin_raster22[jj] = nodata_out;
+                    }
+                    else
+                    {
+                        csmin_raster11[jj] = csminxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
+                        csmin_raster22[jj] = csminyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                    }
                 }
                 
                 
                 if (csmaxxname != "")
                 {
-                    csmax_raster11[jj] = csmaxxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
-                    csmax_raster22[jj] = csmaxyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                    if (csmaxxLine[jj] == nodata)
+                    {
+                        csmax_raster11[jj] = nodata_out;
+                        csmax_raster22[jj] = nodata_out;
+                    }
+                    else
+                    {
+                        csmax_raster11[jj] = csmaxxLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_grd;
+                        csmax_raster22[jj] = csmaxyLine[jj] / ChipSizeX0 * ChipSizeX0_PIX_azm;
+                    }
                 }
                 
                 
                 if (ssmname != "")
                 {
-                    ssm_raster[jj] = ssmLine[jj];
+                    if (ssmLine[jj] == nodata)
+                    {
+                        ssm_raster[jj] = nodata_out;
+                    }
+                    else
+                    {
+                        ssm_raster[jj] = ssmLine[jj];
+                    }
                 }
                 
                 
                 
-//                raster1a[jj] = los[0]*dt/dr/365.0/24.0/3600.0;
-//                raster1b[jj] = los[1]*dt/dr/365.0/24.0/3600.0;
-//                raster1c[jj] = los[2]*dt/dr/365.0/24.0/3600.0;
-//                raster2a[jj] = temp[0]*dt/norm_C(alt)/365.0/24.0/3600.0;
-//                raster2b[jj] = temp[1]*dt/norm_C(alt)/365.0/24.0/3600.0;
-//                raster2c[jj] = temp[2]*dt/norm_C(alt)/365.0/24.0/3600.0;
+
             }
             
             
@@ -1398,14 +1417,15 @@ void geoGrid::geogrid()
                                  raster1a, pCount, 1, GDT_Float64, 0, 0 );
             poBand2RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster1b, pCount, 1, GDT_Float64, 0, 0 );
-    //        poBand3Los->RasterIO( GF_Write, 0, ii, pCount, 1,
-    //                             raster1c, pCount, 1, GDT_Float64, 0, 0 );
+            poBand3RO2VX->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster1c, pCount, 1, GDT_Float64, 0, 0 );
             poBand1RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster2a, pCount, 1, GDT_Float64, 0, 0 );
             poBand2RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
                                  raster2b, pCount, 1, GDT_Float64, 0, 0 );
-    //        poBand3Alt->RasterIO( GF_Write, 0, ii, pCount, 1,
-    //                             raster2c, pCount, 1, GDT_Float64, 0, 0 );
+            poBand3RO2VY->RasterIO( GF_Write, 0, ii, pCount, 1,
+                                 raster2c, pCount, 1, GDT_Float64, 0, 0 );
+            
         }
         
         
@@ -1451,6 +1471,7 @@ void geoGrid::geogrid()
         
         /* Once we're done, close properly the dataset */
         GDALClose( (GDALDatasetH) poDstDSRO2VY );
+        
     }
     
     

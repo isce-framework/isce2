@@ -95,7 +95,7 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     cd dem_3_arcsec
     dem.py -a stitch -b 29 37 125 133 -k -s 3 -c -f -u http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11
     fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f
-    rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
+    rm *.hgt *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
     cd ../
 
     #1 arcsec for creating differential interferogram
@@ -103,7 +103,7 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
     cd dem_1_arcsec
     dem.py -a stitch -b 29 37 125 133 -k -s 1 -c -f -u http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11
     fixImageXml.py -i demLat_*_*_Lon_*_*.dem.wgs84 -f
-    rm *.hgt* *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
+    rm *.hgt *.log demLat_*_*_Lon_*_*.dem demLat_*_*_Lon_*_*.dem.vrt demLat_*_*_Lon_*_*.dem.xml
     cd ../
 
     #water body
