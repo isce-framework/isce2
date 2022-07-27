@@ -335,8 +335,7 @@ class run(object):
         configObj.topo('[Function-2]')
         configObj.finalize()
 
-        line_cnt = 1
-        configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
     def unpackSecondarysSLC(self,  stackReferenceDate, secondaryList, safe_dict):
@@ -356,7 +355,8 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def averageBaseline(self, stackReferenceDate, secondaryList):
@@ -373,7 +373,8 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def gridBaseline(self, stackReferenceDate, secondaryList):
@@ -402,8 +403,7 @@ class run(object):
         configObj.computeGridBaseline('[Function-1]')
         configObj.finalize()
 
-        line_cnt = 1
-        configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
 
@@ -438,7 +438,8 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def resample_with_carrier(self, secondaryList, fullBurst='False'):
@@ -468,7 +469,8 @@ class run(object):
             configObj.finalize()
 
             line_cnt += 1
-            configObj.write_wrapper_config2run_file(configName, line_cnt, secondary == secondaryList[-1], self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
@@ -639,8 +641,8 @@ class run(object):
         configObj.mergeBurst('[Function-1]')
         configObj.finalize()
 
-        line_cnt = 1
-        configObj.write_wrapper_config2run_file(configName, line_cnt)
+        line_cnt = 1;
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
         geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
