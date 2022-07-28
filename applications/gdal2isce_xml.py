@@ -105,8 +105,12 @@ def gdal2isce_xml(fname):
         img.scheme = 'BSQ'
     else:
         print('Unrecognized interleaving scheme, {}'.format(sch))
-        print('Assuming default, BIP')
-        img.scheme = 'BIP'
+        if bands < 2:
+            print('Assuming default, BIP')
+            img.scheme = 'BIP'
+        else:
+            print('Assuming default, BSQ')
+            img.scheme = 'BSQ'
 
     img.firstLongitude = transform[0]
     img.firstLatitude = transform[3] 
