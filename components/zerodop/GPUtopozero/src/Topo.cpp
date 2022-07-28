@@ -23,6 +23,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <cassert>
 #include <fstream>
 #include <future>
 #include <omp.h>
@@ -78,7 +79,7 @@ void *writeToFile(void *inputData) {
     data.nLines = ((struct writeData *)inputData)->nLines;
     data.width = ((struct writeData *)inputData)->width;
     data.firstWrite = ((struct writeData *)inputData)->firstWrite;
-    
+
     if (!data.firstWrite) {
         for (int i=0; i<data.nLines; i++) {
             size_t offset = i * size_t(data.width);
@@ -170,7 +171,7 @@ void Topo::topo() {
         exit(1);
     }
     tzMethods.prepareMethods(dem_method);
-    
+
     // Set up Ellipsoid object
     elp.a = major;
     elp.e2 = eccentricitySquared;
@@ -252,12 +253,12 @@ void Topo::topo() {
         peg.hdg = peghdg;
         ptm.radar_to_xyz(elp,peg);
         rcurv = ptm.radcur;
-        
+
         for (int ind=0; ind<2; ind++) {
             pixel = ind * (width - 1);
             rng = rho[pixel];
             dopfact = (0.5 * wvl * (dopline[pixel] / vmag)) * rng;
-           
+
             for (int iter=0; iter<2; iter++) {
                 // SWOT-specific near range check
                 // If slant range vector doesn't hit ground, pick nadir point
@@ -377,7 +378,7 @@ void Topo::topo() {
     if (RUN_GPU_TOPO) {
         double gpu_inputs_d[14];
         int gpu_inputs_i[7];
-    
+
         gpu_inputs_d[0] = t0;
         gpu_inputs_d[1] = prf;
         gpu_inputs_d[2] = elp.a;
@@ -409,7 +410,7 @@ void Topo::topo() {
                  gpu_dem[(i*udemlength)+j] = dem[i][j];
             }
         }
-        
+
         int gpu_orbNvec = orb.nVectors;
         double *gpu_orbSvs = new double[7*gpu_orbNvec];
         for (int i=0; i<gpu_orbNvec; i++) {
@@ -432,7 +433,7 @@ void Topo::topo() {
         bool incFlag = bool(incAccessor > 0);
         bool losFlag = bool(losAccessor > 0);
         //std::future<void> result = std::async(std::launch::async, &Topo::writeToFile, this, (void **)accObjs, outputArrays, incFlag, losFlag, 0, width, true);
-        
+
         // Create pthread data and initialize dummy thread
         pthread_t writeThread;
         pthread_attr_t attr;
@@ -455,26 +456,51 @@ void Topo::topo() {
         pthread_create(&writeThread, &attr, writeToFile, (void*)&wd);
 
         // Calculate number of and size of blocks
-        size_t num_GPU_bytes = getDeviceMem();
-        long totalPixels = (long)length * width;
-        long pixPerImg = (((num_GPU_bytes / 8) / 9) / 1e7) * 1e7; // Round down to the nearest 10M pixels
-        long linesPerImg = pixPerImg / width;
-        pixPerImg = linesPerImg * width;
-        int nBlocks = totalPixels / pixPerImg;
 
-        //original values: 1.5e8 is too large for each of GPU on kamb.
-        //here I change it to 1.0e8. 16-MAY-2018, Cunren Liang
-        while (pixPerImg > 1.0e8) {
-            linesPerImg -= 1;
-            pixPerImg -= width;
-            nBlocks = totalPixels / pixPerImg;
-        }
-        long remPix = totalPixels - (pixPerImg * nBlocks);
-        long remLines = remPix / width;
+        // free GPU memory available
+        size_t num_GPU_bytes = getDeviceFreeMem();
+        // use 100Mb as a rounding unit , may be adjusted
+        size_t memoryRoundingUnit = 1024ULL * 1024ULL * 100;
+        // memory to be used for each pixel in bytes, with 9 double elements per pixel
+        size_t pixelBytes = sizeof(double) * 9;
+        // memory overhead for other shared parameters, in terms of memoryRoundUnit, or 200M
+        size_t memoryOverhead = 2;
+
+        // adjust the available free memory by rounding down
+        num_GPU_bytes = (num_GPU_bytes/memoryRoundingUnit - memoryOverhead) * memoryRoundingUnit;
+
+        // calculate the max pixels allowed in a batch (block)
+        size_t pixPerImg = num_GPU_bytes / pixelBytes;
+        assert(pixPerImg > 0);
+
+        // ! To best parallelize the computation, use the max available gpu memory is the best option
+        // ! the following adjustment is not needed
+        // set a upper limit on the size of the block
+        // preferably offered as an input parameter
+        // 2^24 is about 1.2G Memory
+        // size_t maxPixPerImg = 1 << 24;
+        // pixPerImg = std::min(pixPerImg, maxPixPerImg);
+
+        // the max lines in a batch, and will be used for each run
+        int linesPerImg = pixPerImg / width;
+        assert(linesPerImg >0);
+        // now reassign the value for pixels in a batch
+        pixPerImg = linesPerImg * width;
+
+        // total number of pixels in SLC
+        size_t totalPixels = (size_t)length * width;
+
+        // total of blocks needed to process the whole image
+        int nBlocks = length / linesPerImg;
+
+        // check whether there are remnant lines
+        int remLines = length - nBlocks*linesPerImg;
+        size_t remPix = remLines * width;
+
         printf("NOTE: GPU will process image in %d blocks of %d lines", nBlocks, linesPerImg);
         if (remPix > 0) printf(" (with %d lines in a final partial block)", remLines);
         printf("\n");
-        
+
         double *gpu_rho = new double[linesPerImg * width];
         double *gpu_dopline = new double[linesPerImg * width];
         size_t nb_pixels = pixPerImg * sizeof(double);
@@ -490,7 +516,7 @@ void Topo::topo() {
                 dopAccObj->getLineSequential((char *)raw_line);
                 for (int k=0; k<width; k++) gpu_dopline[(j*width)+k] = raw_line[k];
             }
-             
+
             outputArrays[0] = (double *)malloc(nb_pixels); // h_lat
             outputArrays[1] = (double *)malloc(nb_pixels); // h_lon
             outputArrays[2] = (double *)malloc(nb_pixels); // h_z
@@ -565,7 +591,7 @@ void Topo::topo() {
 
         printf("\n  ------------------ EXITING GPU TOPO ------------------\n\n");
         printf("Finished!\n");
-        
+
         delete[] raw_line;
         delete[] gpu_dem;
         delete[] gpu_rho;
@@ -579,7 +605,7 @@ void Topo::topo() {
             // Step 1: Get satellite position
             // Get time
             tline = t0 + (Nazlooks * (line / prf));
-            
+
             // Get state vector
             stat = orb.interpolateOrbit(tline,xyzsat,velsat,orbit_method);
             if (stat != 0) {
@@ -657,15 +683,15 @@ void Topo::topo() {
                 for (pixel=0; pixel<width; pixel++) {
                     rng = rho[pixel];
                     dopfact = (0.5 * wvl * (dopline[pixel] / vmag)) * rng;
-                   
+
                     // If pixel hasn't converged
                     if (converge[pixel] == 0) {
-                        
+
                         // Use previous llh in degrees and meters
                         llh_prev[0] = lat[pixel] / (180. / M_PI);
                         llh_prev[1] = lon[pixel] / (180. / M_PI);
                         llh_prev[2] = z[pixel];
-                        
+
                         // Solve for new position at height zsch
                         aa = height + rcurv;
                         bb = rcurv + zsch[pixel];
@@ -680,12 +706,12 @@ void Topo::topo() {
                         gamm = costheta * rng;
                         alpha = (dopfact - (gamm * linalg.dot(nhat,vhat))) / linalg.dot(vhat,that);
                         beta = -ilrl * sqrt((rng * rng * sintheta * sintheta) - (alpha * alpha));
-                        
+
                         // xyz position of target
                         for (int idx=0; idx<3; idx++) delta[idx] = (gamm * nhat[idx]) + (alpha * that[idx]) + (beta * chat[idx]);
                         for (int idx=0; idx<3; idx++) xyz[idx] = xyzsat[idx] + delta[idx];
                         elp.latlon(xyz,llh,XYZ_2_LLH);
-                        
+
                         // Convert lat, lon, hgt to xyz coordinates
                         lat[pixel] = llh[0] * (180. / M_PI);
                         lon[pixel] = llh[1] * (180. / M_PI);
@@ -701,7 +727,7 @@ void Topo::topo() {
                         fraclon = demlon - idemlon;
                         z[pixel] = tzMethods.interpolate(dem,idemlon,idemlat,fraclon,fraclat,udemwidth,udemlength,dem_method);
                         if (z[pixel] < -500.0) z[pixel] = -500.0;
-                        
+
                         // Given llh, where h = z(pixel, line) in WGS84, get the SCH height
                         llh[0] = lat[pixel] / (180. / M_PI);
                         llh[1] = lon[pixel] / (180. / M_PI);
@@ -719,7 +745,7 @@ void Topo::topo() {
                         } else if (iter > numiter) {
                             elp.latlon(xyz_prev,llh_prev,LLH_2_XYZ);
                             for (int idx=0; idx<3; idx++) xyz[idx] = 0.5 * (xyz_prev[idx] + xyz[idx]);
-                            
+
                             // Repopulate lat, lon, z
                             elp.latlon(xyz,llh,XYZ_2_LLH);
                             lat[pixel] = llh[0] * (180. / M_PI);
@@ -727,7 +753,7 @@ void Topo::topo() {
                             z[pixel] = llh[2];
                             ptm.convert_sch_to_xyz(sch,xyz,XYZ_2_SCH);
                             zsch[pixel] = sch[2];
-                            
+
                             // Absolute distance
                             distance[pixel] = sqrt(pow((xyz[0]-xyzsat[0]),2)+pow((xyz[1]-xyzsat[1]),2) + pow((xyz[2]-xyzsat[2]),2)) - rng;
                         }
@@ -754,32 +780,32 @@ void Topo::topo() {
                 gamm = costheta * rng;
                 alpha = (dopfact - (gamm * linalg.dot(nhat,vhat))) / linalg.dot(vhat,that);
                 beta = -ilrl * sqrt((rng * rng * sintheta * sintheta) - (alpha * alpha));
-                
+
                 // xyz position of target
                 for (int idx=0; idx<3; idx++) delta[idx] = (gamm * nhat[idx]) + (alpha * that[idx]) + (beta * chat[idx]);
                 for (int idx=0; idx<3; idx++) xyz[idx] = xyzsat[idx] + delta[idx];
                 elp.latlon(xyz,llh,XYZ_2_LLH);
-                
+
                 // Copy into output arrays
                 lat[pixel] = llh[0] * (180. / M_PI);
                 lon[pixel] = llh[1] * (180. / M_PI);
                 z[pixel] = llh[2];
                 distance[pixel] = sqrt(pow((xyz[0]-xyzsat[0]),2)+pow((xyz[1]-xyzsat[1]),2) + pow((xyz[2]-xyzsat[2]),2)) - rng;
-                
+
                 // Computation in ENU coordinates around target
                 linalg.enubasis(llh[0],llh[1],enumat);
                 linalg.tranmat(enumat,xyz2enu);
                 linalg.matvec(xyz2enu,delta,enu);
                 cosalpha = abs(enu[2]) / linalg.norm(enu);
-                
+
                 // LOS vectors
                 losang[(2*pixel)] = acos(cosalpha) * (180. / M_PI);
                 losang[((2*pixel)+1)] = (atan2(-enu[1],-enu[0]) - (0.5*M_PI)) * (180. / M_PI);
                 incang[(2*pixel)] = acos(costheta) * (180. / M_PI);
-                
+
                 // ctrack gets stored in zsch
                 zsch[pixel] = rng * sintheta;
-                
+
                 // Get local incidence angle
                 demlat = ((lat[pixel] - ufirstlat) / deltalat) + 1;
                 demlon = ((lon[pixel] - ufirstlon) / deltalon) + 1;
@@ -792,12 +818,12 @@ void Topo::topo() {
                 fraclat = demlat - idemlat;
                 fraclon = demlon - idemlon;
                 gamm = lat[pixel] / (180. / M_PI);
-                
+
                 // Slopex
                 aa = tzMethods.interpolate(dem,(idemlon-1),idemlat,fraclon,fraclat,udemwidth,udemlength,dem_method);
                 bb = tzMethods.interpolate(dem,(idemlon+1),idemlat,fraclon,fraclat,udemwidth,udemlength,dem_method);
                 alpha = ((bb - aa) * (180. / M_PI)) / (2.0 * elp.reast(gamm) * deltalon);
-                
+
                 // Slopey
                 aa = tzMethods.interpolate(dem,idemlon,(idemlat-1),fraclon,fraclat,udemwidth,udemlength,dem_method);
                 bb = tzMethods.interpolate(dem,idemlon,(idemlat+1),fraclon,fraclat,udemwidth,udemlength,dem_method);
@@ -822,7 +848,7 @@ void Topo::topo() {
             max_lat = max(mxlat, max_lat);
             min_lon = min(mnlon, min_lon);
             max_lon = max(mxlon, max_lon);
-            
+
             latAccObj->setLineSequential((char *)&lat[0]);
             lonAccObj->setLineSequential((char *)&lon[0]);
             heightAccObj->setLineSequential((char *)&z[0]);
@@ -840,7 +866,7 @@ void Topo::topo() {
                 ctrackmin = mnzsch - demmax;
                 ctrackmax = mxzsch + demmax;
                 dctrack = (ctrackmax - ctrackmin) / (owidth - 1.0);
-                
+
                 // Sort lat/lon by ctrack
                 linalg.insertionSort(zsch,width);
                 linalg.insertionSort(lat,width);
@@ -853,7 +879,7 @@ void Topo::topo() {
                     aa = ctrackmin + (pixel * dctrack);
                     ctrack[pixel] = aa;
                     i_type = linalg.binarySearch(zsch,0,(width-1),aa);
-                    
+
                     // Simple bi-linear interpolation
                     fraclat = (aa - zsch[i_type]) / (zsch[(i_type+1)] - zsch[i_type]);
                     demlat = lat[i_type] + (fraclat * (lat[(i_type+1)] - lat[i_type]));
