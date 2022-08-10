@@ -2,19 +2,19 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Copyright 2013 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # United States Government Sponsorship acknowledged. This software is subject to
 # U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
 # (No [Export] License Required except when exporting to an embargoed country,
@@ -66,6 +66,7 @@ releases = (Tag('1.0.0',   '739', '20120814'),
             Tag('2.5.1', '', '20210305'),
             Tag('2.5.2', '', '20210528'),
             Tag('2.5.3', '', '20210823'),
+            Tag('2.6.0', '', '20220214'),
 )
 
 
