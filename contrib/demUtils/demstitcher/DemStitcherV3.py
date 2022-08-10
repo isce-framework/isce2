@@ -44,12 +44,12 @@ from iscesys.Component.Component import Component
 from contrib.demUtils.DemStitcher import DemStitcher as DS
 #Parameters definitions
 URL1 = Component.Parameter('_url1',
-    public_name = 'URL1',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11',
+    public_name = 'URL1',default = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11',
     type = str,
     mandatory = False,
     doc = "Url for the high resolution DEM. Used for SRTM version3")
 URL3 = Component.Parameter('_url3',
-    public_name = 'URL3',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11',
+    public_name = 'URL3',default = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11',
     type = str,
     mandatory = False,
     doc = "Url for the low resolution DEM. Used for SRTM version3")
