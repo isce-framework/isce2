@@ -2,19 +2,19 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Copyright 2012 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # United States Government Sponsorship acknowledged. This software is subject to
 # U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
 # (No [Export] License Required except when exporting to an embargoed country,
@@ -45,10 +45,10 @@ DATA_EXT = Component.Parameter('_dataExt',
     mandatory = False,
     doc = 'Extension of the data such as .raw')
 URL = Component.Parameter('_url',
-    public_name = 'URL',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMSWBD.003/2000.02.11',
+    public_name = 'URL',default = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMSWBD.003/2000.02.11',
     type = str,
     mandatory = False,
-    doc = "Url for the high resolution water body mask") 
+    doc = "Url for the high resolution water body mask")
 DTYPE = Component.Parameter('_dtype',
     public_name = 'dtype',
     default = 'BYTE',
@@ -85,7 +85,7 @@ class SWBDManager(SRTMManager):
             self.outputFile = self.defaultName([min(lats[0],lats[1]),max(lats[0],lats[1]),
                                                 min(lons[0],lons[1]),max(lons[0],lons[1])])
         super(SWBDManager,self).stitch(lats,lons)
-        
+
     def createImage(self,lats,lons,filename):
         img = createImage()
         lons = np.sort(lons)
@@ -97,7 +97,7 @@ class SWBDManager(SRTMManager):
         img.coord2.coordDelta = -1./self._tileWidth
         img.dataType = self._dtype
         return img
-    
+
     def defaultName(self,snwe):
         latMin = np.floor(snwe[0])
         latMax = np.ceil(snwe[1])
@@ -120,4 +120,3 @@ class SWBDManager(SRTMManager):
     def updateParameters(self):
         self.extendParameterList(SRTMManager,SWBDManager)
         super(SWBDManager,self).updateParameters()
-   

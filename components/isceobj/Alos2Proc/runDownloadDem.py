@@ -97,7 +97,7 @@ def runDownloadDem(self):
         #runCmd(cmd)
         #cmd = 'rm *.log'
         #runCmd(cmd)
-        
+
         #replace the above system calls with function calls
         imagePathXml((glob.glob('swbdLat_*_*_Lon_*_*.wbd'))[0], fullPath=True)
         filesRemoved = glob.glob('*.log')
@@ -132,9 +132,9 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
 
     if demType == 'version3':
         if resolution == 1:
-            ds._url1 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
+            ds._url1 = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
         else:
-            ds._url3 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
+            ds._url3 = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
     elif demType == 'nasadem':
         resolution = 1
         #this url is included in the module
