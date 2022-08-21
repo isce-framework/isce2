@@ -9,7 +9,7 @@
         data/DOR_POR_AXVF-P20111121_014700_20111118_215526_20111120_002326
     </property>
     <property name="OUTPUT">
-        reference.raw
+        reference
     </property>
 </component>
 
@@ -17,16 +17,16 @@
 Shown above is the bare minimum input XML file for the EnviSAT sensor.
 The reference and secondary catalog xml files have the same structure.
 
-The Envisat_SLC sensor has the same inputs, 
+The Envisat_SLC sensor has the same inputs,
 except that it starts with an ASA_IMS_1 SLC image.
 
-If you have a directory of the Envisat Instrument files, 
+If you have a directory of the Envisat Instrument files,
 you can specify the directory and ISCE will find the right file:
     <property name="INSTRUMENT_DIRECTORY">
         .../data/Envisat/INS
     </property>
 
-If you have a directory of the Envisat orbit files, 
+If you have a directory of the Envisat orbit files,
 you can specify the directory and ISCE will find the right file:
     <property name="ORBIT_DIRECTORY">
         .../data/Envisat/vor
