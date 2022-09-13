@@ -69,6 +69,7 @@ def runCoregCc(self):
                     self._insar.rangeResidualOffsetCc[i].append(0.0)
                     self._insar.azimuthResidualOffsetCc[i].append(0.0)
                     catalog.addItem('warning message', 'land area too small for estimating offsets between reference and secondary magnitudes at frame {}, swath {}'.format(frameNumber, swathNumber), 'runCoregCc')
+                    os.chdir('../')
                     continue
                 #total number of offsets to use
                 numberOfOffsets /= landRatio
