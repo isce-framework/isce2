@@ -35,6 +35,8 @@ import sys
 import argparse
 from osgeo import gdal
 from isce.applications.gdal2isce_xml import gdal2isce_xml
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
 
 
 # command line parsing of input file
@@ -102,3 +104,19 @@ if __name__ == '__main__':
 
     # Generating the ISCE xml and vrt of this coarse DEM
     gdal2isce_xml(coarse_dem_envi)
+    
+    #Code adapted from https://github.com/scottstanie/sardem/blob/master/sardem/utils.py to tag the downsampled DEM as WGS84
+    ref = ET.Element("property", attrib={"name": "reference"})
+    val.text = "WGS84"
+    doc = ET.SubElement(ref, "doc")
+    doc.text = "Geodetic datum"
+
+    # pretty xml
+    ref_str = minidom.parseString(ET.tostring(ref)).toprettyxml(indent="    ")
+    ref = ET.fromstring(ref_str)
+
+    # write back to xml file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+    root.append(ref)
+    tree.write(coarse_dem_envi+'.xml')
