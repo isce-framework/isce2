@@ -14,7 +14,7 @@ import numpy as np
 import isce
 import isceobj
 from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
-from Stack import config, run, sentinelSLC
+from topsStack.Stack import config, run, sentinelSLC
 
 
 helpstr = """
@@ -103,7 +103,7 @@ def createParser():
                         help='Working directory (default: %(default)s).')
 
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
-                        help='Directory with the DEM')
+                        help='Path of the DEM file')
 
     parser.add_argument('-m', '--reference_date', dest='reference_date', type=str, default=None,
                         help='Directory with reference acquisition')

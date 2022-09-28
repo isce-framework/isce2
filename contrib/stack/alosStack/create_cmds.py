@@ -277,7 +277,7 @@ def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
         return hdr
 
 
-    stackScriptPath = os.environ['PATH_ALOSSTACK']
+    stackScriptPath = os.path.join(os.environ['ISCE_STACK'], 'alosStack')
 
     def parallelSettings(array):
         settings = '''
