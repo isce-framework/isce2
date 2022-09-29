@@ -34,10 +34,10 @@ In all workflows, coregistration (-C option) can be done using only geometry (se
 
 The following calibration auxliary (AUX_CAL) file is used for **antenna pattern correction** to compensate the range phase offset of SAFE products with **IPF verison 002.36** (mainly for images acquired before March 2015). If all your SAFE products are from another IPF version, then no AUX files are needed. Check [ESA document](https://earth.esa.int/documents/247904/1653440/Sentinel-1-IPF_EAP_Phase_correction) for details. 
 
-Run the command below to download the AUX_CAL file once and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
+The AUX_CAL file is available on [Sentinel-1 Mission Performance Center](https://sar-mpc.eu/ipf-adf/aux_cal/?sentinel1__mission=S1A&validity_start=2014&validity_start=2014-09&adf__active=True). We recommend download it using the web brower or the `wget` command below, and store it somewhere (_i.e._ ~/aux/aux_cal) so that you can use it all the time, for `stackSentinel.py -a` or `auxiliary data directory` in `topsApp.py`.
 
 ```
-wget https://qc.sentinel1.groupcls.com/product/S1A/AUX_CAL/2014/09/08/S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.TGZ
+wget https://sar-mpc.eu/download/ca97845e-1314-4817-91d8-f39afbeff74d/ -O S1A_AUX_CAL_V20140908T000000_G20190626T100201.SAFE.zip
 ```
 
 #### 1. Create your project folder somewhere ####
