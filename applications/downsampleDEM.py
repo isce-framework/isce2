@@ -111,14 +111,11 @@ if __name__ == '__main__':
     val.text = "WGS84"
     doc = ET.SubElement(ref, "doc")
     doc.text = "Geodetic datum"
-
-    # pretty xml
     ref_str = minidom.parseString(ET.tostring(ref)).toprettyxml(indent="    ")
     ref = ET.fromstring(ref_str)
-
-    # write back to xml file
     xml_file = coarse_dem_envi+'.xml'
     tree = ET.parse(xml_file)
     root = tree.getroot()
     root.append(ref)
     tree.write(xml_file)
+    os.system("fixImageXml.py -i {0} -f".format(coarse_dem_envi))
