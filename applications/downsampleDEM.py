@@ -118,4 +118,4 @@ if __name__ == '__main__':
     root = tree.getroot()
     root.append(ref)
     tree.write(xml_file)
-    os.system("fixImageXml.py -i {0} -f".format(coarse_dem_envi))
+    os.system("fixImageXml.py -i {0} -b".format(coarse_dem_envi))
