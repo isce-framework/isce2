@@ -105,8 +105,9 @@ if __name__ == '__main__':
     # Generating the ISCE xml and vrt of this coarse DEM
     gdal2isce_xml(coarse_dem_envi)
     
-    #Code adapted from https://github.com/scottstanie/sardem/blob/master/sardem/utils.py to tag the downsampled DEM as WGS84
+    #Code adapted from https://github.com/scottstanie/sardem/blob/master/sardem/utils.py to tag the downsampled DEM as WGS84 ellipsoid
     ref = ET.Element("property", attrib={"name": "reference"})
+    val = ET.SubElement(ref, "value")
     val.text = "WGS84"
     doc = ET.SubElement(ref, "doc")
     doc.text = "Geodetic datum"
@@ -116,7 +117,8 @@ if __name__ == '__main__':
     ref = ET.fromstring(ref_str)
 
     # write back to xml file
+    xml_file = coarse_dem_envi+'.xml'
     tree = ET.parse(xml_file)
     root = tree.getroot()
     root.append(ref)
-    tree.write(coarse_dem_envi+'.xml')
+    tree.write(xml_file)
