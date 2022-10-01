@@ -18,7 +18,7 @@ mpl_logger.setLevel(logging.WARNING)
 import isce
 import isceobj
 from mroipac.baseline.Baseline import Baseline
-from Stack import config, run, selectPairs
+from stripmapStack.Stack import config, run, selectPairs
 
 
 filtStrength = '0.8'
