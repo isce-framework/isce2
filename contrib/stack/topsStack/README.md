@@ -204,6 +204,8 @@ An example --param_ion file 'ion_param.txt' is provided in the code directory. F
 stackSentinel.py -s ../data/slc -d ../data/dem/dem_1_arcsec/demLat_N32_N41_Lon_W113_W107.dem.wgs84 -b '33.550217 37.119545 -111.233932 -107.790451' -a ../data/s1_aux_cal -o ../data/orbit -C geometry -c 2 --param_ion ../code/ion_param.txt --num_connections_ion 3
 ```
 
+Note in 'ion_param.txt', if 'consider burst properties in ionosphere computation' is True, Coregistration options '-C', '--coregistration' in stackSentinel.py must be NESD.
+
 If ionospheric phase estimation is enabled in stackSentinel.py, it will generate the following run files. Here ***ns*** means number of steps in the original stack processing, which depends on the type of stack (slc, correlation, interferogram, and offset).
 
 -	run_ns+1_subband_and_resamp
@@ -251,6 +253,22 @@ Estimate ionospheric phase for each date. We highly recommend inspecting all pai
 
 Typical anomalies include dense fringes caused by phase unwrapping errors, and a range ramp as a result of errors in estimating phase offsets for pairs with different swath starting ranges (check pairs_diff_starting_ranges.txt).
 
+**run_ns+9_filtIonShift**
+
+Filter azimuth ionospheric shift.
+
+**run_ns+10_invertIonShift**
+
+Estimate azimuth ionospheric shift for each date. As in step **run_ns+8_invertIon**, check if there are anamolies.
+
+**run_ns+11_burstRampIon**
+
+Compute azimuth burst ramps as a result of ionosphere for each date.
+
+**run_ns+12_mergeBurstRampIon**
+
+Merge azimuth burst ramps.
+
 #### 3. run command files generated ####
 
 Run the commands sequentially.
@@ -261,7 +279,11 @@ Results from ionospheric phase estimation.
 
 -	reference and coreg_secondarys: now contains also subband burst SLCs
 -	ion: original ionospheric phase estimation results
+-   ion_azshift_dates: azimuth ionospheric shift for each acquistion
+-   ion_burst_ramp_dates: azimuth burst ramps caused by ionosphere for each acquistion
+-   ion_burst_ramp_merged_dates: merged azimuth burst ramps caused by ionosphere for each acquistion
 -	ion_dates: ionospheric phase for each acquistion
+-	ion/date1_date2/ion_cal/azshift.ion: azimuth ionospheric shift
 -	ion/date1_date2/ion_cal/filt.ion: filtered ionospheric phase
 -	ion/date1_date2/ion_cal/raw_no_projection.ion: original ionospheric phase
 -	ion/date1_date2/lower/merged/fine_look.unw: unwrapped lower band interferogram
@@ -273,6 +295,7 @@ If ionospheric phase estimation processing is swath by swath because of differen
 -	ion/date1_date2/lower/merged_IW*
 -	ion/date1_date2/upper/merged_IW*
 
+Unit of azimuth ionospheric shift is number of single look azimuth lines.
 After processing, we can plot ionospheric phase estimation results using plotIonPairs.py and plotIonDates.py. For example
 
 ```
@@ -285,4 +308,5 @@ Relationships of the ionospheric phases:
 ```
 ion_dates/date1.ion - ion_dates/date2.ion = ion/date1_date2/ion_cal/filt.ion
 ion_dates/date1.ion - ion_dates/date2.ion = ionospheric phase in merged/interferograms/date1_date2/filt_fine.unw
+ion_burst_ramp_merged_dates/date1.float - ion_burst_ramp_merged_dates/date2.float = azimuth burst ramps caused by ionosphere in merged/interferograms/date1_date2/filt_fine.unw
 ```

@@ -96,6 +96,8 @@ def cmdLineParse():
     parser = argparse.ArgumentParser(description='least squares estimation')
     parser.add_argument('--idir', dest='idir', type=str, required=True,
             help = 'input directory where each pair (YYYYMMDD_YYYYMMDD) is located. only folders are recognized')
+    parser.add_argument('--filename', dest='filename', type=str, default='filt.ion',
+            help = 'input file name. default: filt.ion')
     parser.add_argument('--odir', dest='odir', type=str, required=True,
             help = 'output directory for estimated result of each date')
     parser.add_argument('--zro_date', dest='zro_date', type=str, default=None,
@@ -205,7 +207,7 @@ if __name__ == '__main__':
     ndate = len(dates)
     npair = len(pairs)
 
-    ionfile = os.path.join(idir, pairs[0], 'ion_cal', 'filt.ion')
+    ionfile = os.path.join(idir, pairs[0], 'ion_cal', inps.filename)
 
     img = isceobj.createImage()
     img.load(ionfile+'.xml')
@@ -219,7 +221,7 @@ if __name__ == '__main__':
     wls = False
     stdPairs = np.ones((npair, length, width), dtype=np.float32)
     for i in range(npair):
-        ionfile = os.path.join(idir, pairs[i], 'ion_cal', 'filt.ion')
+        ionfile = os.path.join(idir, pairs[i], 'ion_cal', inps.filename)
         ionPairs[i, :, :] = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
         #flag of valid/invalid is defined by amplitde image
         amp = (np.fromfile(ionfile, dtype=np.float32).reshape(length*2, width))[0:length*2:2, :]
