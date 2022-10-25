@@ -7,6 +7,7 @@ import argparse
 import isce
 import isceobj
 import os
+import re
 from osgeo import gdal
 import numpy as np
 import xml.etree.ElementTree as ET
@@ -146,6 +147,14 @@ def runGeo(inps):
        #cmd = 'isce2gis.py envi -i ' + file
        #os.system(cmd)
 
+    # set format and file extenstion
+    if inps.istiff:
+        ext = '.tif'
+        outformat = 'GTiff'
+    else:
+        ext = ''
+        outformat = 'ENVI'
+
 
     if not inps.isAlexGrid:
         WSEN = str(inps.bbox[2]) + ' ' + str(inps.bbox[0]) + ' ' + str(inps.bbox[3]) + ' ' + str(inps.bbox[1])
@@ -162,11 +171,21 @@ def runGeo(inps):
             #os.system(cmd)
             writeVRT(infile, latFile, lonFile)
 
-            cmd = 'gdalwarp -of ENVI -geoloc  -te '+ WSEN + ' -tr ' + str(inps.latStep) + ' ' + str(inps.lonStep) + ' -srcnodata 0 -dstnodata 0 ' + ' -r ' + inps.resamplingMethod + ' ' + infile +'.vrt '+ outFile
+            step_cmd = ' '
+            if re.match(r'^-?\d+(?:\.\d+)$', str(inps.lonStep)) and \
+                 re.match(r'^-?\d+(?:\.\d+)$', str(inps.latStep)):
+                step_cmd = ' -tr ' + str(inps.latStep) + \
+                           ' ' + str(inps.lonStep)
+
+            cmd = 'gdalwarp -of ' + outformat + ' -t_srs ' + inps.outproj + \
+                  ' -geoloc  -te '+ WSEN + step_cmd + \
+                  ' -srcnodata 0 -dstnodata 0 ' + \
+                  ' -r ' + inps.resamplingMethod + ' ' + infile + '.vrt ' + \
+                  outFile + ext
             print (cmd)
             os.system(cmd)
 
-            write_xml(outFile)
+            write_xml(outFile+ext)
 
 
     else:
@@ -174,19 +193,16 @@ def runGeo(inps):
         ylims, xlims = getGridLimits(latfile=latFile, lonfile=lonFile)
 
         WSEN = str(xlim[0]) + ' ' + str(ylim[0]) + ' ' + str(xlim[1]) + ' ' + str(ylim[1])
-        if inps.istiff:
-            ext = '.tif'
-            outformat = 'GTiff'
-        else:
-            ext = '.ant'
-            outformat = 'ENVI'
 
         for infile in inps.prodlist:
             print('geocoding: ' + infile)
 
             writeVRT(infile, latFile, lonFile)
 
-            cmd = 'gdalwarp -of ' + outformat + ' -t_srs ' + inps.outproj + ' -geoloc -te ' + WSEN + ' -tr ' + str(inps.lonStep) + ' ' + str(inps.latStep) + ' -srcnodata 0 -dstnodata 0 -r ' + inps.resamplingMethod + ' ' + infile + '.vrt ' + infile+'ext'
+            cmd = 'gdalwarp -of ' + outformat + ' -t_srs ' + inps.outproj + \
+                  ' -geoloc -te ' + WSEN + ' -tr ' + str(inps.lonStep) + \
+                  ' ' + str(inps.latStep) + ' -srcnodata 0 -dstnodata 0 -r ' + \
+                  inps.resamplingMethod + ' ' + infile + '.vrt ' + infile + ext
             status = os.system(cmd)
             if status:
                 raise Exception('Command {0} Failed'.format(cmd))
@@ -266,5 +282,3 @@ def main(iargs=None):
    
 if __name__ == '__main__':
     main()
-
-
