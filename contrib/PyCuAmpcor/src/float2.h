@@ -7,7 +7,8 @@
 #ifndef __FLOAT2_H
 #define __FLOAT2_H
 
-#include <vector_types.h>
+#include <cuda_runtime.h>
+#include <math.h>
 
 inline __host__ __device__ void zero(float2 &a) { a.x = 0.0f; a.y = 0.0f; }
 

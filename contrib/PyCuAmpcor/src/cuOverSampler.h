@@ -12,7 +12,7 @@
 #define __CUOVERSAMPLER_H
 
 #include "cuArrays.h"
-#include "cudaUtil.h"
+#include <cufft.h>
 
 // FFT Oversampler for complex images
 class cuOverSamplerC2C
