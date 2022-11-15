@@ -1,19 +1,30 @@
-PROJECT = CUAMPCOR
+CXX ?= g++
+NVCC ?= nvcc
 
-LDFLAGS =  -lcuda -lcudart -lcufft -lgdal
-CXXFLAGS = -std=c++11 -fpermissive -DNDEBUG -fPIC -shared
-NVCCFLAGS = -std=c++11 -m64 -DNDEBUG \
+CUDA_ROOT ?= $(dir $(shell which $(NVCC)))..
+
+LDFLAGS = -L$(CUDA_ROOT)/lib64 -L$(CUDA_ROOT)/lib64/stubs -lcuda -lcudart -lcufft -lgdal
+CXXFLAGS = -std=c++11 -fPIC -shared -I$(CUDA_ROOT)/include
+NVCCFLAGS = -std=c++11 -m64 \
 		-gencode arch=compute_35,code=sm_35 \
 		-gencode arch=compute_60,code=sm_60 \
 		-Xcompiler -fPIC -shared -Wno-deprecated-gpu-targets \
 		-ftz=false -prec-div=true -prec-sqrt=true \
 		-I/usr/include/gdal
 
-CXX=g++
-NVCC=nvcc
+CXXFLAGS += -O2 -DNDEBUG
+NVCCFLAGS += -O2 -DNDEBUG
+
+# pybind11 configuration
+PYTHON ?= python3
+PYTHON_CONFIG ?= python3-config
+PYTHON_EXT_SUFFIX := $(shell "$(PYTHON_CONFIG)" --extension-suffix)
+PYTHON_INCLUDES := $(shell "$(PYTHON)" -m pybind11 --includes) \
+                   $(shell "$(PYTHON_CONFIG)" --includes)
 
 DEPS = cudaUtil.h cudaError.h cuArrays.h GDALImage.h cuAmpcorParameter.h
 OBJS =  GDALImage.o cuArrays.o cuArraysCopy.o cuArraysPadding.o cuOverSampler.o \
+		cudaError.o cudaUtil.o \
 		cuSincOverSampler.o cuDeramp.o cuOffset.o \
 		cuCorrNormalization.o cuCorrNormalizationSAT.o cuCorrNormalizer.o \
 		cuAmpcorParameter.o cuCorrTimeDomain.o cuCorrFrequency.o \
@@ -21,60 +32,16 @@ OBJS =  GDALImage.o cuArrays.o cuArraysCopy.o cuArraysPadding.o cuOverSampler.o 
 
 all: pyampcor
 
-GDALImage.o: GDALImage.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ GDALImage.cu
+pyampcor: PyCuAmpcor$(PYTHON_EXT_SUFFIX)
 
-cuArrays.o: cuArrays.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuArrays.cu
+PyCuAmpcor$(PYTHON_EXT_SUFFIX): PyCuAmpcor.cpp $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(PYTHON_INCLUDES) $^ -o $@
 
-cuArraysCopy.o: cuArraysCopy.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuArraysCopy.cu
+%.o: %.cu $(DEPS)
+	$(NVCC) $(NVCCFLAGS) -c -o $@ $<
 
-cuArraysPadding.o: cuArraysPadding.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuArraysPadding.cu
-
-cuSincOverSampler.o: cuSincOverSampler.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuSincOverSampler.cu
-
-cuOverSampler.o: cuOverSampler.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuOverSampler.cu
-
-cuDeramp.o: cuDeramp.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuDeramp.cu
-
-cuOffset.o: cuOffset.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuOffset.cu
-
-cuCorrNormalization.o: cuCorrNormalization.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalization.cu
-
-cuCorrNormalizationSAT.o: cuCorrNormalizationSAT.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalizationSAT.cu
-
-cuCorrNormalizer.o: cuCorrNormalizer.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrNormalizer.cu
-
-cuAmpcorParameter.o: cuAmpcorParameter.cu
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuAmpcorParameter.cu
-
-cuCorrTimeDomain.o: cuCorrTimeDomain.cu $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrTimeDomain.cu
-
-cuCorrFrequency.o: cuCorrFrequency.cu $(DEPS) cuCorrFrequency.h
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuCorrFrequency.cu
-
-cuAmpcorChunk.o: cuAmpcorChunk.cu cuAmpcorUtil.h $(DEPS)
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuAmpcorChunk.cu
-
-cuAmpcorController.o: cuAmpcorController.cu
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuAmpcorController.cu
-
-cuEstimateStats.o: cuEstimateStats.cu
-	$(NVCC) $(NVCCFLAGS) -c -o $@ cuEstimateStats.cu
-
-
-pyampcor: $(OBJS)
-	rm -f PyCuAmpcor.cpp && python3 setup.py build_ext --inplace
+%.o: %.cpp $(DEPS)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf *.o *so build *~  PyCuAmpcor.cpp *.dat
+	rm -rf *.o *.so build *~
