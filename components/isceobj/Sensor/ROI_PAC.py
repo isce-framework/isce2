@@ -232,7 +232,7 @@ class ROI_PAC(Sensor):
         self.populateImage()
         createAuxFile(self.frame,self.rawFile + '.aux')
 
-     def extractDoppler(self):
+    def extractDoppler(self):
         """
         Return the doppler centroid as defined in the HDF5 file.
         """
