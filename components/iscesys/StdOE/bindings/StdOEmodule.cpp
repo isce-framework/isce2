@@ -7,7 +7,7 @@
 //
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "StdOE.h"
 #include "StdOEmodule.h"
@@ -53,7 +53,7 @@ PyInit_StdOE()
 PyObject * setStdErr_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -65,7 +65,7 @@ PyObject * setStdErr_C(PyObject* self, PyObject* args)
 PyObject * setStdErrFileTag_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -77,7 +77,7 @@ PyObject * setStdErrFileTag_C(PyObject* self, PyObject* args)
 PyObject * setStdOutFileTag_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -89,7 +89,7 @@ PyObject * setStdOutFileTag_C(PyObject* self, PyObject* args)
 PyObject * setStdLogFileTag_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -101,7 +101,7 @@ PyObject * setStdLogFileTag_C(PyObject* self, PyObject* args)
 PyObject * setStdErrFile_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -113,7 +113,7 @@ PyObject * setStdErrFile_C(PyObject* self, PyObject* args)
 PyObject * setStdOut_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -125,7 +125,7 @@ PyObject * setStdOut_C(PyObject* self, PyObject* args)
 PyObject * setStdLogFile_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -137,7 +137,7 @@ PyObject * setStdLogFile_C(PyObject* self, PyObject* args)
 PyObject * setStdOutFile_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -161,7 +161,7 @@ PyObject * getStdErr_C(PyObject* self, PyObject* args)
 PyObject * writeStd_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -173,7 +173,7 @@ PyObject * writeStd_C(PyObject* self, PyObject* args)
 PyObject * writeStdLog_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -185,7 +185,7 @@ PyObject * writeStdLog_C(PyObject* self, PyObject* args)
 PyObject * writeStdOut_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -197,7 +197,7 @@ PyObject * writeStdOut_C(PyObject* self, PyObject* args)
 PyObject * writeStdErr_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
         {
                 return NULL;
@@ -209,9 +209,9 @@ PyObject * writeStdErr_C(PyObject* self, PyObject* args)
 PyObject * writeStdFile_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
+        Py_ssize_t varInt;
         char * var1;
-        int  varInt1;
+        Py_ssize_t varInt1;
         if(!PyArg_ParseTuple(args, "s#s#", &var ,&varInt,&var1,&varInt1))
         {
                 return NULL;
