@@ -12,6 +12,7 @@
 #include "cudaUtil.h"
 #include "cuAmpcorChunk.h"
 #include "cuAmpcorUtil.h"
+#include <cuda_runtime.h>
 #include <iostream>
 
 // constructor

@@ -12,14 +12,9 @@
 #define __CUARRAYS_H
 
 // cuda dependencies
-#include <cuda.h>
 #include <driver_types.h>
 
-#include <iostream>
-#include <fstream>
-#include <cstdlib>
-#include <ctime>
-
+#include <string>
 
 template <typename T>
 class cuArrays{

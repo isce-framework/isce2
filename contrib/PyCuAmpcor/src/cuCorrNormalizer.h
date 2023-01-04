@@ -13,7 +13,6 @@
 #define __CUNORMALIZER_H
 
 #include "cuArrays.h"
-#include "cudaUtil.h"
 
 /**
  * Abstract class interface for correlation surface normalization processor
