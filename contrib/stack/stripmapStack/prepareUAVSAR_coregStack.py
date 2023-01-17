@@ -55,6 +55,12 @@ def write_xml(shelveFile, slcFile):
     slc.renderHdr()
     slc.renderVRT()
 
+    # set filename in shelvefile
+    frame.image.filename = os.path.join(os.path.dirname(shelveFile), slcFile)
+    frame.image.width = width
+    with shelve.open(shelveFile) as db:
+        db['frame'] = frame
+
 
 def get_Date(file):
     yyyymmdd='20'+file.split('_')[4]
