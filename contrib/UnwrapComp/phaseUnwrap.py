@@ -99,7 +99,7 @@ class Edge(object):
         return None not in (self.src.getPhase(), self.dst.getPhase())
 
     def diff(self):
-        return np.int(np.round((self.dst.phase - self.src.phase)/(2*np.pi)))
+        return int(np.round((self.dst.phase - self.src.phase)/(2*np.pi)))
 
     def updateTri(self, index):
         if self.triIdx is not None:

@@ -41,8 +41,8 @@ def makePlot(filename, pos):
 
     for index, (num, line, pixel) in enumerate(pos):
         print(line, pixel)
-        xx = np.int(pixel)
-        yy = np.int(line)
+        xx = int(pixel)
+        yy = int(line)
         box = 10 * np.log10(np.abs(data[yy-win:yy+win, yy-win:yy+win]))
 
         plt.subplot(7,3,index+1)

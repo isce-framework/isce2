@@ -155,8 +155,8 @@ class VRTConstructor(object):
 
 
         for ind, burst in enumerate(swath.prod.bursts):
-            xoff = np.int(np.round( (burst.startingRange - self.rref)/self.dr))
-            yoff = np.int(np.round( (burst.sensingStart - self.tref).total_seconds() / self.dt))
+            xoff = int(np.round( (burst.startingRange - self.rref)/self.dr))
+            yoff = int(np.round( (burst.sensingStart - self.tref).total_seconds() / self.dt))
 
             infile = filelist[ind]
             self.addBurst( burst, infile, yoff, xoff, band=band, validOnly=validOnly)

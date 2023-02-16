@@ -55,8 +55,8 @@ def main(iargs=None):
     upperint = np.fromfile(inps.upper, dtype=np.complex64).reshape(length, width)
 
     if (inps.nrlks != 1) or (inps.nalks != 1):
-        width = np.int(width/inps.nrlks)
-        length = np.int(length/inps.nalks)
+        width = int(width/inps.nrlks)
+        length = int(length/inps.nalks)
         lowerint = multilook(lowerint, inps.nalks, inps.nrlks)
         upperint = multilook(upperint, inps.nalks, inps.nrlks)
 

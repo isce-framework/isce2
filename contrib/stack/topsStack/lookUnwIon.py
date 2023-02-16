@@ -56,12 +56,12 @@ def main(iargs=None):
         corimg.load(corName0 + '.xml')
         width = corimg.width
         length = corimg.length
-        widthNew = np.int(width / nrlks)
-        lengthNew = np.int(length / nalks)
+        widthNew = int(width / nrlks)
+        lengthNew = int(length / nalks)
         cor0 = (np.fromfile(corName0, dtype=np.float32).reshape(length*2, width))[1:length*2:2, :]
         wgt = cor0**2
         a = multilook(wgt, nalks, nrlks)
-        d = multilook((cor0!=0).astype(np.int), nalks, nrlks)
+        d = multilook((cor0!=0).astype(int), nalks, nrlks)
 
         #unwrapped file
         unwrapName0 = inps.unw

@@ -128,13 +128,13 @@ def cropFrame(frame, limits, outname, israw=False):
     ####sensing start
     ymin = np.floor( (limits[0] - frame.sensingStart).total_seconds() * frame.PRF)
     print('Line start: ', ymin)
-    ymin = np.int( np.clip(ymin, 0, frame.numberOfLines-1))
+    ymin = int(np.clip(ymin, 0, frame.numberOfLines-1))
 
 
     ####sensing stop 
     ymax = np.ceil( (limits[1] - frame.sensingStart).total_seconds() * frame.PRF) + 1
     print('Line stop: ', ymax)
-    ymax = np.int( np.clip(ymax, 1, frame.numberOfLines)) 
+    ymax = int( np.clip(ymax, 1, frame.numberOfLines))
 
     print('Line limits: ', ymin, ymax)
     print('Original Line Limits: ', 0, frame.numberOfLines)
@@ -152,13 +152,13 @@ def cropFrame(frame, limits, outname, israw=False):
     ####starting range
     xmin = np.floor( (limits[2] - frame.startingRange)/frame.instrument.rangePixelSize)
     print('Pixel start: ', xmin)
-    xmin = np.int(np.clip(xmin, 0, (frame.image.width//factor)-1))
+    xmin = int(np.clip(xmin, 0, (frame.image.width//factor)-1))
 
     ####far range
     xmax = np.ceil( (limits[3] - frame.startingRange)/frame.instrument.rangePixelSize)+1
     print('Pixel stop: ', xmax)
 
-    xmax = np.int(np.clip(xmax, 1, frame.image.width//factor))
+    xmax = int(np.clip(xmax, 1, frame.image.width//factor))
 
     print('Pixel limits: ', xmin, xmax)
     print('Original Pixel Limits: ', 0, frame.image.width//factor)

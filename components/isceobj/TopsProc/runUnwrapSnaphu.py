@@ -53,7 +53,7 @@ def runUnwrap(self,costMode = None,initMethod = None, defomax = None, initOnly =
         #some times tmid may exceed the time span, so use mid burst instead
         #14-APR-2018, Cunren Liang
         #orbit = ifg.bursts[0].orbit
-        burst_index = np.int(np.around(len(ifg.bursts)/2))
+        burst_index = int(np.around(len(ifg.bursts)/2))
         orbit = ifg.bursts[burst_index].orbit
         peg = orbit.interpolateOrbit(tmid, method='hermite')
 

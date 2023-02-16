@@ -25,7 +25,7 @@ def runDownloadDem(self):
 
     bboxGeo = getBboxGeo(referenceTrack)
     bbox = np.array(bboxGeo)
-    bboxStr = '{} {} {} {}'.format(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
+    bboxStr = '{} {} {} {}'.format(int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3])))
 
 
     #get 1 arcsecond dem for coregistration
@@ -92,7 +92,7 @@ def runDownloadDem(self):
 
         #cmd = 'wbd.py {}'.format(bboxStr)
         #runCmd(cmd)
-        download_wbd(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
+        download_wbd(int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3])))
         #cmd = 'fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f'
         #runCmd(cmd)
         #cmd = 'rm *.log'
@@ -151,7 +151,7 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
     ds.setFillingValue(fillingValue)
     ds.setFilling()
 
-    bbox = [np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3]))]
+    bbox = [int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3]))]
     if outputFile==None:
         outputFile = ds.defaultName(bbox)
 

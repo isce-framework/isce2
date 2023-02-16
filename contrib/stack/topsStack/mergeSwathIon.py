@@ -181,10 +181,10 @@ def main(iargs=None):
         for j in range(nBurst):
 
             #index after multi-looking in merged image, index starts from 1
-            first_line = np.int(np.around((burstValidBox[i][j][0] - 1) / numberAzimuthLooks + 1))
-            last_line = np.int(np.around(burstValidBox[i][j][1] / numberAzimuthLooks))
-            first_sample = np.int(np.around((burstValidBox[i][j][2] - 1) / numberRangeLooks + 1))
-            last_sample = np.int(np.around(burstValidBox[i][j][3] / numberRangeLooks))
+            first_line = int(np.around((burstValidBox[i][j][0] - 1) / numberAzimuthLooks + 1))
+            last_line = int(np.around(burstValidBox[i][j][1] / numberAzimuthLooks))
+            first_sample = int(np.around((burstValidBox[i][j][2] - 1) / numberRangeLooks + 1))
+            last_sample = int(np.around(burstValidBox[i][j][3] / numberRangeLooks))
 
             corMerged[first_line-1:last_line-1+1, first_sample-1:last_sample-1+1] = \
                 corList[i][first_line-1:last_line-1+1, first_sample-1:last_sample-1+1]

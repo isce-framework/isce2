@@ -940,9 +940,9 @@ def arImgDisp_u(I1, I2, xGrid, yGrid, ChipSizeX, ChipSizeY, SearchLimitX, Search
     Dy0 = -Dy0
 
     SLx_max = np.max(SearchLimitX + np.abs(Dx0))
-    Px = np.int(np.max(ChipSizeX)/2 + SLx_max + 2)
+    Px = int(np.max(ChipSizeX)/2 + SLx_max + 2)
     SLy_max = np.max(SearchLimitY + np.abs(Dy0))
-    Py = np.int(np.max(ChipSizeY)/2 + SLy_max + 2)
+    Py = int(np.max(ChipSizeY)/2 + SLy_max + 2)
 
     I1 = np.lib.pad(I1,((Py,Py),(Px,Px)),'constant')
     I2 = np.lib.pad(I2,((Py,Py),(Px,Px)),'constant')
@@ -1188,9 +1188,9 @@ def arImgDisp_s(I1, I2, xGrid, yGrid, ChipSizeX, ChipSizeY, SearchLimitX, Search
     Dy0 = -Dy0
     
     SLx_max = np.max(SearchLimitX + np.abs(Dx0))
-    Px = np.int(np.max(ChipSizeX)/2 + SLx_max + 2)
+    Px = int(np.max(ChipSizeX)/2 + SLx_max + 2)
     SLy_max = np.max(SearchLimitY + np.abs(Dy0))
-    Py = np.int(np.max(ChipSizeY)/2 + SLy_max + 2)
+    Py = int(np.max(ChipSizeY)/2 + SLy_max + 2)
     
     I1 = np.lib.pad(I1,((Py,Py),(Px,Px)),'constant')
     I2 = np.lib.pad(I2,((Py,Py),(Px,Px)),'constant')
