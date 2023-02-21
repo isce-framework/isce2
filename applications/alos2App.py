@@ -475,7 +475,7 @@ DELETE_GEOMETRY_FILES = Application.Parameter('deleteGeometryFiles',
 #normally we only have to set the following parameters.
 #a good set of parameters other than default is:
 #    <property name="dense offset estimation window width">128</property>
-#    <property name="dense offset estimation window hight">128</property>
+#    <property name="dense offset estimation window height">128</property>
 #    <property name="dense offset skip width">64</property>
 #    <property name="dense offset skip hight">64</property>
 
@@ -487,7 +487,7 @@ OFFSET_WINDOW_WIDTH = Application.Parameter('offsetWindowWidth',
                                 doc='dense offset estimation window width')
 
 OFFSET_WINDOW_HEIGHT = Application.Parameter('offsetWindowHeight',
-                                public_name='dense offset estimation window hight',
+                                public_name='dense offset estimation window height',
                                 default=64,
                                 type=int,
                                 mandatory=False,
