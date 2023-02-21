@@ -377,7 +377,7 @@ FBD (indicated by ^) is the acquisition mode code.
     <!--=========================================================================================
     NOTE: actual number of resulting correlation pixels: offsetSearchWindowHeight*2+1
     ==========================================================================================-->
-    <!--<property name="dense offset search window hight">8</property>-->
+    <!--<property name="dense offset search window height">8</property>-->
     <!--<property name="dense offset skip width">32</property>-->
     <!--<property name="dense offset skip height">32</property>-->
     <!--<property name="dense offset covariance surface oversample factor">64</property>-->
