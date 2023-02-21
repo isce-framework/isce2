@@ -179,8 +179,8 @@ dr = swath.bursts[0].rangePixelSize
 print (slcPath)
 for ind, burst in enumerate(swath.bursts):
 
-    xoff = np.int(np.round( (burst.startingRange - rref)/dr))
-    yoff = np.int(np.round( (burst.sensingStart - tref).total_seconds() / dt))
+    xoff = int(np.round( (burst.startingRange - rref)/dr))
+    yoff = int(np.round( (burst.sensingStart - tref).total_seconds() / dt))
     tyoff = int(burst.firstValidLine)
     txoff = int(burst.firstValidSample)
     wysize = int(burst.numValidLines)
