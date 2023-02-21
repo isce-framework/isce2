@@ -33,10 +33,6 @@ def cmdLineParse():
             help='Number of colors')
     inps = parser.parse_args()
 
-    if inps.table is not None:
-        if inps.reversemap:
-            raise Exception('Only matplotlib colormaps can be reversed')
-
     return inps
 
 
@@ -94,7 +90,7 @@ if __name__ == '__main__':
         cmap = get_cmap(inps.cmap, inps.ncolors, inps.clim)
         plt_cmap = True
     else:
-        cmap = table
+        cmap = inps.table
         plt_cmap = False
 
 

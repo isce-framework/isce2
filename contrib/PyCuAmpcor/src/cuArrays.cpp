@@ -7,6 +7,9 @@
 // dependencies
 #include "cuArrays.h"
 #include "cudaError.h"
+#include <cuda_runtime.h>
+#include <fstream>
+#include <iostream>
 
 // allocate arrays in device memory
 template <typename T>

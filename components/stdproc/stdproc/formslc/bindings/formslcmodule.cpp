@@ -27,7 +27,7 @@
 
 
 
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "formslcmodule.h"
 #include <cmath>
@@ -561,11 +561,12 @@ PyObject * setTransDat_C(PyObject* self, PyObject* args)
 PyObject * setIQFlip_C(PyObject* self, PyObject* args)
 {
     char * var;
-    int  varInt;
-    if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
+    Py_ssize_t varSize;
+    if(!PyArg_ParseTuple(args, "s#", &var, &varSize))
     {
         return NULL;
     }
+    int varInt = Py_SAFE_DOWNCAST(varSize, Py_ssize_t, int);
     setIQFlip_f(var,&varInt);
     return Py_BuildValue("i", 0);
 }
@@ -573,11 +574,12 @@ PyObject * setIQFlip_C(PyObject* self, PyObject* args)
 PyObject * setDeskewFlag_C(PyObject* self, PyObject* args)
 {
     char * var;
-    int  varInt;
-    if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
+    Py_ssize_t varSize;
+    if(!PyArg_ParseTuple(args, "s#", &var, &varSize))
     {
         return NULL;
     }
+    int varInt = Py_SAFE_DOWNCAST(varSize, Py_ssize_t, int);
     setDeskewFlag_f(var,&varInt);
     return Py_BuildValue("i", 0);
 }
@@ -585,11 +587,12 @@ PyObject * setDeskewFlag_C(PyObject* self, PyObject* args)
 PyObject * setSecondaryRangeMigrationFlag_C(PyObject* self, PyObject* args)
 {
     char * var;
-    int  varInt;
-    if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
+    Py_ssize_t varSize;
+    if(!PyArg_ParseTuple(args, "s#", &var, &varSize))
     {
         return NULL;
     }
+    int varInt = Py_SAFE_DOWNCAST(varSize, Py_ssize_t, int);
     setSecondaryRangeMigrationFlag_f(var,&varInt);
     return Py_BuildValue("i", 0);
 }

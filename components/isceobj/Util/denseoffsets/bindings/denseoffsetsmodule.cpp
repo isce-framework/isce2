@@ -28,7 +28,7 @@
 
 
 
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "denseoffsetsmodule.h"
 #include <cmath>
@@ -232,11 +232,12 @@ PyObject * setScaleFactorY_C(PyObject* self, PyObject* args)
 PyObject * setDebugFlag_C(PyObject* self, PyObject* args)
 {
         char * var;
-        int  varInt;
-        if(!PyArg_ParseTuple(args, "s#", &var ,&varInt))
+        Py_ssize_t varSize;
+        if(!PyArg_ParseTuple(args, "s#", &var, &varSize))
         {
                 return NULL;
         }
+        int varInt = Py_SAFE_DOWNCAST(varSize, Py_ssize_t, int);
         setDebugFlag_f(var,&varInt);
         return Py_BuildValue("i", 0);
 }

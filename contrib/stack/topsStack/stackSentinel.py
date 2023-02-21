@@ -727,8 +727,14 @@ def correlationStack(inps, acquisitionDates, stackReferenceDate, secondaryDates,
 
     i+=1
     runObj = run()
+    runObj.configure(inps, 'run_{:02d}_generate_burst_igram'.format(i))
+    runObj.generate_burstIgram(acquisitionDates, safe_dict, pairs)
+    runObj.finalize()
+
+    i += 1
+    runObj = run()
     runObj.configure(inps, 'run_{:02d}_merge_burst_igram'.format(i))
-    runObj.burstIgram_mergeBurst(acquisitionDates, safe_dict, pairs)
+    runObj.igram_mergeBurst(acquisitionDates, safe_dict, pairs)
     runObj.finalize()
 
     i+=1

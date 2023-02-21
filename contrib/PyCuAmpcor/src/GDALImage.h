@@ -12,6 +12,7 @@
 #define __GDALIMAGE_H
 
 // dependencies
+#include <driver_types.h>
 #include <string>
 #include <gdal_priv.h>
 #include <cpl_conv.h>

@@ -27,7 +27,7 @@
 
 
 
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "correct_geoid_i2_srtmmodule.h"
 #include <cmath>
@@ -172,12 +172,13 @@ PyObject * setConversionType_C(PyObject* self, PyObject* args)
 PyObject * setGeoidFilename_C(PyObject* self, PyObject* args)
 {
     char * varChar;
-    int  var;
+    Py_ssize_t var;
     if(!PyArg_ParseTuple(args, "s#", &varChar ,&var))
     {
         return NULL;
     }
-    setGeoidFilename_f(varChar,&var);
+    int ivar = Py_SAFE_DOWNCAST(var, Py_ssize_t, int);
+    setGeoidFilename_f(varChar, &ivar);
     return Py_BuildValue("i", 0);
 }
 
