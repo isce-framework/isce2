@@ -362,7 +362,7 @@ FBD (indicated by ^) is the acquisition mode code.
     to:   dense offset covariance surface oversample window size
     Normally we only have to set the following parameters. A good set of parameters other than default is:
     <property name="dense offset estimation window width">128</property>
-    <property name="dense offset estimation window hight">128</property>
+    <property name="dense offset estimation window height">128</property>
     <property name="dense offset skip width">64</property>
     <property name="dense offset skip height">64</property>
     ==========================================================================================-->
