@@ -93,7 +93,7 @@ def runESD(self, debugPlot=True):
             vali = off[mask]
             val = np.hstack((val, vali))
 
-    
+
 
         img = isceobj.createIntImage()
         img.filename = combIntName
@@ -114,13 +114,13 @@ def runESD(self, debugPlot=True):
             img.renderHdr()
 
     if val.size == 0 :
-        raise Exception('Coherence threshold too strict. No points left for reliable ESD estimate') 
+        raise Exception('Coherence threshold too strict. No points left for reliable ESD estimate')
 
     medianval = np.median(val)
     meanval = np.mean(val)
     stdval = np.std(val)
 
-    hist, bins = np.histogram(val, 50, normed=1)
+    hist, bins = np.histogram(val, 50, density=True)
     center = 0.5*(bins[:-1] + bins[1:])
 
 
@@ -156,7 +156,7 @@ def runESD(self, debugPlot=True):
     catalog.printToLog(logger, "runESD")
     self._insar.procDoc.addAllFromCatalog(catalog)
 
-    self._insar.secondaryTimingCorrection = medianval * reference.bursts[0].azimuthTimeInterval 
+    self._insar.secondaryTimingCorrection = medianval * reference.bursts[0].azimuthTimeInterval
 
     return
 

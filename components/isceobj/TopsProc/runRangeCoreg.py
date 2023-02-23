@@ -4,7 +4,7 @@
 #
 
 
-import numpy as np 
+import numpy as np
 import os
 import isceobj
 import logging
@@ -108,7 +108,7 @@ def runRangeCoreg(self, debugPlot=True):
     '''
 
     if not self.doESD:
-        return 
+        return
 
     catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
@@ -125,8 +125,8 @@ def runRangeCoreg(self, debugPlot=True):
 
         minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
 
-        maxBurst = maxBurst - 1  ###For overlaps 
-    
+        maxBurst = maxBurst - 1  ###For overlaps
+
         referenceTop = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
         referenceBottom  = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
 
@@ -137,14 +137,14 @@ def runRangeCoreg(self, debugPlot=True):
             for ii in range(minBurst,maxBurst):
                 mFile = pair[0].bursts[ii-minBurst].image.filename
                 sFile = pair[1].bursts[ii-minBurst].image.filename
-            
+
                 field = runAmpcor(mFile, sFile)
 
                 for offset in field:
                     rangeOffsets.append(offset.dx)
                     snr.append(offset.snr)
 
-    ###Cull 
+    ###Cull
     mask = np.logical_and(np.array(snr) >  self.offsetSNRThreshold, np.abs(rangeOffsets) < 1.2)
     val = np.array(rangeOffsets)[mask]
 
@@ -152,7 +152,7 @@ def runRangeCoreg(self, debugPlot=True):
     meanval = np.mean(val)
     stdval = np.std(val)
 
-    hist, bins = np.histogram(val, 50, normed=1)
+    hist, bins = np.histogram(val, 50, density=True)
     center = 0.5*(bins[:-1] + bins[1:])
 
 

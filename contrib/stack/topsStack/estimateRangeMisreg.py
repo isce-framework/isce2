@@ -6,7 +6,7 @@
 # Heresh Fattahi: Adopted for stack processing
 
 import argparse
-import numpy as np 
+import numpy as np
 import os
 import isce
 import isceobj
@@ -20,7 +20,7 @@ import s1a_isce_utils as ut
 
 def createParser():
     parser = argparse.ArgumentParser( description='Estimate range misregistration using overlap bursts')
-    
+
     parser.add_argument('-o', '--out_range', type=str, dest='output', default='misreg.txt',
             help='Output textfile with the constant range offset')
     parser.add_argument('-t', '--snr_threshold', type=float, dest='offsetSNRThreshold', default=6.0,
@@ -139,7 +139,7 @@ def main(iargs=None):
     '''
 
     #if not self.doESD:
-    #    return 
+    #    return
 
     #catalog = isceobj.Catalog.createCatalog(self._insar.procDoc.name)
 
@@ -158,9 +158,9 @@ def main(iargs=None):
         #    continue
 
         #minBurst, maxBurst = self._insar.commonReferenceBurstLimits(swath-1)
-        
-        #maxBurst = maxBurst - 1  ###For overlaps 
-    
+
+        #maxBurst = maxBurst - 1  ###For overlaps
+
         #referenceTop = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct, 'top_IW{0}.xml'.format(swath)))
         #referenceBottom  = self._insar.loadProduct( os.path.join(self._insar.referenceSlcOverlapProduct , 'bottom_IW{0}.xml'.format(swath)))
         referenceTop = ut.loadProduct(os.path.join(inps.reference , 'overlap','IW{0}_top.xml'.format(swath)))
@@ -185,14 +185,14 @@ def main(iargs=None):
             for ii in range(minBurst,maxBurst):
                 mFile = pair[0].bursts[ii-minReference].image.filename
                 sFile = pair[1].bursts[ii-minSecondary].image.filename
-            
+
                 field = runAmpcor(mFile, sFile)
 
                 for offset in field:
                     rangeOffsets.append(offset.dx)
                     snr.append(offset.snr)
 
-    ###Cull 
+    ###Cull
     mask = np.logical_and(np.array(snr) >  inps.offsetSNRThreshold, np.abs(rangeOffsets) < 1.2)
     val = np.array(rangeOffsets)[mask]
 
@@ -200,12 +200,12 @@ def main(iargs=None):
     meanval = np.mean(val)
     stdval = np.std(val)
 
-    # convert the estimations to meters 
+    # convert the estimations to meters
     medianval = medianval * referenceTop.bursts[0].rangePixelSize
     meanval = meanval * referenceTop.bursts[0].rangePixelSize
     stdval = stdval * referenceTop.bursts[0].rangePixelSize
 
-    hist, bins = np.histogram(val, 50, normed=1)
+    hist, bins = np.histogram(val, 50, density=True)
     center = 0.5*(bins[:-1] + bins[1:])
 
     outputDir = os.path.dirname(inps.output)
