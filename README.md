@@ -31,7 +31,6 @@ TERRASARX, UAVSAR and SAOCOM1A.
    - [Installing dependencies with Anaconda](#with-anaconda)
    - [Installing dependencies with Macports](#with-macports)
    - [Note On 'python3' Exectuable Convention](#python3-convention)
-   - [License required for dependencies to enable some workflows in ISCE](#license-required-for-dependencies-to-enable-some-workflows-in-isce)
 2. [Building ISCE](#building-isce)
    - [SCons](#scons-recommended)
      - [Configuration control: SCONS\_CONFIG\_DIR and SConfigISCE](#configuration-control)
@@ -170,24 +169,6 @@ executable automatically, then you should place a soft link on your path to
 have the command 'python3' on your path.  Then you will be able to execute an
 ISCE application such as 'stripmapApp.py as "> stripmapApp.py" rather than as
 "> /path-to-Python3/python stripmapApp.py".
-
-### License required for dependencies to enable some workflows in ISCE
-
-Some of the applications, or workflows (such as insarApp.py and isceApp.py),
-in ISCE that may be familiar to users will not work with this open source version
-of ISCE without obtaining licensed components.  WinSAR users who have downloaded
-ISCE from the UNAVCO website (https://winsar.unavco.org/software/isce) have signed
-the licence agreement and will be given access to those licensed components.  Others
-wanting to use those specific workflows and components may be able to sign the
-agreement through UNAVCO if they become members there.  Further instructions will
-be available for a possible other procedure for obtaining a license directly from
-the supplier of those components.
-
-ISCE provides workflows that do not require the licensed components that
-may be used effectively and that will be supported going forward by the ISCE team.
-Users that need to work with newly processed data along with older processed data
-may require those licensed components as a convenience unless they also reprocess
-the older data with the same workflows available in this open source release.
 
 
 -------
