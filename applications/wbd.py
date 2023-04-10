@@ -6,9 +6,41 @@
 #
 
 
+import argparse
 import sys
 import isce
 from isceobj.Alos2Proc.runDownloadDem import download_wbd
+
+
+EXAMPLE = """Usage examples:
+  wbd.py -1 0 -92 -91
+
+  # do not correct missing tiles
+  wbd.py -1 0 -92 -91 0
+
+  # use a different url to download tile files
+  wbd.py -1 0 -92 -91 -u https://e4ftl01.cr.usgs.gov/DP133/SRTM/SRTMSWBD.003/2000.02.11
+"""
+
+
+def cmd_line_parse(iargs=None):
+    parser = argparse.ArgumentParser(description='Create water body file from SRTMSWBD.003 database.',
+                                     formatter_class=argparse.RawTextHelpFormatter,
+                                     epilog=EXAMPLE)
+    parser.add_argument('s', type=float, help='south bounds in latitude in degrees')
+    parser.add_argument('n', type=float, help='north bounds in latitude in degrees')
+    parser.add_argument('w', type=float, help='west bounds in longitude in degrees')
+    parser.add_argument('e', type=float, help='east bounds in longitude in degrees')
+    parser.add_argument('correct_missing_tiles', type=int, nargs='?', choices=[0, 1], default=1,
+                        help='whether correct missing water body tiles problem:\n'
+                             '    0: False\n'
+                             '    1: True (default)')
+    parser.add_argument('-u', '--url', dest='url', type=str,
+                        help='Change the (default) url in full path for where water body files are located.\n'
+                             'E.g.: https://e4ftl01.cr.usgs.gov/DP133/SRTM/SRTMSWBD.003/2000.02.11')
+
+    inps = parser.parse_args(args=iargs)
+    return inps
 
 
 def download_wbd_old(snwe):
@@ -39,28 +71,16 @@ def download_wbd_old(snwe):
     runCreateWbdMask(self,info)
 
 
-if __name__=="__main__":
+def main(iargs=None):
+    inps = cmd_line_parse(iargs)
 
-    if len(sys.argv) < 5:
-        print()
-        print("usage: wbd.py s n w e [c]")
-        print("  s: south latitude bounds in degrees")
-        print("  n: north latitude bounds in degrees")
-        print("  w: west longitude bounds in degrees")
-        print("  e: east longitude bounds in degrees")
-        print("  c: whether correct missing water body tiles problem")
-        print("       0: False")
-        print("       1: True (default)")
-        sys.exit(0)
-
-    doCorrection = True
-    if len(sys.argv) >= 6:
-    	if int(sys.argv[5]) == 0:
-    		doCorrection = False
- 
-    snwe = list(map(float,sys.argv[1:5]))
-
-    if doCorrection:
-        download_wbd(snwe[0], snwe[1], snwe[2], snwe[3])
+    if inps.correct_missing_tiles:
+        download_wbd(inps.s, inps.n, inps.w, inps.e, url=inps.url)
     else:
-    	download_wbd_old(snwe)
+        snwe = [inps.s, inps.n, inps.w, inps.e]
+        download_wbd_old(snwe)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
