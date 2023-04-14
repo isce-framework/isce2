@@ -166,7 +166,7 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
         print(k,'=',v)
 
 
-def download_wbd(s, n, w, e):
+def download_wbd(s, n, w, e, url=None):
     '''
     download water body
     water body. (0) --- land; (-1) --- water; (-2) --- no data.
@@ -192,6 +192,10 @@ def download_wbd(s, n, w, e):
     ############################################################
     sw = createManager('wbd')
     sw.configure()
+
+    # change the default url to the specified one.
+    if url and isinstance(url, str):
+        sw.url = url
 
     outputFile = sw.defaultName([latMin,latMax,lonMin,lonMax])
     if os.path.exists(outputFile) and os.path.exists(outputFile+'.xml'):
