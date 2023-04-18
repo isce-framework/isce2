@@ -18,35 +18,32 @@ def cmdLineParse():
 
     parser = argparse.ArgumentParser(description='Unpack ERS(ESA) SLC data and store metadata in pickle file.')
     parser.add_argument('-i','--input', dest='datadir', type=str,
-            required=True, help='Input ERS directory')
+            required=True, help='Input ERS files path')
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output SLC directory')
     parser.add_argument('--orbitdir', dest='orbitdir', type=str,required=True, help='Orbit directory')
 
     return parser.parse_args()
 
+def get_Date(file):
+    yyyymmdd=file[14:22]
+    return yyyymmdd
 
-def unpack(hdf5, slcname, orbitdir):
+def unpack(fname, slcname, orbitdir):
     '''
-    Unpack HDF5 to binary SLC file.
+    Unpack .E* file to binary SLC file.
     '''
-
-    fname = glob.glob(os.path.join(hdf5,'SAR*.E*'))[0]
-    if not os.path.isdir(slcname):
-        os.mkdir(slcname)
-
-    date = os.path.basename(slcname)
 
     obj = createSensor('ERS_ENviSAT_SLC')
     obj._imageFileName = fname
-    obj.orbitDir = orbitdir
+    obj._orbitDir = orbitdir
+    obj._orbitType = 'ODR'
     #obj.instrumentDir = '/Users/agram/orbit/INS_DIR'
-    obj.output = os.path.join(slcname, date+'.slc')
-
+    obj.output = os.path.join(slcname,os.path.basename(slcname)+'.slc')
     obj.extractImage()
     obj.frame.getImage().renderHdr()
 
-    ####  computation of "poly" adapted from line 339 - line 353 of isceobj/Sensor/ERS_EnviSAT_SLC.py ###
+    ####  computation of "poly" adapted from line 339 - line 353 of  Components/isceobj/Sensor/ERS_EnviSAT_SLC.py ###
     coeffs = obj.dopplerRangeTime
     dr = obj.frame.getInstrument().getRangePixelSize()
     rref = 0.5 * Const.c * obj.rangeRefTime
@@ -77,8 +74,11 @@ if __name__ == '__main__':
     inps = cmdLineParse()
     if inps.slcdir.endswith('/'):
         inps.slcdir = inps.slcdir[:-1]
-
-    if inps.datadir.endswith('/'):
-        inps.datadir = inps.datadir[:-1]
-
-    unpack(inps.datadir, inps.slcdir, inps.orbitdir)
+    if not os.path.isdir(inps.slcdir):
+        os.mkdir(inps.slcdir)
+    for fname in glob.glob(os.path.join(inps.datadir, '*.E*')):
+        date = get_Date(os.path.basename(fname))
+        slcname = os.path.join(inps.slcdir, date)
+        if not os.path.isdir(slcname):
+            os.mkdir(slcname)
+        unpack(fname, slcname, inps.orbitdir)
