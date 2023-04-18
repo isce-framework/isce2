@@ -85,11 +85,12 @@ class customArgparseAction(argparse.Action):
 
 
 def createParser():
-    parser = argparse.ArgumentParser(description='Preparing the directory structure and config files for stack processing of Sentinel data')
+    parser = argparse.ArgumentParser(description='Preparing the directory structure and config files for stack processing of Sentinel-1 TOPS data')
 
     parser.add_argument('-H','--hh', nargs=0, action=customArgparseAction,
                         help='Display detailed help information.')
 
+    # input directories
     parser.add_argument('-s', '--slc_directory', dest='slc_dirname', type=str, required=True,
                         help='Directory with all Sentinel SLCs')
 
@@ -105,77 +106,87 @@ def createParser():
     parser.add_argument('-d', '--dem', dest='dem', type=str, required=True,
                         help='Path of the DEM file')
 
-    parser.add_argument('-m', '--reference_date', dest='reference_date', type=str, default=None,
-                        help='Directory with reference acquisition')
-
-    parser.add_argument('-c','--num_connections', dest='num_connections', type=str, default = '1',
-                        help='number of interferograms between each date and subsequent dates (default: %(default)s).')
-
-    parser.add_argument('-n', '--swath_num', dest='swath_num', type=str, default='1 2 3',
-                        help="A list of swaths to be processed. -- Default : '1 2 3'")
-
-    parser.add_argument('-b', '--bbox', dest='bbox', type=str, default=None,
-                        help="Lat/Lon Bounding SNWE. -- Example : '19 20 -99.5 -98.5' -- Default : common overlap between stack")
-
-    parser.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None,
-                        help="List of the dates to be excluded for processing. -- Example : '20141007,20141031' (default: %(default)s).")
-
-    parser.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None,
-                        help="List of the dates to be included for processing. -- Example : '20141007,20141031' (default: %(default)s).")
-
-    parser.add_argument('--start_date', dest='startDate', type=str, default=None,
-                        help='Start date for stack processing. Acquisitions before start date are ignored. '
-                             'format should be YYYY-MM-DD e.g., 2015-01-23')
-
-    parser.add_argument('--stop_date', dest='stopDate', type=str, default=None,
-                        help='Stop date for stack processing. Acquisitions after stop date are ignored. '
-                             'format should be YYYY-MM-DD e.g., 2017-02-26')
-
-    parser.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3',
-                        help='Number of looks in azimuth for interferogram multi-looking (default: %(default)s).')
-
-    parser.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9',
-                        help='Number of looks in range for interferogram multi-looking (default: %(default)s).')
-
-    parser.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5',
-                        help='Filter strength for interferogram filtering (default: %(default)s).')
-
-    parser.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10',
-                        help='SNR threshold for estimating range misregistration using cross correlation (default: %(default)s).')
-
     parser.add_argument('-p', '--polarization', dest='polarization', type=str, default='vv',
                         help='SAR data polarization (default: %(default)s).')
-
-    parser.add_argument('-C', '--coregistration', dest='coregistration', type=str, default='NESD', choices=['geometry', 'NESD'],
-                        help='Coregistration options (default: %(default)s).')
-
-    parser.add_argument('-O','--num_overlap_connections', dest='num_overlap_connections', type=str, default = '3',
-                        help='number of overlap interferograms between each date and subsequent dates used for NESD computation '
-                             '(for azimuth offsets misregistration) (default: %(default)s).')
-
-    parser.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85',
-                        help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
 
     parser.add_argument('-W', '--workflow', dest='workflow', type=str, default='interferogram',
                         choices=['slc', 'correlation', 'interferogram', 'offset'],
                         help='The InSAR processing workflow (default: %(default)s).')
 
-    # unwrap
-    parser.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
+    # area of interest
+    aoi = parser.add_argument_group('Area of interest')
+    aoi.add_argument('-n', '--swath_num', dest='swath_num', type=str, default='1 2 3',
+                     help="A list of swaths to be processed. -- Default : '1 2 3'")
+
+    aoi.add_argument('-b', '--bbox', dest='bbox', type=str, default=None,
+                     help="Lat/Lon Bounding SNWE. -- Example : '19 20 -99.5 -98.5' -- Default : common overlap between stack")
+
+    # dates of interest
+    doi = parser.add_argument_group('Dates of interest')
+    doi.add_argument('-x', '--exclude_dates', dest='exclude_dates', type=str, default=None,
+                     help="List of the dates to be excluded for processing. -- Example : '20141007,20141031' (default: %(default)s).")
+
+    doi.add_argument('-i', '--include_dates', dest='include_dates', type=str, default=None,
+                     help="List of the dates to be included for processing. -- Example : '20141007,20141031' (default: %(default)s).")
+
+    doi.add_argument('--start_date', dest='startDate', type=str, default=None,
+                     help='Start date for stack processing. Acquisitions before start date are ignored. '
+                          'format should be YYYY-MM-DD e.g., 2015-01-23')
+
+    doi.add_argument('--stop_date', dest='stopDate', type=str, default=None,
+                     help='Stop date for stack processing. Acquisitions after stop date are ignored. '
+                          'format should be YYYY-MM-DD e.g., 2017-02-26')
+
+    # coregistration
+    coreg = parser.add_argument_group('Coregistration options', 'Configurations for stack coregistartion of SLCs')
+    coreg.add_argument('-C', '--coregistration', dest='coregistration', type=str, default='NESD', choices=['geometry', 'NESD'],
+                       help='Coregistration options (default: %(default)s).')
+
+    coreg.add_argument('-m', '--reference_date', dest='reference_date', type=str, default=None,
+                       help='Directory with reference acquisition')
+
+    coreg.add_argument('--snr_misreg_threshold', dest='snrThreshold', type=str, default='10',
+                       help='SNR threshold for estimating range misregistration using cross correlation (default: %(default)s).')
+    
+    coreg.add_argument('-e', '--esd_coherence_threshold', dest='esdCoherenceThreshold', type=str, default='0.85',
+                       help='Coherence threshold for estimating azimuth misregistration using enhanced spectral diversity (default: %(default)s).')
+
+    coreg.add_argument('-O','--num_overlap_connections', dest='num_overlap_connections', type=str, default = '3',
+                       help='number of overlap interferograms between each date and subsequent dates used for NESD computation '
+                            '(for azimuth offsets misregistration) (default: %(default)s).')
+
+    # interferogram formation
+    ifgram = parser.add_argument_group('Interferogram options', 'Configurations for interferogram generation')
+    ifgram.add_argument('-c','--num_connections', dest='num_connections', type=str, default = '1',
+                        help='number of interferograms between each date and subsequent dates (default: %(default)s).')
+
+    ifgram.add_argument('-z', '--azimuth_looks', dest='azimuthLooks', type=str, default='3',
+                        help='Number of looks in azimuth for interferogram multi-looking (default: %(default)s).')
+
+    ifgram.add_argument('-r', '--range_looks', dest='rangeLooks', type=str, default='9',
+                        help='Number of looks in range for interferogram multi-looking (default: %(default)s).')
+
+    ifgram.add_argument('-f', '--filter_strength', dest='filtStrength', type=str, default='0.5',
+                        help='Filter strength for interferogram filtering (default: %(default)s).')
+
+    # phase unwrap
+    unwrap = parser.add_argument_group('Phase unwrapping options', 'Configurations for phase unwrapping')
+    unwrap.add_argument('-u', '--unw_method', dest='unwMethod', type=str, default='snaphu', choices=['icu', 'snaphu'],
                         help='Unwrapping method (default: %(default)s).')
 
-    parser.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
+    unwrap.add_argument('-rmFilter', '--rmFilter', dest='rmFilter', action='store_true', default=False,
                         help='Make an extra unwrap file in which filtering effect is removed')
 
     # ionospheric correction
-    parser.add_argument('--param_ion', dest='param_ion', type=str, default=None,
-                        help='ionosphere estimation parameter file. if provided, will do ionosphere estimation.')
+    iono = parser.add_argument_group('Ionosphere options', 'Configurations for ionospheric delay estimation')
+    iono.add_argument('--param_ion', dest='param_ion', type=str, default=None,
+                      help='ionosphere estimation parameter file. if provided, will do ionosphere estimation.')
 
-    parser.add_argument('--num_connections_ion', dest='num_connections_ion', type=str, default = '3',
-                        help='number of interferograms between each date and subsequent dates for ionosphere estimation (default: %(default)s).')
+    iono.add_argument('--num_connections_ion', dest='num_connections_ion', type=str, default = '3',
+                      help='number of interferograms between each date and subsequent dates for ionosphere estimation (default: %(default)s).')
 
     # computing
-    compute = parser.add_argument_group('Computing options')
+    compute = parser.add_argument_group('Computing options', 'Configurations for computing environment and resource')
     compute.add_argument('-useGPU', '--useGPU', dest='useGPU',action='store_true', default=False,
                          help='Allow App to use GPU when available')
 
@@ -187,11 +198,11 @@ def createParser():
 
     compute.add_argument('-t', '--text_cmd', dest='text_cmd', type=str, default='',
                          help="text command to be added to the beginning of each line of the run files (default: '%(default)s'). "
-                              "Example : 'source ~/.bash_profile;'")
+                              "Example: 'source ~/.bash_profile;'")
 
     compute.add_argument('-V', '--virtual_merge', dest='virtualMerge', type=str, default=None, choices=['True', 'False'],
-                         help='Use virtual files for the merged SLCs and geometry files.\n'
-                              'Default: True  for correlation / interferogram workflow\n'
+                         help='Use virtual files for the merged SLCs and geometry files. '
+                              'Default: True  for correlation / interferogram workflow, '
                               '         False for slc / offset workflow')
 
     return parser
@@ -416,7 +427,7 @@ def get_dates(inps):
         if len(dateList)<1:
             print('*************************************')
             print('Error:')
-            print('No acquisition forfills the temporal range and bbox requirement.')
+            print('No acquisition fulfills the temporal range and bbox requirement.')
             sys.exit(1)
         inps.reference_date = dateList[0]
         print ("The reference date was not chosen. The first date is considered as reference date.")
@@ -538,10 +549,10 @@ def selectNeighborPairsIonosphere(safe_dict, num_connections):
     for k in range(ndate_unique-1):
         cnt = 0
         for pair in pairs_diff_starting_ranges_0:
-            if (pair[0] in starting_ranges_unique_dates[k] and pair[1] in starting_ranges_unique_dates[k+1]) or \
-               (pair[1] in starting_ranges_unique_dates[k] and pair[0] in starting_ranges_unique_dates[k+1]):
-               pairs_diff_starting_ranges.append(pair)
-            cnt += 1
+            if ((pair[0] in starting_ranges_unique_dates[k] and pair[1] in starting_ranges_unique_dates[k+1])
+                    or (pair[1] in starting_ranges_unique_dates[k] and pair[0] in starting_ranges_unique_dates[k+1])):
+                pairs_diff_starting_ranges.append(pair)
+                cnt += 1
             if cnt >= num_connections:
                 break
 
