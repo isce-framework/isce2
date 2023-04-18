@@ -364,10 +364,10 @@ FBD (indicated by ^) is the acquisition mode code.
     <property name="dense offset estimation window width">128</property>
     <property name="dense offset estimation window height">128</property>
     <property name="dense offset skip width">64</property>
-    <property name="dense offset skip hight">64</property>
+    <property name="dense offset skip height">64</property>
     ==========================================================================================-->
     <!--<property name="dense offset estimation window width">64</property>-->
-    <!--<property name="dense offset estimation window hight">64</property>-->
+    <!--<property name="dense offset estimation window height">64</property>-->
 
     <!--=========================================================================================
     NOTE: actual number of resulting correlation pixels: offsetSearchWindowWidth*2+1
