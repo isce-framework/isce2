@@ -1014,8 +1014,8 @@ def main(iargs=None):
         dateListIon, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict = checkCurrentStatusIonosphere(inps)
         i = ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i)
 
-    else:
-        print("Ion parameter file is missing. Ionospheric estimation will not be done")
+    elif inps.param_ion is None or os.path.isfile(inps.param_ion) == False:
+        print("Ion parameter file is not specified or missing. Ionospheric estimation will not be done.")
 
 if __name__ == "__main__":
   # Main engine
