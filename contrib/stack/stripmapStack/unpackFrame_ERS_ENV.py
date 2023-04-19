@@ -2,6 +2,7 @@
 
 import isce
 from isceobj.Sensor import createSensor
+import isceobj
 import shelve
 import argparse
 import glob
@@ -28,6 +29,22 @@ def cmdLineParse():
 def get_Date(file):
     yyyymmdd=file[14:22]
     return yyyymmdd
+
+def write_xml(shelveFile, slcFile):
+    with shelve.open(shelveFile,flag='r') as db:
+        frame = db['frame']
+
+    length = frame.numberOfLines 
+    width = frame.numberOfSamples
+    print (width,length)
+
+    slc = isceobj.createSlcImage()
+    slc.setWidth(width)
+    slc.setLength(length)
+    slc.filename = slcFile
+    slc.setAccessMode('write')
+    slc.renderHdr()
+    slc.renderVRT()
 
 def unpack(fname, slcname, orbitdir):
     '''
@@ -78,7 +95,13 @@ if __name__ == '__main__':
         os.mkdir(inps.slcdir)
     for fname in glob.glob(os.path.join(inps.datadir, '*.E*')):
         date = get_Date(os.path.basename(fname))
-        slcname = os.path.join(inps.slcdir, date)
-        if not os.path.isdir(slcname):
-            os.mkdir(slcname)
+        slcname = os.path.abspath(os.path.join(inps.slcdir, date))
+        os.makedirs(slcname, exist_ok=True)
+
+        print(fname)
         unpack(fname, slcname, inps.orbitdir)
+
+        slcFile = os.path.abspath(os.path.join(slcname, date+'.slc'))
+
+        shelveFile = os.path.join(slcname, 'data')
+        write_xml(shelveFile,slcFile)
