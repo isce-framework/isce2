@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import isce
 import isceobj
 from iscesys.Component.Component import Component
