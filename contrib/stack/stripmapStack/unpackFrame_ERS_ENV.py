@@ -24,8 +24,8 @@ def cmdLineParse():
             help='Bbox (SNWE in degrees)')
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output SLC directory')
-    parser.add_argument('--orbitdir', dest='orbitdir', type=str,required=True, help='Orbit directory')
-
+    parser.add_argument('--orbitdir', dest='orbitdir', type=str, required=True, help='Orbit directory')
+    parser.add_argument('--orbittype',dest='orbittype', type = str, default='ODR', help='ODR, PDS, PDS')
     return parser.parse_args()
 
 def get_Date(file):
@@ -48,7 +48,7 @@ def write_xml(shelveFile, slcFile):
     slc.renderHdr()
     slc.renderVRT()
 
-def unpack(fname, slcname, orbitdir):
+def unpack(fname, slcname, orbitdir, orbittype):
     '''
     Unpack .E* file to binary SLC file.
     '''
@@ -56,7 +56,7 @@ def unpack(fname, slcname, orbitdir):
     obj = createSensor('ERS_ENviSAT_SLC')
     obj._imageFileName = fname
     obj._orbitDir = orbitdir
-    obj._orbitType = 'ODR'
+    obj._orbitType = orbittype
     #obj.instrumentDir = '/Users/agram/orbit/INS_DIR'
     obj.output = os.path.join(slcname,os.path.basename(slcname)+'.slc')
     obj.extractImage()
@@ -103,7 +103,7 @@ if __name__ == '__main__':
         os.makedirs(slcname, exist_ok=True)
 
         print(fname)
-        unpack(fname, slcname, inps.orbitdir)
+        unpack(fname, slcname, inps.orbitdir, inps.orbittype)
 
         slcFile = os.path.abspath(os.path.join(slcname, date+'.slc'))
 
