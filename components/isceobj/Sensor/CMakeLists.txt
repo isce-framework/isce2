@@ -2,12 +2,12 @@ add_subdirectory(db)
 add_subdirectory(TOPS)
 add_subdirectory(MultiMode)
 add_subdirectory(GRD)
-isce2_add_cdll(asa_im_decode src/asa_im_decode/asa_im_decode.c)
+isce2_add_cdll(envisat src/asa_im_decode/asa_im_decode.c)
 
 set(installfiles
-    asa_im_decode
     alos
     cosar
+    envisat
     __init__.py
     ALOS.py
     ALOS2.py

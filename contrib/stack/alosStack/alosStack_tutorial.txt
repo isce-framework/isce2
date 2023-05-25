@@ -10,8 +10,8 @@ This is the tutorial of alosStack processor.
 #        0. SET ENVIRONMENT VARIABLE
 ###########################################
 
-Set environment variable 'PATH_ALOSSTACK'
-export PATH_ALOSSTACK=CODE_DIR/contrib/stack/alosStack
+Set environment variable 'ISCE_STACK'
+export ISCE_STACK=CODE_DIR/contrib/stack
 
 where CODE_DIR is the directory of your isce code. Note that alosStack is not installed when you install
 the software, so CODE_DIR is your code directory rather than installation directory.
@@ -81,10 +81,10 @@ cd saf_d169_proc
 
 2. Input xml file alosStack.xml can be found in code directory. Copy it to current folder and simply set 
 the parameters.
-cp ${PATH_ALOSSTACK}/alosStack.xml ./
+cp ${ISCE_STACK}/alosStack/alosStack.xml ./
 
 3. Create command files for processing data. Run
-${PATH_ALOSSTACK}/create_cmds.py -stack_par alosStack.xml
+${ISCE_STACK}/alosStack/create_cmds.py -stack_par alosStack.xml
 
 4. Do most of the single date processing. Run
 ./cmd_1.sh
@@ -130,7 +130,7 @@ some pairs with ionosphere estimation anomalies, specify them by adding argument
 Make sure all dates are still connected after excluding these pairs, and then run ion_ls.py.
 
 You can plot baselines to see if the pairs are fully connected, e.g.
-${PATH_ALOSSTACK}/plot_baseline.py -baseline baseline/baseline_center.txt -pairs_dir pairs_ion -pairs_exc 150520-150701 -output baselines.pdf
+${ISCE_STACK}/alosStack/plot_baseline.py -baseline baseline/baseline_center.txt -pairs_dir pairs_ion -pairs_exc 150520-150701 -output baselines.pdf
 
 If the following parameters of the input xml file are True (default)
 

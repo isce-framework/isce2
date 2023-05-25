@@ -52,10 +52,4 @@ except KeyError:
 try:
     from . license import stanford_license
 except:
-    print("This is the Open Source version of ISCE.")
-    print("Some of the workflows depend on a separate licensed package.")
-    print("To obtain the licensed package, please make a request for ISCE")
-    print("through the website: https://download.jpl.nasa.gov/ops/request/index.cfm.")
-    print("Alternatively, if you are a member, or can become a member of WinSAR")
-    print("you may be able to obtain access to a version of the licensed sofware at")
-    print("https://winsar.unavco.org/software/isce")
+    pass

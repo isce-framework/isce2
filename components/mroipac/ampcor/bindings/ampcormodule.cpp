@@ -1,3 +1,4 @@
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include "ampcormodule.h"
 #include <cmath>
@@ -44,12 +45,12 @@ PyInit_ampcor()
 PyObject* setImageDatatype1_C(PyObject* self, PyObject* args)
 {
   char* type;
-  int len;
+  Py_ssize_t len;
   if( !PyArg_ParseTuple(args,"s#",&type,&len) )
   {
     return NULL;
   }
-  setImageDatatype1_f(type,len);
+  setImageDatatype1_f(type, Py_SAFE_DOWNCAST(len, Py_ssize_t, int));
   return Py_BuildValue("i",0);
 }
 
@@ -79,12 +80,12 @@ PyObject* setImageLength1_C(PyObject* self, PyObject* args)
 PyObject* setImageDatatype2_C(PyObject* self, PyObject* args)
 {
   char* type;
-  int len;
+  Py_ssize_t len;
   if( !PyArg_ParseTuple(args,"s#",&type,&len) )
   {
     return NULL;
   }
-  setImageDatatype2_f(type,len);
+  setImageDatatype2_f(type, Py_SAFE_DOWNCAST(len, Py_ssize_t, int));
   return Py_BuildValue("i",0);
 }
 

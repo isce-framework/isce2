@@ -30,7 +30,7 @@
 
 
 
-from collections import MutableSequence
+from collections.abc import MutableSequence
 from iscesys.Component.Component import Component
 import numpy as N
 import re

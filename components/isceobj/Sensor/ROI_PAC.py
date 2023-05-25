@@ -220,10 +220,10 @@ class ROI_PAC(Sensor):
         Populate some extra fields.
         """
         mdict = self.constants
-        self.dopplerVsRangePixel = [ float(mdict['DOPPLER_RANGE0']),
-                                     float(mdict['DOPPLER_RANGE1']),
-                                     float(mdict['DOPPLER_RANGE2']),
-                                     float(mdict['DOPPLER_RANGE3']) ]
+        prf=float(mdict['PRF'])
+        self.frame._dopplerVsPixel = [float(mdict['DOPPLER_RANGE0'])*prf,
+                                      float(mdict['DOPPLER_RANGE1'])*prf,
+                                      float(mdict['DOPPLER_RANGE2'])*prf ]
 
     def extractImage(self):
         """Extract the raw image data"""
@@ -236,14 +236,16 @@ class ROI_PAC(Sensor):
         """
         Return the doppler centroid as defined in the HDF5 file.
         """
+        self._populateExtras()
+        prf = float(self.constants['PRF'])
         quadratic = {}
-        dopp = self.dopplerVsRangePixel
+        dopp = self.frame._dopplerVsPixel
         mid = 0.5*(int(self.constants['WIDTH']) - int(self.constants['XMIN']))
-        fd_mid = dopp[0] + (dopp[1] + (dopp[2] + dopp[3]*mid)*mid)*mid
+        fd_mid = dopp[0] + (dopp[1] + dopp[2]*mid)*mid
 
-        quadratic['a'] = dopp[0]
-        quadratic['b'] = dopp[1]
-        quadratic['c'] = dopp[2]
+        quadratic['a'] = dopp[0]/prf
+        quadratic['b'] = dopp[1]/prf
+        quadratic['c'] = dopp[2]/prf                
         return quadratic
 
     rawFile = property(getRawFile, setRawFile)

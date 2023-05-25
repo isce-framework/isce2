@@ -1,5 +1,8 @@
 #include "cuAmpcorChunk.h"
+
 #include "cuAmpcorUtil.h"
+#include <cufft.h>
+#include <iostream>
 
 /**
  * Run ampcor process for a batch of images (a chunk)

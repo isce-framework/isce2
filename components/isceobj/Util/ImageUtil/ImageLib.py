@@ -67,8 +67,8 @@ fnDict = { 'cos':       np.cos,
 
 #######Current list of constants
 constDict = { "PI"  : np.pi,
-              "J"   : np.complex(0.0, 1.0),
-              "I"   : np.complex(0.0, 1.0),
+              "J"   : 1j,
+              "I"   : 1j,
               "E"   : np.exp(1.0),
               "NAN" : np.nan,
               "ROW" : None,

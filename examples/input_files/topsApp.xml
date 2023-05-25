@@ -156,8 +156,8 @@ By default, ESD is always performed.
 <!-- <<PHASE UNWRAPPING>>
              Phase unwrapping can be optionally turned off.
              Following unwrappers are currently available:
-             grass, icu, snaphu, snaphu_mcf-->
-<!--<property name="unwrap">True</property>-->
+             grass, icu, snaphu, snaphu_mcf, downsample_snaphu-->
+<!--<property name="do unwrap">True</property>-->
 <!--<property name="unwrapper name">snaphu_mcf</property>-->
 <!-- 2 Stage unwrapping option requires the following tags:-->
 <!--<property name="do unwrap">True</property> -->

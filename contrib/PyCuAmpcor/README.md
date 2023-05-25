@@ -59,8 +59,6 @@ You may also install PyCuAmpcor as a standalone package.
     # edit Makefile to provide the correct gdal include path and gpu architecture to NVCCFLAGS
     # call make to compile
     make
-    # install 
-    python3 setup.py install  
  ```
 
 ## 3. User Guide

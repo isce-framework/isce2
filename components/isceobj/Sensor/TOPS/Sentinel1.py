@@ -490,7 +490,7 @@ class Sentinel1(Component):
         for index in indices:
             aslice = slices[index]
 
-            offset = np.int(np.rint((aslice.product.bursts[0].burstStartUTC - t0).total_seconds() / burstStartInterval.total_seconds()))
+            offset = int(np.rint((aslice.product.bursts[0].burstStartUTC - t0).total_seconds() / burstStartInterval.total_seconds()))
 
             for kk in range(aslice.product.numberOfBursts):
                 #####Skip appending if burst also exists from previous scene

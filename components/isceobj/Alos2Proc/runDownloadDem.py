@@ -25,7 +25,7 @@ def runDownloadDem(self):
 
     bboxGeo = getBboxGeo(referenceTrack)
     bbox = np.array(bboxGeo)
-    bboxStr = '{} {} {} {}'.format(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
+    bboxStr = '{} {} {} {}'.format(int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3])))
 
 
     #get 1 arcsecond dem for coregistration
@@ -92,12 +92,12 @@ def runDownloadDem(self):
 
         #cmd = 'wbd.py {}'.format(bboxStr)
         #runCmd(cmd)
-        download_wbd(np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3])))
+        download_wbd(int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3])))
         #cmd = 'fixImageXml.py -i swbdLat_*_*_Lon_*_*.wbd -f'
         #runCmd(cmd)
         #cmd = 'rm *.log'
         #runCmd(cmd)
-        
+
         #replace the above system calls with function calls
         imagePathXml((glob.glob('swbdLat_*_*_Lon_*_*.wbd'))[0], fullPath=True)
         filesRemoved = glob.glob('*.log')
@@ -132,9 +132,9 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
 
     if demType == 'version3':
         if resolution == 1:
-            ds._url1 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
+            ds._url1 = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11'
         else:
-            ds._url3 = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
+            ds._url3 = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL3.003/2000.02.11'
     elif demType == 'nasadem':
         resolution = 1
         #this url is included in the module
@@ -151,7 +151,7 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
     ds.setFillingValue(fillingValue)
     ds.setFilling()
 
-    bbox = [np.int(np.floor(bbox[0])), np.int(np.ceil(bbox[1])), np.int(np.floor(bbox[2])), np.int(np.ceil(bbox[3]))]
+    bbox = [int(np.floor(bbox[0])), int(np.ceil(bbox[1])), int(np.floor(bbox[2])), int(np.ceil(bbox[3]))]
     if outputFile==None:
         outputFile = ds.defaultName(bbox)
 
@@ -166,7 +166,7 @@ def downloadDem(bbox, demType='version3', resolution=1, fillingValue=-32768, out
         print(k,'=',v)
 
 
-def download_wbd(s, n, w, e):
+def download_wbd(s, n, w, e, url=None):
     '''
     download water body
     water body. (0) --- land; (-1) --- water; (-2) --- no data.
@@ -192,6 +192,10 @@ def download_wbd(s, n, w, e):
     ############################################################
     sw = createManager('wbd')
     sw.configure()
+
+    # change the default url to the specified one.
+    if url and isinstance(url, str):
+        sw.url = url
 
     outputFile = sw.defaultName([latMin,latMax,lonMin,lonMax])
     if os.path.exists(outputFile) and os.path.exists(outputFile+'.xml'):

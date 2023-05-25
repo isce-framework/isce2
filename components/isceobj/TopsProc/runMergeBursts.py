@@ -141,7 +141,7 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
         avalidList = list(range(1, nalks+1))
         avalidList.reverse()
     else:
-        avalidList = [np.int(np.around(avalid))]
+        avalidList = [int(np.around(avalid))]
     
     avalidnum = len(avalidList)
     for i in range(avalidnum):
@@ -154,7 +154,7 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
         rvalidList = list(range(1, nrlks+1))
         rvalidList.reverse()
     else:
-        rvalidList = [np.int(np.around(rvalid))]
+        rvalidList = [int(np.around(rvalid))]
 
     rvalidnum = len(rvalidList)
     for i in range(rvalidnum):
@@ -233,8 +233,8 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
             nburst = len(swaths[i].bursts)
             for j in range(nburst):
 
-                #offsample = np.int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
-                offline = np.int(np.round( (swaths[i].bursts[j].sensingStart - sensingStart).total_seconds() / dt))
+                #offsample = int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
+                offline = int(np.round( (swaths[i].bursts[j].sensingStart - sensingStart).total_seconds() / dt))
 
                 #index in burst, index starts from 1
                 firstline = swaths[i].bursts[j].firstValidLine + 1
@@ -302,7 +302,7 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
     #     firstcolumn0 = []
     #     lastcolumn0 = []       
     #     for j in range(nburst):
-    #         offsample = np.int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
+    #         offsample = int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
     #         #index in merged image, index starts from 1
     #         firstcolumn0.append(swaths[i].bursts[j].firstValidSample + 1 + offsample)
     #         lastcolumn0.append(firstcolumn + swaths[i].bursts[j].numValidSamples - 1 + offsample)
@@ -324,7 +324,7 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
 
     #     #index in burst, index starts from 0
     #     for j in range(nburst):
-    #         offsample = np.int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
+    #         offsample = int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
 
     #         swaths[i].bursts[j].firstValidSample = firstcolumnAdj - offsample - 1
     #         swaths[i].bursts[j].numValidSamples = lastcolumnAdj - firstcolumnAdj + 1
@@ -358,7 +358,7 @@ def adjustValidWithLooks(swaths, box, nalks, nrlks, edge=0, avalid='strict', rva
             nburst = len(swaths[i].bursts)
             for j in range(nburst):
 
-                offsample = np.int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
+                offsample = int(np.round( (swaths[i].bursts[j].startingRange - nearRange)/dr))
 
                 #index in burst, index starts from 1
                 firstcolumn = swaths[i].bursts[j].firstValidSample + 1

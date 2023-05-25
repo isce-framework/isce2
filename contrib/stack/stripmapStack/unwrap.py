@@ -29,18 +29,18 @@
 
 
 
+import os
+import sys
+import time
+import argparse
+import shelve
 
 import isce
-import sys
 import isceobj
-from contrib.Snaphu.Snaphu import Snaphu
 from isceobj.Constants import SPEED_OF_LIGHT
-import argparse
-import os
-import pickle
-import sys
-import shelve
+from contrib.Snaphu.Snaphu import Snaphu
 #from contrib.UnwrapComp.unwrapComponents import UnwrapComponents
+
 
 def createParser():
     '''
@@ -88,9 +88,6 @@ def extractInfoFromPickle(pckfile, inps):
     '''
     from isceobj.Planet.Planet import Planet
     from isceobj.Util.geo.ellipsoid import Ellipsoid
-
-   # with open(pckfile, 'rb') as f:
-   #    frame = pickle.load(f)
 
     with shelve.open(pckfile,flag='r') as db:
        # frame = db['swath']
@@ -292,6 +289,7 @@ def main(iargs=None):
     '''
     The main driver.
     '''
+    start_time = time.time()
 
     inps = cmdLineParse(iargs)
     print(inps.method)
@@ -337,6 +335,10 @@ def main(iargs=None):
 
     elif inps.method == 'icu':
         runUnwrapIcu(inps.intfile, inps.unwprefix + '_icu.unw')
+
+    # time usage
+    m, s = divmod(time.time() - start_time, 60)
+    print('time used: {:02.0f} mins {:02.1f} secs.'.format(m, s))
 
 
 if __name__ == '__main__':

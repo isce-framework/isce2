@@ -19,11 +19,11 @@ from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
 
 EXAMPLE = '''example
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0
 
   # offset and its geometry
   # tip: re-run with --full/out-geom and without --redo to generate geometry only
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2 --full-geom ./geom_reference --out-geom ./offset/geom_reference
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
 
@@ -42,7 +42,9 @@ def createParser():
     parser.add_argument('-s', '--secondary',type=str, dest='secondary', required=True,
                         help='Secondary image')
     parser.add_argument('--fix-xml','--fix-image-xml', dest='fixImageXml', action='store_true',
-                        help='Fix the image file path in the XML file. Enable this if input files havee been moved.')
+                        help='Fix the image file path in the XML file. Enable this if input files have been moved.')
+    parser.add_argument('--fix-vrt','--fix-image-vrt', dest='fixImageVrt', action='store_true',
+                        help='Fix the image file path in the VRT file. Enable this if input files have VRT pointing to non-existing burst files')
 
     parser.add_argument('--op','--outprefix','--output-prefix', type=str, dest='outprefix',
                         default='offset', required=True,
@@ -179,6 +181,12 @@ def estimateOffsetField(reference, secondary, inps=None):
             img.filename = fname
             img.setAccessMode('READ')
             img.renderHdr()
+
+    if inps.fixImageVrt:
+        for fname in [reference, secondary]:
+            fname = os.path.abspath(fname)
+            img = IML.loadImage(fname)[0]
+            img.renderVRT()
 
     ###Loading the secondary image object
     sim = isceobj.createSlcImage()

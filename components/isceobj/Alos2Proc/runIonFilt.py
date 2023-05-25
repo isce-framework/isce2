@@ -441,11 +441,11 @@ def adaptive_gaussian_v0(ionos, wgt, size_max, size_min):
     #sigma of window size: size_max
     sigma = size_max / 2.0
     for i in range(size_num):
-        size2 = np.int(np.around(size[i]))
+        size2 = int(np.around(size[i]))
         if size2 % 2 == 0:
             size2 += 1
         if (i+1) % 10 == 0:
-            print('min win: %4d, max win: %4d, current win: %4d'%(np.int(np.around(size_min)), np.int(np.around(size_max)), size2))
+            print('min win: %4d, max win: %4d, current win: %4d'%(int(np.around(size_min)), int(np.around(size_max)), size2))
         g2d = gaussian(size2, sigma*size2/size_max, scale=1.0)
         scale = ss.fftconvolve(wgt, g2d, mode='same')
         flt[:, :, i] = ss.fftconvolve(ionos*wgt, g2d, mode='same') / (scale + (scale==0))

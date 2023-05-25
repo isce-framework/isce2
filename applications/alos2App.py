@@ -475,9 +475,9 @@ DELETE_GEOMETRY_FILES = Application.Parameter('deleteGeometryFiles',
 #normally we only have to set the following parameters.
 #a good set of parameters other than default is:
 #    <property name="dense offset estimation window width">128</property>
-#    <property name="dense offset estimation window hight">128</property>
+#    <property name="dense offset estimation window height">128</property>
 #    <property name="dense offset skip width">64</property>
-#    <property name="dense offset skip hight">64</property>
+#    <property name="dense offset skip height">64</property>
 
 OFFSET_WINDOW_WIDTH = Application.Parameter('offsetWindowWidth',
                                 public_name='dense offset estimation window width',
@@ -487,11 +487,11 @@ OFFSET_WINDOW_WIDTH = Application.Parameter('offsetWindowWidth',
                                 doc='dense offset estimation window width')
 
 OFFSET_WINDOW_HEIGHT = Application.Parameter('offsetWindowHeight',
-                                public_name='dense offset estimation window hight',
+                                public_name='dense offset estimation window height',
                                 default=64,
                                 type=int,
                                 mandatory=False,
-                                doc='dense offset estimation window hight')
+                                doc='dense offset estimation window height')
 
 #NOTE: actual number of resulting correlation pixels: offsetSearchWindowWidth*2+1
 OFFSET_SEARCH_WINDOW_WIDTH = Application.Parameter('offsetSearchWindowWidth',
@@ -503,11 +503,11 @@ OFFSET_SEARCH_WINDOW_WIDTH = Application.Parameter('offsetSearchWindowWidth',
 
 #NOTE: actual number of resulting correlation pixels: offsetSearchWindowHeight*2+1
 OFFSET_SEARCH_WINDOW_HEIGHT = Application.Parameter('offsetSearchWindowHeight',
-                                public_name='dense offset search window hight',
+                                public_name='dense offset search window height',
                                 default=8,
                                 type=int,
                                 mandatory=False,
-                                doc='dense offset search window hight')
+                                doc='dense offset search window height')
 
 OFFSET_SKIP_WIDTH = Application.Parameter('offsetSkipWidth',
                                 public_name='dense offset skip width',
@@ -517,11 +517,11 @@ OFFSET_SKIP_WIDTH = Application.Parameter('offsetSkipWidth',
                                 doc='dense offset skip width')
 
 OFFSET_SKIP_HEIGHT = Application.Parameter('offsetSkipHeight',
-                                public_name='dense offset skip hight',
+                                public_name='dense offset skip height',
                                 default=32,
                                 type=int,
                                 mandatory=False,
-                                doc='dense offset skip hight')
+                                doc='dense offset skip height')
 
 OFFSET_COVARIANCE_OVERSAMPLING_FACTOR = Application.Parameter('offsetCovarianceOversamplingFactor',
                                 public_name='dense offset covariance surface oversample factor',

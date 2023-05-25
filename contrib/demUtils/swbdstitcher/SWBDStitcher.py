@@ -47,7 +47,7 @@ from contrib.demUtils.DemStitcher import DemStitcher
 from isceobj.Image import createImage
 #Parameters definitions
 URL = Component.Parameter('_url',
-    public_name = 'URL',default = 'http://e4ftl01.cr.usgs.gov/SRTM/SRTMSWBD.003/2000.02.11',
+    public_name = 'URL',default = 'https://e4ftl01.cr.usgs.gov/SRTM/SRTMSWBD.003/2000.02.11',
     type = str,
     mandatory = False,
     doc = "Url for the high resolution water body mask")
@@ -121,8 +121,8 @@ class SWBDStitcher(DemStitcher):
         deltaLon  = maskim.coord1.coordDelta
         #remember mask starts from top left corner
         #deltaLat < 0
-        lati = np.clip(((lat - startLat)/deltaLat).astype(np.int), 0, mask.shape[0]-1)
-        loni = np.clip(((lon - startLon)/deltaLon).astype(np.int), 0, mask.shape[1]-1)
+        lati = np.clip(((lat - startLat)/deltaLat).astype(int), 0, mask.shape[0]-1)
+        loni = np.clip(((lon - startLon)/deltaLon).astype(int), 0, mask.shape[1]-1)
         cropped = (mask[lati,loni] + 1).astype(maskim.toNumpyDataType())
         cropped = np.reshape(cropped,(latim.coord2.coordSize,latim.coord1.coordSize))
         cropped.tofile(output)

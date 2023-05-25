@@ -76,7 +76,7 @@ def getDopplerMethod(sensor):
     Return appropriate doppler method based on user input.
     '''
 
-    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','cosmo_skymed','ers_envisat_slc','sicd_rgzero', 'iceye_slc', 'uavsar_hdf5_slc', 'saocom_slc']:
+    if str(sensor).lower() in ["terrasarx","cosmo_skymed_slc","radarsat2",'tandemx', 'kompsat5','risat1_slc','sentinel1', 'alos2','ers_slc','alos_slc','envisat_slc', 'uavsar_rpi','cosmo_skymed','ers_envisat_slc','sicd_rgzero', 'iceye_slc', 'uavsar_hdf5_slc', 'saocom_slc', 'roi_pac']:
         res =  'useDEFAULT'
     else:
         res =  'useDOPIQ'

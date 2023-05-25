@@ -2,19 +2,19 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Copyright 2012 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # United States Government Sponsorship acknowledged. This software is subject to
 # U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
 # (No [Export] License Required except when exporting to an embargoed country,
@@ -47,10 +47,10 @@ DATA_EXT = Component.Parameter('_dataExt',
     mandatory = False,
     doc = 'Extension of the data such as .hgt')
 URL = Component.Parameter('_url',
-    public_name = 'URL',default = 'http://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11',
+    public_name = 'URL',default = 'https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11',
     type = str,
     mandatory = False,
-    doc = "Url for the high resolution DEM.") 
+    doc = "Url for the high resolution DEM.")
 DTYPE = Component.Parameter('_dtype',
     public_name = 'dtype',
     default = 'SHORT',
@@ -95,7 +95,7 @@ class Dem1Manager(SRTMManager):
             self.outputFile = self.defaultName([min(lats[0],lats[1]),max(lats[0],lats[1]),
                                                 min(lons[0],lons[1]),max(lons[0],lons[1])])
         return super(Dem1Manager,self).stitch(lats,lons)
-       
+
     ## Corrects the self._image from EGM96 to WGS84 and viceversa.
     #@param image \c Image if provided is used instead of the instance attribute self._image
     #@param conversionType \c int -1 converts from  EGM96 to WGS84, 1 converts from  WGS84 to EGM96
@@ -107,7 +107,7 @@ class Dem1Manager(SRTMManager):
             )
         cg = Correct_geoid_i2_srtm()
         return cg(image,conversionType) if image else cg(self._image,conversionType)
-         
+
     def createImage(self,lats,lons,filename):
         img = createDemImage()
         lons = np.sort(lons)
@@ -118,7 +118,7 @@ class Dem1Manager(SRTMManager):
         img.coord2.coordStart = np.sort(lats)[-1]
         img.coord2.coordDelta = -1./self._tileWidth
         return img
-    
+
     def defaultName(self,snwe):
         latMin = np.floor(snwe[0])
         latMax = np.ceil(snwe[1])
@@ -141,4 +141,3 @@ class Dem1Manager(SRTMManager):
     def updateParameters(self):
         self.extendParameterList(SRTMManager,Dem1Manager)
         super(Dem1Manager,self).updateParameters()
-   

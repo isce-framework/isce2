@@ -3,6 +3,7 @@
 
 import os
 import argparse
+import glob
 import isce
 import isceobj
 from isceobj.Util.ImageUtil import ImageLib as IML
@@ -14,7 +15,7 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser(description='Fixes pathnames in ISCE image XML files. Can be used to do more things in the future.')
-    parser.add_argument('-i', '--input', type=str, required=True, dest='infile',
+    parser.add_argument('-i', '--input', type=str, nargs='+', required=True, dest='infile',
             help = 'Input image for which the XML file needs to be fixed.')
 
     fname = parser.add_mutually_exclusive_group(required=True)
@@ -33,20 +34,19 @@ if __name__ == '__main__':
     '''
     inps = cmdLineParse()
 
-    if inps.infile.endswith('.xml'):
-        inps.infile = os.path.splitext(inps.infile)[0]
+    for fname in inps.infile:
+        if fname.endswith('.xml'):
+            fname = os.path.splitext(fname)[0]
+        print('fixing xml file path for file: {}'.format(fname))
 
-    dirname  = os.path.dirname(inps.infile)
+        if inps.full:
+            fdir = os.path.dirname(fname)
+            fname = os.path.abspath(os.path.join(fdir, os.path.basename(fname)))
+        else:
+            fname = os.path.basename(os.path.basename(fname))
 
-    img = IML.loadImage(inps.infile)[0]
-
-    if inps.full:
-        fname = os.path.abspath( os.path.join(dirname, os.path.basename(inps.infile)))
-    else:
-        fname = os.path.basename( os.path.basename(inps.infile))
-
-    img.filename = fname
-    img.setAccessMode('READ')
-    img.renderHdr()
-
+        img = IML.loadImage(fname)[0]
+        img.filename = fname
+        img.setAccessMode('READ')
+        img.renderHdr()
 
