@@ -1355,7 +1355,7 @@ class run(object):
                     configObj.defoMax = '2'
                     configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
                     configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
-                    configObj.rmfilter = False
+                    configObj.rmFilter = False
                     configObj.unwMethod = 'snaphu'
                     configObj.unwrap(function)
 
@@ -1373,7 +1373,7 @@ class run(object):
                     configObj.defoMax = '2'
                     configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
                     configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
-                    configObj.rmfilter = False
+                    configObj.rmFilter = False
                     configObj.unwMethod = 'snaphu'
                     configObj.unwrap(function)
 
