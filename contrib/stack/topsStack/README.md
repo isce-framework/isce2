@@ -186,7 +186,7 @@ Ionospheric phase estimation has more requirements than regular InSAR processing
 In stack ionospheric phase estimation, acquistions with same swath starting ranges are put in a group. A network is formed within a group. Extra pairs are also processed to connect the different groups so that all acquistions are connected. But we need to estimate a phase offset for these extra pairs, which might not be accurate. Therefore, for a particualr swath starting ranges, if there are only a few acquistions, it's better to just discard them so that we don't have to estimate the phase offsets.
 
 ```
-s1_select_ion.py -dir data/slc -sn 33.550217/37.119545 -nr 10
+s1_select_ion.py -dir data/slc -sn 33.550217 37.119545 -nr 10
 ```
 
 Acquistions to be used need to fully cover the south/north bounds. After running this command, acquistion not to be used will be put in a folder named 'not_used'. It's OK to run this command multiple times.
