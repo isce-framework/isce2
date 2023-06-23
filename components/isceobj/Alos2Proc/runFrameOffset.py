@@ -97,18 +97,23 @@ def frameOffset(track, image, outputfile, crossCorrelation=True, matchingMode=0)
         swath1 = track.frames[j-1].swaths[0]
         swath2 = track.frames[j].swaths[0]
 
+        #consider frame/swath azimuth sensing start differences caused by swath mosaicking
+        # tested with alos2App.py, alos2burstApp.py and alosStack
+        frame1 = track.frames[j-1]
+        frame2 = track.frames[j]
+        delta_az = -((frame2.sensingStart - frame1.sensingStart).total_seconds() - (swath2.sensingStart - swath1.sensingStart).total_seconds()) / swath1.azimuthLineInterval
 
         #offset from geometry
         offsetGeometrical = computeFrameOffset(swath1, swath2)
         rangeOffsetGeometrical.append(offsetGeometrical[0])
-        azimuthOffsetGeometrical.append(offsetGeometrical[1])
+        azimuthOffsetGeometrical.append(offsetGeometrical[1]+delta_az)
 
         #offset from cross-correlation
         if crossCorrelation:
             offsetMatching = estimateFrameOffset(swath1, swath2, image1, image2, matchingMode=matchingMode)
             if offsetMatching != None:
                 rangeOffsetMatching.append(offsetMatching[0])
-                azimuthOffsetMatching.append(offsetMatching[1])
+                azimuthOffsetMatching.append(offsetMatching[1]+delta_az)
             else:
                 print('******************************************************************')
                 print('WARNING: bad matching offset, we are forced to use')
