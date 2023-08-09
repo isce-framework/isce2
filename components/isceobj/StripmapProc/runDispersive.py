@@ -251,7 +251,7 @@ def rotate(k , theta):
         xR = AR[0,:].reshape(Sy,Sx)
         yR = AR[1,:].reshape(Sy,Sx)
 
-        k = griddata((x.flatten(),y.flatten()),k.flatten(),(xR,yR), interp='linear')
+        k = griddata((x.flatten(),y.flatten()),k.flatten(),(xR,yR), method='linear')
         #k = f(xR, yR)
         k = k.data
         k[np.isnan(k)] = 0.0
