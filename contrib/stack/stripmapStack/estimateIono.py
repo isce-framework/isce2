@@ -358,7 +358,7 @@ def rotate(k , theta):
 
         k = griddata((x.flatten(),y.flatten()),k.flatten(),(xR,yR), method='linear')
         #k = f(xR, yR)
-        k = k.data
+        #k = k.data
         k[np.isnan(k)] = 0.0
         a = 1./np.sum(k)
         k = a*k
