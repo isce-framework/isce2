@@ -335,6 +335,7 @@ def Gaussian_kernel(Sx, Sy, sig_x,sig_y):
     return k
 
 def rotate(k , theta):
+    from matplotlib import mlab
 
     Sy,Sx = np.shape(k)
     x,y = np.meshgrid(np.arange(Sx),np.arange(Sy))
