@@ -335,7 +335,7 @@ def Gaussian_kernel(Sx, Sy, sig_x,sig_y):
     return k
 
 def rotate(k , theta):
-    from matplotlib import mlab
+
 
     Sy,Sx = np.shape(k)
     x,y = np.meshgrid(np.arange(Sx),np.arange(Sy))
@@ -349,13 +349,14 @@ def rotate(k , theta):
 
     A=np.vstack((x.flatten(), y.flatten()))
     if theta!=0:
+        from scipy.interpolate import griddata
         theta = theta*np.pi/180.
         R = np.array([[np.cos(theta), -1.0*np.sin(theta)],[np.sin(theta), np.cos(theta)]])
         AR = np.dot(R,A)
         xR = AR[0,:].reshape(Sy,Sx)
         yR = AR[1,:].reshape(Sy,Sx)
 
-        k = mlab.griddata(x.flatten(),y.flatten(),k.flatten(),xR,yR, interp='linear')
+        k = griddata((x.flatten(),y.flatten()),k.flatten(),(xR,yR), interp='linear')
         #k = f(xR, yR)
         k = k.data
         k[np.isnan(k)] = 0.0
