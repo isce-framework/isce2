@@ -336,7 +336,6 @@ def Gaussian_kernel(Sx, Sy, sig_x,sig_y):
 
 def rotate(k , theta):
 
-
     Sy,Sx = np.shape(k)
     x,y = np.meshgrid(np.arange(Sx),np.arange(Sy))
 
