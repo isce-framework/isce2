@@ -304,7 +304,7 @@ int nLinesPossible(int length, int width) {
     // printf("GPU Memory to be used %ld\n", freeByte);
     // printf("Device has roughly %.4f GB of memory, ", double(totalByte)/1.e9);
     // determine the allowed max lines per run, 556 is per pixel memory usage (estimated)
-    linesPerRun = freeByte / (7*sizeof(double) * width);
+    linesPerRun = freeByte / (8*sizeof(double) * width);
     assert(linesPerRun>0);
     printf("and can process roughly %d lines (each with %d pixels) per run.\n", linesPerRun, width);
     return linesPerRun;
