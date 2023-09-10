@@ -8,7 +8,6 @@ import glob
 from isceobj.Util import Poly1D
 from isceobj.Planet.AstronomicalHandbook import Const
 import os
-from mroipac.dopiq.DopIQ import DopIQ
 import copy
 
 def cmdLineParse():
@@ -38,7 +37,7 @@ def unpack(rawname, hdrname, slcname):
     date = os.path.basename(slcname)
     obj = createSensor('ROI_PAC')
     obj.configure()
-    obj._rawFile = rawname
+    obj._rawFile = os.path.abspath(rawname)
     obj._hdrFile = hdrname
     obj.output = os.path.join(slcname, date+'.raw')
 
@@ -47,25 +46,7 @@ def unpack(rawname, hdrname, slcname):
     print(obj.output)
     obj.extractImage()
     obj.frame.getImage().renderHdr()
-
-
-    #####Estimate doppler
-    dop = DopIQ()
-    dop.configure()
-
-    img = copy.deepcopy(obj.frame.getImage())
-    img.setAccessMode('READ')
-
-    dop.wireInputPort('frame', object=obj.frame)
-    dop.wireInputPort('instrument', object=obj.frame.instrument)
-    dop.wireInputPort('image', object=img)
-    dop.calculateDoppler()
-    dop.fitDoppler()
-    fit = dop.quadratic
-    coef = [fit['a'], fit['b'], fit['c']]
-
-    print(coef)
-    obj.frame._dopplerVsPixel = [x*obj.frame.PRF for x in coef]
+    obj.extractDoppler()
 
     pickName = os.path.join(slcname, 'raw')
     with shelve.open(pickName) as db:
