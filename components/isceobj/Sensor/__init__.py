@@ -99,12 +99,15 @@ createSICD_RGZERO = partial(factory_template, 'SICD_RGZERO')
 createICEYE_SLC = partial(factory_template, 'ICEYE_SLC')
 createUAVSAR_Hdf5_SLC = partial(factory_template, 'UAVSAR_HDF5_SLC')
 createSAOCOM_SLC = partial(factory_template, 'SAOCOM_SLC')
+## test for CSG
+createCOSMO_SkyMed_G2_SLC = partial(factory_template,'COSMO_SkyMed_G2_SLC')
 
 SENSORS = {'ALOS' : createALOS,
            'ALOS_SLC' : createALOS_SLC,
            'ALOS2' : createALOS2,
            'COSMO_SKYMED' : createCOSMO_SkyMed,
            'COSMO_SKYMED_SLC' : createCOSMO_SkyMed_SLC,
+           'COSMO_SKYMED_G2_SLC' : createCOSMO_SkyMed_G2_SLC,
            'ENVISAT' : createEnviSAT,
            'ERS' : createERS,
            'ERS_SLC' : createERS_SLC,
