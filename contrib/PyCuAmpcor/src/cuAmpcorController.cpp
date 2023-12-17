@@ -168,8 +168,9 @@ void cuAmpcorController::runAmpcor()
 
     for (int ist=0; ist<param->nStreams; ist++)
     {
-        checkCudaErrors(cudaStreamDestroy(streams[ist]));
+        // cufftplan etc are stream dependent, need to be deleted before stream is destroyed
         delete chunk[ist];
+        checkCudaErrors(cudaStreamDestroy(streams[ist]));
     }
 
     delete referenceImage;
