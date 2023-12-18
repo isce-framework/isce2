@@ -462,7 +462,7 @@ void Topo::topo() {
         // use 100Mb as a rounding unit , may be adjusted
         size_t memoryRoundingUnit = 1024ULL * 1024ULL * 100;
         // memory to be used for each pixel in bytes, with 9 double elements per pixel
-        size_t pixelBytes = sizeof(double) * 9;
+        size_t pixelBytes = sizeof(double) * 10;
         // memory overhead for other shared parameters, in terms of memoryRoundUnit, or 200M
         size_t memoryOverhead = 2;
 
