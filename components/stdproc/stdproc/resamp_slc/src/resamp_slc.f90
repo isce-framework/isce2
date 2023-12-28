@@ -128,7 +128,7 @@
 
         !!!!All carriers are removed from the data up front
         do j = 1,inlength
-            call getLineSequential(slcInAccessor,cline,lineNum)
+            call getLineSequential_c(slcInAccessor,cline,lineNum)
             r_at = j
 
             !$OMP PARALLEL DO private(i,r_rt,r_ph)&
@@ -150,7 +150,7 @@
       else
         lineNum=1
         do j = 1,inlength
-            call getLineSequential(slcInAccessor, rin(:,j), lineNum)
+            call getLineSequential_r4(slcInAccessor, rin(:,j), lineNum)
 
             if (mod(j,1000).eq.0) then
                 print *, 'At line ',j
@@ -172,11 +172,11 @@
             end if
 
             if(residazAccessor .ne. 0) then
-              call getLineSequential(residAzAccessor, residaz, lineNum)
+              call getLineSequential_r8(residAzAccessor, residaz, lineNum)
             endif
 
             if(residRgAccessor .ne. 0) then
-              call getLineSequential(residRgAccessor, residrg, lineNum)
+              call getLineSequential_r8(residRgAccessor, residrg, lineNum)
             endif
 
             cout=cmplx(0.,0.)
@@ -255,7 +255,7 @@
             end do
             !$OMP END PARALLEL DO
 
-            call setLineSequential(slcOutAccessor,cout)
+            call setLineSequential_c(slcOutAccessor,cout)
         enddo
 
      !!!!!Interpolation of real images
