@@ -4,7 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
+
+extern "C" {
 
 void rewindAccessor_f(uint64_t * ptDataAccessor)
 {
@@ -24,15 +25,47 @@ void setLineSequential_f(uint64_t * ptDataAccessor,  char * dataLine)
 {
     ((DataAccessor * ) (* ptDataAccessor))->setLineSequential(dataLine);
 }
+void setlinesequential_c_(uint64_t* acc, char* data)
+{
+    setLineSequential_f(acc, data);
+}
+void setlinesequential_r4_(uint64_t* acc, char* data)
+{
+    setLineSequential_f(acc, data);
+}
+void setlinesequential_r8_(uint64_t* acc, char* data)
+{
+    setLineSequential_f(acc, data);
+}
 void setLineSequentialBand_f(uint64_t * ptDataAccessor, char * dataLine, int * band)
 {
     (*band) -=1;
     ((DataAccessor * ) (* ptDataAccessor))->setLineSequentialBand(dataLine, (*band));
     (*band) +=1;
 }
+void setlinesequentialband_c_(uint64_t* acc, char* data, int* band)
+{
+    setLineSequentialBand_f(acc, data, band);
+}
+void setlinesequentialband_r4_(uint64_t* acc, char* data, int* band)
+{
+    setLineSequentialBand_f(acc, data, band);
+}
 void getLineSequential_f(uint64_t * ptDataAccessor,  char * dataLine, int * ptFlag) 
 {
     (*ptFlag) =  ((DataAccessor * ) (* ptDataAccessor))->getLineSequential(dataLine);
+}
+void getlinesequential_c_(uint64_t* acc,  char* data, int* flag)
+{
+    getLineSequential_f(acc, data, flag);
+}
+void getlinesequential_r4_(uint64_t* acc,  char* data, int* flag)
+{
+    getLineSequential_f(acc, data, flag);
+}
+void getlinesequential_r8_(uint64_t* acc,  char* data, int* flag)
+{
+    getLineSequential_f(acc, data, flag);
 }
 void getLineSequentialBand_f(uint64_t * ptDataAccessor, char * dataLine, int *band, int *ptFlag)
 {
@@ -41,12 +74,28 @@ void getLineSequentialBand_f(uint64_t * ptDataAccessor, char * dataLine, int *ba
     (*band) +=1;
     (*ptFlag) = flag;
 }
+void getlinesequentialband_c_(uint64_t* acc, char* data, int *band, int* flag)
+{
+    getLineSequentialBand_f(acc, data, band, flag);
+}
+void getlinesequentialband_r4_(uint64_t* acc, char* data, int *band, int* flag)
+{
+    getLineSequentialBand_f(acc, data, band, flag);
+}
 void setLine_f(uint64_t * ptDataAccessor,  char * dataLine, int * ptLine) 
 {
     // fortran is one based
     (*ptLine) -= 1;
     ((DataAccessor * ) (* ptDataAccessor))->setLine(dataLine, (*ptLine));
     (*ptLine) += 1;
+}
+void setline_c_(uint64_t* acc,  char* data, int* line)
+{
+    setLine_f(acc, data, line);
+}
+void setline_r4_(uint64_t* acc,  char* data, int* line)
+{
+    setLine_f(acc, data, line);
 }
 void setLineBand_f(uint64_t * ptDataAccessor, char * dataLine, int * ptLine, int * band)
 {
@@ -55,6 +104,10 @@ void setLineBand_f(uint64_t * ptDataAccessor, char * dataLine, int * ptLine, int
     ((DataAccessor * ) (* ptDataAccessor))->setLineBand(dataLine, (*ptLine), (*band));
     (*ptLine) += 1;
     (*band) +=1;
+}
+void setlineband_r4_(uint64_t* acc, char* data, int* line, int* band)
+{
+    setLineBand_f(acc, data, line, band);
 }
 void getLine_f(uint64_t * ptDataAccessor,  char * dataLine, int * ptLine) 
 {
@@ -70,6 +123,14 @@ void getLine_f(uint64_t * ptDataAccessor,  char * dataLine, int * ptLine)
         (*ptLine) += 1;
     }
 }
+void getline_r4_(uint64_t* acc,  char* data, int* line)
+{
+    getLine_f(acc, data, line);
+}
+void getline_r8_(uint64_t* acc,  char* data, int* line)
+{
+    getLine_f(acc, data, line);
+}
 void getLineBand_f(uint64_t * ptDataAccessor, char * dataLine, int *band, int *ptLine)
 {
     int ptLine1, band1;
@@ -84,6 +145,14 @@ void getLineBand_f(uint64_t * ptDataAccessor, char * dataLine, int *band, int *p
 //    {
 //        (*ptLine) +=1;
 //    }
+}
+void getlineband_c_(uint64_t* acc, char* data, int* band, int* line)
+{
+    getLineBand_f(acc, data, band, line);
+}
+void getlineband_r4_(uint64_t* acc, char* data, int* band, int* line)
+{
+    getLineBand_f(acc, data, band, line);
 }
 
 void setSequentialElements_f(uint64_t * ptDataAccessor,  char * dataLine, int * ptRow, int * ptCol, int * ptNumEl) 
@@ -159,4 +228,6 @@ void setLineOffset_f(uint64_t * ptDataAccessor,int * lineoff)
 int getLineOffset_f(uint64_t * ptDataAccessor)
 {
   return ((DataAccessor * ) (* ptDataAccessor))->getLineOffset();
+}
+
 }

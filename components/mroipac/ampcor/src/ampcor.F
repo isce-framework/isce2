@@ -480,7 +480,7 @@
                if ((i_lineno .lt. 1).or.(i_lineno .gt. i_lines(1))) then
                     c_refimg(:,i_yy) = cmplx(0.,0.)
                else
-                    call getLineBand(imgAccessor1, c_refimg(:,i_yy), i_xx, i_lineno)
+                    call getLineBand_c(imgAccessor1, c_refimg(:,i_yy), i_xx, i_lineno)
                endif
 
                if(i_mag1 .ne. 0) then
@@ -500,7 +500,7 @@
                if ((i_lineno .lt. 1).or.(i_lineno .gt. i_lines(1))) then
                     r_refimg(:,i_yy) = 0.0
                else
-                   call getLineBand(imgAccessor1, r_refimg(:,i_yy), i_xx, i_lineno)
+                   call getLineBand_r4(imgAccessor1, r_refimg(:,i_yy), i_xx, i_lineno)
                endif
 
                do i_xx=1,i_samples(1)
@@ -522,7 +522,7 @@
                if ((i_lineno .lt. 1).or.(i_lineno .gt. i_lines(2))) then
                     c_srchimg(:,i_yy) = cmplx(0.,0.)
                else
-                    call getLineBand(imgAccessor2, c_srchimg(:,i_yy), i_xx, i_lineno)
+                    call getLineBand_c(imgAccessor2, c_srchimg(:,i_yy), i_xx, i_lineno)
                endif
 
                 if(i_mag2 .ne. 0) then
@@ -544,7 +544,7 @@
                if ((i_lineno .lt. 1).or.(i_lineno .gt. i_lines(2))) then
                     r_srchimg(:,i_yy) = 0.0
                else
-                   call getLineBand(imgAccessor2, r_srchimg(:,i_yy), i_xx, i_lineno)
+                   call getLineBand_r4(imgAccessor2, r_srchimg(:,i_yy), i_xx, i_lineno)
                endif
 
                do i_xx=1,i_samples(2)
