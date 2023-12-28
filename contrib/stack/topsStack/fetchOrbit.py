@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import numpy as np
+from types import SimpleNamespace
+import json
 import requests
 import re
 import os
 import argparse
 import datetime
-from html.parser import HTMLParser
 
 server = 'https://scihub.copernicus.eu/gnss/'
 
@@ -15,11 +15,6 @@ orbitMap = [('precise', 'AUX_POEORB'),
 
 datefmt = "%Y%m%dT%H%M%S"
 queryfmt = "%Y-%m-%d"
-queryfmt2 = "%Y/%m/%d/"
-
-#Generic credentials to query and download orbit files
-credentials = ('gnssguest', 'gnssguest')
-
 
 def cmdLineParse():
     '''
@@ -31,6 +26,11 @@ def cmdLineParse():
                         help='Path to SAFE package of interest')
     parser.add_argument('-o', '--output', dest='outdir', type=str, default='.',
                         help='Path to output directory')
+
+    parser.add_argument('-u', '--username', dest='username', type=str,
+                        help='Copernicus Data Space Ecosystem username')
+    parser.add_argument('-p', '--password', dest='password', type=str,
+                        help='Copernicus Data Space Ecosystem password')
 
     return parser.parse_args()
 
@@ -56,30 +56,7 @@ def FileToTimeStamp(safename):
     return tstamp, satName, sstamp
 
 
-class MyHTMLParser(HTMLParser):
-
-    def __init__(self,url):
-        HTMLParser.__init__(self)
-        self.fileList = []
-        self._url = url
-        
-    def handle_starttag(self, tag, attrs):
-        for name, val in attrs:
-            if name == 'href':
-                if val.startswith("https://scihub.copernicus.eu/gnss/odata") and val.endswith(")/"):
-                    pass
-                else:
-                    downloadLink = val.strip()
-                    downloadLink = downloadLink.split("/Products('Quicklook')")
-                    downloadLink = downloadLink[0] + downloadLink[-1]
-                    self._url = downloadLink
-                
-    def handle_data(self, data):
-        if data.startswith("S1") and data.endswith(".EOF"):
-            self.fileList.append((self._url, data.strip()))
-            
-
-def download_file(url, outdir='.', session=None):
+def download_file(file_id, outdir='.', session=None, token=None):
     '''
     Download file to specified directory.
     '''
@@ -87,9 +64,13 @@ def download_file(url, outdir='.', session=None):
     if session is None:
         session = requests.session()
 
+    url = "https://zipper.dataspace.copernicus.eu/odata/v1/"
+    url += f"Products({file_id})/$value"
+
     path = outdir
     print('Downloading URL: ', url)
-    request = session.get(url, stream=True, verify=True, auth=credentials)
+    request = session.get(url, stream=True, verify=True,
+                          headers = {"Authorization": f"Bearer {token}"})
 
     try:
         val = request.raise_for_status()
@@ -105,19 +86,6 @@ def download_file(url, outdir='.', session=None):
                     f.flush()
 
     return success
-
-
-def fileToRange(fname):
-    '''
-    Derive datetime range from orbit file name.
-    '''
-
-    fields = os.path.basename(fname).split('_')
-    start = datetime.datetime.strptime(fields[-2][1:16], datefmt)
-    stop = datetime.datetime.strptime(fields[-1][:15], datefmt)
-    mission = fields[0]
-
-    return (start, stop, mission)
 
 
 if __name__ == '__main__':
@@ -138,34 +106,72 @@ if __name__ == '__main__':
         delta = datetime.timedelta(days=1)
         timebef = (fileTS - delta).strftime(queryfmt)
         timeaft = (fileTS + delta).strftime(queryfmt)
-        url = server + 'search?q=( beginPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] AND endPosition:[{0}T00:00:00.000Z TO {1}T23:59:59.999Z] ) AND ( (platformname:Sentinel-1 AND filename:{2}_* AND producttype:{3}))&start=0&rows=100'.format(timebef,timeaft, satName,spec[1])
-        
+        url = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+
+        start_time = timebef + "T00:00:00.000Z"
+        stop_time = timeaft + "T23:59:59.999Z"
+
+        query = " and ".join([
+            f"ContentDate/Start gt '{start_time}'",
+            f"ContentDate/Start lt '{stop_time}'",
+            f"ContentDate/End gt '{start_time}'",
+            f"ContentDate/End lt '{stop_time}'",
+            f"startswith(Name,'{satName}')",
+            f"contains(Name,'{spec[1]}')",
+        ])
+
         success = False
         match = None
-  
+
         try:
-            r = session.get(url, verify=True, auth=credentials)
+            r = session.get(url, verify=True, params={"$filter": query})
             r.raise_for_status()
-            parser = MyHTMLParser(url)
-            parser.feed(r.text)
-            for resulturl, result in parser.fileList:
-                tbef, taft, mission = fileToRange(os.path.basename(result))
+
+            entries = json.loads(r.text, object_hook=lambda x: SimpleNamespace(**x)).value
+
+            for entry in entries:
+                entry_datefmt = "%Y-%m-%dT%H:%M:%S.000Z"
+                tbef = datetime.datetime.strptime(entry.ContentDate.Start, entry_datefmt)
+                taft = datetime.datetime.strptime(entry.ContentDate.End, entry_datefmt)
                 if (tbef <= fileTSStart) and (taft >= fileTS):
-                    matchFileName = result
-                    match = resulturl
+                    matchFileName = entry.Name
+                    match = entry.Id
 
             if match is not None:
                 success = True
         except:
-            pass
+            raise
 
         if success:
             break
 
     if match is not None:
+
+        username = inps.username
+        password = inps.password
+
+        if username is None:
+            username = input("Username: ")
+        if password is None:
+            import getpass
+            password = getpass.getpass("Password (will not be displayed): ")
+
+        data = {
+            "client_id": "cdse-public",
+            "username": username,
+            "password": password,
+            "grant_type": "password",
+        }
+
+        url = "https://identity.dataspace.copernicus.eu/"
+        url += "auth/realms/CDSE/protocol/openid-connect/token"
+        r = session.post(url, data=data)
+        r.raise_for_status()
+        token = r.json()["access_token"]
+
         output = os.path.join(inps.outdir, matchFileName)
-        res = download_file(match, output, session)
+        res = download_file(match, output, session, token)
         if res is False:
-            print('Failed to download URL: ', match)
+            print('Failed to download orbit ID:', match)
     else:
         print('Failed to find {1} orbits for tref {0}'.format(fileTS, satName))
