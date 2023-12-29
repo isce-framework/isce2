@@ -1643,7 +1643,6 @@ class sentinelSLC(object):
         # convert the pnts to a list
         from scipy.spatial import distance as dist
         import numpy as np
-        import cv2
         lats = []
         lons = []
         for pnt in pnts:
