@@ -94,6 +94,8 @@ if __name__ == '__main__':
     '''
 
     inps = cmdLineParse()
+    username = inps.username
+    password = inps.password
 
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
@@ -146,9 +148,6 @@ if __name__ == '__main__':
             break
 
     if match is not None:
-
-        username = inps.username
-        password = inps.password
 
         if username is None:
             username = input("Username: ")
