@@ -168,7 +168,7 @@ subroutine geocode(demAccessor,topophaseAccessor,demCropAccessor,losAccessor,geo
   !allocate(demi2(demwidth))
   lineNum = 1
   do i = 1,demlength
-      call getLineSequential(demAccessor,dem(:,i),lineNum)
+      call getLineSequential_r4(demAccessor,dem(:,i),lineNum)
       !do j=1,demwidth
       !   dem(j,i) = demi2(j)
       !enddo
@@ -454,7 +454,7 @@ subroutine geocode(demAccessor,topophaseAccessor,demCropAccessor,losAccessor,geo
 
      if(losAccessor.gt.0) then
          do i=1,plen
-            call setLineSequential(losAccessor, losang(:,i))
+            call setLineSequential_r4(losAccessor, losang(:,i))
          enddo
      endif
 

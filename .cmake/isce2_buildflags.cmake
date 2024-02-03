@@ -9,11 +9,6 @@ add_compile_options(
     $<$<COMPILE_LANGUAGE:Fortran>:-ffree-line-length-none>
     $<$<COMPILE_LANGUAGE:Fortran>:-fno-range-check>
     $<$<COMPILE_LANGUAGE:Fortran>:-fno-second-underscore>)
-if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" AND
-   CMAKE_Fortran_COMPILER_VERSION VERSION_GREATER_EQUAL 10)
-    add_compile_options(
-        $<$<COMPILE_LANGUAGE:Fortran>:-fallow-argument-mismatch>)
-endif()
 
 # Set up build flags for C++ and Fortran.
 set(CMAKE_CXX_STANDARD 11)
