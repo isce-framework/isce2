@@ -64,3 +64,5 @@ RUN set -ex \
 COPY --from=builder /tmp/isce*.deb /tmp/isce2.deb
 
 RUN dpkg -i /tmp/isce2.deb
+
+RUN ln -s /usr/lib/python3.8/dist-packages/isce2 /usr/lib/python3.8/dist-packages/isce
