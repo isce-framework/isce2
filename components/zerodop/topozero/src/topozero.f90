@@ -193,7 +193,7 @@
         !!!For detailed explanation of steps - see main loop below
         line=1
         !!!Doppler for geometry (not carrier) is const / range variant only
-        call getLine(dopAccessor, dopline, line)
+        call getLine_r8(dopAccessor, dopline, line)
         call getLine(slrngAccessor, rho, line)
 
         !!!First line
@@ -337,7 +337,7 @@
         do j=1,udemlength
             lineFile = j + ustarty - 1
 !            print *, 'Line: ', lineFile
-            call getLine(demAccessor,demline,lineFile)
+            call getLine_r4(demAccessor,demline,lineFile)
             dem(:,j) = demline(ustartx:uendx)
         enddo
 
@@ -714,15 +714,15 @@
          min_lon = min(minval(lon), min_lon)
          max_lon = max(maxval(lon), max_lon)
 !!         write(31,rec=line)(distance(j),j=1,width)
-         call setLineSequential(latAccessor, lat)
-         call setLineSequential(lonAccessor, lon)
-         call setLineSequential(heightAccessor, z)
+         call setLineSequential_r8(latAccessor, lat)
+         call setLineSequential_r8(lonAccessor, lon)
+         call setLineSequential_r8(heightAccessor, z)
          if(losAccessor.gt.0) then
-             call setLineSequential(losAccessor,losang)
+             call setLineSequential_r4(losAccessor,losang)
          endif
 
          if (incAccessor.gt.0) then
-             call setLineSequential(incAccessor, incang)
+             call setLineSequential_r4(incAccessor, incang)
          endif
 
 

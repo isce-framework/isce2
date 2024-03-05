@@ -226,7 +226,7 @@
              if(corrAcc.gt.0)then
                 do l=i_sl, i_el
 !c             write(CCUNIT,rec=j+l+1) (r_cc(k,l,1), k=0, infp%i_rsamps-1)
-                    call setLine(corrAcc,r_cc(0,l,1),j+l+1)
+                    call setLine_r4(corrAcc,r_cc(0,l,1),j+l+1)
                 end do 
             end if
          end if
@@ -235,7 +235,7 @@
              if(gccAcc .gt. 0)then
                 do l=i_sl, i_el
 !c             write(GCCUNIT,rec=j+l+1) (r_cc(k,l,2), k=0, infp%i_rsamps-1)
-                    call setLine(gccAcc,r_cc(0,l,2),j+l+1)
+                    call setLine_r4(gccAcc,r_cc(0,l,2),j+l+1)
                 end do 
             end if
          end if
@@ -244,10 +244,10 @@
              if(phsigcorrAcc .gt. 0) then
                 do l=i_sl, i_el
 !c             write(SIGMAUNIT,rec=j+l+1)(r_sigma(k,l), k=0, infp%i_rsamps-1)
-!c            setLine(sigmaAcc,r_sigma(0,l),j+l+1)
+!c            setLine_r4(sigmaAcc,r_sigma(0,l),j+l+1)
 
 !c             write(SIGMACCUNIT,rec=j+l+1)(r_cc(k,l,3), k=0, infp%i_rsamps-1)
-                    call setLine(phsigcorrAcc,r_cc(0,l,3),j+l+1)
+                    call setLine_r4(phsigcorrAcc,r_cc(0,l,3),j+l+1)
                 end do 
             end if
          end if
@@ -287,8 +287,8 @@
            do ia = i_sl, i_el
 !c              write(UNWUNIT,rec=(j+ia)+1)(r_unw(k,ia), k=0, infp
 !c     $             %i_rsamps-1)
-                call setLineBand(unwAcc, r_amp(0,ia),j+ia+1, b1)
-                call setLineBand(unwAcc, r_unw(0,ia),j+ia+1, b2)
+                call setLineBand_r4(unwAcc, r_amp(0,ia),j+ia+1, b1)
+                call setLineBand_r4(unwAcc, r_unw(0,ia),j+ia+1, b2)
            end do           
 
            if (conncompAcc.gt.0) then

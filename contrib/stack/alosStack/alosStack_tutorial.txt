@@ -1,6 +1,7 @@
 ######################################################################################
 # Tutorial for alosStack
 # Cunren Liang, October 2020
+# updated Eric Fielding, May 2023
 ######################################################################################
 
 This is the tutorial of alosStack processor.
@@ -11,10 +12,10 @@ This is the tutorial of alosStack processor.
 ###########################################
 
 Set environment variable 'ISCE_STACK'
-export ISCE_STACK=CODE_DIR/contrib/stack
+export ISCE_STACK=CODE_DIR/isce2/contrib/stack/
 
-where CODE_DIR is the directory of your isce code. Note that alosStack is not installed when you install
-the software, so CODE_DIR is your code directory rather than installation directory.
+where CODE_DIR is the directory of your isce code. The alosStack is not installed in your ISCE_HOME directory when you install
+the software, so CODE_DIR is your ISCE2 source code directory rather than installation directory.
 
 
 ###########################################
