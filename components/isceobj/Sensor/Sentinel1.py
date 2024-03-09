@@ -359,7 +359,6 @@ class Sentinel1(Sensor):
         self.frame.setNumberOfLines(lines)
         self.frame.setNumberOfSamples(samples)
         
-        self.frame.setPassDirection(passDirection)
 
     def extractOrbitFromAnnotation(self):
         '''
