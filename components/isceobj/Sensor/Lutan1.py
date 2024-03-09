@@ -233,10 +233,14 @@ class LuTan1(Sensor):
         lgth = self.frame.getNumberOfLines()
 
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
-        band = src.GetRasterBand(1)
+        band1 = src.GetRasterBand(1)
+        band2 = src.GetRasterBand(2)
+
         fid = open(self.output, 'wb')
         for ii in range(lgth):
-            data = band.ReadAsArray(0,ii,width,1)
+            data1 = band1.ReadAsArray(0,ii,width,1)
+            data2 = band2.ReadAsArray(0,ii,width,1)
+            data = data1 + 1j*data2
             data.tofile(fid)
 
         fid.close()
