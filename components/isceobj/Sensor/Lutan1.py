@@ -39,7 +39,7 @@ ORBIT_FILE = Component.Parameter('orbitFile',
                             doc = 'Orbit file')
 
 
-class LuTan1(Sensor):
+class Lutan1(Sensor):
 
     "Class for Lutan-1 SLC data"
     
