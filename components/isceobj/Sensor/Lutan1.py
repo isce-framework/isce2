@@ -49,7 +49,7 @@ class Lutan1(Sensor):
     parameter_list = (TIFF, ORBIT_FILE) + Sensor.parameter_list
 
     def __init__(self, name = ''):
-        super(LuTan1,self).__init__(self.__class__.family, name=name)
+        super(Lutan1,self).__init__(self.__class__.family, name=name)
         self.frame = Frame()
         self.frame.configure()
         self.xml_root = None
@@ -148,8 +148,8 @@ class Lutan1(Sensor):
         '''
 
         try:
-            orbitFile = "/Volumes/jupiter/LuTan-1/orbits/LT1A_20230228143413185_V20230209T235500_20230211T000500_ABSORBIT_SCIE.xml"
-            fp = open(orbitFile, 'r')
+            #orbitFile = "/Volumes/jupiter/LuTan-1/orbits/LT1A_20230228143413185_V20230209T235500_20230211T000500_ABSORBIT_SCIE.xml"
+            fp = open(self.orbitFile, 'r')
         except IOError as strerr:
             print("IOError: %s" % strerr)
         
@@ -262,7 +262,7 @@ class Lutan1(Sensor):
 
 
 
-k = LuTan1()
+#k = LuTan1()
 #k.extractOrbit()
 #k.extractOrbit()
 
