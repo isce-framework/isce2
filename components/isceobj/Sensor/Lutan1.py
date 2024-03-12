@@ -26,6 +26,14 @@ lookMap = { 'RIGHT' : -1,
 antennaLength = 9.8
 
 
+
+XML = Component.Parameter('xml',
+        public_name = 'xml',
+        default = None,
+        type = str,
+        doc = 'Input XML file')
+
+
 TIFF = Component.Parameter('tiff',
                             public_name ='tiff',
                             default = None,
@@ -52,16 +60,21 @@ class Lutan1(Sensor):
         super(Lutan1,self).__init__(self.__class__.family, name=name)
         self.frame = Frame()
         self.frame.configure()
-        self.xml_root = None
+        self._xml_root = None
 
 
     
     def parse(self):
+        xmlFileName = self.tiff[:-4] + "meta.xml"
+        self.xml = xmlFileName
+
         with open(self.xml, 'r') as fid:
             xmlstr = fid.read()
         
-        self.xml_root = ET.fromstring(xmlstr)
+        self._xml_root = ET.fromstring(xmlstr)
         self.populateMetadata()
+
+
 
 
     def convertToDateTime(self,string):
@@ -77,12 +90,13 @@ class Lutan1(Sensor):
 
         if res is None:
             raise Exception('Tag = %s not found'%(path))
+        
         return res
     
 
     def populateMetadata(self):
         mission = self.grab_from_xml('generalHeader/mission')
-        polarization = self.grab_from_xml('generalHeader/acquisitionInfo/polarisationMode')
+        polarization = self.grab_from_xml('productInfo/acquisitionInfo/polarisationMode')
         frequency = float(self.grab_from_xml('instrument/radarParameters/centerFrequency'))
         passDirection = self.grab_from_xml('productInfo/missionInfo/orbitDirection')
         rangePixelSize = float(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/columnSpacing units="m"'))
@@ -257,6 +271,8 @@ class Lutan1(Sensor):
         slcImage.setXmin(0)
         slcImage.setXmax(self.frame.getNumberOfSamples())
         self.frame.setImage(slcImage)
+
+    
 
 
 
