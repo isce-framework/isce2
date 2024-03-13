@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 import datetime
 import isce
 import isceobj
+from isceobj.Planet.Planet import Planet
 from iscesys.Component.Component import Component
 from isceobj.Sensor.Sensor import Sensor
 from isceobj.Scene.Frame import Frame
@@ -62,8 +63,6 @@ class Lutan1(Sensor):
         self.frame.configure()
         self._xml_root = None
 
-
-    
     def parse(self):
         xmlFileName = self.tiff[:-4] + "meta.xml"
         self.xml = xmlFileName
@@ -73,9 +72,6 @@ class Lutan1(Sensor):
         
         self._xml_root = ET.fromstring(xmlstr)
         self.populateMetadata()
-
-
-
 
     def convertToDateTime(self,string):
         dt = datetime.datetime.strptime(string,"%Y-%m-%dT%H:%M:%S.%f")
@@ -99,29 +95,29 @@ class Lutan1(Sensor):
         polarization = self.grab_from_xml('productInfo/acquisitionInfo/polarisationMode')
         frequency = float(self.grab_from_xml('instrument/radarParameters/centerFrequency'))
         passDirection = self.grab_from_xml('productInfo/missionInfo/orbitDirection')
-        rangePixelSize = float(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/columnSpacing units="m"'))
-        azimuthPixelSize = float(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/rowSpacing units="m"'))
+        rangePixelSize = float(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/columnSpacing'))
+        azimuthPixelSize = float(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/rowSpacing'))
         rangeSamplingRate = Const.c/(2.0*rangePixelSize)
 
         prf = float(self.grab_from_xml('instrument/settings/settingRecord/PRF'))
-        lines = int(self.grab_from_xml('productInfo/imageDataInfo/numberOfRows'))
-        samples = int(self.grab_from_xml('productInfo/imageDataInfo/numberOfColumns'))
+        lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
+        samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
 
-        startingRange = float(self.grab_from_xml('sceneInfo/rangeTime/firstPixel'))*Const.c/2.0
+        startingRange = float(self.grab_from_xml('productInfo/sceneInfo/rangeTime/firstPixel'))*Const.c/2.0
         #slantRange = float(self.grab_from_xml('productSpecific/complexImageInfo/'))
-        incidenceAngle = float(self.grab_from_xml('sceneInfo/sceneCenterCoord/incidenceAngle'))
-        dataStartTime = self.convertToDateTime(self.grab_from_xml('sceneInfo/start/timeUTC'))
-        dataStopTime = self.convertToDateTime(self.grab_from_xml('sceneInfo/stop/timeUTC'))
+        incidenceAngle = float(self.grab_from_xml('productInfo/sceneInfo/sceneCenterCoord/incidenceAngle'))
+        dataStartTime = self.convertToDateTime(self.grab_from_xml('productInfo/sceneInfo/start/timeUTC'))
+        dataStopTime = self.convertToDateTime(self.grab_from_xml('productInfo/sceneInfo/stop/timeUTC'))
 
 
-        pulseLength = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/pulseLength'))
-        pulseBandwidth = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/pulseBandwidth'))
+        pulseLength = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseLength'))
+        pulseBandwidth = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseBandwidth'))
         chirpSlope = pulseBandwidth/pulseLength
         lookSide = lookMap['RIGHT']
 
         # Platform parameters
         platform = self.frame.getInstrument().getPlatform()
-        platform.setPlanet(pname='Earth')
+        platform.setPlanet(Planet(pname='Earth'))
         platform.setMission(mission)
         platform.setPointingDirection(lookSide)
         platform.setAntennaLength(antennaLength)
@@ -134,7 +130,7 @@ class Lutan1(Sensor):
         instrument.ChirpSlope = chirpSlope
         instrument.setIncidenceAngle(incidenceAngle)
         instrument.setRangePixelSize(rangePixelSize)
-        instrument.RangeSamplingRate(rangeSamplingRate)
+        instrument.setRangeSamplingRate(rangeSamplingRate)
         instrument.setPulseLength(pulseLength)
 
         # Frame parameters
@@ -198,6 +194,7 @@ class Lutan1(Sensor):
             vec.setVelocity(vel)
             orb.addStateVector(vec)
             print("Velocity: ",vel)
+
         fp.close()
 
         return orb
@@ -247,11 +244,15 @@ class Lutan1(Sensor):
         lgth = self.frame.getNumberOfLines()
 
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
+        
+        # Assumed band 1 as real and band 2 as imaginary numbers
         band1 = src.GetRasterBand(1)
         band2 = src.GetRasterBand(2)
 
         fid = open(self.output, 'wb')
         for ii in range(lgth):
+            # Combine the real and imaginary to make
+            # them in to a complex numbers
             data1 = band1.ReadAsArray(0,ii,width,1)
             data2 = band2.ReadAsArray(0,ii,width,1)
             data = data1 + 1j*data2
@@ -272,15 +273,7 @@ class Lutan1(Sensor):
         slcImage.setXmax(self.frame.getNumberOfSamples())
         self.frame.setImage(slcImage)
 
-    
 
-
-
-
-
-#k = LuTan1()
-#k.extractOrbit()
-#k.extractOrbit()
 
 
 
