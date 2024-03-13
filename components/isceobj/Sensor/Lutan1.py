@@ -252,7 +252,7 @@ class Lutan1(Sensor):
         fid = open(self.output, 'wb')
         for ii in range(lgth):
             # Combine the real and imaginary to make
-            # them in to a complex numbers
+            # them in to complex numbers
             data1 = band1.ReadAsArray(0,ii,width,1)
             data2 = band2.ReadAsArray(0,ii,width,1)
             data = data1 + 1j*data2
