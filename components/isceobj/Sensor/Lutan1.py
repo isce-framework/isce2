@@ -7,6 +7,7 @@
 
 import os
 import glob
+import numpy as np
 import xml.etree.ElementTree as ET
 import datetime
 import isce
@@ -20,8 +21,6 @@ from isceobj.Planet.AstronomicalHandbook import Const
 from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTUtil
 from isceobj.Orbit.OrbitExtender import OrbitExtender
 
-sep = "\n"
-tab = "    "
 lookMap = { 'RIGHT' : -1,
             'LEFT' : 1}
 antennaLength = 9.8
@@ -53,7 +52,7 @@ class Lutan1(Sensor):
     "Class for Lutan-1 SLC data"
     
     family = 'l1sm'
-    logging_name = 'isce.sensor.LuTan1'
+    logging_name = 'isce.sensor.Lutan1'
 
     parameter_list = (TIFF, ORBIT_FILE) + Sensor.parameter_list
 
@@ -62,6 +61,7 @@ class Lutan1(Sensor):
         self.frame = Frame()
         self.frame.configure()
         self._xml_root = None
+        self.doppler_coeff = None
 
     def parse(self):
         xmlFileName = self.tiff[:-4] + "meta.xml"
@@ -72,6 +72,16 @@ class Lutan1(Sensor):
         
         self._xml_root = ET.fromstring(xmlstr)
         self.populateMetadata()
+
+        if self.orbitFile:
+            orb = self.extractOrbit()
+            self.frame.orbit.setOrbitSource(os.path.basename(self.orbitFile))
+        else:
+            orb = self.extractOrbitFromAnnotation()
+            self.frame.orbit.setOrbitSource('Annotation')
+
+        for sv in orb:
+            self.frame.orbit.addStateVector(sv)
 
     def convertToDateTime(self,string):
         dt = datetime.datetime.strptime(string,"%Y-%m-%dT%H:%M:%S.%f")
@@ -108,8 +118,6 @@ class Lutan1(Sensor):
         incidenceAngle = float(self.grab_from_xml('productInfo/sceneInfo/sceneCenterCoord/incidenceAngle'))
         dataStartTime = self.convertToDateTime(self.grab_from_xml('productInfo/sceneInfo/start/timeUTC'))
         dataStopTime = self.convertToDateTime(self.grab_from_xml('productInfo/sceneInfo/stop/timeUTC'))
-
-
         pulseLength = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseLength'))
         pulseBandwidth = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseBandwidth'))
         chirpSlope = pulseBandwidth/pulseLength
@@ -135,7 +143,9 @@ class Lutan1(Sensor):
 
         # Frame parameters
         self.frame.setSensingStart(dataStartTime)
+        print("Start time: ", dataStartTime)
         self.frame.setSensingStop(dataStopTime)
+        print("Stop time:", dataStopTime)
 
         # Two-way travel time 
         diffTime = DTUtil.timeDeltaToSeconds(dataStopTime - dataStartTime) / 2.0
@@ -158,7 +168,6 @@ class Lutan1(Sensor):
         '''
 
         try:
-            #orbitFile = "/Volumes/jupiter/LuTan-1/orbits/LT1A_20230228143413185_V20230209T235500_20230211T000500_ABSORBIT_SCIE.xml"
             fp = open(self.orbitFile, 'r')
         except IOError as strerr:
             print("IOError: %s" % strerr)
@@ -171,14 +180,15 @@ class Lutan1(Sensor):
         orb = Orbit()
         orb.configure()
 
-        margin = datetime.timedelta(seconds=40.0)
+        # I based the margin on the data that I have.
+        # Lutan-1 position and velocity sampling frequency is 1 Hz
+        margin = datetime.timedelta(seconds=2.0)
         tstart = self.frame.getSensingStart() - margin
         tend = self.frame.getSensingStop() + margin
-
+        
         for child in node:
-            timestamp = self.convertDateTime(child.find('UTC').text)
-
-            if (tstart <= timestamp) and (timestamp < tend):
+            timestamp = self.convertToDateTime(child.find('UTC').text)
+            if (timestamp >= tstart) and (timestamp <= tend):
                 pos = []
                 vel = []
         
@@ -188,12 +198,11 @@ class Lutan1(Sensor):
                 for tag in ['X', 'Y', 'Z']:
                     pos.append(float(child.find(tag).text))
 
-            vec = StateVector()
-            vec.setTime(timestamp)
-            vec.setPosition(pos)
-            vec.setVelocity(vel)
-            orb.addStateVector(vec)
-            print("Velocity: ",vel)
+                vec = StateVector()
+                vec.setTime(timestamp)
+                vec.setPosition(pos)
+                vec.setVelocity(vel)
+                orb.addStateVector(vec)
 
         fp.close()
 
@@ -203,7 +212,7 @@ class Lutan1(Sensor):
 
         '''
         Extract orbit information from xml annotation
-        WARNING! Only used this method if precise orbit file is not available
+        WARNING! Only use this method if orbit file is not available
         '''
 
         node = self.xml_root.find('platform/orbit')
@@ -220,6 +229,7 @@ class Lutan1(Sensor):
 
             for tag in ['velX', 'velY', 'velZ']:
                 vel.append(float(child.find(tag).text))
+
 
             vec = StateVector()
             vec.setTime(timestamp)
@@ -273,11 +283,22 @@ class Lutan1(Sensor):
         slcImage.setXmax(self.frame.getNumberOfSamples())
         self.frame.setImage(slcImage)
 
+    def extractDoppler(self):
+
+        '''
+        Extract doppler information from image metadata file
+        '''
+        dop = self._xml_root.find('processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient').text
+        dop = float(dop)
+
+        ####For insarApp
+        quadratic = {}
+        quadratic['a'] = dop / self.frame.getInstrument().getPulseRepetitionFrequency()
+        quadratic['b'] = 0.
+        quadratic['c'] = 0.
 
 
+        print("Average doppler: ", dop)
+        self.frame._dopplerVsPixel = dop
 
-
-
-  
-
-
+        return quadratic
