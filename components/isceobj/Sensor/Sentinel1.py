@@ -517,7 +517,7 @@ class Sentinel1(Sensor):
 
 
         ###Actual Doppler Polynomial for accurate processing
-        ###Will be used in roiApp
+        ###Will be used in stripmapApp
         pix = np.linspace(0, self.frame.getNumberOfSamples(), num=dpoly._order+2)
         rngs = self.frame.startingRange + pix * self.frame.getInstrument().getRangePixelSize()
         evals = dpoly(rngs)

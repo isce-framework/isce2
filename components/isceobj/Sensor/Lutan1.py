@@ -191,7 +191,6 @@ class Lutan1(Sensor):
             if (timestamp >= tstart) and (timestamp <= tend):
                 pos = []
                 vel = []
-        
                 for tag in ['VX', 'VY', 'VZ']:
                     vel.append(float(child.find(tag).text))
 
@@ -288,12 +287,19 @@ class Lutan1(Sensor):
         '''
         Extract doppler information from image metadata file
         '''
-        dop = self._xml_root.find('processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient').text
-        dop = float(dop)
+        #midwidth = self.frame.getNumberOfSamples() / 2.0
+        dop = [0, 0, 0]
+        for x in range(1,4):
+            dopName = 'processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient[{0}]'.format(x)
+            dopIndex = x-1
+            dopTemp = self._xml_root.find(dopName).text
+            dop[dopIndex] = float(dopTemp)
+        #dop = self._xml_root.find("processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient").text
+        #dop = float(dop)
 
         ####For insarApp
         quadratic = {}
-        quadratic['a'] = dop / self.frame.getInstrument().getPulseRepetitionFrequency()
+        quadratic['a'] = dop[0] / self.frame.getInstrument().getPulseRepetitionFrequency()
         quadratic['b'] = 0.
         quadratic['c'] = 0.
 
