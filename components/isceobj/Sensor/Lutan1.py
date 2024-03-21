@@ -254,7 +254,8 @@ class Lutan1(Sensor):
 
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
         
-        # Assumed band 1 as real and band 2 as imaginary numbers
+        # Band 1 as real and band 2 as imaginary numbers
+        # Confirmed by Yunjun Zhang
         band1 = src.GetRasterBand(1)
         band2 = src.GetRasterBand(2)
 
