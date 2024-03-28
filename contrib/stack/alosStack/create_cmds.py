@@ -88,9 +88,9 @@ def formPairs(idir, numberOfSubsequentDates, pairTimeSpanMinimum=None, pairTimeS
     '''
     datefmt = "%y%m%d"
 
-    #get date folders
+    #get date folders [and ignore sub-folders that are not digits, e.g. ARCHIVED_FILES]
     dateDirs = sorted(glob.glob(os.path.join(os.path.abspath(idir), '*')))
-    dateDirs = [x for x in dateDirs if os.path.isdir(x)]
+    dateDirs = [x for x in dateDirs if os.path.isdir(x) and os.path.basename(x).isdigit()]
     dates = [os.path.basename(x) for x in dateDirs]
     ndate = len(dates)
 
@@ -224,7 +224,7 @@ def checkStackDataDir(idir):
 
     #get date folders
     dateDirs = sorted(glob.glob(os.path.join(os.path.abspath(idir), '*')))
-    dateDirs = [x for x in dateDirs if os.path.isdir(x)]
+    dateDirs = [x for x in dateDirs if os.path.isdir(x) and os.path.basename(x).isdigit()]
 
     #check dates and acquisition mode
     mode = os.path.basename(sorted(glob.glob(os.path.join(dateDirs[0], 'IMG-HH-ALOS2*')))[0]).split('-')[4][0:3]
@@ -1258,7 +1258,7 @@ done'''.format(extraCommands       = parallelCommands,
         extraArguments = ''
         if insar.geocodeInterpMethod is not None:
             extraArguments += ' -interp_method {}'.format(insar.geocodeInterpMethod)
-        if insar.bbox is not None:
+        if insar.bbox: # is not None:
             extraArguments += ' -bbox {}'.format('/'.format(insar.bbox))
 
         cmd += header('geocode')
@@ -1371,8 +1371,8 @@ if __name__ == '__main__':
         stack.datesExcluded, stack.pairsExcluded)
     datesProcess = datesFromPairs(pairsProcess)
     print('InSAR processing:')
-    print('dates: {}'.format(' '.join(datesProcess)))
-    print('pairs: {}'.format(' '.join(pairsProcess)))
+    print(f"dates ({len(datesProcess)}): {' '.join(datesProcess)}")
+    print(f"pairs ({len(pairsProcess)}): {' '.join(pairsProcess)}")
 
     rank = stackRank(datesProcess, pairsProcess)
     if rank != len(datesProcess) - 1:
@@ -1388,8 +1388,8 @@ if __name__ == '__main__':
             stack.datesExcludedIon, stack.pairsExcludedIon)
         datesProcessIon = datesFromPairs(pairsProcessIon)
         print('ionospheric phase estimation:')
-        print('dates: {}'.format(' '.join(datesProcessIon)))
-        print('pairs: {}'.format(' '.join(pairsProcessIon)))
+        print(f"dates ({len(datesProcessIon)}): {' '.join(datesProcessIon)}")
+        print(f"pairs ({len(pairsProcessIon)}): {' '.join(pairsProcessIon)}")
 
         rankIon = stackRank(datesProcessIon, pairsProcessIon)
         if rankIon != len(datesProcessIon) - 1:
@@ -1418,7 +1418,7 @@ if __name__ == '__main__':
         datesProcess, datesProcessRemoved = removeCommonItemsLists(datesProcess, datesProcessedAlready)
         if datesProcessRemoved != []:
             print('the following dates have already been processed, will not reprocess them.')
-            print('dates: {}'.format(' '.join(datesProcessRemoved)))
+            print(f"dates ({len(datesProcessRemoved)}): {' '.join(datesProcessRemoved)}")
             print()
 
     pairsProcessedAlready = getFolders(stack.pairsProcessingDir)
@@ -1426,7 +1426,7 @@ if __name__ == '__main__':
         pairsProcess, pairsProcessRemoved = removeCommonItemsLists(pairsProcess, pairsProcessedAlready)
         if pairsProcessRemoved != []:
             print('the following pairs for InSAR processing have already been processed, will not reprocess them.')
-            print('pairs: {}'.format(' '.join(pairsProcessRemoved)))
+            print(f"pairs ({len(pairsProcessRemoved)}): {' '.join(pairsProcessRemoved)}")
             print()
 
     if insar.doIon:
@@ -1435,16 +1435,16 @@ if __name__ == '__main__':
             pairsProcessIon, pairsProcessRemovedIon = removeCommonItemsLists(pairsProcessIon, pairsProcessedAlreadyIon)
             if pairsProcessRemovedIon != []:
                 print('the following pairs for estimating ionospheric phase have already been processed, will not reprocess them.')
-                print('pairs: {}'.format(' '.join(pairsProcessRemovedIon)))
+                print(f"pairs ({len(pairsProcessRemovedIon)}): {' '.join(pairsProcessRemovedIon)}")
                 print()
 
     print()
-    
+
     print('dates and pairs to be processed:')
-    print('dates: {}'.format(' '.join(datesProcess)))
-    print('pairs (for InSAR processing): {}'.format(' '.join(pairsProcess)))
+    print(f"dates ({len(datesProcess)}): {' '.join(datesProcess)}")
+    print(f"pairs ({len(pairsProcess)}; for InSAR processing): {' '.join(pairsProcess)}")
     if insar.doIon:
-        print('pairs (for estimating ionospheric phase): {}'.format(' '.join(pairsProcessIon)))
+        print(f"pairs ({len(pairsProcessIon)}; for estimating ionospheric phase): {' '.join(pairsProcessIon)}")
     print('\n')
 
 

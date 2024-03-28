@@ -12,13 +12,20 @@ import zipfile
 from uncompressFile import uncompressfile
 
 
+EXAMPLE = """example:
+  prepSlcALOS2.py -i download -o SLC
+  ${ISCE_STACK}/stripmapStack/prepSlcALOS2.py -i download --alosStack
+"""
+
+
 def createParser():
     '''
     Create command line parser.
     '''
 
     parser = argparse.ArgumentParser(description='Prepare ALOS2 SLC for processing (unzip/untar files, '
-                                     'organize in date folders, generate script to unpack into isce formats).')
+                                     'organize in date folders, generate script to unpack into isce formats).',
+                                     epilog=EXAMPLE, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument('-i', '--input', dest='inputDir', type=str, required=True,
             help='directory with the downloaded SLC data')
     parser.add_argument('-o', '--output', dest='outputDir', type=str, required=False,
@@ -33,6 +40,9 @@ def createParser():
     parser.add_argument('-rmfile', '--rmfile', dest='rmfile',action='store_true', default=False,
             help='Optional: remove zip/tar/compressed files after unpacking into date structure '
                  '(default is to keep in archive folder)')
+
+    parser.add_argument('--alosStack', dest='alosStack', action='store_true', default=False,
+            help='Optional: organize the uncompressed folders into the alosStack conventions.')
     return parser
 
 
@@ -178,24 +188,43 @@ def main(iargs=None):
 
         workdir = os.path.dirname(ALOS_folder)
         if successflag:
-            # move the file into the date folder
-            SLC_dir = os.path.join(workdir,imgDate,'')
-            os.makedirs(SLC_dir, exist_ok=True)
+            if inps.alosStack:
+                ## alosStack: YYMMDD/IMG-*.1__A
+                # create the date folder
+                imgDate = imgDate[2:]
+                SLC_dir = os.path.join(workdir,imgDate)
+                os.makedirs(SLC_dir, exist_ok=True)
 
-            # check if the folder already exist in that case overwrite it
-            ALOS_folder_out = os.path.join(SLC_dir,os.path.basename(ALOS_folder))
-            if os.path.isdir(ALOS_folder_out):
-                shutil.rmtree(ALOS_folder_out)
-            # move the ALOS acqusition folder in the date folder
-            cmd  = 'mv ' + ALOS_folder + ' ' + SLC_dir + '.' 
-            os.system(cmd)
+                # move the ALOS file into the date folder
+                cmd = f'mv {ALOS_folder}/* {SLC_dir}'
+                os.system(cmd)
+
+                # remove the ALOS acquisition folder
+                shutil.rmtree(ALOS_folder)
+
+            else:
+                ## stripmapStack: YYYYMMDD/ALOS2*/IMG-*.1__A
+                # create the date folder
+                SLC_dir = os.path.join(workdir,imgDate)
+                os.makedirs(SLC_dir, exist_ok=True)
+
+                # check if the folder already exist in that case overwrite it
+                ALOS_folder_out = os.path.join(SLC_dir,os.path.basename(ALOS_folder))
+                if os.path.isdir(ALOS_folder_out):
+                    shutil.rmtree(ALOS_folder_out)
+
+                # move the ALOS acqusition folder in the date folder
+                cmd = 'mv ' + ALOS_folder + ' ' + SLC_dir + '.'
+                os.system(cmd)
 
             print ('Succes: ' + imgDate)
         else:
             print('Failed: ' + ALOS_folder)
-        
+
 
     # now generate the unpacking script for all the date dirs
+    if inps.alosStack:
+        return
     dateDirs = sorted(glob.glob(os.path.join(inps.inputDir,'2*')))
     if inps.outputDir is not None:
         f = open(run_unPack,'w')

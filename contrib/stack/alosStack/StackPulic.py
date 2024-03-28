@@ -187,7 +187,7 @@ def stackDateStatistics(idir, dateReference):
 
     #get date folders
     dateDirs = sorted(glob.glob(os.path.join(os.path.abspath(idir), '*')))
-    dateDirs = [x for x in dateDirs if os.path.isdir(x)]
+    dateDirs = [x for x in dateDirs if os.path.isdir(x) and os.path.basename(x).isdigit()]
 
     #find index of reference date:
     dates = []

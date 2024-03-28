@@ -34,7 +34,7 @@ def getAlos2StackDirs(dataDir):
 
     #get only folders in dataDir
     dateDirs = sorted(glob.glob(os.path.join(dataDir, '*')))
-    dateDirs = [x for x in dateDirs if os.path.isdir(x)]
+    dateDirs = [x for x in dateDirs if os.path.isdir(x) and os.path.basename(x).isdigit()]
     ndate = len(dateDirs)
 
     #get first LED files in dateDirs
