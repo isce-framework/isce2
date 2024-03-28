@@ -4,6 +4,8 @@ import numpy as np
 import requests
 import re
 import os
+import sys
+import glob
 import argparse
 import datetime
 from html.parser import HTMLParser
@@ -27,8 +29,10 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser(description='Fetch orbits corresponding to given SAFE package')
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
+    parser.add_argument('-i', '--input', dest='input', type=str, default=None,
                         help='Path to SAFE package of interest')
+    parser.add_argument('-d', '--indir', dest='indir', type=str, default=None,
+                        help='Directory to SAFE package(s) of interest')
     parser.add_argument('-o', '--output', dest='outdir', type=str, default='.',
                         help='Path to output directory')
 
@@ -120,13 +124,15 @@ def fileToRange(fname):
     return (start, stop, mission)
 
 
-if __name__ == '__main__':
+def run_main(inps, input_file=None):
     '''
-    Main driver.
+    Run the major thing
     '''
 
-    inps = cmdLineParse()
+    if input_file:
+        inps.input = input_file
 
+    print('Fetching for: ', inps.input)
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
@@ -156,6 +162,7 @@ if __name__ == '__main__':
 
             if match is not None:
                 success = True
+                print('fetch success, orbit type: ', oType)
         except:
             pass
 
@@ -169,3 +176,20 @@ if __name__ == '__main__':
             print('Failed to download URL: ', match)
     else:
         print('Failed to find {1} orbits for tref {0}'.format(fileTS, satName))
+
+
+if __name__ == '__main__':
+    '''
+    Main driver.
+    '''
+
+    inps = cmdLineParse()
+    if (inps.input is None) and (inps.indir is None):
+        sys.exit('Both input files and input folder is missing!')
+
+    if inps.indir:
+        input_files = glob.glob(os.path.join(inps.indir, '*.zip'))
+        for infile in input_files:
+            run_main(inps, input_file=infile)
+    else:
+        run_main(inps)
