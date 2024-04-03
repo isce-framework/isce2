@@ -112,7 +112,7 @@ class Lutan1(Sensor):
         prf = float(self.grab_from_xml('instrument/settings/settingRecord/PRF'))
         lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
         samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
-
+       
         startingRange = float(self.grab_from_xml('productInfo/sceneInfo/rangeTime/firstPixel'))*Const.c/2.0
         #slantRange = float(self.grab_from_xml('productSpecific/complexImageInfo/'))
         incidenceAngle = float(self.grab_from_xml('productInfo/sceneInfo/sceneCenterCoord/incidenceAngle'))
@@ -121,7 +121,20 @@ class Lutan1(Sensor):
         pulseLength = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseLength'))
         pulseBandwidth = float(self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/pulseBandwidth'))
         chirpSlope = pulseBandwidth/pulseLength
-        lookSide = lookMap['RIGHT']
+
+        if self.grab_from_xml('processing/processingParameter/rangeCompression/chirps/referenceChirp/chirpSlope') == "DOWN":
+            chirpSlope = -1.0 * chirpSlope
+        else:
+            pass
+
+        # Check for satellite's look direction
+        if self.grab_from_xml('productInfo/acquisitionInfo/lookDirection') == "LEFT":
+            lookSide = lookMap['LEFT']
+            print("Look direction: LEFT")
+        else:
+            lookSide = lookMap['RIGHT']
+            print("Look direction: RIGHT")
+
 
         # Platform parameters
         platform = self.frame.getInstrument().getPlatform()
@@ -135,7 +148,7 @@ class Lutan1(Sensor):
         instrument.setRadarFrequency(frequency)
         instrument.setPulseRepetitionFrequency(prf)
         instrument.setPulseLength(pulseLength)
-        instrument.ChirpSlope = chirpSlope
+        instrument.setChirpSlope(chirpSlope)
         instrument.setIncidenceAngle(incidenceAngle)
         instrument.setRangePixelSize(rangePixelSize)
         instrument.setRangeSamplingRate(rangeSamplingRate)
@@ -143,9 +156,7 @@ class Lutan1(Sensor):
 
         # Frame parameters
         self.frame.setSensingStart(dataStartTime)
-        print("Start time: ", dataStartTime)
         self.frame.setSensingStop(dataStopTime)
-        print("Stop time:", dataStopTime)
 
         # Two-way travel time 
         diffTime = DTUtil.timeDeltaToSeconds(dataStopTime - dataStartTime) / 2.0
@@ -258,19 +269,24 @@ class Lutan1(Sensor):
         # Confirmed by Yunjun Zhang
         band1 = src.GetRasterBand(1)
         band2 = src.GetRasterBand(2)
+        cJ = np.complex64(1.0j)
 
         fid = open(self.output, 'wb')
         for ii in range(lgth):
             # Combine the real and imaginary to make
             # them in to complex numbers
-            data1 = band1.ReadAsArray(0,ii,width,1)
-            data2 = band2.ReadAsArray(0,ii,width,1)
-            data = data1 + 1j*data2
+            real = band1.ReadAsArray(0,ii,width,1)
+            imag = band2.ReadAsArray(0,ii,width,1)
+            
+            data = real + cJ * imag
             data.tofile(fid)
 
         fid.close()
+        real = None
+        imag = None
         src = None
-        band = None
+        band1 = None
+        band2 = None
 
         ####
         slcImage = isceobj.createSlcImage()
