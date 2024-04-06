@@ -271,8 +271,8 @@ class Lutan1(Sensor):
             # them in to complex numbers
             real = band1.ReadAsArray(0,ii,width,1)
             imag = band2.ReadAsArray(0,ii,width,1)
-            
-            data = np.complex64(real + (cJ * imag))
+            # Data becomes np.complex128 after combining them
+            data = real + (cJ * imag)
             data.tofile(fid)
 
         fid.close()
