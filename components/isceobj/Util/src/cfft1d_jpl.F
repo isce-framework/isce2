@@ -289,7 +289,7 @@ c     NOTE: if above condition changed, also need to update fftw3stub.c
          if(n.eq.131072)call sfftw_execute_dft(plani(17),c,c)
       end if
       if(dir .eq. 2) then
-         do i=2,16
+         do i=2,17
             if(2**i.eq.n)go to 10
          end do
          write(6,*) 'fftw: length unsupported:: ',n
