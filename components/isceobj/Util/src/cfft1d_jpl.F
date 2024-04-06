@@ -236,7 +236,7 @@ c     NOTE: if above condition changed, also need to update fftw3stub.c
 
       if(dir.eq.0)then
 !c move i calculation to top of function
-         do i=2,16
+         do i=2,17
             if(2**i.eq.n)go to 1
          end do
          write(6,*) 'fftw: length unsupported:: ',n
