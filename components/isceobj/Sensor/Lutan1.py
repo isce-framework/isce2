@@ -20,13 +20,10 @@ from isceobj.Orbit.Orbit import StateVector, Orbit
 from isceobj.Planet.AstronomicalHandbook import Const
 from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTUtil
 from isceobj.Orbit.OrbitExtender import OrbitExtender
+from osgeo import gdal
 
 lookMap = { 'RIGHT' : -1,
             'LEFT' : 1}
-antennaLength = 9.8
-
-
-
 XML = Component.Parameter('xml',
         public_name = 'xml',
         default = None,
@@ -110,9 +107,11 @@ class Lutan1(Sensor):
         rangeSamplingRate = Const.c/(2.0*rangePixelSize)
 
         prf = float(self.grab_from_xml('instrument/settings/settingRecord/PRF'))
-        lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
-        samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
-       
+        # lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
+        # samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
+        samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))       
+        lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
+
         startingRange = float(self.grab_from_xml('productInfo/sceneInfo/rangeTime/firstPixel'))*Const.c/2.0
         #slantRange = float(self.grab_from_xml('productSpecific/complexImageInfo/'))
         incidenceAngle = float(self.grab_from_xml('productInfo/sceneInfo/sceneCenterCoord/incidenceAngle'))
@@ -135,13 +134,14 @@ class Lutan1(Sensor):
             lookSide = lookMap['RIGHT']
             print("Look direction: RIGHT")
 
+        processingFacility = self.grab_from_xml('productInfo/generationInfo/level1ProcessingFacility')
 
         # Platform parameters
         platform = self.frame.getInstrument().getPlatform()
         platform.setPlanet(Planet(pname='Earth'))
         platform.setMission(mission)
         platform.setPointingDirection(lookSide)
-        platform.setAntennaLength(antennaLength)
+        platform.setAntennaLength(2 * azimuthPixelSize)
 
         # Instrument parameters
         instrument = self.frame.getInstrument()
@@ -157,6 +157,7 @@ class Lutan1(Sensor):
         # Frame parameters
         self.frame.setSensingStart(dataStartTime)
         self.frame.setSensingStop(dataStopTime)
+        self.frame.setProcessingFacility(processingFacility)
 
         # Two-way travel time 
         diffTime = DTUtil.timeDeltaToSeconds(dataStopTime - dataStartTime) / 2.0
@@ -165,10 +166,10 @@ class Lutan1(Sensor):
         self.frame.setPassDirection(passDirection)
         self.frame.setPolarization(polarization)
         self.frame.setStartingRange(startingRange)
-        self.frame.setFarRange(startingRange + rangePixelSize * (samples - 1))
+        self.frame.setFarRange(startingRange +  (samples - 1) * rangePixelSize)
         self.frame.setNumberOfLines(lines)
         self.frame.setNumberOfSamples(samples)
-        
+
         return
 
 
@@ -193,7 +194,7 @@ class Lutan1(Sensor):
 
         # I based the margin on the data that I have.
         # Lutan-1 position and velocity sampling frequency is 1 Hz
-        margin = datetime.timedelta(seconds=2.0)
+        margin = datetime.timedelta(seconds=1.0)
         tstart = self.frame.getSensingStart() - margin
         tend = self.frame.getSensingStop() + margin
         
@@ -255,16 +256,11 @@ class Lutan1(Sensor):
         return newOrb
     
     def extractImage(self):
-        try:
-            from osgeo import gdal
-        except ImportError:
-            raise Exception('GDAL python bindings not found. Need this for Lutan-1.')
         self.parse()
         width = self.frame.getNumberOfSamples()
         lgth = self.frame.getNumberOfLines()
-
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
-        
+
         # Band 1 as real and band 2 as imaginary numbers
         # Confirmed by Yunjun Zhang
         band1 = src.GetRasterBand(1)
@@ -278,7 +274,7 @@ class Lutan1(Sensor):
             real = band1.ReadAsArray(0,ii,width,1)
             imag = band2.ReadAsArray(0,ii,width,1)
             
-            data = real + cJ * imag
+            data = np.complex64(real + cJ * imag)
             data.tofile(fid)
 
         fid.close()
@@ -300,26 +296,17 @@ class Lutan1(Sensor):
         self.frame.setImage(slcImage)
 
     def extractDoppler(self):
-
         '''
-        Extract doppler information from image metadata file
+        Set doppler values to zero since the metadata doppler values are unreliable.
+        Also, the SLC images are zero doppler.
         '''
-        #midwidth = self.frame.getNumberOfSamples() / 2.0
-        dop = [0, 0, 0]
-        for x in range(1,4):
-            dopName = 'processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient[{0}]'.format(x)
-            dopIndex = x-1
-            dopTemp = self._xml_root.find(dopName).text
-            dop[dopIndex] = float(dopTemp)
-        #dop = self._xml_root.find("processing/doppler/dopplerCentroid/dopplerEstimate/combinedDoppler/coefficient").text
-        #dop = float(dop)
+        dop = [0., 0., 0.]
 
         ####For insarApp
         quadratic = {}
         quadratic['a'] = dop[0] / self.frame.getInstrument().getPulseRepetitionFrequency()
         quadratic['b'] = 0.
         quadratic['c'] = 0.
-
 
         print("Average doppler: ", dop)
         self.frame._dopplerVsPixel = dop
