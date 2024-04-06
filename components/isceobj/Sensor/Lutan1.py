@@ -107,10 +107,10 @@ class Lutan1(Sensor):
         rangeSamplingRate = Const.c/(2.0*rangePixelSize)
 
         prf = float(self.grab_from_xml('instrument/settings/settingRecord/PRF'))
-        # lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
-        # samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
-        samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))       
-        lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
+        lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))
+        samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
+        #samples = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfRows'))       
+        #lines = int(self.grab_from_xml('productInfo/imageDataInfo/imageRaster/numberOfColumns'))
 
         startingRange = float(self.grab_from_xml('productInfo/sceneInfo/rangeTime/firstPixel'))*Const.c/2.0
         #slantRange = float(self.grab_from_xml('productSpecific/complexImageInfo/'))
