@@ -7,8 +7,7 @@ import re
 import os
 import argparse
 import datetime
-
-server = 'https://scihub.copernicus.eu/gnss/'
+import time
 
 orbitMap = [('precise', 'AUX_POEORB'),
             ('restituted', 'AUX_RESORB')]
@@ -26,10 +25,11 @@ def cmdLineParse():
                         help='Path to SAFE package of interest')
     parser.add_argument('-o', '--output', dest='outdir', type=str, default='.',
                         help='Path to output directory')
-
-    parser.add_argument('-u', '--username', dest='username', type=str,
+    parser.add_argument('-t', '--token-file', dest='token_file', type=str, default='.copernicus_dataspace_token',
+                        help='Filename to save auth token file')
+    parser.add_argument('-u', '--username', dest='username', type=str, default='',
                         help='Copernicus Data Space Ecosystem username')
-    parser.add_argument('-p', '--password', dest='password', type=str,
+    parser.add_argument('-p', '--password', dest='password', type=str, default='',
                         help='Copernicus Data Space Ecosystem password')
 
     return parser.parse_args()
@@ -54,6 +54,43 @@ def FileToTimeStamp(safename):
     satName = fields[0]
 
     return tstamp, satName, sstamp
+
+
+def get_saved_token_data(token_file):
+    try:
+        with open(token_file, 'r') as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return None
+
+
+def save_token_data(access_token, expires_in, token_file):
+    token_data = {
+        "access_token": access_token,
+        "expires_at": time.time() + expires_in
+    }
+    with open(token_file, 'w') as file:
+        json.dump(token_data, file)
+
+
+def is_token_valid(token_data):
+    if token_data and "expires_at" in token_data:
+        return time.time() < token_data["expires_at"]
+    return False
+
+
+def get_new_token(username, password, session):
+    data = {
+        "client_id": "cdse-public",
+        "username": username,
+        "password": password,
+        "grant_type": "password",
+    }
+    url = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
+    response = session.post(url, data=data)
+    response.raise_for_status()
+    token_info = response.json()
+    return token_info["access_token"], token_info["expires_in"]
 
 
 def download_file(file_id, outdir='.', session=None, token=None):
@@ -96,6 +133,7 @@ if __name__ == '__main__':
     inps = cmdLineParse()
     username = inps.username
     password = inps.password
+    token_file = os.path.expanduser(inps.token_file)
 
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
@@ -149,24 +187,19 @@ if __name__ == '__main__':
 
     if match is not None:
 
-        if username is None:
-            username = input("Username: ")
-        if password is None:
-            import getpass
-            password = getpass.getpass("Password (will not be displayed): ")
-
-        data = {
-            "client_id": "cdse-public",
-            "username": username,
-            "password": password,
-            "grant_type": "password",
-        }
-
-        url = "https://identity.dataspace.copernicus.eu/"
-        url += "auth/realms/CDSE/protocol/openid-connect/token"
-        r = session.post(url, data=data)
-        r.raise_for_status()
-        token = r.json()["access_token"]
+        token_data = get_saved_token_data(token_file)
+        if token_data and is_token_valid(token_data):
+            print("using saved access token")
+            token = token_data["access_token"]
+        else:
+            print("generating a new access token")
+            if username is None:
+                username = input("Username: ")
+            if password is None:
+                import getpass
+                password = getpass.getpass("Password (will not be displayed): ")
+            token, expires_in = get_new_token(username, password, session)
+            save_token_data(token, expires_in, token_file)
 
         output = os.path.join(inps.outdir, matchFileName)
         res = download_file(match, output, session, token)
