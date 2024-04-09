@@ -69,12 +69,15 @@ class Lutan1(Sensor):
         
         self._xml_root = ET.fromstring(xmlstr)
         self.populateMetadata()
+        fid.close()
 
         if self.orbitFile:
             orb = self.extractOrbit()
             self.frame.orbit.setOrbitSource(os.path.basename(self.orbitFile))
         else:
+            print("Warning! No orbit file found. Orbit information from the annotation file is used for processing.")
             orb = self.extractOrbitFromAnnotation()
+            self.frame.orbit.setOrbitSource(os.path.basename(self.xml))
             self.frame.orbit.setOrbitSource('Annotation')
 
         for sv in orb:
@@ -182,9 +185,7 @@ class Lutan1(Sensor):
         except IOError as strerr:
             print("IOError: %s" % strerr)
         
-    
         _xml_root = ET.ElementTree(file=fp).getroot()
-
         node = _xml_root.find('Data_Block/List_of_OSVs')
 
         orb = Orbit()
@@ -224,34 +225,35 @@ class Lutan1(Sensor):
         WARNING! Only use this method if orbit file is not available
         '''
 
-        node = self.xml_root.find('platform/orbit')
+        try:
+            fp = open(self.xml, 'r')
+        except IOError as strerr:
+            print("IOError: %s" % strerr)
+
+        _xml_root = ET.ElementTree(file=fp).getroot()
+        node = _xml_root.find('platform/orbit')
+        countNode = len(list(_xml_root.find('platform/orbit')))
+
         frameOrbit = Orbit()
         frameOrbit.setOrbitSource('Header')
+        margin = datetime.timedelta(seconds=1.0)
+        tstart = self.frame.getSensingStart() - margin
+        tend = self.frame.getSensingStop() + margin
 
-        for child in node:
-            timestamp = self.convertToDateTime(child.find('timeUTC').text)
-            pos = []
-            vel = []
+        for k in range(1,countNode):
+            timestamp = self.convertToDateTime(node.find('stateVec[{}]timeUTC'.format(k)).text)
+            if (timestamp >= tstart) and (timestamp <= tend):
+                pos = [float(node.find('stateVec[{}]posX'.format(k)).text), float(node.find('stateVec[{}]posY'.format(k)).text), float(node.find('stateVec[{}]posZ'.format(k)).text)]
+                vel = [float(node.find('stateVec[{}]velX'.format(k)).text), float(node.find('stateVec[{}]velY'.format(k)).text), float(node.find('stateVec[{}]velZ'.format(k)).text)]
 
-            for tag in ['posX', 'posY', 'posZ']:
-                pos.append(float(child.find(tag).text))
-
-            for tag in ['velX', 'velY', 'velZ']:
-                vel.append(float(child.find(tag).text))
-
-
-            vec = StateVector()
-            vec.setTime(timestamp)
-            vec.setPosition(pos)
-            vec.setVelocity(vel)
-            frameOrbit.addStateVector(vec)
+                vec = StateVector()
+                vec.setTime(timestamp)
+                vec.setPosition(pos)
+                vec.setVelocity(vel)
+                frameOrbit.addStateVector(vec)
         
-        planet = self.frame.instrument.platform.planet
-        orbExt = OrbitExtender(planet=planet)
-        orbExt.configure()
-        newOrb = orbExt.setOrbit(frameOrbit)
-
-        return newOrb
+        fp.close()
+        return frameOrbit
     
     def extractImage(self):
         self.parse()
