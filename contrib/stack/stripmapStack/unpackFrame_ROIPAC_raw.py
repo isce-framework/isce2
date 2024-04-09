@@ -5,6 +5,8 @@ from isceobj.Sensor import createSensor
 import shelve
 import argparse
 import os
+from mroipac.dopiq.DopIQ import DopIQ
+import copy
 
 def cmdLineParse():
     '''
