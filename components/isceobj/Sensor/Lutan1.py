@@ -241,10 +241,10 @@ class Lutan1(Sensor):
         tend = self.frame.getSensingStop() + margin
 
         for k in range(1,countNode):
-            timestamp = self.convertToDateTime(node.find('stateVec[{}]timeUTC'.format(k)).text)
+            timestamp = self.convertToDateTime(node.find('stateVec[{}]/timeUTC'.format(k)).text)
             if (timestamp >= tstart) and (timestamp <= tend):
-                pos = [float(node.find('stateVec[{}]posX'.format(k)).text), float(node.find('stateVec[{}]posY'.format(k)).text), float(node.find('stateVec[{}]posZ'.format(k)).text)]
-                vel = [float(node.find('stateVec[{}]velX'.format(k)).text), float(node.find('stateVec[{}]velY'.format(k)).text), float(node.find('stateVec[{}]velZ'.format(k)).text)]
+                pos = [float(node.find('stateVec[{}]/posX'.format(k)).text), float(node.find('stateVec[{}]/posY'.format(k)).text), float(node.find('stateVec[{}]/posZ'.format(k)).text)]
+                vel = [float(node.find('stateVec[{}]/velX'.format(k)).text), float(node.find('stateVec[{}]/velY'.format(k)).text), float(node.find('stateVec[{}]/velZ'.format(k)).text)]
 
                 vec = StateVector()
                 vec.setTime(timestamp)
