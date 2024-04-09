@@ -19,17 +19,19 @@ def cmdLineParse():
     parser.add_argument('-o', '--output', dest='slcdir', type=str,
             required=True, help='Output data directory')
 
+    parser.add_argument('-d','--default', dest='defaultDoppler', type=str, action='store_true'
+            required=False, help='use DEFAULT to estimate doppler')
+
     return parser.parse_args()
 
 
-def unpack(rawname, hdrname, slcname):
+def unpack(rawname, hdrname, slcname, default):
     '''
     Unpack raw to binary file.
     '''
 
     if not os.path.isdir(slcname):
         os.mkdir(slcname)
-
     date = os.path.basename(slcname)
     obj = createSensor('ROI_PAC')
     obj.configure()
@@ -42,7 +44,26 @@ def unpack(rawname, hdrname, slcname):
     print(obj.output)
     obj.extractImage()
     obj.frame.getImage().renderHdr()
-    obj.extractDoppler()
+
+    if defaultDoppler == True:
+        obj.extractDoppler()
+    else:
+        dop = DopIQ()
+        dop.configure()
+
+        img = copy.deepcopy(obj.frame.getImage())
+        img.setAccessMode('READ')
+
+        dop.wireInputPort('frame', object=obj.frame)
+        dop.wireInputPort('instrument', object=obj.frame.instrument)
+        dop.wireInputPort('image', object=img)
+        dop.calculateDoppler()
+        dop.fitDoppler()
+        fit = dop.quadratic
+        coef = [fit['a'], fit['b'], fit['c']]
+
+        print(coef)
+        obj.frame._dopplerVsPixel = [x*obj.frame.PRF for x in coef]
 
     pickName = os.path.join(slcname, 'raw')
     with shelve.open(pickName) as db:
@@ -57,4 +78,4 @@ if __name__ == '__main__':
     if inps.slcdir.endswith('/'):
         inps.slcdir = inps.slcdir[:-1]
 
-    unpack(inps.rawfile, inps.hdrfile, inps.slcdir)
+    unpack(inps.rawfile, inps.hdrfile, inps.slcdir, inps.defaultDoppler)
