@@ -21,9 +21,14 @@ from isceobj.Planet.AstronomicalHandbook import Const
 from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTUtil
 from isceobj.Orbit.OrbitExtender import OrbitExtender
 from osgeo import gdal
+import warnings
 
 lookMap = { 'RIGHT' : -1,
             'LEFT' : 1}
+
+# Antenna length, dimesnions 3.4 x 9.8 m
+antennaLength = 9.8
+
 XML = Component.Parameter('xml',
         public_name = 'xml',
         default = None,
@@ -72,10 +77,14 @@ class Lutan1(Sensor):
         fid.close()
 
         if self.orbitFile:
-            orb = self.extractOrbit()
-            self.frame.orbit.setOrbitSource(os.path.basename(self.orbitFile))
+            # Check if orbit file exists or not
+            if os.path.isfile(self.orbitFile) == True:
+                orb = self.extractOrbit()
+                self.frame.orbit.setOrbitSource(os.path.basename(self.orbitFile))
+            else:
+                pass
         else:
-            print("Warning! No orbit file found. Orbit information from the annotation file is used for processing.")
+            warnings.warn("WARNING! No orbit file found. Orbit information from the annotation file is used for processing.")
             orb = self.extractOrbitFromAnnotation()
             self.frame.orbit.setOrbitSource(os.path.basename(self.xml))
             self.frame.orbit.setOrbitSource('Annotation')
@@ -142,7 +151,7 @@ class Lutan1(Sensor):
         platform.setPlanet(Planet(pname='Earth'))
         platform.setMission(mission)
         platform.setPointingDirection(lookSide)
-        platform.setAntennaLength(2 * azimuthPixelSize)
+        platform.setAntennaLength(antennaLength)
 
         # Instrument parameters
         instrument = self.frame.getInstrument()
