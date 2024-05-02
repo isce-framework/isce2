@@ -27,9 +27,9 @@ def cmdLineParse():
                         help='Path to output directory')
     parser.add_argument('-t', '--token-file', dest='token_file', type=str, default='.copernicus_dataspace_token',
                         help='Filename to save auth token file')
-    parser.add_argument('-u', '--username', dest='username', type=str, default='',
+    parser.add_argument('-u', '--username', dest='username', type=str, default=None,
                         help='Copernicus Data Space Ecosystem username')
-    parser.add_argument('-p', '--password', dest='password', type=str, default='',
+    parser.add_argument('-p', '--password', dest='password', type=str, default=None,
                         help='Copernicus Data Space Ecosystem password')
 
     return parser.parse_args()
@@ -193,11 +193,22 @@ if __name__ == '__main__':
             token = token_data["access_token"]
         else:
             print("generating a new access token")
-            if username is None:
-                username = input("Username: ")
-            if password is None:
-                import getpass
-                password = getpass.getpass("Password (will not be displayed): ")
+            if username is None or password is None:
+                try:
+                    import netrc
+                    host = "dataspace.copernicus.eu"
+                    creds = netrc.netrc().hosts[host]
+                except:
+                    if username is None:
+                        username = input("Username: ")
+                    if password is None:
+                        from getpass import getpass
+                        password = getpass("Password (will not be displayed): ")
+                else:
+                    if username is None:
+                        username, _, _ = creds
+                    if password is None:
+                        _, _, password = creds
             token, expires_in = get_new_token(username, password, session)
             save_token_data(token, expires_in, token_file)
 
