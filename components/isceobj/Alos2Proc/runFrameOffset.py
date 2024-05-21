@@ -76,8 +76,7 @@ def frameOffset(track, image, outputfile, crossCorrelation=True, matchingMode=0)
     azimuthOffsetMatching = []
 
     for j in range(len(track.frames)):
-        # use int type for frameNumber to get rid of padding 0s
-        frameNumber = int(track.frames[j].frameNumber)
+        frameNumber = track.frames[j].frameNumber
         swathNumber = track.frames[j].swaths[0].swathNumber
         swathDir = 'f{}_{}/s{}'.format(j+1, frameNumber, swathNumber)
 
