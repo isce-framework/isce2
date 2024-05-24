@@ -103,7 +103,7 @@ if __name__ == '__main__':
         runCmd('mv {} {}'.format(os.path.join(odir, 'out.ppm'), os.path.join(odir, 'out2.ppm')))
         runCmd('mdx {} -s {} -c8pha -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793{} -P -workdir {}'.format(diff, width, wbdArguments, odir))
         runCmd('mv {} {}'.format(os.path.join(odir, 'out.ppm'), os.path.join(odir, 'out3.ppm')))
-        runCmd("montage -pointsize {} -label 'original' {} -label 'ionosphere' {} -label 'corrected' {} -geometry +{} -compress LZW{} {}.tif".format(
+        runCmd("montage -font DejaVu-Sans -pointsize {} -label 'original' {} -label 'ionosphere' {} -label 'corrected' {} -geometry +{} -compress LZW{} {}.tif".format(
             int((ratio*width)/111*18+0.5),
             os.path.join(odir, 'out1.ppm'),
             os.path.join(odir, 'out2.ppm'),
