@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component>
+  <property name="tiff">
+    <value>../../data/SLC/crop/reference/image.tiff</value>
+  </property>
+  <!--property name="orbitFile">
+      <value>None</value>
+  </property-->
+  <property name="OUTPUT">
+    <value>reference</value>
+  </property>
+</component>
