@@ -5,7 +5,7 @@
   </property>
   <!--comment out orbitFile property when using annotation file for orbit information -->
   <property name="orbitFile">
-      <value>../../data/SLC/crop/reference/image.meta.xml</value>
+      <value>../../data/SLC/crop/reference/annotation.xml</value>
   </property>
   <property name="OUTPUT">
     <value>reference</value>
