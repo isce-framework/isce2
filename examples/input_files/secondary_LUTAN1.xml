@@ -3,9 +3,9 @@
   <property name="tiff">
     <value>../../data/SLC/crop/secondary/image.tiff</value>
   </property>
-  <!--property name="orbitFile">
-      <value>None</value>
-  </property-->
+  <property name="orbitFile">
+      <value>../../data/SLC/crop/reference/image.meta.xml</value>
+  </property>
   <property name="OUTPUT">
     <value>secondary</value>
   </property>
