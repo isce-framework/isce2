@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component>
   <property name="tiff">
-    <value>../../data/SLC/crop/reference/image.tiff</value>
+    <value>../SLC/20230210/LT1A_MONO_KSC_STRIP2_005661_E37.5_N37.6_20230210_SLC_HH_L1A_0000070327.tiff</value>
   </property>
   <!--comment out orbitFile property when using annotation file for orbit information -->
   <property name="orbitFile">
