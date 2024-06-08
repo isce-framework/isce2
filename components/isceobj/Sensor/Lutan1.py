@@ -26,7 +26,7 @@ import warnings
 lookMap = { 'RIGHT' : -1,
             'LEFT' : 1}
 
-# Antenna length, dimesnions 3.4 x 9.8 m
+# Antenna dimensions 9.8 x 3.4 m
 antennaLength = 9.8
 
 XML = Component.Parameter('xml',
@@ -271,7 +271,7 @@ class Lutan1(Sensor):
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
 
         # Band 1 as real and band 2 as imaginary numbers
-        # Confirmed by Yunjun Zhang
+        # Confirmed by Zhang Yunjun
         band1 = src.GetRasterBand(1)
         band2 = src.GetRasterBand(2)
         cJ = np.complex64(1.0j)
