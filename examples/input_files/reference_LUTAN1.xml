@@ -5,7 +5,7 @@
   </property>
   <!--comment out orbitFile property when using annotation file for orbit information -->
   <property name="orbitFile">
-      <value>../../data/SLC/crop/reference/annotation.xml</value>
+      <value>../orbits/LT1A_20230228143413185_V20230209T235500_20230211T000500_ABSORBIT_SCIE.xml</value>
   </property>
   <property name="OUTPUT">
     <value>reference</value>
