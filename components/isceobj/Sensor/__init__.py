@@ -99,6 +99,7 @@ createSICD_RGZERO = partial(factory_template, 'SICD_RGZERO')
 createICEYE_SLC = partial(factory_template, 'ICEYE_SLC')
 createUAVSAR_Hdf5_SLC = partial(factory_template, 'UAVSAR_HDF5_SLC')
 createSAOCOM_SLC = partial(factory_template, 'SAOCOM_SLC')
+createLUTAN1 = partial(factory_template, 'Lutan1')
 
 SENSORS = {'ALOS' : createALOS,
            'ALOS_SLC' : createALOS_SLC,
@@ -125,7 +126,8 @@ SENSORS = {'ALOS' : createALOS,
            'SICD_RGZERO' : createSICD_RGZERO,
            'ICEYE_SLC' : createICEYE_SLC,
            'UAVSAR_HDF5_SLC' : createUAVSAR_Hdf5_SLC,
-           'SAOCOM_SLC': createSAOCOM_SLC}
+           'SAOCOM_SLC': createSAOCOM_SLC,
+           'LUTAN1': createLUTAN1}
 
 #These are experimental and can be added in as they become ready
 #           'JERS': createJERS,
