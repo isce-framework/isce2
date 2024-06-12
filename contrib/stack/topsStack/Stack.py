@@ -340,19 +340,15 @@ class config(object):
         self.f.write('win_max : ' + '{}'.format(self.win_max) + '\n')
 
 
-
-
-    def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
+    def write_wrapper_config2run_file(self, configName, line_cnt = 1, last_line = False, numProcess = 1):
         # dispassionate list of commands for single process
         if numProcess == 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + '\n')
         # aggregate background commands between wait blocks for speed gains
         elif numProcess > 1:
             self.runf.write(self.text_cmd + 'SentinelWrapper.py -c ' + configName + ' &\n')
-            if line_cnt == numProcess:
+            if line_cnt % numProcess == 0 or last_line:
                 self.runf.write('wait\n\n')
-                line_cnt = 0
-        return line_cnt
 
     def finalize(self):
         self.f.close()
@@ -663,8 +659,7 @@ class run(object):
         swath_path = self.work_dir
         os.makedirs(self.config_path, exist_ok=True)
 
-        line_cnt = 0
-        for slcdate in acquisitionDates:
+        for i, slcdate in enumerate(acquisitionDates):
             configName = os.path.join(self.config_path,'config_unpack_'+slcdate)
             configObj = config(configName)
             configObj.configure(self)
@@ -679,8 +674,7 @@ class run(object):
             configObj.topo('[Function-2]')
             configObj.finalize()
             
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
     def unpackStackReferenceSLC(self, safe_dict):
@@ -700,14 +694,12 @@ class run(object):
         configObj.topo('[Function-2]')
         configObj.finalize()
 
-        line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
     def unpackSecondarysSLC(self,  stackReferenceDate, secondaryList, safe_dict):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             configName = os.path.join(self.config_path,'config_secondary_'+secondary)
             outdir = os.path.join(self.work_dir,'secondarys/'+secondary)
             configObj = config(configName)
@@ -720,14 +712,13 @@ class run(object):
             configObj.Sentinel1_TOPS('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def averageBaseline(self, stackReferenceDate, secondaryList):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             configName = os.path.join(self.config_path,'config_baseline_'+secondary)
             configObj = config(configName)
             configObj.configure(self)
@@ -737,14 +728,13 @@ class run(object):
             configObj.computeAverageBaseline('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def gridBaseline(self, stackReferenceDate, secondaryList):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             configName = os.path.join(self.config_path,'config_baselinegrid_'+secondary)
             configObj = config(configName)
             configObj.configure(self)
@@ -754,8 +744,7 @@ class run(object):
             configObj.computeGridBaseline('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
         # also add the reference in itself to be consistent with the SLC dir
         configName = os.path.join(self.config_path,'config_baselinegrid_reference')
@@ -767,8 +756,7 @@ class run(object):
         configObj.computeGridBaseline('[Function-1]')
         configObj.finalize()
 
-        line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
 
@@ -779,8 +767,7 @@ class run(object):
 
     def geo2rdr_offset(self, secondaryList, fullBurst='False'):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             reference = self.reference_date
             if fullBurst == 'True':
                 configName = os.path.join(self.config_path, 'config_fullBurst_geo2rdr_' + secondary)
@@ -802,14 +789,13 @@ class run(object):
             configObj.geo2rdr('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def resample_with_carrier(self, secondaryList, fullBurst='False'):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             reference = self.reference_date
             if fullBurst == 'True':
                 configName = os.path.join(self.config_path, 'config_fullBurst_resample_' + secondary)
@@ -832,8 +818,8 @@ class run(object):
             configObj.resamp_withCarrier('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = secondary == secondaryList[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
@@ -853,8 +839,7 @@ class run(object):
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
         safe_dict[self.reference_date].slc_overlap = os.path.join(self.work_dir , 'reference')
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             interferogramDir = os.path.join(self.work_dir, 'coarse_interferograms/'+reference+'_'+secondary)
@@ -883,8 +868,8 @@ class run(object):
             configObj.rangeMisreg('[Function-4]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = pair == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
             ########################
 
@@ -905,8 +890,7 @@ class run(object):
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
@@ -922,8 +906,8 @@ class run(object):
             configObj.generateIgram('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = pair == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
@@ -933,8 +917,7 @@ class run(object):
             safe_dict[date].slc = os.path.join(self.work_dir, 'coreg_secondarys/'+date)
         safe_dict[self.reference_date].slc = os.path.join(self.work_dir , 'reference')
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             interferogramDir = os.path.join(self.work_dir, 'interferograms/' + reference + '_' + secondary)
@@ -956,14 +939,13 @@ class run(object):
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = pair == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def mergeSecondarySLC(self, secondaryList, virtual='True'):
 
-        line_cnt = 0
-        for secondary in secondaryList:
+        for i, secondary in enumerate(secondaryList):
             configName = os.path.join(self.config_path,'config_merge_' + secondary)
             configObj = config(configName)
             configObj.configure(self)
@@ -981,8 +963,7 @@ class run(object):
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
@@ -1004,8 +985,7 @@ class run(object):
         configObj.mergeBurst('[Function-1]')
         configObj.finalize()
 
-        line_cnt = 1
-        line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+        configObj.write_wrapper_config2run_file(configName)
         del configObj
 
         geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
@@ -1032,14 +1012,12 @@ class run(object):
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
     def mergeSLC(self, aquisitionDates, virtual='True'):
 
-        line_cnt  = 0
-        for slcdate in aquisitionDates:
+        for i, slcdate in enumerate(aquisitionDates):
             configName = os.path.join(self.config_path,'config_merge_' + slcdate)
             configObj = config(configName)
             configObj.configure(self)
@@ -1056,13 +1034,11 @@ class run(object):
             configObj.mergeBurst('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
 
 
             geometryList = ['lat*rdr', 'lon*rdr', 'los*rdr', 'hgt*rdr', 'shadowMask*rdr','incLocal*rdr']
             
-            g_line_cnt = 0
             for i in range(len(geometryList)):
                 pattern = geometryList[i]
                 configName = os.path.join(self.config_path,'config_merge_' + slcdate + '_' +pattern.split('*')[0])
@@ -1081,14 +1057,12 @@ class run(object):
                 configObj.mergeBurst('[Function-1]')
                 configObj.finalize()
                 
-                g_line_cnt += 1
-                g_line_cnt = configObj.write_wrapper_config2run_file(configName, g_line_cnt)
+                configObj.write_wrapper_config2run_file(configName, i + 1)
                 del configObj
 
     def filter_coherence(self, pairs):
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
@@ -1108,15 +1082,14 @@ class run(object):
             configObj.FilterAndCoherence('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = pair == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
     def unwrap(self, pairs):
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             mergedDir = os.path.join(self.work_dir, 'merged/interferograms/' + reference + '_' + secondary)
@@ -1134,14 +1107,13 @@ class run(object):
             configObj.unwrap('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = pair == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
     def denseOffsets(self, pairs):
 
-        line_cnt = 0
-        for pair in pairs:
+        for i, pair in enumerate(pairs):
             reference = pair[0]
             secondary = pair[1]
             configName = os.path.join(self.config_path ,'config_denseOffset_' + reference + '_' + secondary)
@@ -1154,15 +1126,13 @@ class run(object):
             configObj.denseOffset('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
     def subband_and_resamp(self, dateListIon, stackReferenceDate):
 
-        line_cnt = 0
-        for date in dateListIon:
+        for i, date in enumerate(dateListIon):
             configName = os.path.join(self.config_path,'config_subband_and_resamp_{}'.format(date))
             configObj = config(configName)
             configObj.configure(self)
@@ -1177,15 +1147,14 @@ class run(object):
                 configObj.subband_and_resamp('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = date == dateListIon[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
     def generateIgram_ion(self, pairs, stackReferenceDate):
 
-        line_cnt = 0
-        for p in pairs:
+        for i, p in enumerate(pairs):
             configName = os.path.join(self.config_path,'config_generateIgram_ion_{}_{}'.format(p[0], p[1]))
             configObj = config(configName)
             configObj.configure(self)
@@ -1212,8 +1181,8 @@ class run(object):
             configObj.generateIgram_ion('[Function-2]')
             configObj.finalize()
 
-            line_cnt += 1
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            last_line = p == pairs[-1]
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1, last_line = last_line, numProcess = self.numProcess)
             del configObj
 
 
@@ -1233,8 +1202,7 @@ class run(object):
             pairs1 = pairs_same_starting_ranges_update
             pairs2 = pairs_diff_starting_ranges_update
 
-        line_cnt = 0
-        for p in pairs1+pairs2:
+        for i, p in enumerate(pairs1+pairs2):
             configName = os.path.join(self.config_path,'config_mergeBurstsIon_{}-{}'.format(p[0], p[1]))
             configObj = config(configName)
             configObj.configure(self)
@@ -1292,9 +1260,8 @@ class run(object):
 
             configObj.finalize()
 
-            line_cnt += 1
             #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
@@ -1314,8 +1281,7 @@ class run(object):
             pairs1 = pairs_same_starting_ranges_update
             pairs2 = pairs_diff_starting_ranges_update
 
-        line_cnt = 0
-        for p in pairs1+pairs2:
+        for i, p in enumerate(pairs1+pairs2):
             configName = os.path.join(self.config_path,'config_unwrap_ion_{}-{}'.format(p[0], p[1]))
             configObj = config(configName)
             configObj.configure(self)
@@ -1354,9 +1320,8 @@ class run(object):
 
             configObj.finalize()
 
-            line_cnt += 1
             #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
@@ -1376,8 +1341,7 @@ class run(object):
             pairs1 = pairs_same_starting_ranges_update
             pairs2 = pairs_diff_starting_ranges_update
 
-        line_cnt = 0
-        for p in pairs1+pairs2:
+        for i, p in enumerate(pairs1+pairs2):
             configName = os.path.join(self.config_path,'config_look_ion_{}-{}'.format(p[0], p[1]))
             configObj = config(configName)
             configObj.configure(self)
@@ -1424,9 +1388,8 @@ class run(object):
 
             configObj.finalize()
 
-            line_cnt += 1
             #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
@@ -1509,8 +1472,7 @@ class run(object):
         ionParamUsrObj = ionParamUsr(self.param_ion)
         ionParamUsrObj.configure()
 
-        line_cnt = 0
-        for p in pairs:
+        for i, p in enumerate(pairs):
             configName = os.path.join(self.config_path,'config_filtIon_{}_{}'.format(p[0], p[1]))
             configObj = config(configName)
             configObj.configure(self)
@@ -1522,9 +1484,8 @@ class run(object):
             configObj.filtIon('[Function-1]')
             configObj.finalize()
 
-            line_cnt += 1
             #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
-            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            configObj.write_wrapper_config2run_file(configName, line_cnt = i + 1)
             del configObj
 
 
