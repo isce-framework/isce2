@@ -19,12 +19,12 @@
 
 //in cuArraysCopy.cu: various utilities for copy images file in gpu memory
 void cuArraysCopyToBatch(cuArrays<float2> *image1, cuArrays<float2> *image2, int strideH, int strideW, cudaStream_t stream);
-void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream);
-void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream);
-void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream);
+void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream);
+void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream);
+void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream);
 void cuArraysCopyC2R(cuArrays<float2> *image1, cuArrays<float> *image2, int strideH, int strideW, cudaStream_t stream);
 
 // same routine name overloaded for different data type
