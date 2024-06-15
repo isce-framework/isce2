@@ -226,7 +226,7 @@ class make_raw(Component, FrameMixin):
         self.frame.squintAngle = math.radians(self.squint)
 
     def make_raw(self):
-        from  isceobj.Image import createRawImage, createSlcImage
+        from isceobj.Image import createRawImage, createSlcImage
         self.activateInputPorts()
 
         # Parse the image metadata and extract the image
