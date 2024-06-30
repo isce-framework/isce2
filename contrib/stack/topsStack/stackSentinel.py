@@ -1026,7 +1026,12 @@ def main(iargs=None):
 
 
     #do ionosphere estimation
-    if inps.param_ion is not None:
+    # Checks the presence of the ion parameter file. If it exists, do ionosphere estimation.
+    if inps.param_ion is None:
+        print("Ion parameter file is not specified. Ionospheric estimation will not be done.")
+    elif not os.path.isfile(inps.param_ion):
+        print("Ion parameter file is missing. Ionospheric estimation will not be done.")
+    else:
         #############################################
         #check if consider burst properties
         from Stack import ionParamUsr
