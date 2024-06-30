@@ -14,7 +14,7 @@ import numpy as np
 import isce
 import isceobj
 from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
-from Stack import config, run, sentinelSLC
+from topsStack.Stack import config, run, sentinelSLC, ionParamUsr
 
 
 helpstr = """
