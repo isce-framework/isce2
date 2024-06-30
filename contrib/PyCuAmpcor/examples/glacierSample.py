@@ -6,9 +6,12 @@
 #
 
 import argparse
-import numpy as np
-from PyCuAmpcor import PyCuAmpcor
-
+try:
+    # if installed with ISCE2
+    from contrib.PyCuAmpcor.PyCuAmpcor import PyCuAmpcor
+except ModuleNotFoundError:
+    # if standalone
+    from PyCuAmpcor import PyCuAmpcor
 
 def main():
     '''

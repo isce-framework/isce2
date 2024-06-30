@@ -10,9 +10,6 @@
 #ifndef __CUDAUTIL_H
 #define __CUDAUTIL_H
 
-#include <cuda_runtime.h>
-#include "cudaError.h"
-
 // for 2D FFT
 #define NRANK 2
 
@@ -47,12 +44,6 @@
 #define MIN(a,b) (a > b ? b: a)
 #endif
 
-// Float To Int conversion
-inline int ftoi(float value)
-{
-    return (value >= 0 ? (int)(value + 0.5) : (int)(value - 0.5));
-}
-
 // compute the next integer in power of 2
 inline int nextpower2(int value)
 {
@@ -61,63 +52,11 @@ inline int nextpower2(int value)
     return r;
 }
 
-
 // General GPU Device CUDA Initialization
-inline int gpuDeviceInit(int devID)
-{
-    int device_count;
-    checkCudaErrors(cudaGetDeviceCount(&device_count));
-
-    if (device_count == 0)
-    {
-        fprintf(stderr, "gpuDeviceInit() CUDA error: no devices supporting CUDA.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if (devID < 0 || devID > device_count-1)
-    {
-        fprintf(stderr, "gpuDeviceInit() Device %d is not a valid GPU device. \n", devID);
-        exit(EXIT_FAILURE);
-    }
-
-    checkCudaErrors(cudaSetDevice(devID));
-    printf("Using CUDA Device %d ...\n", devID);
-
-    return devID;
-}
+int gpuDeviceInit(int devID);
 
 // This function lists all available GPUs
-inline void gpuDeviceList()
-{
-    int device_count = 0;
-    int current_device = 0;
-    cudaDeviceProp deviceProp;
-    checkCudaErrors(cudaGetDeviceCount(&device_count));
-
-    fprintf(stderr, "Detecting all CUDA devices ...\n");
-    if (device_count == 0)
-    {
-        fprintf(stderr, "CUDA error: no devices supporting CUDA.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    while (current_device < device_count)
-    {
-        checkCudaErrors(cudaGetDeviceProperties(&deviceProp, current_device));
-        if (deviceProp.computeMode == cudaComputeModeProhibited)
-        {
-            fprintf(stderr, "CUDA Device [%d]: \"%s\" is not available: device is running in <Compute Mode Prohibited> \n", current_device, deviceProp.name);
-        }
-        else if (deviceProp.major < 1)
-        {
-            fprintf(stderr, "CUDA Device [%d]: \"%s\" is not available: device does not support CUDA \n", current_device, deviceProp.name);
-        }
-        else {
-            fprintf(stderr, "CUDA Device [%d]: \"%s\" is available.\n", current_device, deviceProp.name);
-        }
-        current_device++;
-    }
-}
+void gpuDeviceList();
 
 #endif //__CUDAUTIL_H
 //end of file

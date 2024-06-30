@@ -113,7 +113,7 @@ if __name__ == '__main__':
     import numpy as np
     Nx = 500
     Ny = 300
-    Nrand = np.int(0.4*Nx*Ny)
+    Nrand = int(0.4*Nx*Ny)
 
     x = np.arange(Nx, dtype=np.float32)/(1.0*Nx)
     y = np.arange(Ny, dtype=np.float32)/(1.0*Ny)

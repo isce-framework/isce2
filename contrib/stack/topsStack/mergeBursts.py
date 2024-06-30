@@ -18,6 +18,7 @@ import isceobj
 from isceobj.Util.ImageUtil import ImageLib as IML
 from isceobj.Util.decorators import use_api
 import s1a_isce_utils as ut
+from isce.applications.gdal2isce_xml import gdal2isce_xml
 
 
 def createParser():
@@ -313,6 +314,7 @@ def multilook(infile, outname=None, alks=5, rlks=15, multilook_tool="isce", no_d
         gdal.Translate(outname, ds, options=options_str)
         # generate VRT file
         gdal.Translate(outname+".vrt", outname, options='-of VRT')
+        gdal2isce_xml(outname)
 
     else:
         from mroipac.looks.Looks import Looks

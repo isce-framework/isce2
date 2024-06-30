@@ -10,7 +10,7 @@
     <property name="secondary directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
     <!--Normally no need to set frame numbers, but if reference and secondary frames do not meet the following
     one-to-one correspondence, you need to set frame numbers here. See instructions below on how to find
-    and set frame numbers.
+    and set frame numbers. Always use 4-digit to set the frame number, e.g. 2980, 0750, etc.
 
     Reference Data Folder               Secondary Data Folder
        Frame ****     .............     Frame ****
@@ -362,12 +362,12 @@ FBD (indicated by ^) is the acquisition mode code.
     to:   dense offset covariance surface oversample window size
     Normally we only have to set the following parameters. A good set of parameters other than default is:
     <property name="dense offset estimation window width">128</property>
-    <property name="dense offset estimation window hight">128</property>
+    <property name="dense offset estimation window height">128</property>
     <property name="dense offset skip width">64</property>
-    <property name="dense offset skip hight">64</property>
+    <property name="dense offset skip height">64</property>
     ==========================================================================================-->
     <!--<property name="dense offset estimation window width">64</property>-->
-    <!--<property name="dense offset estimation window hight">64</property>-->
+    <!--<property name="dense offset estimation window height">64</property>-->
 
     <!--=========================================================================================
     NOTE: actual number of resulting correlation pixels: offsetSearchWindowWidth*2+1
@@ -377,9 +377,9 @@ FBD (indicated by ^) is the acquisition mode code.
     <!--=========================================================================================
     NOTE: actual number of resulting correlation pixels: offsetSearchWindowHeight*2+1
     ==========================================================================================-->
-    <!--<property name="dense offset search window hight">8</property>-->
+    <!--<property name="dense offset search window height">8</property>-->
     <!--<property name="dense offset skip width">32</property>-->
-    <!--<property name="dense offset skip hight">32</property>-->
+    <!--<property name="dense offset skip height">32</property>-->
     <!--<property name="dense offset covariance surface oversample factor">64</property>-->
     <!--<property name="dense offset covariance surface oversample window size">16</property>-->
     <!--<property name="mask dense offset with water body">True</property>-->

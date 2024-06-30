@@ -30,14 +30,8 @@
 
 
 
-
-from __future__ import print_function
 import sys
-import os
-import math
 import isce
-from iscesys.Compatibility import Compatibility
-Compatibility.checkPythonVersion()
 from iscesys.Display.Display import Display
 ##
 # Call mdx.py argv.

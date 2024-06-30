@@ -8,6 +8,7 @@
 #include "GDALImage.h"
 
 // dependencies
+#include <cuda_runtime.h>
 #include <iostream>
 #include "cudaError.h"
 

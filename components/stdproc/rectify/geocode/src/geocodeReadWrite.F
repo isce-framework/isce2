@@ -57,7 +57,7 @@
                         integer*8 :: acc
                         integer :: irow,band,n,i
 
-                        call getLineSequentialBand(acc,rarr,band,irow)
+                        call getLineSequentialBand_r4(acc,rarr,band,irow)
                         do i=1,n
                             carr(i) = cmplx(rarr(i), 0.)
                         end do
@@ -80,7 +80,7 @@
                             rarr(i) = real(carr(i))
                         enddo
                         
-                        call setLineSequentialBand(acc,rarr,band)
+                        call setLineSequentialBand_r4(acc,rarr,band)
                     end subroutine writeRealLine
 
                 end module geocodeReadWrite

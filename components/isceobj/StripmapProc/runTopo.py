@@ -87,10 +87,8 @@ def runTopo(self):
 #    topo.incFilename = os.path.join(info.outdir, 'inc.rdr')
 #    topo.maskFilename = os.path.join(info.outdir, 'mask.rdr')
 
-
     ####Doppler adjustment
     dop = [x/1.0 for x in info._dopplerVsPixel]
-     
     doppler = Poly2D()
     doppler.setWidth(topo.width // topo.numberRangeLooks)
     doppler.setLength(topo.length // topo.numberAzimuthLooks)

@@ -4,7 +4,7 @@
       integer*4  n, dir, ier
       complex*8    c(*)
       integer nmax
-      parameter (nmax = 65536)  !32768)
+      parameter (nmax = 131072)  !32768)
       interface
         integer(C_INT) function sfftw_import_wisdom_from_filename(filename) bind(C, name='sfftw_import_wisdom_from_filename')
         use, intrinsic :: iso_c_binding
@@ -17,7 +17,7 @@ cc HP platform and using its library
 cc
 
 #if defined(HP) || defined(HAVE_C1DFFT)
-
+      real*4 work128k(5*131072/2)
       real*4 work64k(5*65536/2)
       real*4 work32k(5*32768/2)
       real*4 work16(5*16384/2),work8(5*8192/2),work4(5*4096/2)
@@ -31,6 +31,7 @@ cc
 
 
       if(dir .eq. 0) then
+         if(n.eq.131072)call c1dfft(c,n,work128k,-3,ier)
          if(n.eq.65536)call c1dfft(c,n,work64k,-3,ier)
          if(n.eq.32768)call c1dfft(c,n,work32k,-3,ier)
          if(n.eq.16384)call c1dfft(c,n,work16,-3,ier)
@@ -51,7 +52,7 @@ cc
          end if
          return
       end if
-
+      if(n.eq.131072)call c1dfft(c,n,work128k,-dir,ier)
       if(n.eq.65536)call c1dfft(c,n,work64k,-dir,ier)
       if(n.eq.32768)call c1dfft(c,n,work32k,-dir,ier)
       if(n.eq.16384)call c1dfft(c,n,work16,-dir,ier)
@@ -80,7 +81,7 @@ cc
 c     NOTE: if above condition changed, also need to update cffts.F
 
 c     The should be updated in the future to use SCSL routines
-
+      complex*8 work128k(131072+15)
       complex*8 work64k(65536+15)
       complex*8 work32k(32768+15),work16k(16384+15)
       complex*8 work8k(8192+15),work4k(4096+15)
@@ -88,7 +89,7 @@ c     The should be updated in the future to use SCSL routines
       complex*8 work512(512+15),work256(256+15)
       complex*8 work128(5*128/2),work64(64+15)
       complex*8 work32(32+15),work16(16+15),work8(8+15)
-      common /fftwork/work64k,work32k,work16k,work8k,work4k,work2k,
+      common /fftwork/work128k,work64k,work32k,work16k,work8k,work4k,work2k,
      &                work1k,work512,work256,work128,work64,
      &                work32,work16,work8
 
@@ -96,6 +97,7 @@ c     The should be updated in the future to use SCSL routines
 
 
       if(dir .eq. 0) then
+         if (n.eq.131072) call cfft1di(n,work128k)
          if (n.eq.65536) call cfft1di(n,work64k)
          if (n.eq.32768) call cfft1di(n,work32k)
          if (n.eq.16384) call cfft1di(n,work16k)
@@ -113,6 +115,7 @@ c     The should be updated in the future to use SCSL routines
          return
       end if
 
+      if (n.eq.131072) call cfft1d(dir,n,c,1,work128k)
       if (n.eq.65536) call cfft1d(dir,n,c,1,work64k)
       if (n.eq.32768) call cfft1d(dir,n,c,1,work32k)
       if (n.eq.16384) call cfft1d(dir,n,c,1,work16k)
@@ -139,7 +142,7 @@ cc
 
 
 C Sun WIPSpro Fortran 77
-
+      complex*8 work128k(4*131072+15)
       complex*8 work64k(4*65536+15)
       complex*8 work32k(4*32768+15),work16k(4*16384+15)
       complex*8 work8k(4*8192+15),work4k(4*4096+15)
@@ -147,7 +150,7 @@ C Sun WIPSpro Fortran 77
       complex*8 work512(4*512+15),work256(4*256+15)
       complex*8 work128(4*128+15),work64(4*64+15)
       complex*8 work32(4*32+15),work16(4*16+15),work8(4*8+15)
-      common /fftwork/work64k,work32k,work16k,work8k,work4k,work2k,
+      common /fftwork/work128k,work64k,work32k,work16k,work8k,work4k,work2k,
      &                work1k,work512,work256,work128,work64,
      &                work32,work16,work8
 
@@ -155,6 +158,7 @@ C Sun WIPSpro Fortran 77
 
 
       if(dir .eq. 0) then
+         if (n.eq.131072) call cffti(n,work128k)
          if (n.eq.65536) call cffti(n,work64k)
          if (n.eq.32768) call cffti(n,work32k)
          if (n.eq.16384) call cffti(n,work16k)
@@ -171,6 +175,7 @@ C Sun WIPSpro Fortran 77
          if (n.eq.    8) call cffti(n,work8)
          return
       end if
+      if (n.eq.131072) call cfftf(n,c,work128k)
       if (n.eq.65536) call cfftf(n,c,work64k)
       if (n.eq.32768) call cfftf(n,c,work32k)
       if (n.eq.16384) call cfftf(n,c,work16k)
@@ -231,7 +236,7 @@ c     NOTE: if above condition changed, also need to update fftw3stub.c
 
       if(dir.eq.0)then
 !c move i calculation to top of function
-         do i=2,16
+         do i=2,17
             if(2**i.eq.n)go to 1
          end do
          write(6,*) 'fftw: length unsupported:: ',n
@@ -263,6 +268,7 @@ c     NOTE: if above condition changed, also need to update fftw3stub.c
          if(n.eq.16384)call sfftw_execute_dft(planf(14),c,c)
          if(n.eq.32768)call sfftw_execute_dft(planf(15),c,c)
          if(n.eq.65536)call sfftw_execute_dft(planf(16),c,c)
+         if(n.eq.131072)call sfftw_execute_dft(planf(17),c,c)
       end if
       if(dir.eq. 1)then
          if(n.eq.4)call sfftw_execute_dft(plani(2),c,c)
@@ -280,9 +286,10 @@ c     NOTE: if above condition changed, also need to update fftw3stub.c
          if(n.eq.16384)call sfftw_execute_dft(plani(14),c,c)
          if(n.eq.32768)call sfftw_execute_dft(plani(15),c,c)
          if(n.eq.65536)call sfftw_execute_dft(plani(16),c,c)
+         if(n.eq.131072)call sfftw_execute_dft(plani(17),c,c)
       end if
       if(dir .eq. 2) then
-         do i=2,16
+         do i=2,17
             if(2**i.eq.n)go to 10
          end do
          write(6,*) 'fftw: length unsupported:: ',n

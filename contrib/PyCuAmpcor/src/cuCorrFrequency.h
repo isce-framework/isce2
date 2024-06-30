@@ -8,8 +8,8 @@
 #define __CUCORRFREQUENCY_H
 
 // dependencies
-#include "cudaUtil.h"
 #include "cuArrays.h"
+#include <cufft.h>
 
 class cuFreqCorrelator
 {

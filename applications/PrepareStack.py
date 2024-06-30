@@ -81,7 +81,7 @@ class orbit_info:
     def getBaseline(self, secondary):
         '''Compute baseline between current object and another orbit object.'''
 
-        ind = np.int(self.nvec/2)
+        ind = int(self.nvec/2)
 
         mpos = np.array(self.pos[ind])
         mvel = np.array(self.vel[ind])
@@ -93,7 +93,7 @@ class orbit_info:
         vvec = np.cross(crp, rvec)
         mvel = np.linalg.norm(mvel)
 
-        ind = np.int(secondary.nvec/2)            #First guess
+        ind = int(secondary.nvec/2)            #First guess
         spos = np.array(secondary.pos[ind])
         svel = np.array(secondary.vel[ind])
         svel = np.linalg.norm(svel)
@@ -101,7 +101,7 @@ class orbit_info:
         dx = spos - mpos;
         z_offset = secondary.prf*np.dot(dx, vvec)/mvel
 
-        ind = np.int(ind - z_offset)    #Refined estimate
+        ind = int(ind - z_offset)    #Refined estimate
         spos = secondary.pos[ind]
         svel = secondary.vel[ind]
         svel = np.linalg.norm(svel)

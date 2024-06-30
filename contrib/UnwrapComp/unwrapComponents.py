@@ -211,8 +211,6 @@ class UnwrapComponents(Component):
         '''
         Creates an ENVI style HDR file for use with GDAL API.
         '''
-        import isceobj
-
         tempstring = """ENVI
 description = {{Snaphu connected component file}}
 samples = {0}
@@ -438,9 +436,6 @@ band names = {{component (Band 1) }}
 
 #end class
 if __name__ == "__main__":
-
-    import isceobj
-
     unw = UnwrapComponents()
     unw.setInpFile(inpFile)
     unw.setConnCompFile(ccFile)

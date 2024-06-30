@@ -188,7 +188,7 @@ class Radarsat2_GRD(Component):
         gcps = self.readGCPsFromXML()
         #print('gcps=',gcps)
 
-        azt = np.zeros((len(gcps),3), dtype=np.float)
+        azt = np.zeros((len(gcps),3), dtype=float)
         nvalid = 0
         for ind,gcp in enumerate(gcps):
             try:

@@ -71,8 +71,8 @@ def getGridLimits(geofile=None, latfile=None, lonfile=None):
         width = latds.RasterXSize
         lgth  = latds.RasterYSize
 
-        xs = np.linspace(0, width-1, num=samples).astype(np.int)
-        ys = np.linspace(0, lgth-1, num=samples).astype(np.int)
+        xs = np.linspace(0, width-1, num=samples).astype(int)
+        ys = np.linspace(0, lgth-1, num=samples).astype(int)
 
         for line in range(samples):
 
@@ -122,11 +122,11 @@ def getGridLimits(geofile=None, latfile=None, lonfile=None):
         raise Exception('Either geofile is provided (or) latfile and lonfile. All 3 inputs cannot be provided') 
 
 
-    ii0 =  max(np.int((ymax - maxyy - dely/2.0) / dely ), 0)
-    ii1 =  min(np.int((ymax - minyy + dely/2.0) / dely ) + 1, Ny)
+    ii0 =  max(int((ymax - maxyy - dely/2.0) / dely ), 0)
+    ii1 =  min(int((ymax - minyy + dely/2.0) / dely ) + 1, Ny)
 
-    jj0 = max(np.int((minxx - xmin - delx/2.0)/delx), 0)
-    jj1 = min(np.int((maxxx - xmin + delx/2.0)/delx) + 1, Nx)
+    jj0 = max(int((minxx - xmin - delx/2.0)/delx), 0)
+    jj1 = min(int((maxxx - xmin + delx/2.0)/delx) + 1, Nx)
 
 
     ylim = ymax - np.array([ii1,ii0]) * dely

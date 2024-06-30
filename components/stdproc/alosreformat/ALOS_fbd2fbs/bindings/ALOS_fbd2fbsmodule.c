@@ -34,7 +34,7 @@
 
 #include "ALOS_fbd2fbsmodule.h"
 
-const* __doc__ =  "Python extension for ALOS_fbd2fbs.c";
+const char* __doc__ =  "Python extension for ALOS_fbd2fbs.c";
 
 static struct PyModuleDef moduledef = {
     // header

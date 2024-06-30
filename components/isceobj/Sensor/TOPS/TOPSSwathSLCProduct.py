@@ -282,8 +282,8 @@ class TOPSSwathSLCProduct(Component):
         from isceobj.Util.Poly2D import Poly2D
 
         ####TOPS steering component of the azimuth carrier
-        x = np.arange(0, burst.numberOfSamples,xstep,dtype=np.int)
-        y = np.arange(0, burst.numberOfLines, ystep, dtype=np.int)
+        x = np.arange(0, burst.numberOfSamples,xstep,dtype=int)
+        y = np.arange(0, burst.numberOfLines, ystep, dtype=int)
 
         xx,yy = np.meshgrid(x,y)
 

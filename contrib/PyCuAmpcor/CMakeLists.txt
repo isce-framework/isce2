@@ -11,24 +11,26 @@ set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
 
 pybind11_add_module(PyCuAmpcor
     src/PyCuAmpcor.cpp
-    src/GDALImage.cu
+    src/GDALImage.cpp
     src/SConscript
-    src/cuAmpcorChunk.cu
-    src/cuAmpcorController.cu
-    src/cuAmpcorParameter.cu
-    src/cuArrays.cu
+    src/cuAmpcorChunk.cpp
+    src/cuAmpcorController.cpp
+    src/cuAmpcorParameter.cpp
+    src/cuArrays.cpp
     src/cuArraysCopy.cu
     src/cuArraysPadding.cu
     src/cuCorrFrequency.cu
     src/cuCorrNormalization.cu
     src/cuCorrNormalizationSAT.cu
-    src/cuCorrNormalizer.cu
+    src/cuCorrNormalizer.cpp
     src/cuCorrTimeDomain.cu
     src/cuDeramp.cu
     src/cuEstimateStats.cu
     src/cuOffset.cu
-    src/cuOverSampler.cu
+    src/cuOverSampler.cpp
     src/cuSincOverSampler.cu
+    src/cudaError.cpp
+    src/cudaUtil.cpp
     )
 target_include_directories(PyCuAmpcor PRIVATE
     src

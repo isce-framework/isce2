@@ -106,7 +106,7 @@ def runOffPoly(offField):
     if ynorm == 0:
         ynorm = 1.0
 
-    yoff = np.int(np.round(np.mean(dy)))
+    yoff = int(np.round(np.mean(dy)))
     y = (y - ymin)/ynorm
 
 
