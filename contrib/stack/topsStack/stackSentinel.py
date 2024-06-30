@@ -856,7 +856,6 @@ def ionosphereStack(inps, dateListIonUpdate, dateListIon, stackReferenceDate, pa
     runObj.finalize()
 
 
-    from Stack import ionParamUsr
     ionParamUsrObj = ionParamUsr(inps.param_ion)
     ionParamUsrObj.configure()
     if ionParamUsrObj.ION_considerBurstProperties:
