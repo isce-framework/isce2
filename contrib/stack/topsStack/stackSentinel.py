@@ -1034,7 +1034,6 @@ def main(iargs=None):
     else:
         #############################################
         #check if consider burst properties
-        from Stack import ionParamUsr
         ionParamUsrObj = ionParamUsr(inps.param_ion)
         ionParamUsrObj.configure()
         if ionParamUsrObj.ION_considerBurstProperties:
