@@ -14,7 +14,7 @@ import numpy as np
 import isce
 import isceobj
 from isceobj.Sensor.TOPS.Sentinel1 import Sentinel1
-from topsStack.Stack import config, run, sentinelSLC
+from topsStack.Stack import config, run, sentinelSLC, ionParamUsr
 
 
 helpstr = """
@@ -607,8 +607,9 @@ def checkCurrentStatusIonosphere(inps):
     acquisitionDates, stackReferenceDate, secondaryDates, safe_dict = get_dates(inps)
 
     pairs_same_starting_ranges, pairs_diff_starting_ranges = selectNeighborPairsIonosphere(safe_dict, inps.num_connections_ion)
+    dateListIon = getDatesIonosphere(pairs_same_starting_ranges, pairs_diff_starting_ranges)
     pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update = excludeExistingPairsIonosphere(pairs_same_starting_ranges, pairs_diff_starting_ranges, inps.work_dir)
-    dateListIon = getDatesIonosphere(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
+    dateListIonUpdate = getDatesIonosphere(pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update)
 
     #report pairs of different swath starting ranges.
     pdiff = 'ionosphere phase estimation pairs with different swath starting ranges\n'
@@ -623,7 +624,7 @@ def checkCurrentStatusIonosphere(inps):
     with open('pairs_diff_starting_ranges.txt', 'w') as f:
         f.write(pdiff)
 
-    return dateListIon, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict
+    return dateListIonUpdate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, dateListIon
 
 
 ########################################
@@ -821,12 +822,12 @@ def offsetStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, safe
     return i
 
 
-def ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i):
+def ionosphereStack(inps, dateListIonUpdate, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i):
 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_subband_and_resamp'.format(i))
-    runObj.subband_and_resamp(dateListIon, stackReferenceDate)
+    runObj.subband_and_resamp(dateListIonUpdate, stackReferenceDate)
     runObj.finalize()
 
     i+=1
@@ -870,6 +871,38 @@ def ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_r
     runObj.configure(inps, 'run_{:02d}_invertIon'.format(i))
     runObj.invertIon()
     runObj.finalize()
+
+
+    ionParamUsrObj = ionParamUsr(inps.param_ion)
+    ionParamUsrObj.configure()
+    if ionParamUsrObj.ION_considerBurstProperties:
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_filtIonShift'.format(i))
+        runObj.filtIonShift(pairs_same_starting_ranges_update + pairs_diff_starting_ranges_update)
+        runObj.finalize()
+
+        #From now on, need to reprocess all dates/pairs, not only newly added
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_invertIonShift'.format(i))
+        runObj.invertIonShift()
+        runObj.finalize()
+
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_burstRampIon'.format(i))
+        runObj.burstRampIon(dateListIon)
+        runObj.finalize()
+
+        i+=1
+        runObj = run()
+        runObj.configure(inps, 'run_{:02d}_mergeBurstRampIon'.format(i))
+        runObj.mergeBurstRampIon(dateListIon, stackReferenceDate)
+        runObj.finalize()
+
+    del ionParamUsrObj
+        
 
     return i
 
@@ -1015,8 +1048,19 @@ def main(iargs=None):
     elif not os.path.isfile(inps.param_ion):
         print("Ion parameter file is missing. Ionospheric estimation will not be done.")
     else:
-        dateListIon, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict = checkCurrentStatusIonosphere(inps)
-        i = ionosphereStack(inps, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i)
+        #############################################
+        #check if consider burst properties
+        ionParamUsrObj = ionParamUsr(inps.param_ion)
+        ionParamUsrObj.configure()
+        if ionParamUsrObj.ION_considerBurstProperties:
+            if inps.coregistration != 'NESD':
+                raise Exception("Coregistration options '-C', '--coregistration' must be NESD when 'consider burst properties in ionosphere computation' is True")
+        del ionParamUsrObj
+        #############################################
+
+        dateListIonUpdate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, dateListIon = checkCurrentStatusIonosphere(inps)
+        i = ionosphereStack(inps, dateListIonUpdate, dateListIon, stackReferenceDate, pairs_same_starting_ranges_update, pairs_diff_starting_ranges_update, safe_dict, i)
+
 
 if __name__ == "__main__":
     # Main engine
