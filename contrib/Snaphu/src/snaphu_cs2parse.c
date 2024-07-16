@@ -192,12 +192,12 @@ arc_first= (long*) CAlloc ( n+2, sizeof(long) );
 
 for ( in = nodes; in <= nodes + n; in ++ )
   in -> excess = 0;
-		    
+                    
 if ( nodes == NULL || arcs == NULL || 
      arc_first == NULL || arc_tail == NULL )
   /* memory is not allocated */
   { err_no = EN6; goto error; }
-		     
+                     
 /* setting pointer to the first arc */
 arc_current = arcs;
 node_max = 0;
@@ -368,53 +368,53 @@ for ( i = node_min; i < node_max; i ++ ) /* scanning all the nodes
     for ( arc_num = arc_first[i]; arc_num < last; arc_num ++ )
       { tail = arc_tail[arc_num];
 
-	while ( tail != i )
+        while ( tail != i )
           /* the arc no  arc_num  is not in place because arc cited here
              must go out from i;
              we'll put it to its place and continue this process
              until an arc in this position would go out from i */
 
-	  { arc_new_num  = arc_first[tail];
-	    arc_current  = arcs + arc_num;
-	    arc_new      = arcs + arc_new_num;
-	    
-	    /* arc_current must be cited in the position arc_new    
-	       swapping these arcs:                                 */
+          { arc_new_num  = arc_first[tail];
+            arc_current  = arcs + arc_num;
+            arc_new      = arcs + arc_new_num;
+            
+            /* arc_current must be cited in the position arc_new    
+               swapping these arcs:                                 */
 
-	    head_p               = arc_new -> head;
-	    arc_new -> head      = arc_current -> head;
-	    arc_current -> head  = head_p;
+            head_p               = arc_new -> head;
+            arc_new -> head      = arc_current -> head;
+            arc_current -> head  = head_p;
 
-	    acap                 = cap[arc_new_num];
-	    cap[arc_new_num]     = cap[arc_num];
-	    cap[arc_num]         = acap;
+            acap                 = cap[arc_new_num];
+            cap[arc_new_num]     = cap[arc_num];
+            cap[arc_num]         = acap;
 
-	    acap                 = arc_new -> r_cap;
-	    arc_new -> r_cap     = arc_current -> r_cap;
-	    arc_current -> r_cap = acap;
+            acap                 = arc_new -> r_cap;
+            arc_new -> r_cap     = arc_current -> r_cap;
+            arc_current -> r_cap = acap;
 
-	    dcost                = arc_new -> cost;
-	    arc_new -> cost      = arc_current -> cost;
-	    arc_current -> cost  = dcost;
+            dcost                = arc_new -> cost;
+            arc_new -> cost      = arc_current -> cost;
+            arc_current -> cost  = dcost;
 
-	    if ( arc_new != arc_current -> sister )
-	      {
-	        arc_tmp                = arc_new -> sister;
-	        arc_new  -> sister     = arc_current -> sister;
-	        arc_current -> sister  = arc_tmp;
+            if ( arc_new != arc_current -> sister )
+              {
+                arc_tmp                = arc_new -> sister;
+                arc_new  -> sister     = arc_current -> sister;
+                arc_current -> sister  = arc_tmp;
 
                 ( arc_current -> sister ) -> sister = arc_current;
-		( arc_new     -> sister ) -> sister = arc_new;
-	      }
+                ( arc_new     -> sister ) -> sister = arc_new;
+              }
 
-	    arc_tail[arc_num] = arc_tail[arc_new_num];
-	    arc_tail[arc_new_num] = tail;
+            arc_tail[arc_num] = arc_tail[arc_new_num];
+            arc_tail[arc_new_num] = tail;
 
-	    /* we increase arc_first[tail]  */
-	    arc_first[tail] ++ ;
+            /* we increase arc_first[tail]  */
+            arc_first[tail] ++ ;
 
             tail = arc_tail[arc_num];
-	  }
+          }
       }
     /* all arcs outgoing from  i  are in place */
   }       
@@ -430,10 +430,10 @@ for ( ndp = nodes + node_min; ndp <= nodes + node_max; ndp ++ )
    for ( arc_current = ndp -> first; arc_current != (ndp+1) -> first; 
          arc_current ++ )
       {
-	arc_num = arc_current - arcs;
-	if ( cap[arc_num] > 0 ) cap_out += cap[arc_num];
-	if ( cap[arc_num] == 0 ) 
-	  cap_in += cap[( arc_current -> sister )-arcs];
+        arc_num = arc_current - arcs;
+        if ( cap[arc_num] > 0 ) cap_out += cap[arc_num];
+        if ( cap[arc_num] == 0 ) 
+          cap_in += cap[( arc_current -> sister )-arcs];
       }
 
    /*
