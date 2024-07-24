@@ -68,54 +68,84 @@ void cuArraysCopyToBatch(cuArrays<float2> *image1, cuArrays<float2> *image2,
 
 // kernel for cuArraysCopyToBatchWithOffset
 template<typename T_in, typename T_out>
-__global__ void cuArraysCopyToBatchWithOffset_kernel(const T_in *imageIn, const int inNY,
+__global__ void cuArraysCopyToBatchWithOffset_kernel(const T_in *imageIn, const int inNX, const int inNY,
     T_out *imageOut, const int outNX, const int outNY, const int nImages,
     const int *offsetX, const int *offsetY)
 {
+    // get image index
     int idxImage = blockIdx.z;
+    // check the image index within range
+    if(idxImage>=nImages ) return;
+    // get the output pixel location
     int outx = threadIdx.x + blockDim.x*blockIdx.x;
     int outy = threadIdx.y + blockDim.y*blockIdx.y;
-    if(idxImage>=nImages || outx >= outNX || outy >= outNY) return;
+     // check the output location within range (due to cuda threads)
+    if(outx >= outNX || outy >= outNY) return;
+    // flatten the output location to 1d
     int idxOut = idxImage*outNX*outNY + outx*outNY + outy;
-    int idxIn = (offsetX[idxImage]+outx)*inNY + offsetY[idxImage] + outy;
-    imageOut[idxOut] = T_out{imageIn[idxIn]};
+    // find the input pixel location
+    int inx = offsetX[idxImage] + outx;
+    int iny = offsetY[idxImage] + outy;
+    // check whether the location is within the input image range
+    if(inx>=0 && inx<inNX && iny>=0 && iny<inNY) {
+        int idxIn = inx*inNY+iny;
+        imageOut[idxOut] = T_out{imageIn[idxIn]}; //true, copy
+    }
+    else
+        imageOut[idxOut] = T_out{0.0f}; //false, fill with 0
 }
 
 /**
  * Copy a chunk into a batch of chips with varying offsets/strides
  * @note used to extract chips from a raw secondary image with varying offsets
  * @param image1 Input image as a large chunk
- * @param lda1 the leading dimension of image1, usually, its width inNY
+ * @param  the leading dimension of image1, usually, its width inNY
  * @param image2 Output images as a batch of chips
  * @param strideH (varying) offsets along height to extract chips
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
     dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
     cuArraysCopyToBatchWithOffset_kernel<<<gridSize,blockSize, 0 , stream>>> (
-        image1->devData, lda1,
+        image1->devData, inNX, inNY,
         image2->devData, image2->height, image2->width, image2->count,
         offsetH, offsetW);
     getLastCudaError("cuArraysCopyToBatchAbsWithOffset_kernel");
 }
 
 // same as above, but from complex to real(take amplitudes)
-__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, const int inNY,
+__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, const int inNX, const int inNY,
     float2 *imageOut, const int outNX, const int outNY, const int nImages,
     const int *offsetX, const int *offsetY)
 {
+
+    // get image index
     int idxImage = blockIdx.z;
+    // check the image index within range
+    if(idxImage>=nImages ) return;
+    // get the output pixel location
     int outx = threadIdx.x + blockDim.x*blockIdx.x;
     int outy = threadIdx.y + blockDim.y*blockIdx.y;
-    if(idxImage>=nImages || outx >= outNX || outy >= outNY) return;
+     // check the output location within range (due to cuda threads)
+    if(outx >= outNX || outy >= outNY) return;
+    // flatten the output location to 1d
     int idxOut = idxImage*outNX*outNY + outx*outNY + outy;
-    int idxIn = (offsetX[idxImage]+outx)*inNY + offsetY[idxImage] + outy;
-    imageOut[idxOut] = make_float2(complexAbs(imageIn[idxIn]), 0.0);
+    // find the input pixel location
+    int inx = offsetX[idxImage] + outx;
+    int iny = offsetY[idxImage] + outy;
+    // check whether the location is within the input image range
+    if(inx>=0 && inx<inNX && iny>=0 && iny<inNY)
+    {
+        int idxIn = inx*inNY+iny;
+        imageOut[idxOut] = make_float2(complexAbs(imageIn[idxIn]), 0.0); //true, copy with abs value
+    }
+    else
+        imageOut[idxOut] = make_float2(0.0f, 0.0f); //false, fill with 0
 }
 
 /**
@@ -128,14 +158,14 @@ __global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, c
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
     dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
     cuArraysCopyToBatchAbsWithOffset_kernel<<<gridSize,blockSize, 0 , stream>>> (
-        image1->devData, lda1,
+        image1->devData, inNX, inNY,
         image2->devData, image2->height, image2->width, image2->count,
         offsetH, offsetW);
     getLastCudaError("cuArraysCopyToBatchAbsWithOffset_kernel");
@@ -151,14 +181,15 @@ void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int lda1, 
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int lda1, cuArrays<float2> *image2,
-    const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int inNX, const int inNY,
+    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
     dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
+
     cuArraysCopyToBatchWithOffset_kernel<<<gridSize,blockSize, 0 , stream>>> (
-        image1->devData, lda1,
+        image1->devData, inNX, inNY,
         image2->devData, image2->height, image2->width, image2->count,
         offsetH, offsetW);
     getLastCudaError("cuArraysCopyToBatchWithOffsetR2C_kernel");
