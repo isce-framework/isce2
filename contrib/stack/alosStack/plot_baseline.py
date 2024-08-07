@@ -75,8 +75,8 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
 
     time = [datetime.datetime.strptime(x, "%y%m%d") for x in baseline_dict]
-    baseline = [baseline_dict[x] for x in baseline_dict]
-    ax.plot(time, baseline, 'o', alpha=0.7, c='g')
+    #baseline = [baseline_dict[x] for x in baseline_dict]
+    #ax.plot(time, baseline, 'o', alpha=0.7, c='g')
     
     year_min = datetime.datetime(min(time).year, 1, 1)
     year_max = datetime.datetime(max(time).year+1, 1, 1)
@@ -88,6 +88,10 @@ if __name__ == '__main__':
         time = [rtime, stime]
         baseline = [baseline_dict[rdate], baseline_dict[sdate]]
         ax.plot(time, baseline, '-', lw=.5, c='b')
+
+    time = [datetime.datetime.strptime(x, "%y%m%d") for x in baseline_dict]
+    baseline = [baseline_dict[x] for x in baseline_dict]
+    ax.plot(time, baseline, 'o', alpha=0.7, c='g')
 
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))

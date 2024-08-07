@@ -40,6 +40,8 @@ def cmdLineParse():
             help = 'number of range looks 1. default: 1')
     parser.add_argument('-nalks1', dest='nalks1', type=int, default=1,
             help = 'number of azimuth looks 1. default: 1')
+    parser.add_argument('-water_body', dest='water_body', type=str, default=None,
+            help = 'water body in frame mosaicked size and coordinate for masking out water body in the frame overlap areas when these areas are used to compute frame phase difference in mosaicking frames. default: None')
 
     if len(sys.argv) <= 1:
         print('')
@@ -60,6 +62,12 @@ if __name__ == '__main__':
     dateSecondary = inps.sec_date
     numberRangeLooks1 = inps.nrlks1
     numberAzimuthLooks1 = inps.nalks1
+
+    if inps.water_body is not None:
+        waterBody = os.path.abspath(inps.water_body)
+    else:
+        waterBody = None
+
     #######################################################
 
     logFile = 'process.log'
@@ -186,7 +194,7 @@ if __name__ == '__main__':
         (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = \
         frameMosaic(trackReferenceStack, inputInterferograms, interferogram, 
             rangeOffsets, azimuthOffsets, numberRangeLooks1, numberAzimuthLooks1, 
-            updateTrack=False, phaseCompensation=True, resamplingMethod=1)
+            updateTrack=False, phaseCompensation=True, waterBody=waterBody, resamplingMethod=1)
 
         create_xml(amplitude, trackReferenceStack.numberOfSamples, trackReferenceStack.numberOfLines, 'amp')
         create_xml(interferogram, trackReferenceStack.numberOfSamples, trackReferenceStack.numberOfLines, 'int')

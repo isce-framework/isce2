@@ -258,6 +258,10 @@ def runIonSubband(self, referenceTrack, idir, dateReferenceStack, dateReference,
             #These are for ALOS-2, may need to change for ALOS-4!
             phaseDiffFixed = [0.0, 0.4754024578084084, 0.9509913179406437, 1.4261648478671614, 2.179664007520499, 2.6766909968024932, 3.130810857]
 
+            #new value from processing d170 in Cascadia
+            phaseDiffFixed.append(0.7545891925607972)
+
+
             #if (referenceTrack.frames[i].processingSoftwareVersion == '2.025' and secondaryTrack.frames[i].processingSoftwareVersion == '2.023') or \
             #   (referenceTrack.frames[i].processingSoftwareVersion == '2.023' and secondaryTrack.frames[i].processingSoftwareVersion == '2.025'):
                 
@@ -278,7 +282,7 @@ def runIonSubband(self, referenceTrack, idir, dateReferenceStack, dateReference,
             #     snapThreshold = None
 
             #whether snap for each swath
-            if self.swathPhaseDiffSnapIon == None:
+            if self.swathPhaseDiffSnapIon is None:
                 snapSwath = [[True for jjj in range(numberOfSwaths-1)] for iii in range(numberOfFrames)]
             else:
                 snapSwath = self.swathPhaseDiffSnapIon
@@ -294,7 +298,7 @@ def runIonSubband(self, referenceTrack, idir, dateReferenceStack, dateReference,
                 filt=False, resamplingMethod=1)
 
             #the first item is meaningless for all the following list, so only record the following items
-            if phaseDiff == None:
+            if phaseDiff is None:
                 phaseDiff = [None for iii in range(self._insar.startingSwath, self._insar.endingSwath + 1)]
             #catalog.addItem('frame {} {} band swath phase diff input'.format(frameNumber, ionDir['subband'][k]), phaseDiff[1:], 'runIonSubband')
             #catalog.addItem('frame {} {} band swath phase diff estimated'.format(frameNumber, ionDir['subband'][k]), phaseDiffEst[1:], 'runIonSubband')
@@ -404,10 +408,30 @@ def runIonSubband(self, referenceTrack, idir, dateReferenceStack, dateReference,
             frameMosaic(referenceTrack, inputAmplitudes, self._insar.amplitude, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
                 updateTrack=False, phaseCompensation=False, resamplingMethod=0)
+
+            #same phaseDiffFixed used for frames
+            snapThreshold = 0.2
+
+            #whether snap for each frame
+            if self.framePhaseDiffSnapIon is None:
+                snapFrame = [False for jjj in range(numberOfFrames-1)]
+            else:
+                snapFrame = self.framePhaseDiffSnapIon
+                if len(snapFrame) != numberOfFrames-1:
+                    raise Exception('please specify correct number of swaths for parameter: frame phase difference snap to fixed values')
+
+            #whether use individual coherence to exclude low quality pixels for each frame
+            if self.framePhaseDiffCorIon is None:
+                corFrame = [False for jjj in range(numberOfFrames-1)]
+            else:
+                corFrame = self.framePhaseDiffCorIon
+                if len(corFrame) != numberOfFrames-1:
+                    raise Exception('using individual interferogram coherence to exclude low quality pixels...')
+
             #mosaic interferograms
             (phaseDiffEst, phaseDiffUsed, phaseDiffSource, numberOfValidSamples) = frameMosaic(referenceTrack, inputInterferograms, self._insar.interferogram, 
                 rangeOffsets, azimuthOffsets, self._insar.numberRangeLooks1, self._insar.numberAzimuthLooks1, 
-                updateTrack=False, phaseCompensation=True, resamplingMethod=1)
+                updateTrack=False, phaseCompensation=True, phaseDiffFixed=phaseDiffFixed, snapThreshold=snapThreshold, snapFrame=snapFrame, corFrame=corFrame, waterBody=self.waterBody, resamplingMethod=1)
 
             create_xml(self._insar.amplitude, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'amp')
             create_xml(self._insar.interferogram, referenceTrack.numberOfSamples, referenceTrack.numberOfLines, 'int')
@@ -527,6 +551,14 @@ def cmdLineParse():
             help='swath phase difference lower band. e.g. you have 3 swaths and 2 frames. specify this parameter as: -snap -1.3 2.37 -snap 0.1 None, where None means no user input phase difference value')
     parser.add_argument('-phase_diff_upper', dest='phase_diff_upper', type=str, nargs='+', action='append', default=None,
             help='swath phase difference upper band. e.g. you have 3 swaths and 2 frames. specify this parameter as: -snap -1.3 2.37 -snap 0.1 None, where None means no user input phase difference value')
+    parser.add_argument('-water_body', dest='water_body', type=str, default=None,
+            help = 'water body in frame mosaicked size and coordinate for masking out water body in the frame overlap areas when these areas are used to compute frame phase difference in mosaicking frames. default: None')
+    parser.add_argument('-snap_frame', dest='snap_frame', type=int, nargs='+', default=None,
+            help='frame phase difference snap to fixed values. e.g. you have 3 frames. specify this parameter as: -snap_frame 1 0, where 0 means no snap, 1 means snap. default: no snap')
+    parser.add_argument('-cor_frame', dest='cor_frame', type=int, nargs='+', default=None,
+            help='using individual interferogram coherence to exclude low quality pixels when computing frame phase difference. e.g. you have 3 frames. specify this parameter as: -cor_frame 1 0, where 0 means do not use, 1 means use. no need to use if water_body specified. default: do not use')
+
+
 
     if len(sys.argv) <= 1:
         print('')
@@ -553,6 +585,14 @@ if __name__ == '__main__':
     swathPhaseDiffSnapIon = inps.snap
     swathPhaseDiffLowerIon = inps.phase_diff_lower
     swathPhaseDiffUpperIon = inps.phase_diff_upper
+
+    if inps.water_body is not None:
+        waterBody = os.path.abspath(inps.water_body)
+    else:
+        waterBody = None
+
+    framePhaseDiffSnapIon = inps.snap_frame
+    framePhaseDiffCorIon = inps.cor_frame
     #######################################################
 
     pair = '{}-{}'.format(dateReference, dateSecondary)
@@ -607,9 +647,22 @@ if __name__ == '__main__':
             if len(swathPhaseDiffUpperIon[i]) != (nswath-1):
                raise Exception('please specify correct number of swaths for parameter: -phase_diff_upper')
 
+    if framePhaseDiffSnapIon is not None:
+        framePhaseDiffSnapIon = [True if x==1 else False for x in framePhaseDiffSnapIon]
+        if len(framePhaseDiffSnapIon) != nframe - 1:
+            raise Exception('please specify correct number of frames for parameter: -snap_frame')
+
+    if framePhaseDiffCorIon is not None:
+        framePhaseDiffCorIon = [True if x==1 else False for x in framePhaseDiffCorIon]
+        if len(framePhaseDiffCorIon) != nframe - 1:
+            raise Exception('please specify correct number of frames for parameter: -cor_frame')
+
     self.swathPhaseDiffSnapIon = swathPhaseDiffSnapIon
     self.swathPhaseDiffLowerIon = swathPhaseDiffLowerIon
     self.swathPhaseDiffUpperIon = swathPhaseDiffUpperIon
+    self.waterBody = waterBody
+    self.framePhaseDiffSnapIon = framePhaseDiffSnapIon
+    self.framePhaseDiffCorIon = framePhaseDiffCorIon
 
     log = runIonSubband(self, trackReferenceStack, idir, dateReferenceStack, dateReference, dateSecondary)
 

@@ -257,7 +257,7 @@ def checkStackDataDir(idir):
                     raise Exception('all acquisition modes should be the same')
 
 
-def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
+def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode, nthreads=4, nruns=10):
     '''
     create scripts to process an InSAR stack
     '''
@@ -279,45 +279,60 @@ def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
 
     stackScriptPath = os.path.join(os.environ['ISCE_STACK'], 'alosStack')
 
-    def parallelSettings(array):
-        settings = '''
-# For parallelly processing the dates/pairs.
-# Uncomment and set the following variables, put these settings and the following
-# one or multiple for loops for a group (with an individual group_i) in a seperate 
-# bash script. Then you can run the different groups parallelly. E.g. if you have 
-# 38 pairs and if you want to process them in 4 parallel runs, then you may set 
-# group_n=10, and group_i=1 for the first bash script (and 2, 3, 4 for the other 
-# three bash scripts).
+    def stepSettings(nthreads=4, nruns=10, array='', loop=True):
+        if loop == False:
+            settings = '''
+# Number of threads
+export OMP_NUM_THREADS={}
 
-# Number of threads for this run
-# export OMP_NUM_THREADS=1
+'''.format(nthreads)
+        else:
+            settings = '''
+# Number of threads
+export OMP_NUM_THREADS={}
 
-# CUDA device you want to use for this run. Only need to set if you have CUDA GPU
-# installed on your computer. To find GPU IDs, run nvidia-smi
-# export CUDA_VISIBLE_DEVICES=7
+# Number of parallel runs
+nruns={}
 
-# Parallel processing mode. 0: no, 1 yes.
-# Must set 'parallel=1' for parallel processing!
-# parallel=1
+# set the array variable used. The array can be found at the
+# beginning of this command file. You can redefine it here if
+# you want to process different dates or pairs.
+array=("${{{}[@]}}")
 
-# Group number for this run (group_i starts from 1)
-# group_i=1
-
-# Number of dates or pairs in a group
-# group_n=10
-
-# set the array variable used in this for loop here. The array can be found at the
-# beginning of this command file.
-# {}=()
-
-'''.format(array)
+'''.format(nthreads, nruns, array)
         return settings
 
-    parallelCommands = '''  if [[ ${parallel} -eq 1 ]]; then
-    if !(((0+(${group_i}-1)*${group_n} <= ${i})) && ((${i} <= ${group_n}-1+(${group_i}-1)*${group_n}))); then
-      continue
+    def forLoop(functionName, array, nruns):
+        txt='''for ((i=0;i<${{#{array}[@]}};i++)); do
+
+  {functionName} ${{{array}[i]}} &
+
+  if [[ $(((i+1) % {nruns})) -eq 0 ]]; then
+    wait
+  fi
+
+  #add a wait to the final group of runs to secure the completion of the for loop before anything can proceed
+  #if the wait was not added previously
+  if [[ $((i+1)) -eq ${{#{array}[@]}} ]]; then
+    if [[ $((${{#{array}[@]}} % {nruns})) -ne 0 ]]; then
+      wait
     fi
-  fi'''
+  fi
+
+done
+'''.format(functionName              = functionName,
+               array                 = array,
+               nruns                 = nruns) #make it a variable, not a number, as in stepSettings
+        return txt
+
+    def stepDone():
+        txt='''
+echo "$(basename "$0") done"
+'''
+        return txt
+
+
+    functionName = 'process'
 
     print('                       * * *')
     if stack.dateReferenceStack in datesProcess:
@@ -352,20 +367,25 @@ def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
     pairsProcessIon2 = [ipair for ipair in pairsProcessIon if ipair not in pairsProcess]
 
 
+    cmds = []
+    step_names = []
+
+
     #start new commands: processing each date
     #################################################################################
-    cmd  = '#!/bin/bash\n\n'
-    cmd += '#########################################################################\n'
-    cmd += '#set the environment variable before running the following steps\n'
-    cmd += 'dates=({})\n'.format(' '.join(datesProcess))
-    cmd += 'dates2=({})\n'.format(' '.join(datesProcessSecondary))
-    cmd += '#########################################################################\n'
-    cmd += '\n\n'
+    cmd0  = '#!/bin/bash\n\n'
+    cmd0 += 'dates=({})\n'.format(' '.join(datesProcess))
+    cmd0 += 'dates2=({})\n'.format(' '.join(datesProcessSecondary))
+    cmd0 += '\n\n'
 
 
     #read data
+    step_name = 'read data'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if datesProcess != []:
-        cmd += header('read data')
+        #cmd += header('read data')
         cmd += os.path.join(stackScriptPath, 'read_data.py') + ' -idir {} -odir {} -ref_date {} -sec_date {} -pol {}'.format(stack.dataDir, stack.datesProcessingDir, stack.dateReferenceStack, ' '.join(datesProcess), stack.polarization)
         if stack.frames is not None:
             cmd += ' -frames {}'.format(' '.join(stack.frames))
@@ -379,28 +399,49 @@ def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
         cmd += '\n'
         cmd += '\n'
         #frame and swath names use those from frame and swath dirs from now on
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #compute baseline
+    step_name = 'compute baseline'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if datesProcessSecondary != []:
-        cmd += header('compute baseline')
+        #cmd += header('compute baseline')
         cmd += os.path.join(stackScriptPath, 'compute_baseline.py') + ' -idir {} -odir {} -ref_date {} -sec_date {} -baseline_center baseline_center.txt -baseline_grid -baseline_grid_width 10 -baseline_grid_length 10'.format(stack.datesProcessingDir, stack.baselineDir, stack.dateReferenceStack, ' '.join(datesProcessSecondary))
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #compute burst synchronization
+    step_name = 'compute burst synchronization'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     spotlightModes, stripmapModes, scansarNominalModes, scansarWideModes, scansarModes = acquisitionModesAlos2()
     if mode in scansarNominalModes:
-        cmd += header('compute burst synchronization')
+        #cmd += header('compute burst synchronization')
         cmd += os.path.join(stackScriptPath, 'compute_burst_sync.py') + ' -idir {} -burst_sync_file burst_synchronization.txt -ref_date {}'.format(stack.datesProcessingDir, stack.dateReferenceStack)
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #estimate SLC offsets
+    step_name = 'estimate SLC offsets'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='dates2', loop=True)
     if datesProcessSecondary != []:
         extraArguments = ''
         if insar.useWbdForNumberOffsets is not None:
@@ -412,49 +453,70 @@ def createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode):
             for x in insar.numberAzimuthOffsets:
                 extraArguments += ' -num_az_offset {}'.format(' '.join(x))
 
-        cmd += header('estimate SLC offsets')
-        cmd += parallelSettings('dates2')
-        cmd += '''for ((i=0;i<${{#dates2[@]}};i++)); do
+        #cmd += header('estimate SLC offsets')
+        #cmd += parallelSettings('dates2')
+        cmd += '''{functionName} () {{
+  date=$1
 
-{extraCommands}
-
-  {script} -idir {datesProcessingDir} -ref_date {dateReferenceStack} -sec_date ${{dates2[i]}} -wbd {wbd} -dem {dem}{extraArguments}
-
-done'''.format(extraCommands       = parallelCommands,
+  {script} -idir {datesProcessingDir} -ref_date {dateReferenceStack} -sec_date ${{date}} -wbd {wbd} -dem {dem}{extraArguments}
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'estimate_slc_offset.py'),
                datesProcessingDir  = stack.datesProcessingDir,
                dateReferenceStack  = stack.dateReferenceStack,
                wbd                 = insar.wbd, 
                dem                 = stack.dem,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #estimate swath offsets
+    step_name = 'estimate swath offsets'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if processDateReferenceStack:
-        cmd += header('estimate swath offsets')
+        #cmd += header('estimate swath offsets')
         cmd += os.path.join(stackScriptPath, 'estimate_swath_offset.py') + ' -idir {} -date {} -output swath_offset.txt'.format(os.path.join(stack.datesProcessingDir, stack.dateReferenceStack), stack.dateReferenceStack)
         if insar.swathOffsetMatching:
             cmd += ' -match'
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #estimate frame offsets
+    step_name = 'estimate frame offsets'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if processDateReferenceStack:
-        cmd += header('estimate frame offsets')
+        #cmd += header('estimate frame offsets')
         cmd += os.path.join(stackScriptPath, 'estimate_frame_offset.py') + ' -idir {} -date {} -output frame_offset.txt'.format(os.path.join(stack.datesProcessingDir, stack.dateReferenceStack), stack.dateReferenceStack)
         if insar.frameOffsetMatching:
             cmd += ' -match'
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #resample to a common grid
+    step_name = 'resample to a common grid'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='dates', loop=True)
     if datesProcess != []:
         extraArguments = ''
         if stack.gridFrame is not None:
@@ -464,15 +526,14 @@ done'''.format(extraCommands       = parallelCommands,
         if insar.doIon:
             extraArguments += ' -subband'
 
-        cmd += header('resample to a common grid')
-        cmd += parallelSettings('dates')
-        cmd += '''for ((i=0;i<${{#dates[@]}};i++)); do
+        #cmd += header('resample to a common grid')
+        #cmd += parallelSettings('dates')
+        cmd += '''{functionName} () {{
+  date=$1
 
-{extraCommands}
-
-  {script} -idir {datesProcessingDir} -odir {datesResampledDir} -ref_date {dateReferenceStack} -sec_date ${{dates[i]}} -nrlks1 {numberRangeLooks1} -nalks1 {numberAzimuthLooks1}{extraArguments}
-
-done'''.format(extraCommands       = parallelCommands,
+  {script} -idir {datesProcessingDir} -odir {datesResampledDir} -ref_date {dateReferenceStack} -sec_date ${{date}} -nrlks1 {numberRangeLooks1} -nalks1 {numberAzimuthLooks1}{extraArguments}
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'resample_common_grid.py'),
                datesProcessingDir  = stack.datesProcessingDir,
                datesResampledDir   = stack.datesResampledDir,
@@ -480,14 +541,22 @@ done'''.format(extraCommands       = parallelCommands,
                numberRangeLooks1   = insar.numberRangeLooks1, 
                numberAzimuthLooks1 = insar.numberAzimuthLooks1,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #mosaic parameter
+    step_name = 'mosaic parameter'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if datesProcess != []:
-        cmd += header('mosaic parameter')
+        #cmd += header('mosaic parameter')
         cmd += os.path.join(stackScriptPath, 'mosaic_parameter.py') + ' -idir {} -ref_date {} -sec_date {} -nrlks1 {} -nalks1 {}'.format(stack.datesProcessingDir, stack.dateReferenceStack, ' '.join(datesProcess), insar.numberRangeLooks1, insar.numberAzimuthLooks1)
         if stack.gridFrame is not None:
             cmd += ' -ref_frame {}'.format(stack.gridFrame)
@@ -507,11 +576,18 @@ done'''.format(extraCommands       = parallelCommands,
     else:
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #compute lat/lon/hgt
+    step_name = 'compute latitude longtitude and height'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if processDateReferenceStack:
-        cmd += header('compute latitude, longtitude and height')
+        #cmd += header('compute latitude, longtitude and height')
         cmd += 'cd {}\n'.format(os.path.join(stack.datesResampledDir, stack.dateReferenceStack))
         cmd += os.path.join(stackScriptPath, 'rdr2geo.py') + ' -date {} -dem {} -wbd {} -nrlks1 {} -nalks1 {}'.format(stack.dateReferenceStack, stack.dem, insar.wbd, insar.numberRangeLooks1, insar.numberAzimuthLooks1)
         if insar.useGPU:
@@ -526,25 +602,36 @@ done'''.format(extraCommands       = parallelCommands,
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #compute geometrical offsets
+    step_name = 'compute geometrical offsets'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='dates2', loop=True)
     if datesProcessSecondary != []:
         extraArguments = ''
         if insar.useGPU:
             extraArguments += ' -gpu'
+            cmd += '''
+# Number of parallel runs. Since it uses GPU and is fast. do not use multiple runs due to GPU memory limitations.
+nruns=1
 
-        cmd += header('compute geometrical offsets')
-        cmd += parallelSettings('dates2')
-        cmd += '''for ((i=0;i<${{#dates2[@]}};i++)); do
+'''
 
-{extraCommands}
+        #cmd += header('compute geometrical offsets')
+        #cmd += parallelSettings('dates2')
+        cmd += '''{functionName} () {{
+  date=$1
 
   cd {datesResampledDir}
-  {script} -date ${{dates2[i]}} -date_par_dir {datesProcessingDir} -lat {lat} -lon {lon} -hgt {hgt} -nrlks1 {numberRangeLooks1} -nalks1 {numberAzimuthLooks1}{extraArguments}
+  {script} -date ${{date}} -date_par_dir {datesProcessingDir} -lat {lat} -lon {lon} -hgt {hgt} -nrlks1 {numberRangeLooks1} -nalks1 {numberAzimuthLooks1}{extraArguments}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'geo2rdr.py'),
                datesResampledDir   = os.path.join(stack.datesResampledDir, '${dates2[i]}'),
                datesProcessingDir  = os.path.join('../../', stack.datesProcessingDir, '${dates2[i]}'),
@@ -554,95 +641,129 @@ done'''.format(extraCommands       = parallelCommands,
                numberRangeLooks1   = insar.numberRangeLooks1,
                numberAzimuthLooks1 = insar.numberAzimuthLooks1,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #save commands
-    cmd1 = cmd
+    cmds_1 = cmds
+    step_names_1 = step_names
 
+
+
+    cmds = []
+    step_names = []
 
 
     if pairsProcess != []:
         #start new commands: processing each pair before ionosphere correction
         #################################################################################
-        cmd  = '#!/bin/bash\n\n'
-        cmd += '#########################################################################\n'
-        cmd += '#set the environment variable before running the following steps\n'
-        cmd += 'insarpair=({})\n'.format(' '.join(pairsProcess))
-        cmd += 'dates2=({})\n'.format(' '.join(datesProcessSecondary))
-        cmd += '#########################################################################\n'
-        cmd += '\n\n'
+        cmd0  = '#!/bin/bash\n\n'
+        cmd0 += 'insarpair=({})\n'.format(' '.join(pairsProcess))
+        cmd0 += 'dates2=({})\n'.format(' '.join(datesProcessSecondary))
+        cmd0 += '\n\n'
     else:
-        cmd  = '#!/bin/bash\n\n'
-        cmd += '#no pairs for InSAR processing.'
+        cmd0  = '#!/bin/bash\n\n'
+        cmd0 += '#no pairs for InSAR processing.'
 
 
     #pair up
+    step_name = 'pair up'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if pairsProcess != []:
-        cmd += header('pair up')
+        #cmd += header('pair up')
         cmd += os.path.join(stackScriptPath, 'pair_up.py') + ' -idir1 {} -idir2 {} -odir {} -ref_date {} -pairs {}'.format(stack.datesProcessingDir, stack.datesResampledDir, stack.pairsProcessingDir, stack.dateReferenceStack, ' '.join(pairsProcess))
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #form interferograms
+    step_name = 'form interferograms'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
     if pairsProcess != []:
-        cmd += header('form interferograms')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        #cmd += header('form interferograms')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   {script} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'form_interferogram.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #mosaic interferograms
+    step_name = 'mosaic interferograms'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
     if pairsProcess != []:
-        cmd += header('mosaic interferograms')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        wbd1 = '../../dates_resampled/{}/insar/{}_{}rlks_{}alks.wbd'.format(stack.dateReferenceStack, stack.dateReferenceStack, insar.numberRangeLooks1, insar.numberAzimuthLooks1)
 
-{extraCommands}
+        #cmd += header('mosaic interferograms')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
-  {script} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
+  cd ${{pair}}
+  {script} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -water_body {wbd}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'mosaic_interferogram.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                ref_date_stack      = stack.dateReferenceStack,
                nrlks1              = insar.numberRangeLooks1, 
-               nalks1              = insar.numberAzimuthLooks1)
+               nalks1              = insar.numberAzimuthLooks1,
+               wbd                 = wbd1)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #estimate residual offsets between radar and DEM
+    step_name = 'estimate residual offsets between radar and DEM'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
     if processDateReferenceStack:
     #if not os.path.isfile(os.path.join(stack.datesResampledDir, stack.dateReferenceStack, 'insar', 'affine_transform.txt')):
         #amplitde image of any pair should work, since they are all coregistered now
@@ -661,7 +782,7 @@ done'''.format(extraCommands       = parallelCommands,
         hgt = os.path.join('insar', '{}_{}rlks_{}alks.hgt'.format(stack.dateReferenceStack, insar.numberRangeLooks1, insar.numberAzimuthLooks1))
         amp = os.path.join('../../', stack.pairsProcessingDir, pairToUse, 'insar', '{}_{}rlks_{}alks.amp'.format(pairToUse, insar.numberRangeLooks1, insar.numberAzimuthLooks1))
 
-        cmd += header('estimate residual offsets between radar and DEM')
+        #cmd += header('estimate residual offsets between radar and DEM')
         cmd += 'cd {}\n'.format(os.path.join(stack.datesResampledDir, stack.dateReferenceStack))
         cmd += os.path.join(stackScriptPath, 'radar_dem_offset.py') + ' -track {} -dem {} -wbd {} -hgt {} -amp {} -output affine_transform.txt -nrlks1 {} -nalks1 {}'.format(track, stack.dem, wbd, hgt, amp, insar.numberRangeLooks1, insar.numberAzimuthLooks1)
         if insar.numberRangeLooksSim is not None:
@@ -672,87 +793,108 @@ done'''.format(extraCommands       = parallelCommands,
         cmd += 'cd ../../\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #rectify range offsets
+    step_name = 'rectify range offsets'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='dates2', loop=True)
     if datesProcessSecondary != []:
-        cmd += header('rectify range offsets')
-        cmd += parallelSettings('dates2')
-        cmd += '''for ((i=0;i<${{#dates2[@]}};i++)); do
-
-{extraCommands}
+        #cmd += header('rectify range offsets')
+        #cmd += parallelSettings('dates2')
+        cmd += '''{functionName} () {{
+  date=$1
 
   cd {datesResampledDir}
-  cd ${{dates2[i]}}
+  cd ${{date}}
   cd insar
-  {script} -aff {aff} -input ${{dates2[i]}}_{nrlks1}rlks_{nalks1}alks_rg.off -output ${{dates2[i]}}_{nrlks1}rlks_{nalks1}alks_rg_rect.off -nrlks1 {nrlks1} -nalks1 {nalks1}
+  {script} -aff {aff} -input ${{date}}_{nrlks1}rlks_{nalks1}alks_rg.off -output ${{date}}_{nrlks1}rlks_{nalks1}alks_rg_rect.off -nrlks1 {nrlks1} -nalks1 {nalks1}
   cd ../../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'rect_range_offset.py'),
                datesResampledDir   = stack.datesResampledDir,
                aff                 = os.path.join('../../', stack.dateReferenceStack, 'insar', 'affine_transform.txt'),
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #diff interferograms
+    step_name = 'diff interferograms'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
     if pairsProcess != []:
-        cmd += header('diff interferograms')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        #cmd += header('diff interferograms')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'diff_interferogram.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                idir                = os.path.join('../../', stack.datesResampledDir),
                ref_date_stack      = stack.dateReferenceStack,
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #look and coherence
+    step_name = 'look and coherence'
+    cmd = cmd0
+    cmd += header(step_name)
+    cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
     if (pairsProcess != []) or processDateReferenceStack:
-        cmd += header('look and coherence')
+        #cmd += header('look and coherence')
         if pairsProcess != []:
-            cmd += parallelSettings('insarpair')
-            cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+            #cmd += parallelSettings('insarpair')
+            cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   {script} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks2 {nrlks2} -nalks2 {nalks2}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'look_coherence.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1,
                nrlks2              = insar.numberRangeLooks2,
                nalks2              = insar.numberAzimuthLooks2)
+            cmd += forLoop(functionName, 'array', 'nruns')
             cmd += '\n'
             cmd += '\n'
 
@@ -762,73 +904,99 @@ done'''.format(extraCommands       = parallelCommands,
             cmd += '\n'
             cmd += 'cd ../../\n'
             cmd += '\n'
+        
+    cmd += stepDone()
+    cmds.append(cmd)
+    step_names.append(step_name)
 
 
     #save commands
-    cmd2 = cmd
+    cmds_2 = cmds
+    step_names_2 = step_names
 
 
+
+    cmds = []
+    step_names = []
 
 
     #for ionospheric correction
     if insar.doIon and (pairsProcessIon != []):
         #start new commands: ionospheric phase estimation
         #################################################################################
-        cmd  = '#!/bin/bash\n\n'
-        cmd += '#########################################################################\n'
-        cmd += '#set the environment variables before running the following steps\n'
-        cmd += 'ionpair=({})\n'.format(' '.join(pairsProcessIon))
-        cmd += 'ionpair1=({})\n'.format(' '.join(pairsProcessIon1))
-        cmd += 'ionpair2=({})\n'.format(' '.join(pairsProcessIon2))
-        cmd += 'insarpair=({})\n'.format(' '.join(pairsProcess))
-        cmd += '#########################################################################\n'
-        cmd += '\n\n'
+        cmd0  = '#!/bin/bash\n\n'
+        cmd0 += 'ionpair=({})\n'.format(' '.join(pairsProcessIon))
+        cmd0 += 'ionpair1=({})\n'.format(' '.join(pairsProcessIon1))
+        cmd0 += 'ionpair2=({})\n'.format(' '.join(pairsProcessIon2))
+        cmd0 += 'insarpair=({})\n'.format(' '.join(pairsProcess))
+        cmd0 += '\n\n'
 
 
         #pair up
-        cmd += header('pair up for ionospheric phase estimation')
+        step_name = 'pair up for ionospheric phase estimation'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
+        #cmd += header('pair up for ionospheric phase estimation')
         cmd += os.path.join(stackScriptPath, 'pair_up.py') + ' -idir1 {} -idir2 {} -odir {} -ref_date {} -pairs {}'.format(stack.datesProcessingDir, stack.datesResampledDir, stack.pairsProcessingDirIon, stack.dateReferenceStack, ' '.join(pairsProcessIon))
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #subband interferograms
+        step_name = 'subband interferograms'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair', loop=True)
         if insar.swathPhaseDiffSnapIon is not None:
             snap = [[1 if y else 0 for y in x] for x in insar.swathPhaseDiffSnapIon]
             snapArgument = ' ' + ' '.join(['-snap {}'.format(' '.join([str(y) for y in x])) for x in snap])
         else:
             snapArgument = ''
 
-        cmd += header('subband interferograms')
-        cmd += parallelSettings('ionpair')
-        cmd += '''for ((i=0;i<${{#ionpair[@]}};i++)); do
+        wbd1 = '../../dates_resampled/{}/insar/{}_{}rlks_{}alks.wbd'.format(stack.dateReferenceStack, stack.dateReferenceStack, insar.numberRangeLooks1, insar.numberAzimuthLooks1)
 
-{extraCommands}
+        #cmd += header('subband interferograms')
+        #cmd += parallelSettings('ionpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-  IFS='-' read -ra dates <<< "${{ionpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair[i]}}
-  {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}{snapArgument}
+  cd ${{pair}}
+  {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -water_body {wbd}{snapArgument}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                    script              = os.path.join(stackScriptPath, 'ion_subband.py'),
                    pairsProcessingDir  = stack.pairsProcessingDirIon,
                    idir                = os.path.join('../../', stack.datesResampledDir),
                    ref_date_stack      = stack.dateReferenceStack,
                    nrlks1              = insar.numberRangeLooks1, 
                    nalks1              = insar.numberAzimuthLooks1,
+                   wbd                 = wbd1,
                    snapArgument        = snapArgument)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #unwrap subband interferograms
+        step_name = 'unwrap subband interferograms'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair', loop=True)
         if insar.filterSubbandInt:
             filtArgument = ' -filt -alpha {} -win {} -step {}'.format(insar.filterStrengthSubbandInt, insar.filterWinsizeSubbandInt, insar.filterStepsizeSubbandInt)
             if not insar.removeMagnitudeBeforeFilteringSubbandInt:
@@ -836,22 +1004,21 @@ done'''.format(extraCommands       = parallelCommands,
         else:
             filtArgument = ''
 
-        cmd += header('unwrap subband interferograms')
-        cmd += parallelSettings('ionpair')
-        cmd += '''for ((i=0;i<${{#ionpair[@]}};i++)); do
+        #cmd += header('unwrap subband interferograms')
+        #cmd += parallelSettings('ionpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair[i]}}
+  cd ${{pair}}
   {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -wbd {wbd} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks_ion {nrlks_ion} -nalks_ion {nalks_ion}{filtArgument}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                    script              = os.path.join(stackScriptPath, 'ion_unwrap.py'),
                    pairsProcessingDir  = stack.pairsProcessingDirIon,
                    idir                = os.path.join('../../', stack.datesResampledDir),
@@ -862,12 +1029,20 @@ done'''.format(extraCommands       = parallelCommands,
                    nrlks_ion           = insar.numberRangeLooksIon,
                    nalks_ion           = insar.numberAzimuthLooksIon,
                    filtArgument        = filtArgument)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #filter ionosphere
+        step_name = 'filter ionosphere'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair', loop=True)
         filtArgument = ''
         if insar.fitIon:
             filtArgument += ' -fit'
@@ -875,6 +1050,8 @@ done'''.format(extraCommands       = parallelCommands,
             filtArgument += ' -filt'
         if insar.fitAdaptiveIon:
             filtArgument += ' -fit_adaptive'
+        if insar.rmOutliersIon:
+            filtArgument += ' -rm_outliers'
         if insar.filtSecondaryIon:
             filtArgument += ' -filt_secondary -win_secondary {}'.format(insar.filteringWinsizeSecondaryIon)
         if insar.filterStdIon is not None:
@@ -883,22 +1060,21 @@ done'''.format(extraCommands       = parallelCommands,
         if insar.maskedAreasIon is not None:
             filtArgument += ''.join([' -masked_areas '+' '.join([str(y) for y in x]) for x in insar.maskedAreasIon])
 
-        cmd += header('filter ionosphere')
-        cmd += parallelSettings('ionpair')
-        cmd += '''for ((i=0;i<${{#ionpair[@]}};i++)); do
+        #cmd += header('filter ionosphere')
+        #cmd += parallelSettings('ionpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair[i]}}
-  {script} -idir {idir1} -idir2 {idir2} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks2 {nrlks2} -nalks2 {nalks2} -nrlks_ion {nrlks_ion} -nalks_ion {nalks_ion} -win_min {win_min} -win_max {win_max}{filtArgument}
+  cd ${{pair}}
+  {script} -idir {idir1} -idir2 {idir2} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks2 {nrlks2} -nalks2 {nalks2} -nrlks_ion {nrlks_ion} -nalks_ion {nalks_ion} -win_min {win_min} -win_max {win_max} -fit_adaptive_order {fit_adaptive_order}{filtArgument}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                    script              = os.path.join(stackScriptPath, 'ion_filt.py'),
                    pairsProcessingDir  = stack.pairsProcessingDirIon,
                    idir1               = os.path.join('../../', stack.datesResampledDir),
@@ -912,28 +1088,36 @@ done'''.format(extraCommands       = parallelCommands,
                    nalks_ion           = insar.numberAzimuthLooksIon,
                    win_min             = insar.filteringWinsizeMinIon,
                    win_max             = insar.filteringWinsizeMaxIon,
+                   fit_adaptive_order  = insar.fitAdaptiveOrderIon,
                    filtArgument        = filtArgument)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #prepare interferograms for checking ionospheric correction
-        cmd += header('prepare interferograms for checking ionosphere estimation results')
+        step_name = 'prepare interferograms for checking ionosphere estimation results'
+        cmd = cmd0
+        cmd += header(step_name)
+        #cmd += header('prepare interferograms for checking ionosphere estimation results')
         if pairsProcessIon1 != []:
-            cmd += parallelSettings('ionpair1')
+            cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair1', loop=True)
+            #cmd += parallelSettings('ionpair1')
             if (insar.numberRangeLooksIon != 1) or (insar.numberAzimuthLooksIon != 1):
-                cmd += '''for ((i=0;i<${{#ionpair1[@]}};i++)); do
+                cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair1[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
-  {script} -i {pairsProcessingDir}/${{ionpair1[i]}}/insar/diff_${{ionpair1[i]}}_{nrlks1}rlks_{nalks1}alks.int -o {pairsProcessingDirIon}/${{ionpair1[i]}}/ion/ion_cal/diff_${{ionpair1[i]}}_{nrlks}rlks_{nalks}alks_ori.int -r {nrlks_ion} -a {nalks_ion}
-
-done'''.format(extraCommands       = parallelCommands,
+  {script} -i {pairsProcessingDir}/${{pair}}/insar/diff_${{pair}}_{nrlks1}rlks_{nalks1}alks.int -o {pairsProcessingDirIon}/${{pair}}/ion/ion_cal/diff_${{pair}}_{nrlks}rlks_{nalks}alks_ori.int -r {nrlks_ion} -a {nalks_ion}
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join('', 'looks.py'),
                pairsProcessingDir  = stack.pairsProcessingDir.strip('/'),
                pairsProcessingDirIon  = stack.pairsProcessingDirIon.strip('/'),
@@ -943,42 +1127,43 @@ done'''.format(extraCommands       = parallelCommands,
                nalks_ion           = insar.numberAzimuthLooksIon,
                nrlks               = insar.numberRangeLooks1 * insar.numberRangeLooksIon, 
                nalks               = insar.numberAzimuthLooks1 * insar.numberAzimuthLooksIon)
+                cmd += forLoop(functionName, 'array', 'nruns')
                 cmd += '\n'
                 cmd += '\n'
                 cmd += '\n'
             else:
-                cmd += '''for ((i=0;i<${{#ionpair1[@]}};i++)); do
+                cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair1[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
-  cp {pairsProcessingDir}/${{ionpair1[i]}}/insar/diff_${{ionpair1[i]}}_{nrlks1}rlks_{nalks1}alks.int* {pairsProcessingDirIon}/${{ionpair1[i]}}/ion/ion_cal
-
-done'''.format(extraCommands       = parallelCommands,
+  cp {pairsProcessingDir}/${{pair}}/insar/diff_${{pair}}_{nrlks1}rlks_{nalks1}alks.int* {pairsProcessingDirIon}/${{pair}}/ion/ion_cal
+}}
+'''.format(functionName            = functionName,
                pairsProcessingDir  = stack.pairsProcessingDir.strip('/'),
                pairsProcessingDirIon  = stack.pairsProcessingDirIon.strip('/'),
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+                cmd += forLoop(functionName, 'array', 'nruns')
                 cmd += '\n'
                 cmd += '\n'
                 cmd += '\n'
 
 
         if pairsProcessIon2 != []:
-            cmd += parallelSettings('ionpair2')
-            cmd += '''for ((i=0;i<${{#ionpair2[@]}};i++)); do
+            cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair2', loop=True)
+            #cmd += parallelSettings('ionpair2')
+            cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair2[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair2[i]}}
+  cd ${{pair}}
   {script} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
   cd ../../
 
@@ -987,66 +1172,68 @@ done'''.format(extraCommands       = parallelCommands,
                pairsProcessingDir  = stack.pairsProcessingDirIon,
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+            cmd += forLoop(functionName, 'array', 'nruns')
             cmd += '\n'
             cmd += '\n'
 
-            cmd += '''for ((i=0;i<${{#ionpair2[@]}};i++)); do
+            wbd1 = '../../dates_resampled/{}/insar/{}_{}rlks_{}alks.wbd'.format(stack.dateReferenceStack, stack.dateReferenceStack, insar.numberRangeLooks1, insar.numberAzimuthLooks1)
+            cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair2[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair2[i]}}
-  {script} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
+  cd ${{pair}}
+  {script} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -water_body {wbd}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'mosaic_interferogram.py'),
                pairsProcessingDir  = stack.pairsProcessingDirIon,
                ref_date_stack      = stack.dateReferenceStack,
                nrlks1              = insar.numberRangeLooks1, 
-               nalks1              = insar.numberAzimuthLooks1)
+               nalks1              = insar.numberAzimuthLooks1,
+               wbd                 = wbd1)
+            cmd += forLoop(functionName, 'array', 'nruns')
             cmd += '\n'
             cmd += '\n'
 
-            cmd += '''for ((i=0;i<${{#ionpair2[@]}};i++)); do
+            cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair2[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair2[i]}}
+  cd ${{pair}}
   {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'diff_interferogram.py'),
                pairsProcessingDir  = stack.pairsProcessingDirIon,
                idir                = os.path.join('../../', stack.datesResampledDir),
                ref_date_stack      = stack.dateReferenceStack,
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+            cmd += forLoop(functionName, 'array', 'nruns')
             cmd += '\n'
             cmd += '\n'
 
             if (insar.numberRangeLooksIon != 1) or (insar.numberAzimuthLooksIon != 1):
-                cmd += '''for ((i=0;i<${{#ionpair2[@]}};i++)); do
+                cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair2[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
-  {script} -i {pairsProcessingDir}/${{ionpair2[i]}}/insar/diff_${{ionpair2[i]}}_{nrlks1}rlks_{nalks1}alks.int -o {pairsProcessingDir}/${{ionpair2[i]}}/ion/ion_cal/diff_${{ionpair2[i]}}_{nrlks}rlks_{nalks}alks_ori.int -r {nrlks_ion} -a {nalks_ion}
-
-done'''.format(extraCommands       = parallelCommands,
+  {script} -i {pairsProcessingDir}/${{pair}}/insar/diff_${{pair}}_{nrlks1}rlks_{nalks1}alks.int -o {pairsProcessingDir}/${{pair}}/ion/ion_cal/diff_${{pair}}_{nrlks}rlks_{nalks}alks_ori.int -r {nrlks_ion} -a {nalks_ion}
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join('', 'looks.py'),
                pairsProcessingDir  = stack.pairsProcessingDirIon.strip('/'),
                nrlks1              = insar.numberRangeLooks1, 
@@ -1055,50 +1242,58 @@ done'''.format(extraCommands       = parallelCommands,
                nalks_ion           = insar.numberAzimuthLooksIon,
                nrlks               = insar.numberRangeLooks1 * insar.numberRangeLooksIon, 
                nalks               = insar.numberAzimuthLooks1 * insar.numberAzimuthLooksIon)
+                cmd += forLoop(functionName, 'array', 'nruns')
                 cmd += '\n'
                 cmd += '\n'
                 cmd += '\n'
             else:
-                cmd += '''for ((i=0;i<${{#ionpair2[@]}};i++)); do
+                cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair2[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
-  cp {pairsProcessingDir}/${{ionpair2[i]}}/insar/diff_${{ionpair2[i]}}_{nrlks1}rlks_{nalks1}alks.int* {pairsProcessingDir}/${{ionpair2[i]}}/ion/ion_cal
-
-done'''.format(extraCommands       = parallelCommands,
+  cp {pairsProcessingDir}/${{pair}}/insar/diff_${{pair}}_{nrlks1}rlks_{nalks1}alks.int* {pairsProcessingDir}/${{pair}}/ion/ion_cal
+}}
+'''.format(functionName            = functionName,
                pairsProcessingDir  = stack.pairsProcessingDirIon.strip('/'),
                nrlks1              = insar.numberRangeLooks1, 
                nalks1              = insar.numberAzimuthLooks1)
+                cmd += forLoop(functionName, 'array', 'nruns')
                 cmd += '\n'
                 cmd += '\n'
                 cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #check ionosphere estimation results
-        cmd += header('check ionosphere estimation results')
-        cmd += parallelSettings('ionpair')
-        cmd += '''for ((i=0;i<${{#ionpair[@]}};i++)); do
+        step_name = 'check ionosphere estimation results'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='ionpair', loop=True)
+        #cmd += header('check ionosphere estimation results')
+        #cmd += parallelSettings('ionpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{ionpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{ionpair[i]}}
-  {script} -e='a*exp(-1.0*J*b)' --a=ion/ion_cal/diff_${{ionpair[i]}}_{nrlks}rlks_{nalks}alks_ori.int --b=ion/ion_cal/filt_ion_{nrlks}rlks_{nalks}alks.ion -s BIP -t cfloat -o ion/ion_cal/diff_${{ionpair[i]}}_{nrlks}rlks_{nalks}alks.int
+  cd ${{pair}}
+  {script} -e='a*exp(-1.0*J*b)' --a=ion/ion_cal/diff_${{pair}}_{nrlks}rlks_{nalks}alks_ori.int --b=ion/ion_cal/filt_ion_{nrlks}rlks_{nalks}alks.ion -s BIP -t cfloat -o ion/ion_cal/diff_${{pair}}_{nrlks}rlks_{nalks}alks.int
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                    script              = os.path.join('', 'imageMath.py'),
                    pairsProcessingDir  = stack.pairsProcessingDirIon,
                    nrlks               = insar.numberRangeLooks1*insar.numberRangeLooksIon, 
                    nalks               = insar.numberAzimuthLooks1*insar.numberAzimuthLooksIon)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
 
@@ -1106,10 +1301,17 @@ done'''.format(extraCommands       = parallelCommands,
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #estimate ionospheric phase for each date
-        cmd += header('estimate ionospheric phase for each date')
+        step_name = 'estimate ionospheric phase for each date'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
+        #cmd += header('estimate ionospheric phase for each date')
         cmd += "#check the ionospheric phase estimation results in folder 'fig_ion', and find out the bad pairs.\n"
         cmd += '#these pairs should be excluded from this step by specifying parameter -exc_pair. For example:\n'
         cmd += '#-exc_pair 150401-150624 150401-150722\n\n'
@@ -1122,11 +1324,18 @@ done'''.format(extraCommands       = parallelCommands,
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #correct ionosphere
+        step_name = 'correct ionosphere'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='', loop=False)
         if insar.applyIon:
-            cmd += header('correct ionosphere')
+            #cmd += header('correct ionosphere')
             cmd += '#no need to run parallelly for this for loop, it is fast!!!\n'
             cmd += '''#redefine insarpair to include all processed InSAR pairs
 insarpair=($(ls -l {pairsProcessingDir} | grep ^d | awk '{{print $9}}'))
@@ -1151,57 +1360,65 @@ done'''.format(script              = os.path.join(stackScriptPath, 'ion_correct.
                nalks2              = insar.numberAzimuthLooks2)
             cmd += '\n'
             cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
     else:
         cmd  = '#!/bin/bash\n\n'
         cmd += '#no pairs for estimating ionosphere.'
 
+        #do not create steps if not doing ionospheric correction
 
     #save commands
-    cmd3 = cmd
+    cmds_3 = cmds
+    step_names_3 = step_names
 
 
+
+    cmds = []
+    step_names = []
 
 
     #if pairsProcess != []:
     if True:
         #start new commands: processing each pair after ionosphere correction
         #################################################################################
-        cmd  = '#!/bin/bash\n\n'
-        cmd += '#########################################################################\n'
-        cmd += '#set the environment variable before running the following steps\n'
+        cmd0  = '#!/bin/bash\n\n'
         if insar.doIon and insar.applyIon:
             #reprocess all pairs
-            cmd += '''insarpair=($(ls -l {pairsProcessingDir} | grep ^d | awk '{{print $9}}'))'''.format(pairsProcessingDir = stack.pairsProcessingDir)
-            cmd += '\n'
+            cmd0 += '''insarpair=($(ls -l {pairsProcessingDir} | grep ^d | awk '{{print $9}}'))'''.format(pairsProcessingDir = stack.pairsProcessingDir)
+            cmd0 += '\n'
         else:
-            cmd += 'insarpair=({})\n'.format(' '.join(pairsProcess))
-        cmd += '#########################################################################\n'
-        cmd += '\n\n'
+            cmd0 += 'insarpair=({})\n'.format(' '.join(pairsProcess))
+        cmd0 += '\n\n'
 
 
         #filter interferograms
+        step_name = 'filter interferograms'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
         extraArguments = ''
         if not insar.removeMagnitudeBeforeFiltering:
             extraArguments += ' -keep_mag'
         if insar.waterBodyMaskStartingStep == 'filt':
             extraArguments += ' -wbd_msk'
 
-        cmd += header('filter interferograms')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        #cmd += header('filter interferograms')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks2 {nrlks2} -nalks2 {nalks2} -alpha {alpha} -win {win} -step {step}{extraArguments}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'filt.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                idir                = os.path.join('../../', stack.datesResampledDir),
@@ -1214,32 +1431,39 @@ done'''.format(extraCommands       = parallelCommands,
                win                 = insar.filterWinsize,
                step                = insar.filterStepsize,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #unwrap interferograms
+        step_name = 'unwrap interferograms'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
         extraArguments = ''
         if insar.waterBodyMaskStartingStep == 'unwrap':
             extraArguments += ' -wbd_msk'
 
-        cmd += header('unwrap interferograms')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        #cmd += header('unwrap interferograms')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   {script} -idir {idir} -ref_date_stack {ref_date_stack} -ref_date ${{ref_date}} -sec_date ${{sec_date}} -nrlks1 {nrlks1} -nalks1 {nalks1} -nrlks2 {nrlks2} -nalks2 {nalks2}{extraArguments}
   cd ../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'unwrap_snaphu.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                idir                = os.path.join('../../', stack.datesResampledDir),
@@ -1249,37 +1473,44 @@ done'''.format(extraCommands       = parallelCommands,
                nrlks2              = insar.numberRangeLooks2,
                nalks2              = insar.numberAzimuthLooks2,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
 
 
         #geocode
+        step_name = 'geocode'
+        cmd = cmd0
+        cmd += header(step_name)
+        cmd += stepSettings(nthreads=stack.numberOfParallelThreads, nruns=stack.numberOfParallelRuns, array='insarpair', loop=True)
         extraArguments = ''
         if insar.geocodeInterpMethod is not None:
             extraArguments += ' -interp_method {}'.format(insar.geocodeInterpMethod)
         if insar.bbox: # is not None:
             extraArguments += ' -bbox {}'.format('/'.format(insar.bbox))
 
-        cmd += header('geocode')
-        cmd += parallelSettings('insarpair')
-        cmd += '''for ((i=0;i<${{#insarpair[@]}};i++)); do
+        #cmd += header('geocode')
+        #cmd += parallelSettings('insarpair')
+        cmd += '''{functionName} () {{
+  pair=$1
 
-{extraCommands}
-
-  IFS='-' read -ra dates <<< "${{insarpair[i]}}"
+  IFS='-' read -ra dates <<< "${{pair}}"
   ref_date=${{dates[0]}}
   sec_date=${{dates[1]}}
 
   cd {pairsProcessingDir}
-  cd ${{insarpair[i]}}
+  cd ${{pair}}
   cd insar
-  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input ${{insarpair[i]}}_{nrlks}rlks_{nalks}alks.cor -nrlks {nrlks} -nalks {nalks}{extraArguments}
-  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input filt_${{insarpair[i]}}_{nrlks}rlks_{nalks}alks.unw -nrlks {nrlks} -nalks {nalks}{extraArguments}
-  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input filt_${{insarpair[i]}}_{nrlks}rlks_{nalks}alks_msk.unw -nrlks {nrlks} -nalks {nalks}{extraArguments}
+  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input ${{pair}}_{nrlks}rlks_{nalks}alks.cor -nrlks {nrlks} -nalks {nalks}{extraArguments}
+  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input filt_${{pair}}_{nrlks}rlks_{nalks}alks.unw -nrlks {nrlks} -nalks {nalks}{extraArguments}
+  {script} -ref_date_stack_track ../{ref_date_stack}.track.xml -dem {dem_geo} -input filt_${{pair}}_{nrlks}rlks_{nalks}alks_msk.unw -nrlks {nrlks} -nalks {nalks}{extraArguments}
   cd ../../../
-
-done'''.format(extraCommands       = parallelCommands,
+}}
+'''.format(functionName            = functionName,
                script              = os.path.join(stackScriptPath, 'geocode.py'),
                pairsProcessingDir  = stack.pairsProcessingDir,
                ref_date_stack      = stack.dateReferenceStack,
@@ -1287,6 +1518,7 @@ done'''.format(extraCommands       = parallelCommands,
                nrlks               = insar.numberRangeLooks1*insar.numberRangeLooks2, 
                nalks               = insar.numberAzimuthLooks1*insar.numberAzimuthLooks2,
                extraArguments      = extraArguments)
+        cmd += forLoop(functionName, 'array', 'nruns')
         cmd += '\n'
         cmd += '\n'
 
@@ -1300,16 +1532,22 @@ done'''.format(extraCommands       = parallelCommands,
         cmd += '\n'
         cmd += 'cd ../../../\n'
         cmd += '\n'
+        cmd += stepDone()
+        cmds.append(cmd)
+        step_names.append(step_name)
     else:
         cmd  = '#!/bin/bash\n\n'
         cmd += '#no pairs for InSAR processing.'
 
+        #do not create steps if no pairs for InSAR processing.
+
 
     #save commands
-    cmd4 = cmd
+    cmds_4 = cmds
+    step_names_4 = step_names
 
 
-    return (cmd1, cmd2, cmd3, cmd4)
+    return (cmds_1, cmds_2, cmds_3, cmds_4, step_names_1, step_names_2, step_names_3, step_names_4)
 
 
 def cmdLineParse():
@@ -1470,14 +1708,32 @@ if __name__ == '__main__':
         print('no dates and pairs need to be processed.')
         print('no processing script is generated.')
     else:
-        cmd1, cmd2, cmd3, cmd4 = createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode)
-        with open('cmd_1.sh', 'w') as f:
-            f.write(cmd1)
-        with open('cmd_2.sh', 'w') as f:
-            f.write(cmd2)
-        with open('cmd_3.sh', 'w') as f:
-            f.write(cmd3)
-        with open('cmd_4.sh', 'w') as f:
-            f.write(cmd4)
+        # cmd1, cmd2, cmd3, cmd4 = createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode)
+        # with open('cmd_1.sh', 'w') as f:
+        #     f.write(cmd1)
+        # with open('cmd_2.sh', 'w') as f:
+        #     f.write(cmd2)
+        # with open('cmd_3.sh', 'w') as f:
+        #     f.write(cmd3)
+        # with open('cmd_4.sh', 'w') as f:
+        #     f.write(cmd4)
+        (cmds_1, cmds_2, cmds_3, cmds_4, step_names_1, step_names_2, step_names_3, step_names_4) = createCmds(stack, datesProcess, pairsProcess, pairsProcessIon, mode)
 
-    runCmd('chmod +x cmd_1.sh cmd_2.sh cmd_3.sh cmd_4.sh', silent=1)
+        cmdDir = 'cmd'
+        os.makedirs(cmdDir, exist_ok=True)
+        os.chdir(cmdDir)
+        for i, (cmds_i, step_names_i) in enumerate(zip((cmds_1, cmds_2, cmds_3, cmds_4), (step_names_1, step_names_2, step_names_3, step_names_4))):
+            filename1 = 'cmd_{}.sh'.format(i+1)
+            cmd = ''
+            for j, (cmds_j, step_names_j) in enumerate(zip(cmds_i, step_names_i)):
+                filename2 = 'cmd_{}_{}_{}.sh'.format(i+1, j+1, step_names_j.replace(' ', '_'))
+                with open(filename2, 'w') as f:
+                    f.write(cmds_j)
+                cmd += '{}/{}\n'.format(cmdDir, filename2)
+            cmd +='''
+echo "$(basename "$0") done"
+'''
+            with open(filename1, 'w') as f:
+                f.write(cmd)
+        runCmd('chmod +x cmd_*.sh', silent=1)
+        os.chdir('../')

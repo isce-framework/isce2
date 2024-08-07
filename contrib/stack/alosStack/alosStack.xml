@@ -114,6 +114,15 @@ IEEE Transactions on Geoscience and Remote Sensing, vol. 56, no. 8, pp. 4492-450
 
 
     <!--=========================================================================================
+    Parallel processing settings.
+    Number of parallel threads each run uses.
+    Number of parallel runs.
+    ==========================================================================================-->
+    <!--<property name="number of parallel threads">4</property>-->
+    <!--<property name="number of parallel runs">10</property>-->
+
+
+    <!--=========================================================================================
     It must be set, and should be the same throughout all processings! Format must be YYMMDD.
     ==========================================================================================-->
     <!--<property name="reference date of the stack">None</property>-->
@@ -356,6 +365,17 @@ FBD (indicated by ^) is the acquisition mode code.
     <!--<property name="apply polynomial fit before filtering ionosphere phase">True</property>-->
     <!--<property name="whether filtering ionosphere phase">True</property>-->
     <!--<property name="apply polynomial fit in adaptive filtering window">True</property>-->
+
+    <!--=========================================================================================
+    only order 1 and 2 are supported
+    ==========================================================================================-->
+    <!--<property name="polynomial fit order in adaptive filtering window">2</property>-->
+
+    <!--=========================================================================================
+    sometimes there are blobs in the filtered ionosphere because of outliers in the weight used in
+    the filtering, set this parameter if so.
+    ==========================================================================================-->
+    <!--<property name="remove outliers in adaptive filtering window">False</property>-->
     <!--<property name="whether do secondary filtering of ionosphere phase">True</property>-->
     <!--<property name="maximum window size for filtering ionosphere phase">301</property>-->
     <!--<property name="minimum window size for filtering ionosphere phase">11</property>-->
