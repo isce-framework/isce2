@@ -124,6 +124,8 @@ def ionFilt(self, referenceTrack, catalog=None):
     fit = self.fitIon
     filt = self.filtIon
     fitAdaptive = self.fitAdaptiveIon
+    fitAdaptiveOrder = self.fitAdaptiveOrderIon
+    rmOutliers = self.rmOutliersIon
     filtSecondary = self.filtSecondaryIon
     if (fit == False) and (filt == False):
         raise Exception('either fit ionosphere or filt ionosphere should be True when doing ionospheric correction\n')
@@ -184,6 +186,10 @@ def ionFilt(self, referenceTrack, catalog=None):
     #remove possible wired values in coherence
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
+
+    #remove these values so that there are no outliers in the computed std
+    cor[np.nonzero(cor<0.05)] = 0.05
+    cor[np.nonzero(cor>0.95)] = 0.95
 
     #remove water body. Not helpful, just leave it here
     wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
@@ -288,7 +294,7 @@ def ionFilt(self, referenceTrack, catalog=None):
         ion -= ion_fit * (ion!=0)
     #filter the rest of the ionosphere
     if filt:
-        (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive)
+        (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive, order=fitAdaptiveOrder, rm_outliers=rmOutliers)
         if filtSecondary:
             g2d = gaussian(size_secondary, size_secondary/2.0, scale=1.0)
             scale = ss.fftconvolve((ion_filt!=0), g2d, mode='same')
@@ -361,6 +367,10 @@ def cmdLineParse():
             help='filtering ionosphere phase')
     parser.add_argument('-fit_adaptive', dest='fit_adaptive', action='store_true', default=False,
             help='apply polynomial fit in adaptive filtering window')
+    parser.add_argument('-fit_adaptive_order', dest='fit_adaptive_order', type=int, default=2,
+            help='polynomial fit order in adaptive filtering window')
+    parser.add_argument('-rm_outliers', dest='rm_outliers', action='store_true', default=False,
+            help='remove outliers in adaptive filtering window. very slow')
     parser.add_argument('-filt_secondary', dest='filt_secondary', action='store_true', default=False,
             help='secondary filtering of ionosphere phase')
     parser.add_argument('-win_min', dest='win_min', type=int, default=11,
@@ -402,6 +412,8 @@ if __name__ == '__main__':
     fitIon = inps.fit
     filtIon = inps.filt
     fitAdaptiveIon = inps.fit_adaptive
+    fitAdaptiveOrderIon = inps.fit_adaptive_order
+    rmOutliersIon = inps.rm_outliers
     filtSecondaryIon = inps.filt_secondary
     filteringWinsizeMinIon = inps.win_min
     filteringWinsizeMaxIon = inps.win_max
@@ -435,6 +447,8 @@ if __name__ == '__main__':
     self.fitIon = fitIon
     self.filtIon = filtIon
     self.fitAdaptiveIon = fitAdaptiveIon
+    self.fitAdaptiveOrderIon = fitAdaptiveOrderIon
+    self.rmOutliersIon = rmOutliersIon
     self.filtSecondaryIon = filtSecondaryIon
     self.filteringWinsizeMaxIon = filteringWinsizeMaxIon
     self.filteringWinsizeMinIon = filteringWinsizeMinIon

@@ -303,6 +303,17 @@ FBD (indicated by ^) is the acquisition mode code.
     <!--<property name="apply polynomial fit before filtering ionosphere phase">True</property>-->
     <!--<property name="whether filtering ionosphere phase">True</property>-->
     <!--<property name="apply polynomial fit in adaptive filtering window">True</property>-->
+
+    <!--=========================================================================================
+    only order 1 and 2 are supported
+    ==========================================================================================-->
+    <!--<property name="polynomial fit order in adaptive filtering window">2</property>-->
+
+    <!--=========================================================================================
+    sometimes there are blobs in the filtered ionosphere because of outliers in the weight used in
+    the filtering, set this parameter if so.
+    ==========================================================================================-->
+    <!--<property name="remove outliers in adaptive filtering window">False</property>-->
     <!--<property name="whether do secondary filtering of ionosphere phase">True</property>-->
     <!--<property name="maximum window size for filtering ionosphere phase">301</property>-->
     <!--<property name="minimum window size for filtering ionosphere phase">11</property>-->
