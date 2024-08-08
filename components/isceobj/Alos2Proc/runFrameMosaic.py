@@ -192,6 +192,18 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     rangeOffsets1 = [i/numberOfRangeLooks for i in rangeOffsets]
     azimuthOffsets1 = [i/numberOfAzimuthLooks for i in azimuthOffsets]
 
+    #consider frame/swath azimuth sensing start differences caused by swath mosaicking
+    for j in range(numberOfFrames):
+        if j == 0:
+            continue
+        else:
+            swath1 = track.frames[j-1].swaths[0]
+            swath2 = track.frames[j].swaths[0]
+            frame1 = track.frames[j-1]
+            frame2 = track.frames[j]
+            delta_az = -((frame2.sensingStart - frame1.sensingStart).total_seconds() - (swath2.sensingStart - swath1.sensingStart).total_seconds()) / swath1.azimuthLineInterval
+            azimuthOffsets1[j] += delta_az / numberOfAzimuthLooks
+
     #get offset relative to the first frame
     rangeOffsets2 = [0.0]
     azimuthOffsets2 = [0.0]
