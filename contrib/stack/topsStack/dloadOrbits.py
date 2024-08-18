@@ -227,8 +227,14 @@ if __name__ == '__main__':
                         token, expires_in = get_new_token(username, password, session)
                         save_token_data(token, expires_in, token_file)
 
-                output = os.path.join(inps.dirname, matchFileName)
-                res = download_file(match, output, session, token)
-    
+                    output = os.path.join(inps.dirname, matchFileName)
+                    res = download_file(match, output, session, token)
+                    print("Orbit is downloaded successfully")
+                    print(" ")
+
+                else:
+                    print("Orbit is not downloaded successfully")
+                    print(" ")
+
         except:
-            raise("No downloaded orbits")
+            raise
