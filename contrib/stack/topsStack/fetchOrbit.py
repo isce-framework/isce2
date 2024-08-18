@@ -142,7 +142,6 @@ if __name__ == '__main__':
     session = requests.Session()
 
     for spec in orbitMap:
-        oType = spec[0]
         delta = datetime.timedelta(days=1)
         timebef = (fileTS - delta).strftime(queryfmt)
         timeaft = (fileTS + delta).strftime(queryfmt)
