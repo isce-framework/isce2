@@ -41,6 +41,7 @@ set(installfiles
     UAVSAR_RPI.py
     UAVSAR_Stack.py
     SAOCOM_SLC.py
+    Lutan1.py
     )
 
 if(HDF5_FOUND)

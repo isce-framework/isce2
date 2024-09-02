@@ -339,7 +339,32 @@ class config(object):
         self.f.write('win_min : ' + '{}'.format(self.win_min) + '\n')
         self.f.write('win_max : ' + '{}'.format(self.win_max) + '\n')
 
+    def filtIonShift(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('filtIonShift : ' + '\n')
+        self.f.write('reference_stack : ' + self.reference_stack + '\n')
+        self.f.write('reference : ' + self.reference + '\n')
+        self.f.write('secondary : ' + self.secondary + '\n')
+        self.f.write('input : ' + self.input + '\n')
+        self.f.write('coherence : ' + self.coherence + '\n')
+        self.f.write('output : ' + self.output + '\n')
+        self.f.write('win_min : ' + '{}'.format(self.win_min) + '\n')
+        self.f.write('win_max : ' + '{}'.format(self.win_max) + '\n')
+        self.f.write('nrlks : ' + '{}'.format(self.nrlks) + '\n')
+        self.f.write('nalks : ' + '{}'.format(self.nalks) + '\n')
 
+
+    def burstRampIon(self, function):
+        self.f.write('###################################'+'\n')
+        self.f.write(function + '\n')
+        self.f.write('burstRampIon : ' + '\n')
+        self.f.write('reference_stack : ' + self.reference_stack + '\n')
+        self.f.write('input : ' + self.input + '\n')
+        self.f.write('output : ' + self.output + '\n')
+        self.f.write('nrlks : ' + '{}'.format(self.nrlks) + '\n')
+        self.f.write('nalks : ' + '{}'.format(self.nalks) + '\n')
+        self.f.write('ion_height : ' + '{}'.format(self.ion_height) + '\n')
 
 
     def write_wrapper_config2run_file(self, configName, line_cnt, numProcess = 1):
@@ -1330,7 +1355,7 @@ class run(object):
                     configObj.defoMax = '2'
                     configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
                     configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
-                    configObj.rmfilter = False
+                    configObj.rmFilter = False
                     configObj.unwMethod = 'snaphu'
                     configObj.unwrap(function)
 
@@ -1348,7 +1373,7 @@ class run(object):
                     configObj.defoMax = '2'
                     configObj.rangeLooks = '{}'.format(ionParamUsrObj.ION_numberRangeLooks0)
                     configObj.azimuthLooks = '{}'.format(ionParamUsrObj.ION_numberAzimuthLooks0)
-                    configObj.rmfilter = False
+                    configObj.rmFilter = False
                     configObj.unwMethod = 'snaphu'
                     configObj.unwrap(function)
 
@@ -1540,6 +1565,105 @@ class run(object):
         cmd = 'invertIon.py --idir {} --odir {} --nrlks1 {} --nalks1 {} --nrlks2 {} --nalks2 {} --merged_geom {} --interp --msk_overlap'.format(ion_in,ion_out,ionParamUsrObj.ION_numberRangeLooks, ionParamUsrObj.ION_numberAzimuthLooks, self.rangeLooks, self.azimuthLooks,hgt)
 
         self.runf.write(self.text_cmd + cmd + '\n')
+
+
+    def filtIonShift(self, pairs):
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        line_cnt = 0
+        for p in pairs:
+            configName = os.path.join(self.config_path,'config_filtIonShift_{}_{}'.format(p[0], p[1]))
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.reference_stack = os.path.join(self.work_dir, 'reference')
+            configObj.reference = os.path.join(self.work_dir, 'coreg_secondarys', '{}'.format(p[0]))
+            configObj.secondary = os.path.join(self.work_dir, 'coreg_secondarys', '{}'.format(p[1]))
+            configObj.input = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'filt.ion')
+            configObj.coherence = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'raw_no_projection.cor')
+            configObj.output = os.path.join(self.work_dir, 'ion', '{}_{}'.format(p[0], p[1]), 'ion_cal', 'azshift.ion')
+            configObj.win_min = ionParamUsrObj.ION_ionshiftFilteringWinsizeMin
+            configObj.win_max = ionParamUsrObj.ION_ionshiftFilteringWinsizeMax
+            configObj.nrlks = ionParamUsrObj.ION_numberRangeLooks
+            configObj.nalks = ionParamUsrObj.ION_numberAzimuthLooks
+            configObj.filtIonShift('[Function-1]')
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def invertIonShift(self):
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+        
+        ion_in = os.path.join(self.work_dir,'ion')
+        ion_out = os.path.join(self.work_dir,'ion_azshift_dates')
+        hgt = os.path.join(self.work_dir,'merged/geom_reference/hgt.rdr')
+
+        cmd = 'invertIon.py --idir {} --filename azshift.ion --odir {} --nrlks1 {} --nalks1 {} --nrlks2 {} --nalks2 {} --merged_geom {} --interp --msk_overlap'.format(ion_in,ion_out,ionParamUsrObj.ION_numberRangeLooks, ionParamUsrObj.ION_numberAzimuthLooks, self.rangeLooks, self.azimuthLooks,hgt)
+
+        self.runf.write(self.text_cmd + cmd + '\n')
+
+
+    def burstRampIon(self, dates):
+
+        ionParamUsrObj = ionParamUsr(self.param_ion)
+        ionParamUsrObj.configure()
+
+        line_cnt = 0
+        for p in dates:
+            configName = os.path.join(self.config_path,'config_burstRampIon_{}'.format(p))
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.reference_stack = os.path.join(self.work_dir, 'reference')
+            configObj.input = os.path.join(self.work_dir, 'ion_azshift_dates', '{}.ion'.format(p))
+            configObj.output = os.path.join(self.work_dir, 'ion_burst_ramp_dates', '{}'.format(p))
+            configObj.nrlks = self.rangeLooks
+            configObj.nalks = self.azimuthLooks
+            configObj.ion_height = ionParamUsrObj.ION_ionHeight
+            configObj.burstRampIon('[Function-1]')
+            configObj.finalize()
+
+            line_cnt += 1
+            #line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt, self.numProcess)
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
+
+
+    def mergeBurstRampIon(self, dates, stackReferenceDate):
+
+        line_cnt = 0
+        for d in dates:
+            configName = os.path.join(self.config_path,'config_mergeBurstRampIon_' + d)
+            configObj = config(configName)
+            configObj.configure(self)
+            configObj.stack = os.path.join(self.work_dir, 'stack')
+            if d == stackReferenceDate:
+                configObj.reference = os.path.join(self.work_dir, 'reference')
+            else:
+                configObj.reference = os.path.join(self.work_dir, 'coreg_secondarys/' + d)
+            configObj.dirName = os.path.join(self.work_dir, 'ion_burst_ramp_dates/' + d)
+            configObj.namePattern = 'burst*float'
+            configObj.mergedFile = os.path.join(self.work_dir, 'ion_burst_ramp_merged_dates/' + d + '.float')
+            configObj.mergeBurstsMethod = 'top'
+            if d == stackReferenceDate:
+                configObj.aligned = 'False'
+            else:
+                configObj.aligned = 'True'
+            configObj.validOnly = 'True'
+            configObj.useVirtualFiles = 'True'
+            configObj.multiLook = 'True'
+            configObj.mergeBurst('[Function-1]')
+            configObj.finalize()
+
+            line_cnt += 1
+            line_cnt = configObj.write_wrapper_config2run_file(configName, line_cnt)
+            del configObj
 
 
     def finalize(self):

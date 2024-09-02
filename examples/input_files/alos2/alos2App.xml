@@ -10,7 +10,7 @@
     <property name="secondary directory">../../../z_common_data/insarzd_test_dataset/gorkha/d048/150503</property>
     <!--Normally no need to set frame numbers, but if reference and secondary frames do not meet the following
     one-to-one correspondence, you need to set frame numbers here. See instructions below on how to find
-    and set frame numbers.
+    and set frame numbers. Always use 4-digit to set the frame number, e.g. 2980, 0750, etc.
 
     Reference Data Folder               Secondary Data Folder
        Frame ****     .............     Frame ****
