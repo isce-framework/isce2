@@ -195,7 +195,7 @@ if __name__ == '__main__':
 
             entries = json.loads(r.text, object_hook=lambda x: SimpleNamespace(**x)).value
             for entry in entries:
-                entry_datefmt = "%Y-%m-%dT%H:%M:%S.000Z"
+                entry_datefmt = "%Y-%m-%dT%H:%M:%S.000000Z"
                 tbef = datetime.datetime.strptime(entry.ContentDate.Start, entry_datefmt)
                 taft = datetime.datetime.strptime(entry.ContentDate.End, entry_datefmt)
                 matchFileName = entry.Name
