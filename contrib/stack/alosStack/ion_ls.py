@@ -39,6 +39,135 @@ def least_sqares(H, S, W=None):
     return Z.reshape(Z.size)
 
 
+def least_sqares_insar(H0, S0, dates2, dateZero, pairs, W0=None, mode=0):
+    '''
+    least squares for insar time series analysis. basic equation
+    H0 dates2 = S0
+    invalid values are zeros in S0.
+    assuming full-rank if all pairs are valid. dateZero must be valid.
+    
+    input paramters
+    H0:       observation matrix, 2-D numpy array
+    S0:       insar values, 1-D numpy array
+    dates2:   sorted dates, dateZero excluded, format: ['date1', 'date2'...]
+    dateZero: reference date, format: 'date'
+    pairs:    pairs, format: ['date1-date2', 'date1-date2'...]
+    W0:       weighting matrix 1-D numpy array
+    mode:     solution mode
+              0: only do ls if all pairs are valid
+              1: only do ls if all dates are valid
+              2: do ls for all cases
+
+    output parameters
+    ts:       deformation values of dates2, dateZero excluded, format: 1-D numpy array with length ndate-1.
+              zero values are not valid.
+
+    different cases:
+              | 1. all pairs √
+    all dates |                   | 2. full rank √
+              | a subset of pairs |
+                                  | 3. low rank  ×
+
+                                   | 4. full rank √
+               | ref date included |
+    some dates |                   | 5. low rank ×
+               | 6. ref date not included ×
+    '''
+
+    #import numpy as np
+
+    if mode not in [0, 1, 2]:
+        raise Exception('unknown solution mode: {}'.format(mode))
+
+    (npair, ndate) = H0.shape
+    ndate += 1
+    npairValid = np.sum(S0!=0, dtype=np.int32)
+
+    #zero values are not valid
+    ts = np.zeros(ndate-1, dtype=np.float32)
+
+    #case 1. nothing to be done
+    if npairValid == npair:
+        S = S0
+        H = H0
+    else:
+        if mode == 0:
+            return ts
+
+        #get valid dates first (dates included in valid pairs).
+        #Assume zero values in ionPairs are not valid.
+        dates2Valid = []
+        for k in range(npair):
+            if S0[k] != 0:
+                for datek in pairs[k].split('-'):
+                    if datek not in dates2Valid:
+                        dates2Valid.append(datek)
+        dates2Valid = sorted(dates2Valid)
+        ndateValid = len(dates2Valid)
+        if dateZero in dates2Valid:
+            dateZeroIncluded = True
+            dates2Valid.remove(dateZero)
+        else:
+            dateZeroIncluded = False
+
+        #case: valid include all dates
+        if ndateValid == ndate:
+            #get valid
+            H1 = H0[np.nonzero(S0!=0)]
+            S1 = S0[np.nonzero(S0!=0)]
+            #case 2. full rank
+            #case 3. low rank
+            if np.linalg.matrix_rank(H1) < ndate-1:
+                return ts
+            S = S1
+            H = H1
+        else:
+            if mode <= 1:
+                return ts
+
+            if dateZeroIncluded:
+                dates2ValidIndex = [dates2.index(x) for x in dates2Valid]
+                H1 = H0[np.nonzero(S0!=0)]
+                S1 = S0[np.nonzero(S0!=0)]
+                H2 = H1[:, dates2ValidIndex]
+                #case 4. full rank
+                #case 5. low rank
+                if np.linalg.matrix_rank(H2) < ndateValid-1:
+                    return ts
+                S = S1
+                H = H2
+            else:
+                #case 6. reference date not in valid
+                return ts
+
+    #adding weight
+    #https://stackoverflow.com/questions/19624997/understanding-scipys-least-square-function-with-irls
+    #https://stackoverflow.com/questions/27128688/how-to-use-least-squares-with-weight-matrix-in-python
+    if W0 is not None:
+        if npairValid == npair:
+            W = W0
+        else:
+            W = W0[np.nonzero(S0!=0)]
+        H = H0 * W[:, None]
+        S = S0 * W
+
+    #do least-squares estimation
+    #[theta, residuals, rank, singular] = np.linalg.lstsq(H, S)
+    #make W full matrix if use W here (which is a slower method)
+    #'using W before this' is faster
+    theta = least_sqares(H, S, W=None)
+
+    if npairValid == npair:
+        ts = theta
+    else:
+        if ndateValid == ndate:
+            ts = theta
+        else:
+            ts[dates2ValidIndex] = theta
+
+    return ts
+
+
 def cmdLineParse():
     '''
     command line parser.
@@ -79,6 +208,9 @@ def cmdLineParse():
             help='use reciprocal of window size as weight')
     parser.add_argument('-interp', dest='interp', action='store_true', default=False,
             help='interpolate ionospheric phase to nrlks2/nalks2 sample size')
+    parser.add_argument('-mode', dest='mode', type=int, default=1,
+            help = 'least squares solution mode. 0: only do ls if all pairs are valid. 1: only do ls if all dates are valid (default). 2: do ls for all cases. invalid values are zeros in the interferograms.')
+
 
     if len(sys.argv) <= 1:
         print('')
@@ -110,6 +242,7 @@ if __name__ == '__main__':
     numberAzimuthLooksIon = inps.nalks_ion
     ww = inps.ww
     interp = inps.interp
+    mode = inps.mode
     #######################################################
 
     #all pair folders in order
@@ -227,43 +360,12 @@ if __name__ == '__main__':
             print()
         for j in range(width):
 
-            #observed signal
-            S0 = ionPairs[:, i, j]
-
             if ww == False:
-                #observed signal
-                S = S0
-                H = H0
+                W = None
             else:
-                #add weight
-                #https://stackoverflow.com/questions/19624997/understanding-scipys-least-square-function-with-irls
-                #https://stackoverflow.com/questions/27128688/how-to-use-least-squares-with-weight-matrix-in-python
                 wgt = winPairs[:, i, j]
                 W = np.sqrt(1.0/wgt)
-                H = H0 * W[:, None]
-                S = S0 * W
-
-            #do least-squares estimation
-            #[theta, residuals, rank, singular] = np.linalg.lstsq(H, S)
-            #make W full matrix if use W here (which is a slower method)
-            #'using W before this' is faster
-            theta = least_sqares(H, S, W=None)
-            ts[:, i, j] = theta
-
-    # #dump raw estimate
-    # cdir = os.getcwd()
-    # os.makedirs(odir, exist_ok=True)
-    # os.chdir(odir)
-
-    # for i in range(ndate-1):
-    #     file_name = 'filt_ion_'+dates2[i]+ml2+'.ion'
-    #     ts[i, :, :].astype(np.float32).tofile(file_name)
-    #     create_xml(file_name, width, length, 'float')
-    # file_name = 'filt_ion_'+dateZero+ml2+'.ion'
-    # (np.zeros((length, width), dtype=np.float32)).astype(np.float32).tofile(file_name)
-    # create_xml(file_name, width, length, 'float')
-
-    # os.chdir(cdir)
+            ts[:, i, j] = least_sqares_insar(H0, ionPairs[:, i, j], dates2, dateZero, pairs, W0=W, mode=mode)
 
 
 ####################################################################################

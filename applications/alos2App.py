@@ -375,6 +375,20 @@ FIT_ADAPTIVE_ION = Application.Parameter('fitAdaptiveIon',
                                 mandatory = False,
                                 doc = 'apply polynomial fit in adaptive filtering window')
 
+FIT_ADAPTIVE_ORDER_ION = Application.Parameter('fitAdaptiveOrderIon',
+                                public_name='polynomial fit order in adaptive filtering window',
+                                default=2,
+                                type=int,
+                                mandatory=False,
+                                doc='polynomial fit order in adaptive filtering window')
+
+RM_OUTLIERS_ION = Application.Parameter('rmOutliersIon',
+                                public_name = 'remove outliers in adaptive filtering window',
+                                default = False,
+                                type = bool,
+                                mandatory = False,
+                                doc = 'remove outliers in adaptive filtering window')
+
 FILT_SECONDARY_ION = Application.Parameter('filtSecondaryIon',
                                 public_name = 'whether do secondary filtering of ionosphere phase',
                                 default = True,
@@ -681,6 +695,8 @@ class Alos2InSAR(Application):
                         FIT_ION,
                         FILT_ION,
                         FIT_ADAPTIVE_ION,
+                        FIT_ADAPTIVE_ORDER_ION,
+                        RM_OUTLIERS_ION,
                         FILT_SECONDARY_ION,
                         FILTERING_WINSIZE_MAX_ION,
                         FILTERING_WINSIZE_MIN_ION,
