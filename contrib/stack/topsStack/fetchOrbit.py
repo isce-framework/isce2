@@ -142,7 +142,6 @@ if __name__ == '__main__':
     session = requests.Session()
 
     for spec in orbitMap:
-        oType = spec[0]
         delta = datetime.timedelta(days=1)
         timebef = (fileTS - delta).strftime(queryfmt)
         timeaft = (fileTS + delta).strftime(queryfmt)
@@ -170,7 +169,7 @@ if __name__ == '__main__':
             entries = json.loads(r.text, object_hook=lambda x: SimpleNamespace(**x)).value
 
             for entry in entries:
-                entry_datefmt = "%Y-%m-%dT%H:%M:%S.000Z"
+                entry_datefmt = "%Y-%m-%dT%H:%M:%S.000000Z"
                 tbef = datetime.datetime.strptime(entry.ContentDate.Start, entry_datefmt)
                 taft = datetime.datetime.strptime(entry.ContentDate.End, entry_datefmt)
                 if (tbef <= fileTSStart) and (taft >= fileTS):
