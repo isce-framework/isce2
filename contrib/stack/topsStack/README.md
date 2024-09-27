@@ -279,9 +279,9 @@ Results from ionospheric phase estimation.
 
 -	reference and coreg_secondarys: now contains also subband burst SLCs
 -	ion: original ionospheric phase estimation results
--       ion_azshift_dates: azimuth ionospheric shift for each acquistion
--       ion_burst_ramp_dates: azimuth burst ramps caused by ionosphere for each acquistion
--       ion_burst_ramp_merged_dates: merged azimuth burst ramps caused by ionosphere for each acquistion
+- ion_azshift_dates: azimuth ionospheric shift for each acquistion
+- ion_burst_ramp_dates: azimuth burst ramps caused by ionosphere for each acquistion
+- ion_burst_ramp_merged_dates: merged azimuth burst ramps caused by ionosphere for each acquistion
 -	ion_dates: ionospheric phase for each acquistion
 -	ion/date1_date2/ion_cal/azshift.ion: azimuth ionospheric shift
 -	ion/date1_date2/ion_cal/filt.ion: filtered ionospheric phase
