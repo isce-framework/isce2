@@ -398,7 +398,7 @@ def estimateOffsetField(reference, secondary, inps=None):
 
 
 def prepareGeometry(full_dir, out_dir, x_start, y_start, x_step, y_step, x_win_num, y_win_num,
-                    fbases=['hgt','lat','lon','los','shadowMask','waterMask']):
+                    fbases=['lat','lon','los','hgt','z','shadowMask','waterMask']):
     """Generate multilooked geometry datasets in the same grid as the estimated offset field
     from the full resolution geometry datasets.
     Parameters: full_dir    - str, path of input  geometry directory in full resolution
