@@ -575,8 +575,8 @@ signed char ValidDataArray(float **arr, long nrow, long ncol){
  */
 signed char IsFinite(double d){
 
-  return(finite(d));
-  /* return(isfinite(d)); */
+  /* not available on arm64 return(finite(d)); */
+  return(isfinite(d));
   /* return(!(isnan(d) || isinf(d))); */
   /* return(TRUE) */
 }
