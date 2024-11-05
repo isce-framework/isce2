@@ -9,8 +9,8 @@ build = envPyCuAmpcor['PRJ_LIB_DIR']
 install = envPyCuAmpcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
 listFiles = ['GDALImage.cpp', 'cuArrays.cpp', 'cuArraysCopy.cu',
              'cudaError.cpp', 'cudaUtil.cpp',
-             'cuArraysPadding.cu', 'cuOverSampler.cu',
-             'cuSincOverSampler.cpp', 'cuDeramp.cu',
+             'cuArraysPadding.cu', 'cuOverSampler.cpp',
+             'cuSincOverSampler.cu', 'cuDeramp.cu',
              'cuOffset.cu', 'cuCorrNormalization.cu',
              'cuCorrNormalizationSAT.cu', 'cuCorrNormalizer.cpp',
              'cuAmpcorParameter.cpp', 'cuCorrTimeDomain.cu',
@@ -31,7 +31,8 @@ def pybind11PseudoBuilder(env, src, bld, inst):
     env.MergeFlags('-fopenmp -O3 -std=c++11 -fPIC -pthread -Wno-unused-result -Wsign-compare -DNDEBUG -g -fwrapv -Wall -Wstrict-prototypes')
     libList = ['gdal']
     env.PrependUnique(LIBS=libList)
-    lib = env.LoadableModule(target='PyCuAmpcor.abi3.so', source=listFiles, CPPDEFINES='GPU_ACC_ENABLED')
+    env.Append(CPPDEFINES = 'GPU_ACC_ENABLED')
+    lib = env.LoadableModule(target='PyCuAmpcor.abi3.so', source=listFiles)
 
     env.Install(inst, lib)
     env.Alias('install', inst)

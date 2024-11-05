@@ -526,7 +526,7 @@ def main(iargs=None):
     runSimamp(os.path.dirname(info.heightFilename),os.path.basename(info.heightFilename))
 
     # write multilooked geometry files in "geom_reference" directory, same level as "Igrams"
-    if inps.rlks * inps.rlks > 1:
+    if inps.alks * inps.rlks > 1:
         out_dir = os.path.join(os.path.dirname(os.path.dirname(info.outdir)), 'geom_reference')
         runMultilook(in_dir=info.outdir, out_dir=out_dir, alks=inps.alks, rlks=inps.rlks)
 

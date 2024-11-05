@@ -2,6 +2,9 @@
 ###the values below are the default values used by the module
 ###remove # to set the parameters
 
+#consider burst properties in ionosphere computation: False
+#height of ionosphere layer in km: 200.0
+
 #maximum window size for filtering ionosphere phase:         200
 #minimum window size for filtering ionosphere phase:         100
 #maximum window size for filtering ionosphere azimuth shift: 150

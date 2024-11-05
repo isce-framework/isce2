@@ -243,15 +243,16 @@ def rotate(k , theta):
 
     A=np.vstack((x.flatten(), y.flatten()))
     if theta!=0:
+        from scipy.interpolate import griddata
         theta = theta*np.pi/180.
         R = np.array([[np.cos(theta), -1.0*np.sin(theta)],[np.sin(theta), np.cos(theta)]])
         AR = np.dot(R,A)
         xR = AR[0,:].reshape(Sy,Sx)
         yR = AR[1,:].reshape(Sy,Sx)
 
-        k = mlab.griddata(x.flatten(),y.flatten(),k.flatten(),xR,yR, interp='linear')
+        k = griddata((x.flatten(),y.flatten()),k.flatten(),(xR,yR), method='linear')
         #k = f(xR, yR)
-        k = k.data
+        #k = k.data
         k[np.isnan(k)] = 0.0
         a = 1./np.sum(k)
         k = a*k

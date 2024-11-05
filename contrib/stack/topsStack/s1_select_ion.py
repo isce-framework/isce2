@@ -422,8 +422,8 @@ def cmdLineParse():
     parser = argparse.ArgumentParser( description='select Sentinel-1A/B acquistions good for ionosphere correction. not used slices are moved to folder: not_used')
     parser.add_argument('-dir', dest='dir', type=str, required=True,
             help = 'directory containing the "S1*_IW_SLC_*.zip" files')
-    parser.add_argument('-sn', dest='sn', type=str, required=True,
-            help='south/north bound of area of interest, format: south/north')
+    parser.add_argument('-sn', dest='sn', type=float, nargs=2, required=True,
+            help='south and north bound of area of interest, format: -sn south north')
     parser.add_argument('-nr', dest='nr', type=int, default=10,
             help = 'minimum number of acquisitions for same starting ranges. default: 10')
 
@@ -438,7 +438,8 @@ def cmdLineParse():
 if __name__ == '__main__':
 
     inps = cmdLineParse()
-    s,n=[float(x) for x in inps.sn.split('/')]
+    #s,n=[float(x) for x in inps.sn.split('/')]
+    s,n=inps.sn
 
     #group the slices
     group = get_group(inps.dir)
