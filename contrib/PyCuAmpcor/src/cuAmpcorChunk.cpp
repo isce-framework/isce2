@@ -269,6 +269,15 @@ void cuAmpcorChunk::loadReferenceChunk()
     int height =  param->referenceChunkHeight[idxChunk]; // number of pixels along height
     int width = param->referenceChunkWidth[idxChunk];  // number of pixels along width
 
+#ifdef CUAMPCOR_DEBUG
+    std::cout << "loading reference chunk ...\n "
+              << "    index: " << idxChunk << " "
+              << "starting pixel: (" << startD << ", " << startA << ") "
+              << "size : (" << height << ", " << width << ")"
+              << "\n";
+#endif
+
+
     // check whether all pixels are outside the original image range
     if (height ==0 || width ==0)
     {
@@ -284,6 +293,32 @@ void cuAmpcorChunk::loadReferenceChunk()
         // same for the across direction
         getRelativeOffset(ChunkOffsetAcross->hostData, param->referenceStartPixelAcross, param->referenceChunkStartPixelAcross[idxChunk]);
         ChunkOffsetAcross->copyToDevice(stream);
+
+#ifdef CUAMPCOR_DEBUG
+    std::cout << "loading reference windows from chunk debug ... \n";
+    auto * startPixelDownToChunk = ChunkOffsetDown->hostData;
+    auto * startPixelAcrossToChunk = ChunkOffsetAcross->hostData;
+
+    for(int i=0; i<param->numberWindowDownInChunk; ++i) {
+        int iDown = i;
+        if(i>=nWindowsDown) iDown = nWindowsDown-1;
+        for(int j=0; j<param->numberWindowAcrossInChunk; ++j){
+            int iAcross = j;
+            if(j>=nWindowsAcross) iAcross = nWindowsAcross-1;
+            int idxInChunk = iDown*param->numberWindowAcrossInChunk+iAcross;
+            int idxInAll = (iDown+idxChunkDown*param->numberWindowDownInChunk)*param->numberWindowAcross
+                + idxChunkAcross*param->numberWindowAcrossInChunk+iAcross;
+            std::cout << "Window index in chuck: (" << iDown << ", " << iAcross << ") \n";
+            std::cout << "    Staring pixel location from raw: (" <<  param->referenceStartPixelDown[idxInAll] << ", "
+                                                                  <<  param->referenceStartPixelAcross[idxInAll] <<")\n";
+            std::cout << "    Staring pixel location from chunk: (" <<  startPixelDownToChunk[idxInChunk] << ", "
+                                                                    <<  startPixelAcrossToChunk[idxInChunk] <<")\n";
+
+        }
+    }
+
+#endif
+
 
         // check whether the image is complex (e.g., SLC) or real( e.g. TIFF)
         if(referenceImage->isComplex())

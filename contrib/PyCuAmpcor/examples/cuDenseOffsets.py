@@ -274,9 +274,9 @@ def estimateOffsetField(reference, secondary, inps=None):
         startPixelDown + inps.winhgt//2,
         startPixelAcross + inps.winwidth//2))
     if startPixelDown < inps.srchgt:
-        print('Warning: the starting pixel down is beyond the edge of the image')
+        print(f'Warning: the starting pixel down {startPixelDown} is less than the search range {inps.srchgt}. Zeros will be patched')
     if startPixelAcross < inps.srcwidth:
-        print('Warning: the starting pixel across is beyond the edge of the image')
+        print(f'Warning: the starting pixel across {startPixelAcross} is less than the search range {inps.srcwidth}. Zeros will be patched')
 
     # assign the values to objOffset
     objOffset.referenceStartPixelDownStatic = startPixelDown
@@ -296,10 +296,6 @@ def estimateOffsetField(reference, secondary, inps=None):
     else:
         endPixelAcross = width - margin - inps.srcwidth
 
-    if endPixelDown >= length - inps.srchgt:
-        print('Warning: the ending pixel down is beyond the edge of the image')
-    if endPixelAcross >= width - inps.srcwidth:
-        print('Warning: the ending pixel across is beyond the edge of the image')
 
     # determine the number of windows down and across
     # that's also the size of the output offset field
@@ -308,6 +304,16 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
         else (endPixelAcross-startPixelAcross-inps.winwidth)//inps.skipwidth
     print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
+
+    # get the actual location for the last pixel in reference image
+    endPixelDown = startPixelDown + (objOffset.numberWindowDown-1)*inps.skiphgt + inps.winhgt
+    endPixelAcross = startPixelAcross + (objOffset.numberWindowAcross-1)*inps.skipwidth + inps.winwidth
+    print('the last pixel in reference image is: ({}, {})'.format(
+        endPixelDown-1, endPixelAcross-1))
+    if endPixelDown > length - inps.srchgt:
+        print(f'Warning: the ending pixel down {endPixelDown} is more than length {length} - search range {inps.srchgt}')
+    if endPixelAcross > width - inps.srcwidth:
+        print(f'Warning: the ending pixel across {endPixelAcross} is more than width {width} - search range {inps.srcwidth} ')
 
     # oversample raw data (SLC)
     objOffset.rawDataOversamplingFactor = inps.raw_oversample
