@@ -23,13 +23,14 @@
 #include <sys/wait.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <time.h>
 
 #include "snaphu.h"
 
 
 /* function: IsTrue()
  * ------------------
- * Returns TRUE if the string input is any of TRUE, True, true, 1, 
+ * Returns TRUE if the string input is any of TRUE, True, true, 1,
  * y, Y, yes, YES
  */
 int IsTrue(char *str){
@@ -46,7 +47,7 @@ int IsTrue(char *str){
 
 /* function: IsFalse()
  * ------------------
- * Returns FALSE if the string input is any of FALSE, False, false, 
+ * Returns FALSE if the string input is any of FALSE, False, false,
  * 0, n, N, no, NO
  */
 int IsFalse(char *str){
@@ -82,10 +83,10 @@ signed char SetBooleanSignedChar(signed char *boolptr, char *str){
 /* function: ModDiff()
  * -------------------
  * Computes floating point difference between two numbers.
- * f1 and f2 should be between [0,2pi).  The result is the 
+ * f1 and f2 should be between [0,2pi).  The result is the
  * modulo difference between (-pi,pi].  Assumes that
- * PI and TWOPI have been defined.  
- */  
+ * PI and TWOPI have been defined.
+ */
 double ModDiff(double f1, double f2){
 
   double f3;
@@ -184,13 +185,13 @@ void CalcWrappedAzDiffs(float **dpsi, float **avgdpsi, float **wrappedphase,
 
 /* function: CycleResidue()
  * ------------------------
- * Computes the cycle array of a phase 2D phase array. Input arrays 
- * should be type float ** and signed char ** with memory pre-allocated.  
- * Numbers of rows and columns in phase array should be passed.  
+ * Computes the cycle array of a phase 2D phase array. Input arrays
+ * should be type float ** and signed char ** with memory pre-allocated.
+ * Numbers of rows and columns in phase array should be passed.
  * Residue array will then have size nrow-1 x ncol-1.  Residues will
  * always be -1, 0, or 1 if wrapped phase is passed in.
  */
-void CycleResidue(float **phase, signed char **residue, 
+void CycleResidue(float **phase, signed char **residue,
 		  int nrow, int ncol){
 
   int row, col;
@@ -227,7 +228,7 @@ void CycleResidue(float **phase, signed char **residue,
 
 /* function: CalcFlow()
  * --------------------
- * Calculates flow based on unwrapped phase data in a 2D array.  
+ * Calculates flow based on unwrapped phase data in a 2D array.
  * Allocates memory for row and column flow arrays.
  */
 void CalcFlow(float **phase, short ***flowsptr, long nrow, long ncol){
@@ -247,7 +248,7 @@ void CalcFlow(float **phase, short ***flowsptr, long nrow, long ncol){
 					 /TWOPI);
     }
   }
-  
+
   /* get col flows (horizontal phase differences) */
   for(row=0;row<nrow;row++){
     for(col=0;col<ncol-1;col++){
@@ -264,7 +265,7 @@ void CalcFlow(float **phase, short ***flowsptr, long nrow, long ncol){
  * This function takes row and column flow information and integrates
  * wrapped phase to create an unwrapped phase field.  The unwrapped
  * phase field will be the same size as the wrapped field.  The array
- * rowflow should have size N-1xM and colflow size NxM-1 where the 
+ * rowflow should have size N-1xM and colflow size NxM-1 where the
  * phase fields are NxM.  Output is saved to a file.
  */
 void IntegratePhase(float **psi, float **phi, short **flows,
@@ -274,7 +275,7 @@ void IntegratePhase(float **psi, float **phi, short **flows,
   short **rowflow, **colflow;
   rowflow=flows;
   colflow=&(flows[nrow-1]);
- 
+
   /* set first element as seed */
   phi[0][0]=psi[0][0];
 
@@ -298,16 +299,16 @@ void IntegratePhase(float **psi, float **phi, short **flows,
 /* function: ExtractFlow()
  * -----------------------
  * Given an unwrapped phase array, parse the data and find the flows.
- * Assumes only integer numbers of cycles have been added to get the 
- * unwrapped phase from the wrapped pase.  Gets memory and writes 
+ * Assumes only integer numbers of cycles have been added to get the
+ * unwrapped phase from the wrapped pase.  Gets memory and writes
  * wrapped phase to passed pointer.  Assumes flows fit into short ints.
  */
-float **ExtractFlow(float **unwrappedphase, short ***flowsptr, 
-		    long nrow, long ncol){    
+float **ExtractFlow(float **unwrappedphase, short ***flowsptr,
+		    long nrow, long ncol){
 
   long row, col;
   float **wrappedphase;
-  
+
   /* get memory for wrapped phase array */
   wrappedphase=(float **)Get2DMem(nrow,ncol,sizeof(float *),sizeof(float));
 
@@ -377,7 +378,7 @@ void FlipFlowArraySign(short **arr, paramT *params, long nrow, long ncol){
  * --------------------
  * Allocates memory for 2D array.
  * Dynamically allocates memory and returns pointer of
- * type void ** for an array of size nrow x ncol.  
+ * type void ** for an array of size nrow x ncol.
  * First index is row number: array[row][col]
  * size is size of array element, psize is size of pointer
  * to array element (eg sizeof(float *)).
@@ -388,7 +389,7 @@ void **Get2DMem(int nrow, int ncol, int psize, size_t size){
   void **array;
 
   if((array=malloc(nrow*psize))==NULL){
-    fprintf(sp0,"Out of memory\n"); 
+    fprintf(sp0,"Out of memory\n");
     exit(ABNORMAL_EXIT);
   }
   for(row=0; row<nrow; row++){
@@ -413,7 +414,7 @@ void **Get2DRowColMem(long nrow, long ncol, int psize, size_t size){
   void **array;
 
   if((array=malloc((2*nrow-1)*psize))==NULL){
-    fprintf(sp0,"Out of memory\n"); 
+    fprintf(sp0,"Out of memory\n");
     exit(ABNORMAL_EXIT);
   }
   for(row=0; row<nrow-1; row++){
@@ -444,7 +445,7 @@ void **Get2DRowColZeroMem(long nrow, long ncol, int psize, size_t size){
   void **array;
 
   if((array=malloc((2*nrow-1)*psize))==NULL){
-    fprintf(sp0,"Out of memory\n"); 
+    fprintf(sp0,"Out of memory\n");
     exit(ABNORMAL_EXIT);
   }
   for(row=0; row<nrow-1; row++){
@@ -484,9 +485,9 @@ void *MAlloc(size_t size){
  * Has same functionality as calloc(), but exits if out of memory.
  */
 void *CAlloc(size_t nitems, size_t size){
-  
+
   void *ptr;
-  
+
   if((ptr=calloc(nitems,size))==NULL){
     fprintf(sp0,"Out of memory\n");
     exit(ABNORMAL_EXIT);
@@ -500,9 +501,9 @@ void *CAlloc(size_t nitems, size_t size){
  * Has same functionality as realloc(), but exits if out of memory.
  */
 void *ReAlloc(void *ptr, size_t size){
-  
+
   void *ptr2;
-  
+
   if((ptr2=realloc(ptr,size))==NULL){
     fprintf(sp0,"Out of memory\n");
     exit(ABNORMAL_EXIT);
@@ -568,14 +569,14 @@ signed char ValidDataArray(float **arr, long nrow, long ncol){
 
 /* function: IsFinite()
  * --------------------
- * This function takes a double and returns a nonzero value if 
+ * This function takes a double and returns a nonzero value if
  * the arguemnt is finite (not NaN and not infinite), and zero otherwise.
  * Different implementations are given here since not all machines have
  * these functions available.
  */
-signed char IsFinite(double d){
+int IsFinite(double d){
 
-  return(finite(d));
+  return(isfinite(d));
   /* return(isfinite(d)); */
   /* return(!(isnan(d) || isinf(d))); */
   /* return(TRUE) */
@@ -584,7 +585,7 @@ signed char IsFinite(double d){
 
 /* function: LRound()
  * ------------------
- * Rounds a floating point number to the nearest integer.  
+ * Rounds a floating point number to the nearest integer.
  * The function takes a float and returns a long.
  */
 long LRound(double a){
@@ -595,8 +596,8 @@ long LRound(double a){
 
 /* function: Short2DRowColAbsMax()
  * -------------------------------
- * Returns the maximum of the absolute values of element in a 
- * two-dimensional short array.  The number of rows and columns 
+ * Returns the maximum of the absolute values of element in a
+ * two-dimensional short array.  The number of rows and columns
  * should be passed in.
  */
 long Short2DRowColAbsMax(short **arr, long nrow, long ncol){
@@ -649,7 +650,7 @@ float LinInterp1D(float *arr, double index, long nelem){
  * Given a 2-D array of floats, interpolates at the specified noninteger
  * indices.  Returns first or last array values if index is out of bounds.
  */
-float LinInterp2D(float **arr, double rowind, double colind , 
+float LinInterp2D(float **arr, double rowind, double colind ,
                   long nrow, long ncol){
 
   long rowintpart;
@@ -670,7 +671,7 @@ float LinInterp2D(float **arr, double rowind, double colind ,
 
 /* function: Despeckle()
  * ---------------------
- * Filters magnitude/power data with adaptive geometric filter to get rid of 
+ * Filters magnitude/power data with adaptive geometric filter to get rid of
  * speckle.  Allocates 2D memory for ei.  Does not square before averaging.
  */
 void Despeckle(float **mag, float ***ei, long nrow, long ncol){
@@ -701,7 +702,7 @@ void Despeckle(float **mag, float ***ei, long nrow, long ncol){
     Irow=row+ARMLEN;
     for(col=0;col<ncol;col++){
       Icol=col+ARMLEN;
-      
+
       /* filter only if input is nonzero so we preserve mask info in input */
       if(intensity[Irow][Icol]==0){
 
@@ -741,7 +742,7 @@ void Despeckle(float **mag, float ***ei, long nrow, long ncol){
 	    wfull+=intensity[Irow+i][Icol-j];
 	    wfull+=intensity[Irow-i][Icol-j];
 	  }
-	} 
+	}
 	ratiomax=1;
 	for(k=1;k<=NARMS;k+=2){
 	  wstick=w[0]+w[k]+w[k+1];
@@ -755,7 +756,7 @@ void Despeckle(float **mag, float ***ei, long nrow, long ncol){
 	}
       }
     }
-  }   
+  }
 
   /* free memory */
   Free2DArray((void **)intensity,nrow+2*ARMLEN);
@@ -778,7 +779,7 @@ float **MirrorPad(float **array1, long nrow, long ncol, long krow, long kcol){
   /* get memory */
   array2=(float **)Get2DMem(nrow+2*krow,ncol+2*kcol,
 			    sizeof(float *),sizeof(float));
-  
+
   /* center array1 in new array */
   for(row=0;row<nrow;row++){
     for(col=0;col<ncol;col++){
@@ -819,7 +820,7 @@ float **MirrorPad(float **array1, long nrow, long ncol, long krow, long kcol){
         =array2[nrow+krow-2-row][col];
     }
   }
-  
+
   /* return a pointer to the padded array */
   return(array2);
 
@@ -828,12 +829,12 @@ float **MirrorPad(float **array1, long nrow, long ncol, long krow, long kcol){
 
 /* function: BoxCarAvg()
  * ---------------------
- * Takes in 2-D array, convolves with boxcar filter of size specified.  
+ * Takes in 2-D array, convolves with boxcar filter of size specified.
  * Uses a recursion technique (but the function does not actually call
- * itself recursively) to compute the result, so there may be roundoff 
+ * itself recursively) to compute the result, so there may be roundoff
  * errors.
  */
-void BoxCarAvg(float **avgarr, float **padarr, long nrow, long ncol, 
+void BoxCarAvg(float **avgarr, float **padarr, long nrow, long ncol,
 	       long krow, long kcol){
 
   long i, row, col, n;
@@ -873,11 +874,11 @@ void BoxCarAvg(float **avgarr, float **padarr, long nrow, long ncol,
 
 /* function: StrNCopy()
  * --------------------
- * Just like strncpy(), but terminates string by putting a null 
+ * Just like strncpy(), but terminates string by putting a null
  * character at the end (may overwrite last character).
  */
 char *StrNCopy(char *dest, const char *src, size_t n){
- 
+
   char *s;
 
   s=strncpy(dest,src,n-1);
@@ -892,9 +893,9 @@ char *StrNCopy(char *dest, const char *src, size_t n){
  * the unwrapped data elementwise from the wrapped data and stores
  * the result, rewrapped to [0,2pi), in the wrapped array.
  */
-void FlattenWrappedPhase(float **wrappedphase, float **unwrappedest, 
+void FlattenWrappedPhase(float **wrappedphase, float **unwrappedest,
 			 long nrow, long ncol){
- 
+
   long row, col;
 
   /* loop to subtract, rewrap, store in wrapped array. */
@@ -917,7 +918,7 @@ void FlattenWrappedPhase(float **wrappedphase, float **unwrappedest,
 void Add2DFloatArrays(float **arr1, float **arr2, long nrow, long ncol){
 
   long row, col;
- 
+
   /* loop over all rows and columns, add and store result in first array */
   for(row=0;row<nrow;row++){
     for(col=0;col<ncol;col++){
@@ -938,7 +939,7 @@ int StringToDouble(char *str, double *d){
 
   double tempdouble;
   char *endp;
-  
+
   endp=str;
   tempdouble=strtod(str,&endp);
   if(strlen(endp) || tempdouble>=HUGE_VAL || tempdouble<=-HUGE_VAL){
@@ -952,15 +953,15 @@ int StringToDouble(char *str, double *d){
 
 /* function: StringToLong()
  * ------------------------
- * Uses strtol to convert a string to a base-10 long, but also does error 
- * checking.  If any part of the string is not converted, the function does 
+ * Uses strtol to convert a string to a base-10 long, but also does error
+ * checking.  If any part of the string is not converted, the function does
  * not make the assignment and returns TRUE.  Otherwise, returns FALSE.
  */
 int StringToLong(char *str, long *l){
 
   long templong;
   char *endp;
-  
+
   endp=str;
   templong=strtol(str,&endp,10);
   if(strlen(endp) || templong==LONG_MAX || templong==LONG_MIN){
@@ -974,7 +975,7 @@ int StringToLong(char *str, long *l){
 
 /* function: CatchSignals()
  * ------------------------
- * Traps common signals that by default cause the program to abort.  
+ * Traps common signals that by default cause the program to abort.
  * Sets (pointer to function) Handler as the signal handler for all.
  * Note that SIGKILL usually cannot be caught.  No return value.
  */
@@ -997,10 +998,10 @@ void CatchSignals(void (*SigHandler)(int)){
 /* function: SetDump()
  * -------------------
  * Set the global variable dumpresults_global to TRUE if SIGINT or SIGHUP
- * signals recieved.  Also sets requestedstop_global if SIGINT signal 
- * received.  This function should only be called via signal() when 
+ * signals recieved.  Also sets requestedstop_global if SIGINT signal
+ * received.  This function should only be called via signal() when
  * a signal is caught.
- */ 
+ */
 void SetDump(int signum){
 
   if(signum==SIGINT){
@@ -1052,7 +1053,7 @@ void KillChildrenExit(int signum){
  * Signal hanlder that prints message about the signal received, then exits.
  */
 void SignalExit(int signum){
-  
+
   signal(SIGTERM,SIG_IGN);
   fprintf(sp0,"Exiting with status %d on signal %d\n",ABNORMAL_EXIT,signum);
   fflush(NULL);
@@ -1067,7 +1068,7 @@ void SignalExit(int signum){
  * DisplayElapsedTime().
  */
 void StartTimers(time_t *tstart, double *cputimestart){
-  
+
   struct rusage usagebuf;
 
   *tstart=time(NULL);
@@ -1092,8 +1093,8 @@ void StartTimers(time_t *tstart, double *cputimestart){
  * Displays the elapsed wall clock and CPU times for the process and its
  * children.  Times should be initialized at the start of the program with
  * StartTimers().  The code is written to show the total processor time
- * for the parent process and all of its children, but whether or not 
- * this is actually done depends on the implementation of the system time 
+ * for the parent process and all of its children, but whether or not
+ * this is actually done depends on the implementation of the system time
  * functions.
  */
 void DisplayElapsedTime(time_t tstart, double cputimestart){
