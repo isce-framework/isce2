@@ -277,23 +277,23 @@ Run the commands sequentially.
 
 Results from ionospheric phase estimation.
 
--	reference and coreg_secondarys: now contains also subband burst SLCs
--	ion: original ionospheric phase estimation results
--       ion_azshift_dates: azimuth ionospheric shift for each acquistion
--       ion_burst_ramp_dates: azimuth burst ramps caused by ionosphere for each acquistion
--       ion_burst_ramp_merged_dates: merged azimuth burst ramps caused by ionosphere for each acquistion
--	ion_dates: ionospheric phase for each acquistion
--	ion/date1_date2/ion_cal/azshift.ion: azimuth ionospheric shift
--	ion/date1_date2/ion_cal/filt.ion: filtered ionospheric phase
--	ion/date1_date2/ion_cal/raw_no_projection.ion: original ionospheric phase
--	ion/date1_date2/lower/merged/fine_look.unw: unwrapped lower band interferogram
--	ion/date1_date2/upper/merged/fine_look.unw: unwrapped upper band interferogram
+- reference and coreg_secondarys: now contains also subband burst SLCs
+- ion: original ionospheric phase estimation results
+- ion_azshift_dates: azimuth ionospheric shift for each acquistion
+- ion_burst_ramp_dates: azimuth burst ramps caused by ionosphere for each acquistion
+- ion_burst_ramp_merged_dates: merged azimuth burst ramps caused by ionosphere for each acquistion
+- ion_dates: ionospheric phase for each acquistion
+- ion/date1_date2/ion_cal/azshift.ion: azimuth ionospheric shift
+- ion/date1_date2/ion_cal/filt.ion: filtered ionospheric phase
+- ion/date1_date2/ion_cal/raw_no_projection.ion: original ionospheric phase
+- ion/date1_date2/lower/merged/fine_look.unw: unwrapped lower band interferogram
+- ion/date1_date2/upper/merged/fine_look.unw: unwrapped upper band interferogram
 
 If ionospheric phase estimation processing is swath by swath because of different swath starting ranges, there will be swath processing directories including
 
--	ion/date1_date2/ion_cal_IW*
--	ion/date1_date2/lower/merged_IW*
--	ion/date1_date2/upper/merged_IW*
+- ion/date1_date2/ion_cal_IW*
+- ion/date1_date2/lower/merged_IW*
+- ion/date1_date2/upper/merged_IW*
 
 Unit of azimuth ionospheric shift is number of single look azimuth lines.
 After processing, we can plot ionospheric phase estimation results using plotIonPairs.py and plotIonDates.py. For example
