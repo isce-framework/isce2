@@ -88,64 +88,57 @@ cp ${ISCE_STACK}/alosStack/alosStack.xml ./
 ${ISCE_STACK}/alosStack/create_cmds.py -stack_par alosStack.xml
 
 4. Do most of the single date processing. Run
-./cmd_1.sh
+cmd/cmd_1.sh
 
-In cmd_1.sh and other command files, note that you can split the 'for loop' in each step into a number
-of parallel runs. See command file for details.
+This script runs a number of steps as can be easily seen from the content of the script. Some steps can
+run parallelly. The number of runs can be set in the step script, or in the input file alosStack.xml
+before generating these scripts.
 
-Higly recommended parallel processing steps in each command file.
-
-cmd_1.sh:
-estimate SLC offsets
-resample to a common grid (WD1 SLC size may be up to 7.2 G, so each run requires this much memory!)
-
-cmd_2.sh
-form interferograms (does not requires a lot of computation, more parallel runs recommended)
-mosaic interferograms (does not requires a lot of computation, more parallel runs recommended)
-
-cmd_3.sh
-subband interferograms (does not requires a lot of computation, more parallel runs recommended)
-
-cmd_4.sh
-all steps
-
+Note that cmd_1_7_resample_to_a_common_grid.sh may require a lot of memeory. Each parallel run needs about
+7.2 G because the WD1 SLC size may be up to 7.2 G. So total memeory required = 7.2 G * nruns, where nruns
+is the number of parallel runs.
 
 5. InSAR processing before ionosphere correction. Run
-./cmd_2.sh
+cmd/cmd_2.sh
 
-6. Ionosphere correction (if do ionospheric phase estimation, by default True). If the following parameter of 
-the input xml file is True (default)
+6. Ionosphere correction. Run
+cmd/cmd_3.sh
+
+If the following parameter of the input xml file is True (default)
 
     <!--<property name="do ionospheric phase estimation">True</property>-->
 
-Run
-./cmd_3.sh
+Ionospheric phase estimation is performed, otherwise cmd/cmd_3.sh is empty.
 
-After it finishes, check the images in folder 'fig_ion' to see if ionosphere estimation is OK for each
-pair. The anomalies include dense fringes or slight phase difference between adjacent swaths in ScanSAR
-interferograms after removing ionosphere. There might also be dense fringes elsewhere. These are all anomalies
-and the associated ionosphere estimation results should not be used in the next steps.
 
-At the end of this command file, there is a step called 'estimate ionospheric phase for each date'. If you found 
-some pairs with ionosphere estimation anomalies, specify them by adding argument '-exc_pair' to the command ion_ls.py. 
-Make sure all dates are still connected after excluding these pairs, and then run ion_ls.py.
+After it finishes, actually nothing was done in the last two step scripts as the commands in the two step
+scripts are commented out. Before running them:
 
-You can plot baselines to see if the pairs are fully connected, e.g.
+check the images in folder 'fig_ion' to see if ionosphere estimation is OK for each pair. The anomalies 
+include dense fringes or slight phase difference between adjacent swaths/frames in ScanSAR interferograms after 
+removing ionosphere. There might also be dense fringes elsewhere. These are all anomalies and the associated 
+ionosphere estimation results should not be used in cmd/cmd_3_7_estimate_ionospheric_phase_for_each_date.sh.
+
+If you find some pairs with ionosphere estimation anomalies, specify them by adding argument '-exc_pair'
+to the command ion_ls.py in cmd/cmd_3_7_estimate_ionospheric_phase_for_each_date.sh. Make sure all dates are 
+still connected after excluding these pairs. You can plot baselines to see if the pairs are fully connected, e.g.
 ${ISCE_STACK}/alosStack/plot_baseline.py -baseline baseline/baseline_center.txt -pairs_dir pairs_ion -pairs_exc 150520-150701 -output baselines.pdf
+
+Then run cmd/cmd_3_7_estimate_ionospheric_phase_for_each_date.sh.
 
 If the following parameters of the input xml file are True (default)
 
     <!--<property name="do ionospheric phase estimation">True</property>-->
     <!--<property name="apply ionospheric phase correction">True</property>-->
 
-there is a final step called 'correct ionosphere' in cmd_3.sh, uncomment the code marked by '#uncomment to run this command'
-and then run the entire step.
+In cmd/cmd_3_8_correct_ionosphere.sh, uncomment the code marked by '#uncomment to run this command'
+and then run it.
 
 7. InSAR processing after ionosphere correction. Run
-./cmd_4.sh
+cmd/cmd_4.sh
 
-If everything is OK, you may consider removing the huge slc files in folder dates_resampled. When you need them in
-the future, you can re-run the commands in the '#resample to a common grid' step in cmd_1.sh.
+If everything is OK, you may consider removing the huge slc files in folder dates_resampled. If you need them in
+the future, you can re-run cmd/cmd_1_7_resample_to_a_common_grid.sh.
 
 Furthermore, you may consider removing the huge original data files you unpacked previously.
 
@@ -160,14 +153,14 @@ Sometimes we want to add new acquistions to the already processed stack. To do t
 
 2. Repeat the processing in #2. PROCESS DATA.
 
-We recommend saving previous command files in a folder before new processing. Note that even the previously processed
+We recommend saving previous scripts in a folder before new processing. Note that even the previously processed
 pairs will be reprocessed again by cmd_4.sh if the following parameters of the input xml file are True (default)
 
     <!--<property name="do ionospheric phase estimation">True</property>-->
     <!--<property name="apply ionospheric phase correction">True</property>-->
 
-because ionospheric phase will be estimated by ion_ls.py at the end of cmd_3.sh for each date with new pairs included,
-and therefore all steps after ion_ls.py should be reprocessed.
+because ionospheric phase of each date will be estimated by cmd/cmd_3_7_estimate_ionospheric_phase_for_each_date.sh
+with new pairs included, all steps after this step should be reprocessed.
 
 
 ###########################################
@@ -206,7 +199,7 @@ relies on coherence and phase unwrapping, it does not work in some cases. These 
 
 In addition to the above issues, there are also data-mode-related issues.
 (1) ScanSAR-ScanSAR interferometry. While you can process one single subswath, it's better to process 
-more than one subswath if the addistional subswath has good coherence. This is good for ionospheric 
+more than one subswath if the additional subswath has good coherence. This is good for ionospheric 
 correction.
 
 (2) Range distortions in JAXA product. This mostly happens in stripmap-stripmap interferometry using 
@@ -220,27 +213,28 @@ if your product is ordered after this time, you don't have this problem.
 
 2. How do I improve ionospheric correction?
 
-First of all, we recommend reading through cmd_3.sh before manually improving ionosphere estimation results.
+First of all, we recommend reading through cmd/cmd_3.sh before manually improving ionosphere estimation results.
 
 Isolated areas lead to relative phase unwrapping errors, and therefore leads to significant errors in ionosphere
 estimation result, usually shown as dense fringes in the corrected interferograms. If your scene covers an area 
 with two or more isolated areas and you are interested in one of the areas, you can mask out the other areas by 
-setting "areas masked out in ionospheric phase estimation".
+setting "areas masked out in ionospheric phase estimation" in the input file.
 
-Or if you have processed the data, you can also specify the argument -masked_areas in ion_filt.py in cmd_3.sh.
-Then check the updated results following step '#check ionosphere estimation results' in cmd_3.sh
+Or if you have processed the data, you can also specify the argument -masked_areas in cmd/cmd_3_4_filter_ionosphere.sh.
+Then check the updated results following cmd/cmd_3_6_check_ionosphere_estimation_results.sh.
 
 For ScanSAR, the software uses some accurate values for removing phase difference between adjacent swaths.
 This, however, does not work well sometimes as a result of the inconistencies between different JAXA products,
 especially products processed by different versions of JAXA software. As a result of this, you may see dense
 fringes in the ionospheric correction result. In this case, you can try not to use aforementioned accurate
-values by setting -snap in ion_subband.py in cmd_3.sh, and run this command and the remaining commands to see
-if ionosphere estimation results have improvement.
+values by setting -snap in cmd/cmd_3_2_subband_interferograms.sh, and run this command and the remaining commands
+to see if ionosphere estimation results have improvement. You should do this only for the problematic pairs.
 
 Note that each time you updated ionosphere estimation results, you need to re-run the steps after
-'#estimate ionospheric phase for each date' (including this step) in cmd_3.sh, as well as cmd_4.sh
+cmd/cmd_3_7_estimate_ionospheric_phase_for_each_date.sh (including this step) in cmd/cmd_3.sh, as well as cmd/cmd_4.sh
 
-4. ScanSAR burst synchronization
+
+3. ScanSAR burst synchronization
 For ScanSAR data acquired before February 8, 2015, chances of having enough burst synchronization for 
 interferometry are very low. Don't include data acquired before this date in your stack processing.
 
