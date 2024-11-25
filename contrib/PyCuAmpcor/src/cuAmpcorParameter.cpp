@@ -6,6 +6,7 @@
 #include "cuAmpcorParameter.h"
 #include <stdio.h>
 
+
 #ifndef IDIVUP
 #define IDIVUP(i,j) ((i+j-1)/j)
 #endif
@@ -31,9 +32,9 @@ cuAmpcorParameter::cuAmpcorParameter()
 
     skipSampleAcrossRaw = 64;
     skipSampleDownRaw = 64;
-    rawDataOversamplingFactor = 2;
-    zoomWindowSize = 16;
-    oversamplingFactor = 16;
+    rawDataOversamplingFactor = 2; //antialiasing
+    zoomWindowSize = 16;  // correlation surface oversampling zoom
+    oversamplingFactor = 16; // correlation surface oversampling
     oversamplingMethod = 0;
 
     referenceImageName = "reference.slc";
@@ -54,7 +55,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     referenceStartPixelDown0 = 0;
     referenceStartPixelAcross0 = 0;
 
-    corrStatWindowSize = 21; // 10*2+1 as in RIOPAC
+    // corrStatWindowSize = 21; // 10*2+1 as in RIOPAC
 
     useMmap = 1; // use mmap
     mmapSizeInGB = 1;
@@ -70,32 +71,47 @@ cuAmpcorParameter::cuAmpcorParameter()
 void cuAmpcorParameter::setupParameters()
 {
     // Size to extract the raw correlation surface for snr/cov
-    corrRawZoomInHeight = std::min(corrStatWindowSize, 2*halfSearchRangeDownRaw+1);
-    corrRawZoomInWidth = std::min(corrStatWindowSize, 2*halfSearchRangeAcrossRaw+1);
+    // corrRawZoomInHeight = std::min(corrStatWindowSize, 2*halfSearchRangeDownRaw+1);
+    // corrRawZoomInWidth = std::min(corrStatWindowSize, 2*halfSearchRangeAcrossRaw+1);
 
     // Size to extract the resampled correlation surface for oversampling
     // users should use 16 for zoomWindowSize, no need to multiply by 2
     // zoomWindowSize *= rawDataOversamplingFactor; //8 * 2
     // to check the search range
-    int corrSurfaceActualSize =
-        std::min(halfSearchRangeAcrossRaw, halfSearchRangeDownRaw)*
-        2*rawDataOversamplingFactor;
-    zoomWindowSize = std::min(zoomWindowSize, corrSurfaceActualSize);
+    // int corrSurfaceActualSize =
+    //     std::min(halfSearchRangeAcrossRaw, halfSearchRangeDownRaw)*
+    //     2*rawDataOversamplingFactor;
+    // zoomWindowSize = std::min(zoomWindowSize, corrSurfaceActualSize);
 
-    halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor); // 8*2/(2*2) = 4
+    // halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor); // 8*2/(2*2) = 4
 
+    // template window size (after antialiasing oversampling)
     windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //
     windowSizeHeight = windowSizeHeightRaw*rawDataOversamplingFactor;
 
     searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeDownRaw;
     searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeAcrossRaw;
 
-    searchWindowSizeWidthRawZoomIn = windowSizeWidthRaw + 2*halfZoomWindowSizeRaw;
-    searchWindowSizeHeightRawZoomIn = windowSizeHeightRaw + 2*halfZoomWindowSizeRaw;
+    // search window size (after antialiasing oversample)
+    searchWindowSizeWidth = searchWindowSizeWidthRaw*rawDataOversamplingFactor;
+    searchWindowSizeHeight = searchWindowSizeHeightRaw*rawDataOversamplingFactor;
 
-    searchWindowSizeWidth = searchWindowSizeWidthRawZoomIn*rawDataOversamplingFactor;
-    searchWindowSizeHeight = searchWindowSizeHeightRawZoomIn*rawDataOversamplingFactor;
+    // correlation surface size
+    corrWindowSize = make_int2(searchWindowSizeHeight - windowSizeHeight + 1,
+                               searchWindowSizeWidth - windowSizeWidth +1);
+    // check zoom in window size, if larger, issue a warning
+    if(zoomWindowSize >= corrWindowSize.x || zoomWindowSize >= corrWindowSize.y)
+        fprintf(stderr, "Warning: zoomWindowSize %d is bigger than the original correlation surface size (%d, %d)!\n",
+            zoomWindowSize, corrWindowSize.x, corrWindowSize.y );
+    // use the smaller values
+    corrZoomInSize = make_int2(std::min(zoomWindowSize+1, corrWindowSize.x),
+                               std::min(zoomWindowSize+1, corrWindowSize.y));
 
+    // oversampled correlation surface size
+    corrZoomInOversampledSize = make_int2(corrZoomInSize.x * oversamplingFactor,
+                                              corrZoomInSize.y * oversamplingFactor);
+    fprintf(stderr, "zoomWindowSize is (%d, %d)!\n",
+            corrZoomInSize.x, corrZoomInSize.y );
     numberWindows = numberWindowDown*numberWindowAcross;
     if(numberWindows <=0) {
         fprintf(stderr, "Incorrect number of windows! (%d, %d)\n", numberWindowDown, numberWindowAcross);

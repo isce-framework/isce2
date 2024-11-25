@@ -10,6 +10,7 @@
 #define __CUAMPCORPARAMETER_H
 
 #include <string>
+#include <cuda_runtime.h> // for int2
 
 /// Class container for all parameters
 ///
@@ -46,12 +47,8 @@ public:
     int halfSearchRangeAcrossRaw;    ///< (searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
     // search range is (-halfSearchRangeRaw, halfSearchRangeRaw)
 
-    int searchWindowSizeHeightRawZoomIn; ///< search window height used for zoom in
-    int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
-
-    int corrStatWindowSize;     ///< correlation surface size used to estimate snr
-    int corrRawZoomInHeight;    ///< correlation surface height used for oversampling
-    int corrRawZoomInWidth;     ///< correlation surface width used for oversampling
+    // int searchWindowSizeHeightRawZoomIn; ///< search window height used for zoom in
+    // int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
 
     // chip or window size after oversampling
     int rawDataOversamplingFactor;  ///< Raw data overampling factor (from original size to oversampled size)
@@ -66,12 +63,19 @@ public:
 
     // Zoom in region near location of max correlation
     int zoomWindowSize;      ///< Zoom-in window size in correlation surface (same for down and across directions)
-    int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
+    // int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
 
     int oversamplingFactor;  ///< Oversampling factor for interpolating correlation surface
     int oversamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc
 
+    // correlation surface
+    int2 corrWindowSize; // 2*halfSearchRange + 1
+    int2 corrZoomInSize; // zoomWindowSize+1
+    int2 corrZoomInOversampledSize; // corrZoomInSize * oversamplingFactor
 
+    int corrStatWindowSize;     ///< correlation surface size used to estimate snr
+    // int corrRawZoomInHeight;    ///< correlation surface height used for oversampling
+    // int corrRawZoomInWidth;     ///< correlation surface width used for oversampling
     float thresholdSNR;      ///< Threshold of Signal noise ratio to remove noisy data
 
     //reference image

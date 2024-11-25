@@ -297,13 +297,13 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const float *imageIn, const
         int iny = outy + maxloc[idxImage].y - outNY/2;
 
         // Find the location in flattened array.
-        int idxOut = ( blockIdx.z * outNX + outx ) * outNY + outy;
-        int idxIn = ( blockIdx.z * inNX + inx ) * inNY + iny;
+        int idxOut = (idxImage * outNX + outx) * outNY + outy;
 
         // check whether inside of the input image
         if (inx>=0 && iny>=0 && inx<inNX && iny<inNY)
         {
             // inside the boundary, copy over and mark the pixel as valid (1)
+            int idxIn = (idxImage * inNX + inx) * inNY + iny;
             imageOut[idxOut] = imageIn[idxIn];
             imageValid[idxOut] = 1;
         }

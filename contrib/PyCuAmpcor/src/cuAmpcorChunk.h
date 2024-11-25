@@ -50,7 +50,7 @@ private:
     // windows oversampled data
     cuArrays<float2> * c_referenceBatchOverSampled, * c_secondaryBatchOverSampled;
     cuArrays<float> * r_referenceBatchOverSampled, * r_secondaryBatchOverSampled;
-    cuArrays<float> * r_corrBatchRaw, * r_corrBatchZoomIn, * r_corrBatchZoomInOverSampled, * r_corrBatchZoomInAdjust;
+    cuArrays<float> * r_corrBatch, * r_corrBatchZoomIn, * r_corrBatchZoomInOverSampled;
 
     // offset data
     cuArrays<int> *ChunkOffsetDown, *ChunkOffsetAcross;

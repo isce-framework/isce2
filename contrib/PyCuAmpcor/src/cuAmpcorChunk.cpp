@@ -16,100 +16,6 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 
     // load reference image chunk
     loadReferenceChunk();
-    // take amplitudes
-    cuArraysAbs(c_referenceBatchRaw, r_referenceBatchRaw, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the raw reference image(s)
-    c_referenceBatchRaw->outputToFile("c_referenceBatchRaw", stream);
-    r_referenceBatchRaw->outputToFile("r_referenceBatchRaw", stream);
-#endif
-
-    // compute and subtract mean values (for normalized)
-    cuArraysSubtractMean(r_referenceBatchRaw, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the raw reference image(s)
-    r_referenceBatchRaw->outputToFile("r_referenceBatchRawSubMean", stream);
-#endif
-
-    // load secondary image chunk
-    loadSecondaryChunk();
-    // take amplitudes
-    cuArraysAbs(c_secondaryBatchRaw, r_secondaryBatchRaw, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the raw secondary image(s)
-    c_secondaryBatchRaw->outputToFile("c_secondaryBatchRaw", stream);
-    r_secondaryBatchRaw->outputToFile("r_secondaryBatchRaw", stream);
-#endif
-
-    //cross correlation for un-oversampled data
-    if(param->algorithm == 0) {
-        cuCorrFreqDomain->execute(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw);
-    } else {
-        cuCorrTimeDomain(r_referenceBatchRaw, r_secondaryBatchRaw, r_corrBatchRaw, stream); //time domain cross correlation
-    }
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the un-normalized correlation surface
-    r_corrBatchRaw->outputToFile("r_corrBatchRawUnNorm", stream);
-#endif
-
-    // normalize the correlation surface
-    corrNormalizerRaw->execute(r_corrBatchRaw, r_referenceBatchRaw, r_secondaryBatchRaw, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the normalized correlation surface
-    r_corrBatchRaw->outputToFile("r_corrBatchRaw", stream);
-#endif
-
-    // find the maximum location of none-oversampled correlation
-    // 41 x 41, if halfsearchrange=20
-    cuArraysMaxloc2D(r_corrBatchRaw, offsetInit, r_maxval, stream);
-
-    // estimate variance
-    cuEstimateVariance(r_corrBatchRaw, offsetInit, r_maxval, r_referenceBatchRaw->size, r_covValue, stream);
-
-    // estimate SNR
-    // step1: extraction of correlation surface around the peak
-    cuArraysCopyExtractCorr(r_corrBatchRaw, r_corrBatchRawZoomIn, i_corrBatchZoomInValid, offsetInit, stream);
-
-    // step2: summation of correlation and data point values
-    cuArraysSumCorr(r_corrBatchRawZoomIn, i_corrBatchZoomInValid, r_corrBatchSum, i_corrBatchValidCount, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    r_maxval->outputToFile("r_maxval", stream);
-    r_corrBatchRawZoomIn->outputToFile("r_corrBatchRawStatZoomIn", stream);
-    i_corrBatchZoomInValid->outputToFile("i_corrBatchZoomInValid", stream);
-    r_corrBatchSum->outputToFile("r_corrBatchSum", stream);
-    i_corrBatchValidCount->outputToFile("i_corrBatchValidCount", stream);
-#endif
-
-    // step3: divide the peak value by the mean of surrounding values
-    cuEstimateSnr(r_corrBatchSum, i_corrBatchValidCount, r_maxval, r_snrValue, stream);
-
-#ifdef CUAMPCOR_DEBUG
-    offsetInit->outputToFile("i_offsetInit", stream);
-    r_snrValue->outputToFile("r_snrValue", stream);
-    r_covValue->outputToFile("r_covValue", stream);
-#endif
-
-    // Using the approximate estimation to adjust secondary image (half search window size becomes only 4 pixels)
-    // determine the starting pixel to extract secondary images around the max location
-    cuDetermineSecondaryExtractOffset(offsetInit,
-        maxLocShift,
-        param->halfSearchRangeDownRaw, // old range
-        param->halfSearchRangeAcrossRaw,
-        param->halfZoomWindowSizeRaw,  // new range
-        param->halfZoomWindowSizeRaw,
-        stream);
-
-#ifdef CUAMPCOR_DEBUG
-    offsetInit->outputToFile("i_offsetInitAdjusted", stream);
-    maxLocShift->outputToFile("i_maxLocShift", stream);
-#endif
-
     // oversample reference
     // (deramping included in oversampler)
     referenceBatchOverSampler->execute(c_referenceBatchRaw, c_referenceBatchOverSampled, param->derampMethod);
@@ -117,6 +23,8 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuArraysAbs(c_referenceBatchOverSampled, r_referenceBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
+    // dump the raw reference image(s)
+    c_referenceBatchRaw->outputToFile("c_referenceBatchRaw", stream);
     // dump the oversampled reference image(s)
     c_referenceBatchOverSampled->outputToFile("c_referenceBatchOverSampled", stream);
     r_referenceBatchOverSampled->outputToFile("r_referenceBatchOverSampled", stream);
@@ -130,15 +38,16 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     r_referenceBatchOverSampled->outputToFile("r_referenceBatchOverSampledSubMean",stream);
 #endif
 
-    // extract secondary and oversample
-    cuArraysCopyExtract(c_secondaryBatchRaw, c_secondaryBatchZoomIn, offsetInit, stream);
-    secondaryBatchOverSampler->execute(c_secondaryBatchZoomIn, c_secondaryBatchOverSampled, param->derampMethod);
+    // load secondary image chunk to c_secondaryBatchRaw
+    loadSecondaryChunk();
+    // oversampling the secondary image(s)
+    secondaryBatchOverSampler->execute(c_secondaryBatchRaw, c_secondaryBatchOverSampled, param->derampMethod);
     // take amplitudes
     cuArraysAbs(c_secondaryBatchOverSampled, r_secondaryBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
-    // dump the extracted raw secondary image
-    c_secondaryBatchZoomIn->outputToFile("c_secondaryBatchZoomIn", stream);
+    // dump the raw secondary image
+    c_secondaryBatchRaw->outputToFile("c_secondaryBatchRaw", stream);
     // dump the oversampled secondary image(s)
     c_secondaryBatchOverSampled->outputToFile("c_secondaryBatchOverSampled", stream);
     r_secondaryBatchOverSampled->outputToFile("r_secondaryBatchOverSampled", stream);
@@ -146,43 +55,57 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 
     // correlate oversampled images
     if(param->algorithm == 0) {
-        cuCorrFreqDomain_OverSampled->execute(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn);
+        cuCorrFreqDomain_OverSampled->execute(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatch);
     }
     else {
-        cuCorrTimeDomain(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatchZoomIn, stream);
+        cuCorrTimeDomain(r_referenceBatchOverSampled, r_secondaryBatchOverSampled, r_corrBatch, stream);
     }
 
 #ifdef CUAMPCOR_DEBUG
     // dump the oversampled correlation surface (un-normalized)
-    r_corrBatchZoomIn->outputToFile("r_corrBatchZoomInUnNorm", stream);
+    r_corrBatch->outputToFile("r_corrBatch", stream);
 #endif
 
     // normalize the correlation surface
-    corrNormalizerOverSampled->execute(r_corrBatchZoomIn, r_referenceBatchOverSampled, r_secondaryBatchOverSampled, stream);
+    corrNormalizerOverSampled->execute(r_corrBatch, r_referenceBatchOverSampled, r_secondaryBatchOverSampled, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the oversampled correlation surface (normalized)
+    r_corrBatch->outputToFile("r_corrBatchNormed", stream);
+#endif
+
+    // find the maximum location of none-oversampled correlation
+    cuArraysMaxloc2D(r_corrBatch, offsetInit, r_maxval, stream);
+
+#ifdef CUAMPCOR_DEBUG
+    // dump the max location and value
+    offsetInit->outputToFile("i_offsetInit", stream);
+    r_maxval->outputToFile("r_maxvalInit", stream);
+#endif
+
+    // extract a smaller chip around the peak {offsetInit}
+    cuArraysCopyExtractCorr(r_corrBatch, r_corrBatchZoomIn, i_corrBatchValidCount, offsetInit, stream);
+
+#ifdef CUAMPCOR_DEBUG
+    // dump the extracted correlation Surface
     r_corrBatchZoomIn->outputToFile("r_corrBatchZoomIn", stream);
 #endif
 
-    // remove the last row and col to get even sequences
-    cuArraysCopyExtract(r_corrBatchZoomIn, r_corrBatchZoomInAdjust, make_int2(0,0), stream);
-
-#ifdef CUAMPCOR_DEBUG
-    // dump the adjusted correlation Surface
-    r_corrBatchZoomInAdjust->outputToFile("r_corrBatchZoomInAdjust", stream);
-#endif
+    // TBD statistics of correlation surface
 
     // oversample the correlation surface
     if(param->oversamplingMethod) {
         // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversamplingfactor
         // we need the max loc as the center if shifted
-        corrSincOverSampler->execute(r_corrBatchZoomInAdjust, r_corrBatchZoomInOverSampled,
-            maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
-            );
+        std::cout << "Sinc oversampler needs to be checked\n";
+        exit(1);
+        // corrSincOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled,
+        //     maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
+        //    );
+
     }
     else {
-        corrOverSampler->execute(r_corrBatchZoomInAdjust, r_corrBatchZoomInOverSampled);
+        corrOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled);
     }
 
 #ifdef CUAMPCOR_DEBUG
@@ -202,18 +125,24 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // determine the final offset from non-oversampled (pixel) and oversampled (sub-pixel)
     // = (Init-HalfsearchRange) + ZoomIn/(2*ovs)
     cuSubPixelOffset(offsetInit, offsetZoomIn, offsetFinal,
-        param->oversamplingFactor, param->rawDataOversamplingFactor,
-        param->halfSearchRangeDownRaw, param->halfSearchRangeAcrossRaw,
+        make_int2(param->corrWindowSize.x/2, param->corrWindowSize.y/2), // init offset origin
+        param->rawDataOversamplingFactor, // init offset factor
+        make_int2(param->corrZoomInSize.x/2*param->oversamplingFactor, param->corrZoomInSize.y/2*param->oversamplingFactor),
+        param->rawDataOversamplingFactor*param->oversamplingFactor,
         stream);
+
+#ifdef CUAMPCOR_DEBUG
+    // dump the final offset
+    offsetFinal->outputToFile("i_offsetFinal", stream);
+#endif
 
     // Insert the chunk results to final images
     cuArraysCopyInsert(offsetFinal, offsetImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // snr
-    cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    // cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // Variance.
-    cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    // cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // all done
-
 }
 
 /// set chunk index
@@ -463,21 +392,6 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_secondaryBatchRaw->allocate();
 
-    r_referenceBatchRaw = new cuArrays<float> (
-        param->windowSizeHeightRaw, param->windowSizeWidthRaw,
-        param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_referenceBatchRaw->allocate();
-
-    r_secondaryBatchRaw = new cuArrays<float> (
-        param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,
-        param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    r_secondaryBatchRaw->allocate();
-
-    c_secondaryBatchZoomIn = new cuArrays<float2> (
-        param->searchWindowSizeHeightRawZoomIn, param->searchWindowSizeWidthRawZoomIn,
-        param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    c_secondaryBatchZoomIn->allocate();
-
     c_referenceBatchOverSampled = new cuArrays<float2> (
             param->windowSizeHeight, param->windowSizeWidth,
             param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
@@ -489,13 +403,13 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     c_secondaryBatchOverSampled->allocate();
 
     r_referenceBatchOverSampled = new cuArrays<float> (
-            param->windowSizeHeight, param->windowSizeWidth,
-            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+         param->windowSizeHeight, param->windowSizeWidth,
+         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_referenceBatchOverSampled->allocate();
 
     r_secondaryBatchOverSampled = new cuArrays<float> (
-            param->searchWindowSizeHeight, param->searchWindowSizeWidth,
-            param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+        param->searchWindowSizeHeight, param->searchWindowSizeWidth,
+        param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_secondaryBatchOverSampled->allocate();
 
     referenceBatchOverSampler = new cuOverSamplerC2C(
@@ -503,34 +417,28 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
         c_referenceBatchOverSampled->height, c_referenceBatchOverSampled->width, //oversampled size
         c_referenceBatchRaw->count, stream);
 
-    secondaryBatchOverSampler = new cuOverSamplerC2C(c_secondaryBatchZoomIn->height, c_secondaryBatchZoomIn->width,
-            c_secondaryBatchOverSampled->height, c_secondaryBatchOverSampled->width, c_secondaryBatchRaw->count, stream);
+    secondaryBatchOverSampler = new cuOverSamplerC2C(
+        c_secondaryBatchRaw->height, c_secondaryBatchRaw->width,
+        c_secondaryBatchOverSampled->height, c_secondaryBatchOverSampled->width,
+        c_secondaryBatchRaw->count, stream);
 
-    r_corrBatchRaw = new cuArrays<float> (
-            param->searchWindowSizeHeightRaw-param->windowSizeHeightRaw+1,
-            param->searchWindowSizeWidthRaw-param->windowSizeWidthRaw+1,
-            param->numberWindowDownInChunk,
-            param->numberWindowAcrossInChunk);
-    r_corrBatchRaw->allocate();
+    r_corrBatch = new cuArrays<float> (
+        param->corrWindowSize.x,
+        param->corrWindowSize.y,
+        param->numberWindowDownInChunk,
+        param->numberWindowAcrossInChunk);
+    r_corrBatch->allocate();
 
     r_corrBatchZoomIn = new cuArrays<float> (
-            param->searchWindowSizeHeight - param->windowSizeHeight+1,
-            param->searchWindowSizeWidth - param->windowSizeWidth+1,
+            param->corrZoomInSize.x,
+            param->corrZoomInSize.y,
             param->numberWindowDownInChunk,
             param->numberWindowAcrossInChunk);
     r_corrBatchZoomIn->allocate();
 
-    r_corrBatchZoomInAdjust = new cuArrays<float> (
-            param->searchWindowSizeHeight - param->windowSizeHeight,
-            param->searchWindowSizeWidth - param->windowSizeWidth,
-            param->numberWindowDownInChunk,
-            param->numberWindowAcrossInChunk);
-    r_corrBatchZoomInAdjust->allocate();
-
-
     r_corrBatchZoomInOverSampled = new cuArrays<float> (
-        param->zoomWindowSize * param->oversamplingFactor,
-        param->zoomWindowSize * param->oversamplingFactor,
+        param->corrZoomInOversampledSize.x,
+        param->corrZoomInOversampledSize.y,
         param->numberWindowDownInChunk,
         param->numberWindowAcrossInChunk);
     r_corrBatchZoomInOverSampled->allocate();
@@ -549,22 +457,6 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 
     corrMaxValue = new cuArrays<float> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     corrMaxValue->allocate();
-
-
-    // new arrays due to snr estimation
-    r_corrBatchRawZoomIn = new cuArrays<float> (
-            param->corrRawZoomInHeight,
-            param->corrRawZoomInWidth,
-            param->numberWindowDownInChunk,
-            param->numberWindowAcrossInChunk);
-    r_corrBatchRawZoomIn->allocate();
-
-    i_corrBatchZoomInValid = new cuArrays<int> (
-            param->corrRawZoomInHeight,
-            param->corrRawZoomInWidth,
-            param->numberWindowDownInChunk,
-            param->numberWindowAcrossInChunk);
-    i_corrBatchZoomInValid->allocate();
 
 
     r_corrBatchSum = new cuArrays<float> (
@@ -599,28 +491,19 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
         corrSincOverSampler = new cuSincOverSamplerR2R(param->oversamplingFactor, stream);
     }
     else {
-        corrOverSampler= new cuOverSamplerR2R(param->zoomWindowSize, param->zoomWindowSize,
-            (param->zoomWindowSize)*param->oversamplingFactor,
-            (param->zoomWindowSize)*param->oversamplingFactor,
+        corrOverSampler= new cuOverSamplerR2R(
+            r_corrBatchZoomIn->height, r_corrBatchZoomIn->width,
+            r_corrBatchZoomInOverSampled->height, r_corrBatchZoomInOverSampled->width,
             param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
             stream);
     }
     if(param->algorithm == 0) {
-        cuCorrFreqDomain = new cuFreqCorrelator(
-            param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,
-            param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
-            stream);
         cuCorrFreqDomain_OverSampled = new cuFreqCorrelator(
             param->searchWindowSizeHeight, param->searchWindowSizeWidth,
             param->numberWindowDownInChunk * param->numberWindowAcrossInChunk,
             stream);
     }
 
-    corrNormalizerRaw = std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
-        param->searchWindowSizeHeightRaw,
-        param->searchWindowSizeWidthRaw,
-        param->numberWindowDownInChunk * param->numberWindowAcrossInChunk
-        ));
 
     corrNormalizerOverSampled =
         std::unique_ptr<cuNormalizeProcessor>(newCuNormalizer(
@@ -639,7 +522,6 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 cuAmpcorChunk::~cuAmpcorChunk()
 {
     corrNormalizerOverSampled.release();
-    corrNormalizerRaw.release();
 
     if(param->oversamplingMethod) {
         delete corrSincOverSampler;
@@ -648,7 +530,6 @@ cuAmpcorChunk::~cuAmpcorChunk()
         delete corrOverSampler;
     }
     if(param->algorithm == 0) {
-        delete cuCorrFreqDomain;
         delete cuCorrFreqDomain_OverSampled;
     }
 
@@ -656,9 +537,6 @@ cuAmpcorChunk::~cuAmpcorChunk()
     delete ChunkOffsetAcross ;
     delete c_referenceBatchRaw;
     delete c_secondaryBatchRaw;
-    delete r_referenceBatchRaw;
-    delete r_secondaryBatchRaw;
-    delete c_secondaryBatchZoomIn;
     delete c_referenceBatchOverSampled;
     delete c_secondaryBatchOverSampled;
     delete r_referenceBatchOverSampled;
@@ -666,9 +544,8 @@ cuAmpcorChunk::~cuAmpcorChunk()
     delete referenceBatchOverSampler;
     delete secondaryBatchOverSampler;
 
-    delete r_corrBatchRaw;
+    delete r_corrBatch;
     delete r_corrBatchZoomIn;
-    delete r_corrBatchZoomInAdjust;
     delete r_corrBatchZoomInOverSampled;
     delete offsetInit;
     delete offsetZoomIn;
@@ -676,10 +553,7 @@ cuAmpcorChunk::~cuAmpcorChunk()
     delete maxLocShift;
     delete corrMaxValue;
 
-    delete r_corrBatchRawZoomIn;
-    delete i_corrBatchZoomInValid;
     delete r_corrBatchSum;
-    delete i_corrBatchValidCount;
     delete i_maxloc;
     delete r_maxval;
     delete r_snrValue;
