@@ -122,8 +122,7 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     corrMaxValue->outputToFile("r_maxvalZoomInOversampled", stream);
 #endif
 
-    // determine the final offset from non-oversampled (pixel) and oversampled (sub-pixel)
-    // = (Init-HalfsearchRange) + ZoomIn/(2*ovs)
+    // determine the final offset from initial (pixel/2) and oversampled (sub-pixel)
     cuSubPixelOffset(offsetInit, offsetZoomIn, offsetFinal,
         make_int2(param->corrWindowSize.x/2, param->corrWindowSize.y/2), // init offset origin
         param->rawDataOversamplingFactor, // init offset factor

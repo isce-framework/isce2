@@ -141,8 +141,8 @@ __global__ void cuSubPixelOffset_kernel(const int2 *offsetInit, const int2 *offs
 {
     int idx = threadIdx.x + blockDim.x*blockIdx.x;
     if (idx >= size) return;
-    offsetFinal[idx].x = initRatio*(offsetInit[idx].x-initOrigin.x) + zoomInRatio*(offsetZoomIn[idx].x - initOrigin.x);
-    offsetFinal[idx].y = initRatio*(offsetInit[idx].y-initOrigin.y) + zoomInRatio*(offsetZoomIn[idx].y - initOrigin.y);
+    offsetFinal[idx].x = initRatio*(offsetInit[idx].x-initOrigin.x) + zoomInRatio*(offsetZoomIn[idx].x - zoomInOrigin.x);
+    offsetFinal[idx].y = initRatio*(offsetInit[idx].y-initOrigin.y) + zoomInRatio*(offsetZoomIn[idx].y - zoomInOrigin.y);
 }
 
 
