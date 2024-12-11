@@ -50,8 +50,7 @@ void cuDeramp(int method, cuArrays<float2> *images, cudaStream_t stream);
 void cuDerampMethod1(cuArrays<float2> *images, cudaStream_t stream);
 
 // cuArraysPadding.cu: various utilities for oversampling padding
-void cuArraysPadding(cuArrays<float2> *image1, cuArrays<float2> *image2, cudaStream_t stream);
-void cuArraysPaddingMany(cuArrays<float2> *image1, cuArrays<float2> *image2, cudaStream_t stream);
+void cuArraysFFTPaddingMany(cuArrays<float2> *image1, cuArrays<float2> *image2, cudaStream_t stream);
 
 //in cuCorrNormalization.cu: utilities to normalize the cross correlation function
 void cuArraysSubtractMean(cuArrays<float> *images, cudaStream_t stream);
