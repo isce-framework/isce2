@@ -51,7 +51,7 @@ public:
     // int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
 
     // chip or window size after oversampling
-    int rawDataOversamplingFactor;  ///< Raw data overampling factor (from original size to oversampled size)
+    int rawDataOversamplingFactor;  ///< Raw data oversampling factor (from original size to oversampled size)
     int windowSizeHeight;           ///< Template window length (oversampled size)
     int windowSizeWidth;            ///< Template window width (original size)
     int searchWindowSizeHeight;     ///< Search window height (oversampled size)
@@ -63,7 +63,7 @@ public:
 
     // Zoom in region near location of max correlation
     int zoomWindowSize;      ///< Zoom-in window size in correlation surface (same for down and across directions)
-    // int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
+    int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
 
     int oversamplingFactor;  ///< Oversampling factor for interpolating correlation surface
     int oversamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc

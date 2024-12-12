@@ -19,32 +19,38 @@ inline static __device__ void maxPairReduce(volatile float* maxval, volatile int
     }
 }
 
-// max reduction kernel
+// max reduction kernel for a 2d image
+// start from (start.x, start.y) in a rectangle range (range.x, range.y)
+// start + range <= imageSize
 template<const int BLOCKSIZE>
-__device__ void max_reduction(const float* const images,
-    const size_t imageSize,
-    const size_t nImages,
+__device__ void max_reduction_2d(const float* const image,
+    const int2 imageSize,
+    const int2 start, const int2 range,
     volatile float* shval,
     volatile int* shloc)
 {
     int tid = threadIdx.x;
     shval[tid] = -FLT_MAX;
-    int imageStart = blockIdx.x*imageSize;
-    int imagePixel;
 
     // reduction for intra-block elements
     // i.e., for elements with i, i+BLOCKSIZE, i+2*BLOCKSIZE ...
-    for(int gid = tid; gid < imageSize; gid+=blockDim.x)
+    for(int gid = tid; gid < range.x*range.y; gid+=blockDim.x)
     {
-        imagePixel = imageStart+gid;
-        if(shval[tid] < images[imagePixel]) {
-            shval[tid] = images[imagePixel];
-            shloc[tid] = gid;
+        // gid is the flattened pixel id in the search range
+        // get the pixel 2d coordinate in whole image
+        int idx = start.x + gid / range.y;
+        int idy = start.y + gid % range.y;
+        // get the flattened 1d coordinate
+        int pixelId = IDX2R(idx, idy, imageSize.y);
+        float pixelValue = image[pixelId];
+        if(shval[tid] < pixelValue) {
+            shval[tid] = pixelValue;
+            shloc[tid] = pixelId;
         }
     }
     __syncthreads();
 
-    // reduction within a block
+    // reduction within a block with shared memory
     if (BLOCKSIZE >=1024){ if (tid < 512) { maxPairReduce(shval, shloc, tid, tid + 512); } __syncthreads(); }
     if (BLOCKSIZE >=512) { if (tid < 256) { maxPairReduce(shval, shloc, tid, tid + 256); } __syncthreads(); }
     if (BLOCKSIZE >=256) { if (tid < 128) { maxPairReduce(shval, shloc, tid, tid + 128); } __syncthreads(); }
@@ -66,20 +72,23 @@ __device__ void max_reduction(const float* const images,
 // kernel for 2D array(image), find max location only
 template <const int BLOCKSIZE>
 __global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, float* maxval,
-    const size_t imageNX, const size_t imageNY, const size_t nImages)
+    const int2 imageSize, const size_t nImages, const int2 start, const int2 range)
 {
     __shared__ float shval[BLOCKSIZE];
     __shared__ int shloc[BLOCKSIZE];
 
-    int bid = blockIdx.x;
-    if(bid >= nImages) return;
+    int imageIdx = blockIdx.x;
+    if(imageIdx >= nImages) return;
 
-    const int imageSize = imageNX * imageNY;
-    max_reduction<BLOCKSIZE>(images, imageSize, nImages, shval, shloc);
+    // get the starting pointer for this image
+    const float *image = images + imageIdx*imageSize.x*imageSize.y;
 
+    max_reduction_2d<BLOCKSIZE>(image, imageSize, start, range, shval, shloc);
+
+    // thread 0 contains the final result, convert it to 2d coordinate
     if (threadIdx.x == 0) {
-        maxloc[bid] = make_int2(shloc[0]/imageNY, shloc[0]%imageNY);
-        maxval[bid] = shval[0];
+        maxloc[imageIdx] = make_int2(shloc[0]/imageSize.y, shloc[0]%imageSize.y);
+        maxval[imageIdx] = shval[0];
     }
 }
 
@@ -88,48 +97,43 @@ __global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, fl
  * @param[in] images input batch of images
  * @param[out] maxval arrays to hold the max values
  * @param[out] maxloc arrays to hold the max locations
+ * @param[in] start starting search pixel
+ * @param[in] range search range
  * @param[in] stream cudaStream
  * @note This routine is overloaded with the routine without maxval
  */
-void cuArraysMaxloc2D(cuArrays<float> *images, cuArrays<int2> *maxloc,
-                      cuArrays<float> *maxval, cudaStream_t stream)
+void cuArraysMaxloc2D(cuArrays<float> *images,
+                      const int2 start, const int2 range,
+                      cuArrays<int2> *maxloc, cuArrays<float> *maxval, cudaStream_t stream)
 {
     cudaKernel_maxloc2D<NTHREADS><<<images->count, NTHREADS, 0, stream>>>
-        (images->devData, maxloc->devData, maxval->devData, images->height, images->width, images->count);
+        (images->devData,
+        maxloc->devData, maxval->devData,
+        make_int2(images->height, images->width), images->count,
+        start, range
+        );
     getLastCudaError("cudaKernel find max location 2D error\n");
 }
 
-//kernel and function for 2D array(image), find max location only, use overload
-template <const int BLOCKSIZE>
-__global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, const size_t imageNX, const size_t imageNY, const size_t nImages)
-{
-    __shared__ float shval[BLOCKSIZE];
-    __shared__ int shloc[BLOCKSIZE];
-
-    int bid = blockIdx.x;
-    if(bid >= nImages) return;
-
-    const int imageSize = imageNX * imageNY;
-    max_reduction<BLOCKSIZE>(images, imageSize, nImages, shval, shloc);
-
-    if (threadIdx.x == 0) {
-        int xloc = shloc[0]/imageNY;
-        int yloc = shloc[0]%imageNY;
-        maxloc[bid] = make_int2(xloc, yloc);
-    }
-}
-
 /**
- * Find (only) the maximum location for a batch of 2D images
+ * Find both the maximum value and the location for a batch of 2D images
  * @param[in] images input batch of images
+ * @param[out] maxval arrays to hold the max values
  * @param[out] maxloc arrays to hold the max locations
  * @param[in] stream cudaStream
- * @note This routine is overloaded with the routine with maxval
  */
-void cuArraysMaxloc2D(cuArrays<float> *images, cuArrays<int2> *maxloc, cudaStream_t stream)
+void cuArraysMaxloc2D(cuArrays<float> *images,
+                      cuArrays<int2> *maxloc, cuArrays<float> *maxval, cudaStream_t stream)
 {
+    // if no start and range are provided, use the whole image
+    int2 start = make_int2(0, 0);
+    int2 imageSize = make_int2(images->height, images->width);
     cudaKernel_maxloc2D<NTHREADS><<<images->count, NTHREADS, 0, stream>>>
-        (images->devData, maxloc->devData, images->height, images->width, images->count);
+        (images->devData,
+        maxloc->devData, maxval->devData,
+        imageSize, images->count,
+        start, imageSize
+        );
     getLastCudaError("cudaKernel find max location 2D error\n");
 }
 

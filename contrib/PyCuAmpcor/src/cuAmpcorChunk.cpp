@@ -74,8 +74,11 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     r_corrBatch->outputToFile("r_corrBatchNormed", stream);
 #endif
 
-    // find the maximum location of none-oversampled correlation
-    cuArraysMaxloc2D(r_corrBatch, offsetInit, r_maxval, stream);
+    // find the maximum location of the correlation surface, in a rectangle area {range} from {start}
+    int extraPadSize = param->halfZoomWindowSizeRaw*param->rawDataOversamplingFactor;
+    int2 start = make_int2(extraPadSize, extraPadSize);
+    int2 range = make_int2(r_corrBatch->height-extraPadSize, r_corrBatch->width-extraPadSize);
+    cuArraysMaxloc2D(r_corrBatch, start, range, offsetInit, r_maxval, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the max location and value
