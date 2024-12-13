@@ -33,7 +33,7 @@ cuAmpcorParameter::cuAmpcorParameter()
     skipSampleAcrossRaw = 64;
     skipSampleDownRaw = 64;
     rawDataOversamplingFactor = 2; //antialiasing
-    zoomWindowSize = 20;  // correlation surface oversampling zoom
+    zoomWindowSize = 16;  // correlation surface oversampling zoom
     oversamplingFactor = 16; // correlation surface oversampling
     oversamplingMethod = 0;
 
@@ -89,11 +89,16 @@ void cuAmpcorParameter::setupParameters()
     windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //
     windowSizeHeight = windowSizeHeightRaw*rawDataOversamplingFactor;
 
+    // serve as extra margin for search range
     halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor);
 
+    // add to the search range
+    halfSearchRangeDownRaw += halfZoomWindowSizeRaw;
+    halfSearchRangeAcrossRaw += halfZoomWindowSizeRaw;
+
     // add extra search range to ensure enough area to oversample correlation surface
-    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*(halfSearchRangeDownRaw+halfZoomWindowSizeRaw);
-    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*(halfSearchRangeAcrossRaw+halfZoomWindowSizeRaw);
+    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeDownRaw;
+    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeAcrossRaw;
 
     // search window size (after antialiasing oversample)
     searchWindowSizeWidth = searchWindowSizeWidthRaw*rawDataOversamplingFactor;
