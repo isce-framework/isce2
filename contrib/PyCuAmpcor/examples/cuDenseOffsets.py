@@ -23,11 +23,11 @@ except ModuleNotFoundError:
 
 EXAMPLE = '''example
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0
 
   # offset and its geometry
   # tip: re-run with --full/out-geom and without --redo to generate geometry only
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2 --full-geom ./geom_reference --out-geom ./offset/geom_reference
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
 
@@ -70,6 +70,10 @@ def createParser():
     parser.add_argument('--kh', type=int, dest='skiphgt', default=64,
                         help='Skip down (default: %(default)s).')
 
+    # use the chip center coordinates for starting pixels
+
+
+
     # determine the number of windows
     # either specify the starting pixel and the number of windows,
     # or by setting them to -1, let the script to compute these parameters
@@ -79,12 +83,22 @@ def createParser():
                         help='Number of window across (default: %(default)s to be auto-determined).')
     parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
                         help='Number of window down (default: %(default)s).')
-    parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=-1,
+    parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=None,
                         help='Starting Pixel across of the reference image.' +
-                             'Default: %(default)s to be determined by margin and search range.')
-    parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=-1,
+                             'Default: %(default)s to use the first pixel.')
+    parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=None,
                         help='Starting Pixel down of the reference image.' +
-                             'Default: %(default)s to be determined by margin and search range.')
+                             'Default: %(default)s to use the first pixel.')
+    parser.add_argument('--use-center', dest='use_center', type=int, default=0,
+                        help='whether to use the chip center coordinate as the starting pixel.' +
+                             'Default: %(default)s not to use center coordinate.')
+    parser.add_argument('--endpixelac', dest='endpixelac', type=int, default=None,
+                        help='Ending Pixel across of the reference image.' +
+                             'Default: %(default)s to be determined by the image width.')
+    parser.add_argument('--endpixeldw', dest='endpixeldw', type=int, default=None,
+                        help='Ending Pixel down of the reference image.' +
+                             'Default: %(default)s to be determined by margin, search range and the image height.')
+
 
     # cross-correlation algorithm
     parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
@@ -216,13 +230,6 @@ def estimateOffsetField(reference, secondary, inps=None):
     # if using gross offset, adjust the margin
     margin = max(inps.margin, abs(inps.azshift), abs(inps.rgshift))
 
-    # determine the number of windows down and across
-    # that's also the size of the output offset field
-    objOffset.numberWindowDown = inps.numWinDown if inps.numWinDown > 0 \
-        else (length-2*margin-2*inps.srchgt-inps.winhgt)//inps.skiphgt
-    objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
-        else (width-2*margin-2*inps.srcwidth-inps.winwidth)//inps.skipwidth
-    print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
 
     # window size
     objOffset.windowSizeHeight = inps.winhgt
@@ -234,19 +241,73 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.halfSearchRangeAcross = inps.srcwidth
     print('initial search range: {} by {}'.format(inps.srchgt, inps.srcwidth))
 
-    # starting pixel
-    objOffset.referenceStartPixelDownStatic = inps.startpixeldw if inps.startpixeldw != -1 \
-        else margin + objOffset.halfSearchRangeDown    # use margin + halfSearchRange instead
-    objOffset.referenceStartPixelAcrossStatic = inps.startpixelac if inps.startpixelac != -1 \
-        else margin + objOffset.halfSearchRangeAcross
-
-    print('the first pixel in reference image is: ({}, {})'.format(
-        objOffset.referenceStartPixelDownStatic, objOffset.referenceStartPixelAcrossStatic))
-
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
     print('search step: {} by {}'.format(inps.skiphgt, inps.skipwidth))
+
+    # starting pixel in the reference image
+    # along down direction
+    if inps.startpixeldw is not None:
+        # use the given starting pixel coordinate
+        startPixelDown = inps.startpixeldw
+        if inps.use_center != 0:
+            # the given starting coordinate is the center, adjust it
+            startPixelDown -= inps.winhgt//2
+    else:
+        # use margin + halfSearchHeight instead
+        startPixelDown = margin + inps.srchgt
+    # do the same for across direction
+    if inps.startpixelac is not None:
+        # use the given starting pixel coordinate
+        startPixelAcross = inps.startpixelac
+        if inps.use_center != 0:
+            # the given starting coordinate is the center, adjust it
+            startPixelAcross -= inps.winwidth//2
+    else:
+        # use margin + halfSearchRange instead
+        startPixelAcross = margin + inps.srcwidth
+
+    print('the first pixel in reference image is: ({}, {})'.format(
+        startPixelDown, startPixelAcross))
+    print('the center pixel of the first window is : ({}, {})'.format(
+        startPixelDown + inps.winhgt//2,
+        startPixelAcross + inps.winwidth//2))
+    if startPixelDown < inps.srchgt:
+        print('Warning: the starting pixel down is beyond the edge of the image')
+    if startPixelAcross < inps.srcwidth:
+        print('Warning: the starting pixel across is beyond the edge of the image')
+
+    # assign the values to objOffset
+    objOffset.referenceStartPixelDownStatic = startPixelDown
+    objOffset.referenceStartPixelAcrossStatic = startPixelAcross
+
+    # the ending pixel in the reference image
+    if inps.endpixeldw is not None:
+        endPixelDown =  inps.endpixeldw
+        if inps.use_center !=0:
+            endPixelDown += inps.winhgt//2
+    else:
+        endPixelDown = length - margin - inps.srchgt
+    if inps.endpixelac is not None:
+        endPixelAcross =  inps.endpixelac
+        if inps.use_center !=0:
+            endPixelAcross += inps.winwidth//2
+    else:
+        endPixelAcross = width - margin - inps.srcwidth
+
+    if endPixelDown >= length - inps.srchgt:
+        print('Warning: the ending pixel down is beyond the edge of the image')
+    if endPixelAcross >= width - inps.srcwidth:
+        print('Warning: the ending pixel across is beyond the edge of the image')
+
+    # determine the number of windows down and across
+    # that's also the size of the output offset field
+    objOffset.numberWindowDown = inps.numWinDown if inps.numWinDown > 0 \
+        else (endPixelDown-startPixelDown-inps.winhgt)//inps.skiphgt
+    objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
+        else (endPixelAcross-startPixelAcross-inps.winwidth)//inps.skipwidth
+    print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
 
     # oversample raw data (SLC)
     objOffset.rawDataOversamplingFactor = inps.raw_oversample
