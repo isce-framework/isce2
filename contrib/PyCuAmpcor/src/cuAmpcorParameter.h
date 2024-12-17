@@ -40,20 +40,25 @@ public:
     // chip or window size for raw data
     int windowSizeHeightRaw;        ///< Template window height (original size)
     int windowSizeWidthRaw;         ///< Template window width (original size)
+
+    int windowSizeHeightRawEnlarged; ///< Template window height Enlarged to search window size for oversampling
+    int windowSizeWidthRawEnlarged; ///< Template window width Enlarged to search window size for oversampling
+
     int searchWindowSizeHeightRaw;  ///< Search window height (original size)
     int searchWindowSizeWidthRaw;   ///< Search window width (orignal size)
 
     int halfSearchRangeDownRaw;   ///< (searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
     int halfSearchRangeAcrossRaw;    ///< (searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
     // search range is (-halfSearchRangeRaw, halfSearchRangeRaw)
-
-    // int searchWindowSizeHeightRawZoomIn; ///< search window height used for zoom in
-    // int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
+    // note the search range now includes extra margin for the correlation surface extraction
 
     // chip or window size after oversampling
     int rawDataOversamplingFactor;  ///< Raw data oversampling factor (from original size to oversampled size)
     int windowSizeHeight;           ///< Template window length (oversampled size)
     int windowSizeWidth;            ///< Template window width (original size)
+    int windowSizeHeightEnlarged;           ///< Template window length enlarged (oversampled size)
+    int windowSizeWidthEnlarged;            ///< Template window width enlarged (original size)
+
     int searchWindowSizeHeight;     ///< Search window height (oversampled size)
     int searchWindowSizeWidth;      ///< Search window width (oversampled size)
 

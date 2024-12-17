@@ -44,7 +44,7 @@ private:
     cuArrays<float> * r_referenceChunkRaw, * r_secondaryChunkRaw;
 
     // windows raw (not oversampled) data, complex and real
-    cuArrays<float2> * c_referenceBatchRaw, * c_secondaryBatchRaw, * c_secondaryBatchZoomIn;
+    cuArrays<float2> * c_referenceBatchRaw, * c_secondaryBatchRaw;
     cuArrays<float> * r_referenceBatchRaw, * r_secondaryBatchRaw;
 
     // windows oversampled data

@@ -19,8 +19,12 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // oversample reference
     // (deramping included in oversampler)
     referenceBatchOverSampler->execute(c_referenceBatchRaw, c_referenceBatchOverSampled, param->derampMethod);
-    // take amplitudes
-    cuArraysAbs(c_referenceBatchOverSampled, r_referenceBatchOverSampled, stream);
+    // c_referenceBatchRaw and c_referenceBatchOverSampled now have enlarged size
+
+    int2 offset = make_int2((c_referenceBatchOverSampled->height - r_referenceBatchOverSampled->height)/2,
+        (c_referenceBatchOverSampled->width - r_referenceBatchOverSampled->width)/2);
+    // extract and take amplitudes
+    cuArraysCopyExtractAbs(c_referenceBatchOverSampled, r_referenceBatchOverSampled, offset, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the raw reference image(s)
@@ -385,7 +389,7 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     ChunkOffsetAcross->allocateHost();
 
     c_referenceBatchRaw = new cuArrays<float2> (
-        param->windowSizeHeightRaw, param->windowSizeWidthRaw,
+        param->windowSizeHeightRawEnlarged, param->windowSizeWidthRawEnlarged,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_referenceBatchRaw->allocate();
 
@@ -395,7 +399,7 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     c_secondaryBatchRaw->allocate();
 
     c_referenceBatchOverSampled = new cuArrays<float2> (
-            param->windowSizeHeight, param->windowSizeWidth,
+            param->windowSizeHeightEnlarged, param->windowSizeWidthEnlarged,
             param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_referenceBatchOverSampled->allocate();
 

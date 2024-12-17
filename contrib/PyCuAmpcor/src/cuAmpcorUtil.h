@@ -33,6 +33,7 @@ template<typename T>
 void cuArraysCopyExtract(cuArrays<T> *imagesIn, cuArrays<T> *imagesOut, cuArrays<int2> *offset, cudaStream_t);
 template<typename T_in, typename T_out>
 void cuArraysCopyExtract(cuArrays<T_in> *imagesIn, cuArrays<T_out> *imagesOut, int2 offset, cudaStream_t);
+void cuArraysCopyExtractAbs(cuArrays<float2> *imagesIn, cuArrays<float> *imagesOut, int2 offset, cudaStream_t stream);
 
 template<typename T>
 void cuArraysCopyInsert(cuArrays<T> *in, cuArrays<T> *out, int offsetX, int offsetY, cudaStream_t);

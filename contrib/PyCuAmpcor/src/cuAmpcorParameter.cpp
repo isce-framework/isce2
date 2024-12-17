@@ -100,9 +100,15 @@ void cuAmpcorParameter::setupParameters()
     searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeDownRaw;
     searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeAcrossRaw;
 
-    // search window size (after antialiasing oversample)
+    windowSizeHeightRawEnlarged = searchWindowSizeHeightRaw;
+    windowSizeWidthRawEnlarged = searchWindowSizeWidthRaw;
+
+    // search window size (after antialiasing oversampling)
     searchWindowSizeWidth = searchWindowSizeWidthRaw*rawDataOversamplingFactor;
     searchWindowSizeHeight = searchWindowSizeHeightRaw*rawDataOversamplingFactor;
+
+    windowSizeHeightEnlarged = searchWindowSizeHeight;
+    windowSizeWidthEnlarged = searchWindowSizeWidth;
 
     // correlation surface size
     corrWindowSize = make_int2(searchWindowSizeHeight - windowSizeHeight + 1,
@@ -173,6 +179,10 @@ void cuAmpcorParameter::deallocateArrays()
 }
 
 
+// ****************
+// make reference window the same as secondary for oversampling
+// ****************
+
 /// Set starting pixels for reference and secondary windows from arrays
 /// set also gross offsets between reference and secondary windows
 ///
@@ -180,12 +190,13 @@ void cuAmpcorParameter::setStartPixels(int *mStartD, int *mStartA, int *gOffsetD
 {
     for(int i=0; i<numberWindows; i++)
     {
-        referenceStartPixelDown[i] = mStartD[i];
+
+        referenceStartPixelDown[i] = mStartD[i] - halfSearchRangeDownRaw ;
         grossOffsetDown[i] = gOffsetD[i];
-        secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-        referenceStartPixelAcross[i] = mStartA[i];
+        secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] ;
+        referenceStartPixelAcross[i] = mStartA[i] - halfSearchRangeAcrossRaw ;
         grossOffsetAcross[i] = gOffsetA[i];
-        secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+        secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] ;
     }
     setChunkStartPixels();
 }
@@ -198,12 +209,12 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int *gOffsetD, 
         for(int col = 0; col < numberWindowAcross; col++)
         {
             int i = row*numberWindowAcross + col;
-            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw - halfSearchRangeDownRaw;
             grossOffsetDown[i] = gOffsetD[i];
-            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i];
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw - halfSearchRangeAcrossRaw;
             grossOffsetAcross[i] = gOffsetA[i];
-            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] ;
         }
     }
     setChunkStartPixels();
@@ -217,12 +228,12 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int gOffsetD, i
         for(int col = 0; col < numberWindowAcross; col++)
         {
             int i = row*numberWindowAcross + col;
-            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw - halfSearchRangeDownRaw;
             grossOffsetDown[i] = gOffsetD;
-            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] ;
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw - halfSearchRangeAcrossRaw;
             grossOffsetAcross[i] = gOffsetA;
-            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] ;
         }
     }
     setChunkStartPixels();
@@ -289,9 +300,9 @@ void cuAmpcorParameter::setChunkStartPixels()
             if (sChunkSD < 0) sChunkSD = 0;
             if (sChunkSA < 0) sChunkSA = 0;
             // set and check the last pixel
-            mChunkED += windowSizeHeightRaw;
+            mChunkED += windowSizeHeightRawEnlarged;
             if (mChunkED > referenceImageHeight) mChunkED = referenceImageHeight;
-            mChunkEA += windowSizeWidthRaw;
+            mChunkEA += windowSizeWidthRawEnlarged;
             if (mChunkEA > referenceImageWidth) mChunkED = referenceImageWidth;
             sChunkED += searchWindowSizeHeightRaw;
             if (sChunkED > secondaryImageHeight) sChunkED = secondaryImageHeight;

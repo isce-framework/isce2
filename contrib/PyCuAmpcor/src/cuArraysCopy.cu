@@ -392,6 +392,39 @@ template void cuArraysCopyExtract(cuArrays<float2> *in, cuArrays<float> *out, in
 template void cuArraysCopyExtract(cuArrays<float2> *in, cuArrays<float2> *out, int2 offset, cudaStream_t);
 template void cuArraysCopyExtract(cuArrays<float3> *in, cuArrays<float3> *out, int2 offset, cudaStream_t);
 
+
+__global__ void cuArraysCopyExtractAbsFixedOffset(const float2 *imageIn, const int inNX, const int inNY,
+     float *imageOut, const int outNX, const int outNY, const int nImages,
+     const int offsetX, const int offsetY)
+{
+    int outx = threadIdx.x + blockDim.x*blockIdx.x;
+    int outy = threadIdx.y + blockDim.y*blockIdx.y;
+
+    if(outx < outNX && outy < outNY)
+    {
+        int idxOut = (blockIdx.z * outNX + outx)*outNY+outy;
+        int idxIn = (blockIdx.z*inNX + outx + offsetX)*inNY + outy + offsetY;
+        imageOut[idxOut] = complexAbs(imageIn[idxIn]);
+    }
+}
+/**
+ * copy/extract images from a large size to
+ * a smaller size from the location (offsetX, offsetY), take amplitude
+ */
+void cuArraysCopyExtractAbs(cuArrays<float2> *imagesIn, cuArrays<float> *imagesOut, int2 offset, cudaStream_t stream)
+{
+    //assert(imagesIn->height >= imagesOut && inNY >= outNY);
+    const int nthreads = NTHREADS2D;
+    dim3 threadsperblock(nthreads, nthreads,1);
+    dim3 blockspergrid(IDIVUP(imagesOut->height,nthreads), IDIVUP(imagesOut->width,nthreads), imagesOut->count);
+    cuArraysCopyExtractAbsFixedOffset<<<blockspergrid, threadsperblock,0, stream>>>
+        (imagesIn->devData, imagesIn->height, imagesIn->width,
+        imagesOut->devData, imagesOut->height, imagesOut->width, imagesOut->count, offset.x, offset.y);
+    getLastCudaError("cuArraysCopyExtractAbs error");
+}
+
+
+
 template<typename T>
 __global__ void cuArraysCopyInsert_kernel(const T* imageIn, const int inNX, const int inNY,
     T* imageOut, const int outNY, const int offsetX, const int offsetY)
