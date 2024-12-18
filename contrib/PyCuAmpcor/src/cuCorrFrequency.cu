@@ -34,11 +34,11 @@ cuFreqCorrelator::cuFreqCorrelator(int imageNX, int imageNY, int nImages, cudaSt
     cufftSetStream(backwardPlan, stream);
 
     // set up work arrays
-    workFM = new cuArrays<float2>(imageNX, (imageNY/2+1), nImages);
+    workFM = new cuArrays<complex_type>(imageNX, (imageNY/2+1), nImages);
     workFM->allocate();
-    workFS = new cuArrays<float2>(imageNX, (imageNY/2+1), nImages);
+    workFS = new cuArrays<complex_type>(imageNX, (imageNY/2+1), nImages);
     workFS->allocate();
-    workT = new cuArrays<float> (imageNX, imageNY, nImages);
+    workT = new cuArrays<real_type> (imageNX, imageNY, nImages);
     workT->allocate();
 }
 
@@ -60,38 +60,46 @@ cuFreqCorrelator::~cuFreqCorrelator()
  * @param[out] results the correlation surfaces
  */
 
-void cuFreqCorrelator::execute(cuArrays<float> *templates, cuArrays<float> *images, cuArrays<float> *results)
+void cuFreqCorrelator::execute(cuArrays<real_type> *templates, cuArrays<real_type> *images, cuArrays<real_type> *results)
 {
     // pad the reference windows to the the size of search windows
     cuArraysCopyPadded(templates, workT, stream);
     // forward fft to frequency domain
+#ifdef CUAMPCOR_DOUBLE
+    cufft_Error(cufftExecD2Z(forwardPlan, workT->devData, workFM->devData));
+    cufft_Error(cufftExecD2Z(forwardPlan, images->devData, workFS->devData));
+#else
     cufft_Error(cufftExecR2C(forwardPlan, workT->devData, workFM->devData));
     cufft_Error(cufftExecR2C(forwardPlan, images->devData, workFS->devData));
+#endif
+
     // cufft doesn't normalize, so manually get the image size for normalization
-    float coef = 1.0/(images->size);
+    real_type coef = 1.0/(images->size);
     // multiply reference with secondary windows in frequency domain
     cuArraysElementMultiplyConjugate(workFM, workFS, coef, stream);
     // backward fft to get correlation surface in time domain
+#ifdef CUAMPCOR_DOUBLE
+    cufft_Error(cufftExecZ2D(backwardPlan, workFM->devData, workT->devData));
+#else
     cufft_Error(cufftExecC2R(backwardPlan, workFM->devData, workT->devData));
+#endif
     // extract to get proper size of correlation surface
     cuArraysCopyExtract(workT, results, make_int2(0, 0), stream);
     // all done
 }
 
 // a = a^* * b
-inline __device__ float2 cuMulConj(float2 a, float2 b)
+inline __device__ complex_type cuMulConj(complex_type a, complex_type b, real_type f)
 {
-    return make_float2(a.x*b.x + a.y*b.y, -a.y*b.x + a.x*b.y);
+    return make_complex_type(f*(a.x*b.x + a.y*b.y), f*(-a.y*b.x + a.x*b.y));
 }
 
 // cuda kernel for cuArraysElementMultiplyConjugate
-__global__ void cudaKernel_elementMulConjugate(float2 *ainout, float2 *bin, int size, float coef)
+__global__ void cudaKernel_elementMulConjugate(complex_type *ainout, complex_type *bin, int size, real_type coef)
 {
     int idx = threadIdx.x + blockIdx.x*blockDim.x;
     if(idx < size) {
-        cuComplex prod; 
-        prod = cuMulConj(ainout[idx], bin[idx]);
-        ainout [idx] = prod*coef;
+        ainout [idx] = cuMulConj(ainout[idx], bin[idx], coef);
     }
 } 
 
@@ -101,7 +109,7 @@ __global__ void cudaKernel_elementMulConjugate(float2 *ainout, float2 *bin, int 
  * @param[in] image2, the secondary image
  * @param[in] coef, usually the normalization factor
  */
-void cuArraysElementMultiplyConjugate(cuArrays<float2> *image1, cuArrays<float2> *image2, float coef, cudaStream_t stream)
+void cuArraysElementMultiplyConjugate(cuArrays<complex_type> *image1, cuArrays<complex_type> *image2, real_type coef, cudaStream_t stream)
 {
     int size = image1->getSize();
     int threadsperblock = NTHREADS;

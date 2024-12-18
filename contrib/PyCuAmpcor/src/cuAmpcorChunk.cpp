@@ -260,7 +260,7 @@ void cuAmpcorChunk::loadReferenceChunk()
         {
             // allocate a gpu buffer to load data from cpu/file
             // try allocate/deallocate the buffer on the fly to save gpu memory 07/09/19
-            c_referenceChunkRaw = new cuArrays<float2> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+            c_referenceChunkRaw = new cuArrays<image_complex_type> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
             c_referenceChunkRaw->allocate();
 
             // load the data from cpu
@@ -283,7 +283,7 @@ void cuAmpcorChunk::loadReferenceChunk()
         }
         // if the image is real
         else {
-            r_referenceChunkRaw = new cuArrays<float> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+            r_referenceChunkRaw = new cuArrays<image_real_type> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
             r_referenceChunkRaw->allocate();
 
             // load the data from cpu
@@ -321,7 +321,7 @@ void cuAmpcorChunk::loadSecondaryChunk()
 
         if(secondaryImage->isComplex())
         {
-            c_secondaryChunkRaw = new cuArrays<float2> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+            c_secondaryChunkRaw = new cuArrays<image_complex_type> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
             c_secondaryChunkRaw->allocate();
 
             //load a chunk from mmap to gpu
@@ -346,7 +346,7 @@ void cuAmpcorChunk::loadSecondaryChunk()
         }
         else { //real image
             //allocate the gpu buffer
-            r_secondaryChunkRaw = new cuArrays<float> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+            r_secondaryChunkRaw = new cuArrays<image_real_type> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
             r_secondaryChunkRaw->allocate();
 
             //load a chunk from mmap to gpu
@@ -368,7 +368,7 @@ void cuAmpcorChunk::loadSecondaryChunk()
 
 /// constructor
 cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
-    cuArrays<float2> *offsetImage_, cuArrays<float> *snrImage_, cuArrays<float3> *covImage_,
+    cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_,
     cudaStream_t stream_)
 
 {
@@ -388,32 +388,32 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     ChunkOffsetAcross->allocate();
     ChunkOffsetAcross->allocateHost();
 
-    c_referenceBatchRaw = new cuArrays<float2> (
+    c_referenceBatchRaw = new cuArrays<complex_type> (
         param->windowSizeHeightRawEnlarged, param->windowSizeWidthRawEnlarged,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_referenceBatchRaw->allocate();
 
-    c_secondaryBatchRaw = new cuArrays<float2> (
+    c_secondaryBatchRaw = new cuArrays<complex_type> (
         param->searchWindowSizeHeightRaw, param->searchWindowSizeWidthRaw,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_secondaryBatchRaw->allocate();
 
-    c_referenceBatchOverSampled = new cuArrays<float2> (
+    c_referenceBatchOverSampled = new cuArrays<complex_type> (
             param->windowSizeHeightEnlarged, param->windowSizeWidthEnlarged,
             param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_referenceBatchOverSampled->allocate();
 
-    c_secondaryBatchOverSampled = new cuArrays<float2> (
+    c_secondaryBatchOverSampled = new cuArrays<complex_type> (
             param->searchWindowSizeHeight, param->searchWindowSizeWidth,
             param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     c_secondaryBatchOverSampled->allocate();
 
-    r_referenceBatchOverSampled = new cuArrays<float> (
+    r_referenceBatchOverSampled = new cuArrays<real_type> (
          param->windowSizeHeight, param->windowSizeWidth,
          param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_referenceBatchOverSampled->allocate();
 
-    r_secondaryBatchOverSampled = new cuArrays<float> (
+    r_secondaryBatchOverSampled = new cuArrays<real_type> (
         param->searchWindowSizeHeight, param->searchWindowSizeWidth,
         param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     r_secondaryBatchOverSampled->allocate();
@@ -428,21 +428,21 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
         c_secondaryBatchOverSampled->height, c_secondaryBatchOverSampled->width,
         c_secondaryBatchRaw->count, stream);
 
-    r_corrBatch = new cuArrays<float> (
+    r_corrBatch = new cuArrays<real_type> (
         param->corrWindowSize.x,
         param->corrWindowSize.y,
         param->numberWindowDownInChunk,
         param->numberWindowAcrossInChunk);
     r_corrBatch->allocate();
 
-    r_corrBatchZoomIn = new cuArrays<float> (
+    r_corrBatchZoomIn = new cuArrays<real_type> (
             param->corrZoomInSize.x,
             param->corrZoomInSize.y,
             param->numberWindowDownInChunk,
             param->numberWindowAcrossInChunk);
     r_corrBatchZoomIn->allocate();
 
-    r_corrBatchZoomInOverSampled = new cuArrays<float> (
+    r_corrBatchZoomInOverSampled = new cuArrays<real_type> (
         param->corrZoomInOversampledSize.x,
         param->corrZoomInOversampledSize.y,
         param->numberWindowDownInChunk,
@@ -455,17 +455,17 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     offsetZoomIn = new cuArrays<int2> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     offsetZoomIn->allocate();
 
-    offsetFinal = new cuArrays<float2> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+    offsetFinal = new cuArrays<real2_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     offsetFinal->allocate();
 
     maxLocShift = new cuArrays<int2> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     maxLocShift->allocate();
 
-    corrMaxValue = new cuArrays<float> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+    corrMaxValue = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     corrMaxValue->allocate();
 
 
-    r_corrBatchSum = new cuArrays<float> (
+    r_corrBatchSum = new cuArrays<real_type> (
                     param->numberWindowDownInChunk,
                     param->numberWindowAcrossInChunk);
     r_corrBatchSum->allocate();
@@ -479,15 +479,15 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
 
     i_maxloc->allocate();
 
-    r_maxval = new cuArrays<float> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+    r_maxval = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
 
     r_maxval->allocate();
 
-    r_snrValue = new cuArrays<float> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+    r_snrValue = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
 
     r_snrValue->allocate();
 
-    r_covValue = new cuArrays<float3> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
+    r_covValue = new cuArrays<real3_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
 
     r_covValue->allocate();
 

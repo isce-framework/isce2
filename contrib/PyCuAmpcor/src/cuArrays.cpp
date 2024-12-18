@@ -7,6 +7,8 @@
 // dependencies
 #include "cuArrays.h"
 #include "cudaError.h"
+#include "float2.h"
+#include "data_types.h"
 #include <cuda_runtime.h>
 #include <fstream>
 #include <iostream>
@@ -65,6 +67,34 @@ void cuArrays<T>::setZero(cudaStream_t stream)
     checkCudaErrors(cudaMemsetAsync(devData, 0, getByteSize(), stream));
 }
 
+
+// Overloaded << operator for composite type
+std::ostream& operator<<(std::ostream& os, const float2& p) {
+
+        return os << "(" << p.x << ", " << p.y << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const float3& p) {
+
+        return os << "(" << p.x << ", " << p.y << ", " << p.z << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const double2& p) {
+
+        return os << "(" << p.x << ", " << p.y << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const double3& p) {
+
+        return os << "(" << p.x << ", " << p.y << ", " << p.z << ")";
+}
+
+std::ostream& operator<<(std::ostream& os, const int2& p) {
+
+        return os << "(" << p.x << ", " << p.y << ")";
+}
+
+
 // output (partial) data when debugging
 template <typename T>
 void cuArrays<T>::debuginfo(cudaStream_t stream) {
@@ -90,63 +120,6 @@ void cuArrays<T>::debuginfo(cudaStream_t stream) {
     }
 }
 
-// need specializations for x,y components
-template<>
-void cuArrays<float2>::debuginfo(cudaStream_t stream) {
-    std::cout << "Image height,width,count: " << height << "," << width << "," << count << std::endl;
-    if( !is_allocatedHost)
-        allocateHost();
-    copyToHost(stream);
-
-    int range = std::min(10, size*count);
-
-    for(int i=0; i<range; i++)
-        std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ")" ;
-    std::cout << std::endl;
-    if(size*count>range) {
-        for(int i=size*count-range; i<size*count; i++)
-            std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ")" ;
-        std::cout << std::endl;
-    }
-}
-
-template<>
-void cuArrays<float3>::debuginfo(cudaStream_t stream) {
-    std::cout << "Image height,width,count: " << height << "," << width << "," << count << std::endl;
-    if( !is_allocatedHost)
-        allocateHost();
-    copyToHost(stream);
-
-    int range = std::min(10, size*count);
-
-    for(int i=0; i<range; i++)
-        std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ")" ;
-    std::cout << std::endl;
-    if(size*count>range) {
-        for(int i=size*count-range; i<size*count; i++)
-            std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ", " << hostData[i].z <<")";
-        std::cout << std::endl;
-    }
-}
-
-template<>
-void cuArrays<int2>::debuginfo(cudaStream_t stream) {
-    std::cout << "Image height,width,count: " << height << "," << width << "," << count << std::endl;
-    if( !is_allocatedHost)
-        allocateHost();
-    copyToHost(stream);
-
-    int range = std::min(10, size*count);
-
-    for(int i=0; i<range; i++)
-        std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ")" ;
-    std::cout << std::endl;
-    if(size*count>range) {
-        for(int i=size*count-range; i<size*count; i++)
-            std::cout << "(" <<hostData[i].x << ", " << hostData[i].y << ")" ;
-        std::cout << std::endl;
-    }
-}
 
 // output to file by copying to host at first
 template<typename T>
@@ -169,9 +142,9 @@ void cuArrays<T>::outputHostToFile(std::string fn)
 }
 
 // instantiations, required by python extensions
-template class cuArrays<float>;
-template class cuArrays<float2>;
-template class cuArrays<float3>;
+template class cuArrays<real_type>;
+template class cuArrays<complex_type>;
+template class cuArrays<real3_type>;
 template class cuArrays<int2>;
 template class cuArrays<int>;
 

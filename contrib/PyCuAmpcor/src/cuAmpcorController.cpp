@@ -47,34 +47,34 @@ void cuAmpcorController::runAmpcor()
     std::cout << "Opening secondary image " << param->secondaryImageName << "...\n";
     GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
 
-    cuArrays<float2> *offsetImage, *offsetImageRun;
-    cuArrays<float> *snrImage, *snrImageRun;
-    cuArrays<float3> *covImage, *covImageRun;
+    cuArrays<real2_type> *offsetImage, *offsetImageRun;
+    cuArrays<real_type> *snrImage, *snrImageRun;
+    cuArrays<real3_type> *covImage, *covImageRun;
 
     // nWindowsDownRun is defined as numberChunk * numberWindowInChunk
     // It may be bigger than the actual number of windows
     int nWindowsDownRun = param->numberChunkDown * param->numberWindowDownInChunk;
     int nWindowsAcrossRun = param->numberChunkAcross * param->numberWindowAcrossInChunk;
 
-    offsetImageRun = new cuArrays<float2>(nWindowsDownRun, nWindowsAcrossRun);
+    offsetImageRun = new cuArrays<real2_type>(nWindowsDownRun, nWindowsAcrossRun);
     offsetImageRun->allocate();
 
-    snrImageRun = new cuArrays<float>(nWindowsDownRun, nWindowsAcrossRun);
+    snrImageRun = new cuArrays<real_type>(nWindowsDownRun, nWindowsAcrossRun);
     snrImageRun->allocate();
 
-    covImageRun = new cuArrays<float3>(nWindowsDownRun, nWindowsAcrossRun);
+    covImageRun = new cuArrays<real3_type>(nWindowsDownRun, nWindowsAcrossRun);
     covImageRun->allocate();
 
     // Offset fields.
-    offsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    offsetImage = new cuArrays<real2_type>(param->numberWindowDown, param->numberWindowAcross);
     offsetImage->allocate();
 
     // SNR.
-    snrImage = new cuArrays<float>(param->numberWindowDown, param->numberWindowAcross);
+    snrImage = new cuArrays<real_type>(param->numberWindowDown, param->numberWindowAcross);
     snrImage->allocate();
 
     // Variance.
-    covImage = new cuArrays<float3>(param->numberWindowDown, param->numberWindowAcross);
+    covImage = new cuArrays<real3_type>(param->numberWindowDown, param->numberWindowAcross);
     covImage->allocate();
 
     // set up the cuda streams
@@ -136,10 +136,10 @@ void cuAmpcorController::runAmpcor()
     offsetImage->allocateHost();
     offsetImage->copyToHost(streams[0]);
     // construct the gross offset
-    cuArrays<float2> *grossOffsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    cuArrays<real2_type> *grossOffsetImage = new cuArrays<real2_type>(param->numberWindowDown, param->numberWindowAcross);
     grossOffsetImage->allocateHost();
     for(int i=0; i< param->numberWindows; i++)
-        grossOffsetImage->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
+        grossOffsetImage->hostData[i] = make_real2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
 
     // check whether to merge gross offset
     if (param->mergeGrossOffset)

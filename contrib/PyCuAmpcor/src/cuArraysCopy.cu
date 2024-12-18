@@ -25,10 +25,11 @@
 #include "cudaUtil.h"
 #include "cudaError.h"
 #include "float2.h"
+#include "data_types.h"
 
 // cuda kernel for cuArraysCopyToBatch
-__global__ void cuArraysCopyToBatch_kernel(const float2 *imageIn, const int inNX, const int inNY,
-    float2 *imageOut, const int outNX, const int outNY,
+__global__ void cuArraysCopyToBatch_kernel(const complex_type *imageIn, const int inNX, const int inNY,
+    complex_type *imageOut, const int outNX, const int outNY,
     const int nImagesX, const int nImagesY,
     const int strideX, const int strideY)
 {
@@ -52,7 +53,7 @@ __global__ void cuArraysCopyToBatch_kernel(const float2 *imageIn, const int inNX
  * @param strideW stride along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatch(cuArrays<float2> *image1, cuArrays<float2> *image2,
+void cuArraysCopyToBatch(cuArrays<complex_type> *image1, cuArrays<complex_type> *image2,
     int strideH, int strideW, cudaStream_t stream)
 {
     const int nthreads = NTHREADS2D;
@@ -105,8 +106,8 @@ __global__ void cuArraysCopyToBatchWithOffset_kernel(const T_in *imageIn, const 
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
-    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchWithOffset(cuArrays<complex_type> *image1, const int inNX, const int inNY,
+    cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
@@ -119,8 +120,8 @@ void cuArraysCopyToBatchWithOffset(cuArrays<float2> *image1, const int inNX, con
 }
 
 // same as above, but from complex to real(take amplitudes)
-__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, const int inNX, const int inNY,
-    float2 *imageOut, const int outNX, const int outNY, const int nImages,
+__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const complex_type *imageIn, const int inNX, const int inNY,
+    complex_type *imageOut, const int outNX, const int outNY, const int nImages,
     const int *offsetX, const int *offsetY)
 {
 
@@ -142,10 +143,10 @@ __global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, c
     if(inx>=0 && inx<inNX && iny>=0 && iny<inNY)
     {
         int idxIn = inx*inNY+iny;
-        imageOut[idxOut] = make_float2(complexAbs(imageIn[idxIn]), 0.0); //true, copy with abs value
+        imageOut[idxOut] = make_complex_type(complexAbs(imageIn[idxIn]), 0.0); //true, copy with abs value
     }
     else
-        imageOut[idxOut] = make_float2(0.0f, 0.0f); //false, fill with 0
+        imageOut[idxOut] = make_complex_type(0.0f, 0.0f); //false, fill with 0
 }
 
 /**
@@ -158,8 +159,8 @@ __global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const float2 *imageIn, c
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int inNX, const int inNY,
-    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchAbsWithOffset(cuArrays<complex_type> *image1, const int inNX, const int inNY,
+    cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
@@ -181,8 +182,8 @@ void cuArraysCopyToBatchAbsWithOffset(cuArrays<float2> *image1, const int inNX, 
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int inNX, const int inNY,
-    cuArrays<float2> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
+void cuArraysCopyToBatchWithOffsetR2C(cuArrays<real_type> *image1, const int inNX, const int inNY,
+    cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
@@ -196,10 +197,10 @@ void cuArraysCopyToBatchWithOffsetR2C(cuArrays<float> *image1, const int inNX, c
 }
 
 //copy a chunk into a series of chips, from complex to real
-__global__ void cuArraysCopyC2R_kernel(const float2 *imageIn, const int inNX, const int inNY,
-    float *imageOut, const int outNX, const int outNY,
+__global__ void cuArraysCopyC2R_kernel(const complex_type *imageIn, const int inNX, const int inNY,
+    real_type *imageOut, const int outNX, const int outNY,
     const int nImagesX, const int nImagesY,
-    const int strideX, const int strideY, const float factor)
+    const int strideX, const int strideY, const real_type factor)
 {
     int idxImage = blockIdx.z;
     int outx = threadIdx.x + blockDim.x*blockIdx.x;
@@ -221,13 +222,13 @@ __global__ void cuArraysCopyC2R_kernel(const float2 *imageIn, const int inNX, co
  * @param strideW offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyC2R(cuArrays<float2> *image1, cuArrays<float> *image2,
+void cuArraysCopyC2R(cuArrays<complex_type> *image1, cuArrays<real_type> *image2,
     int strideH, int strideW, cudaStream_t stream)
 {
     const int nthreads = 16;
     dim3 blockSize(nthreads, nthreads, 1);
     dim3 gridSize(IDIVUP(image2->height,nthreads), IDIVUP(image2->width,nthreads), image2->count);
-    float factor = 1.0f/image1->size; //the FFT factor
+    real_type factor = 1.0f/image1->size; //the FFT factor
     cuArraysCopyC2R_kernel<<<gridSize,blockSize, 0 , stream>>> (
         image1->devData, image1->height, image1->width,
         image2->devData, image2->height, image2->width,
@@ -273,12 +274,12 @@ void cuArraysCopyExtract(cuArrays<T> *imagesIn, cuArrays<T> *imagesOut, cuArrays
 }
 
 // instantiate the above template for the data types we need
-template void cuArraysCopyExtract(cuArrays<float> *in, cuArrays<float> *out, cuArrays<int2> *offsets, cudaStream_t);
-template void cuArraysCopyExtract(cuArrays<float2> *in, cuArrays<float2> *out, cuArrays<int2> *offsets, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<real_type> *in, cuArrays<real_type> *out, cuArrays<int2> *offsets, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<complex_type> *in, cuArrays<complex_type> *out, cuArrays<int2> *offsets, cudaStream_t);
 
 // correlation surface extraction (Minyan Zhong)
-__global__ void cuArraysCopyExtractVaryingOffsetCorr(const float *imageIn, const int inNX, const int inNY,
-     float *imageOut, const int outNX, const int outNY, int *imageValid, const int nImages,
+__global__ void cuArraysCopyExtractVaryingOffsetCorr(const real_type *imageIn, const int inNX, const int inNY,
+     real_type *imageOut, const int outNX, const int outNY, int *imageValid, const int nImages,
      const int2 *maxloc)
 {
 
@@ -320,7 +321,7 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const float *imageIn, const
  * @param[in] imageIn inut images
  * @param[out] imageOut output images of dimension nImages*outNX*outNY
  */
-void cuArraysCopyExtractCorr(cuArrays<float> *imagesIn, cuArrays<float> *imagesOut, cuArrays<int> *imagesValid, cuArrays<int2> *maxloc, cudaStream_t stream)
+void cuArraysCopyExtractCorr(cuArrays<real_type> *imagesIn, cuArrays<real_type> *imagesOut, cuArrays<int> *imagesValid, cuArrays<int2> *maxloc, cudaStream_t stream)
 {
     //assert(imagesIn->height >= imagesOut && inNY >= outNY);
     const int nthreads = 16;
@@ -354,8 +355,8 @@ __global__ void cuArraysCopyExtractFixedOffset(const T *imageIn, const int inNX,
     }
 }
 
-__global__ void cuArraysCopyExtractFixedOffset(const float2 *imageIn, const int inNX, const int inNY,
-     float *imageOut, const int outNX, const int outNY, const int nImages,
+__global__ void cuArraysCopyExtractFixedOffset(const complex_type *imageIn, const int inNX, const int inNY,
+     real_type *imageOut, const int outNX, const int outNY, const int nImages,
      const int offsetX, const int offsetY)
 {
     int outx = threadIdx.x + blockDim.x*blockIdx.x;
@@ -387,14 +388,14 @@ void cuArraysCopyExtract(cuArrays<T_in> *imagesIn, cuArrays<T_out> *imagesOut, i
 }
 
 // instantiate the above template for the data types we need
-template void cuArraysCopyExtract(cuArrays<float> *in, cuArrays<float> *out, int2 offset, cudaStream_t);
-template void cuArraysCopyExtract(cuArrays<float2> *in, cuArrays<float> *out, int2 offset, cudaStream_t);
-template void cuArraysCopyExtract(cuArrays<float2> *in, cuArrays<float2> *out, int2 offset, cudaStream_t);
-template void cuArraysCopyExtract(cuArrays<float3> *in, cuArrays<float3> *out, int2 offset, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<real_type> *in, cuArrays<real_type> *out, int2 offset, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<complex_type> *in, cuArrays<real_type> *out, int2 offset, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<complex_type> *in, cuArrays<complex_type> *out, int2 offset, cudaStream_t);
+template void cuArraysCopyExtract(cuArrays<real3_type> *in, cuArrays<real3_type> *out, int2 offset, cudaStream_t);
 
 
-__global__ void cuArraysCopyExtractAbsFixedOffset(const float2 *imageIn, const int inNX, const int inNY,
-     float *imageOut, const int outNX, const int outNY, const int nImages,
+__global__ void cuArraysCopyExtractAbsFixedOffset(const complex_type *imageIn, const int inNX, const int inNY,
+     real_type *imageOut, const int outNX, const int outNY, const int nImages,
      const int offsetX, const int offsetY)
 {
     int outx = threadIdx.x + blockDim.x*blockIdx.x;
@@ -411,7 +412,7 @@ __global__ void cuArraysCopyExtractAbsFixedOffset(const float2 *imageIn, const i
  * copy/extract images from a large size to
  * a smaller size from the location (offsetX, offsetY), take amplitude
  */
-void cuArraysCopyExtractAbs(cuArrays<float2> *imagesIn, cuArrays<float> *imagesOut, int2 offset, cudaStream_t stream)
+void cuArraysCopyExtractAbs(cuArrays<complex_type> *imagesIn, cuArrays<real_type> *imagesOut, int2 offset, cudaStream_t stream)
 {
     //assert(imagesIn->height >= imagesOut && inNY >= outNY);
     const int nthreads = NTHREADS2D;
@@ -453,9 +454,9 @@ void cuArraysCopyInsert(cuArrays<T> *imageIn, cuArrays<T> *imageOut, int offsetX
 }
 
 // instantiate the above template for the data types we need
-template void cuArraysCopyInsert(cuArrays<float2>* in, cuArrays<float2>* out, int offX, int offY, cudaStream_t);
-template void cuArraysCopyInsert(cuArrays<float3>* in, cuArrays<float3>* out, int offX, int offY, cudaStream_t);
-template void cuArraysCopyInsert(cuArrays<float>* in, cuArrays<float>* out, int offX, int offY, cudaStream_t);
+template void cuArraysCopyInsert(cuArrays<complex_type>* in, cuArrays<complex_type>* out, int offX, int offY, cudaStream_t);
+template void cuArraysCopyInsert(cuArrays<real3_type>* in, cuArrays<real3_type>* out, int offX, int offY, cudaStream_t);
+template void cuArraysCopyInsert(cuArrays<real_type>* in, cuArrays<real_type>* out, int offX, int offY, cudaStream_t);
 template void cuArraysCopyInsert(cuArrays<int>* in, cuArrays<int>* out, int offX, int offY, cudaStream_t);
 
 template<typename T_in, typename T_out>
@@ -494,12 +495,12 @@ void cuArraysCopyPadded(cuArrays<T_in> *imageIn, cuArrays<T_out> *imageOut, cuda
 }
 
 // instantiate the above template for the data types we need
-template void cuArraysCopyPadded(cuArrays<float> *imageIn, cuArrays<float> *imageOut, cudaStream_t);
-template void cuArraysCopyPadded(cuArrays<float> *imageIn, cuArrays<float2> *imageOut, cudaStream_t);
-template void cuArraysCopyPadded(cuArrays<float2> *imageIn, cuArrays<float2> *imageOut, cudaStream_t);
+template void cuArraysCopyPadded(cuArrays<real_type> *imageIn, cuArrays<real_type> *imageOut, cudaStream_t);
+template void cuArraysCopyPadded(cuArrays<real_type> *imageIn, cuArrays<complex_type> *imageOut, cudaStream_t);
+template void cuArraysCopyPadded(cuArrays<complex_type> *imageIn, cuArrays<complex_type> *imageOut, cudaStream_t);
 
 // cuda kernel for setting a constant value
-__global__ void cuArraysSetConstant_kernel(float *image, int size, float value)
+__global__ void cuArraysSetConstant_kernel(real_type *image, int size, real_type value)
 {
     int idx = threadIdx.x + blockDim.x*blockIdx.x;
 
@@ -513,7 +514,7 @@ __global__ void cuArraysSetConstant_kernel(float *image, int size, float value)
  * Set real images to a constant value
  * @note use setZero if value=0 because cudaMemset is faster
  */
-void cuArraysSetConstant(cuArrays<float> *imageIn, float value, cudaStream_t stream)
+void cuArraysSetConstant(cuArrays<real_type> *imageIn, real_type value, cudaStream_t stream)
 {
     const int nthreads = 256;
     int size = imageIn->getSize();
@@ -524,8 +525,8 @@ void cuArraysSetConstant(cuArrays<float> *imageIn, float value, cudaStream_t str
 }
 
 
-// convert float to float2(complex)
-__global__ void cuArraysR2C_kernel(float *image1, float2 *image2, int size)
+// convert real_type to complex_type(complex)
+__global__ void cuArraysR2C_kernel(real_type *image1, complex_type *image2, int size)
 {
     int idx =  threadIdx.x + blockDim.x*blockIdx.x;
     if(idx < size)
@@ -540,7 +541,7 @@ __global__ void cuArraysR2C_kernel(float *image1, float2 *image2, int size)
  * @param[in] image1 input images
  * @param[out] image2 output images
  */
-void cuArraysR2C(cuArrays<float> *image1, cuArrays<float2> *image2, cudaStream_t stream)
+void cuArraysR2C(cuArrays<real_type> *image1, cuArrays<complex_type> *image2, cudaStream_t stream)
 {
     int size = image1->getSize();
     cuArraysR2C_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);
@@ -548,8 +549,8 @@ void cuArraysR2C(cuArrays<float> *image1, cuArrays<float2> *image2, cudaStream_t
 }
 
 
-// take real part of float2 to float
-__global__ void cuArraysC2R_kernel(float2 *image1, float *image2, int size)
+// take real part of complex_type to real_type
+__global__ void cuArraysC2R_kernel(complex_type *image1, real_type *image2, int size)
 {
     int idx =  threadIdx.x + blockDim.x*blockIdx.x;
     if(idx < size)
@@ -563,7 +564,7 @@ __global__ void cuArraysC2R_kernel(float2 *image1, float *image2, int size)
  * @param[in] image1 input images
  * @param[out] image2 output images
  */
-void cuArraysC2R(cuArrays<float2> *image1, cuArrays<float> *image2, cudaStream_t stream)
+void cuArraysC2R(cuArrays<complex_type> *image1, cuArrays<real_type> *image2, cudaStream_t stream)
 {
     int size = image1->getSize();
     cuArraysC2R_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);
@@ -571,7 +572,7 @@ void cuArraysC2R(cuArrays<float2> *image1, cuArrays<float> *image2, cudaStream_t
 }
 
 // cuda kernel for cuArraysAbs
-__global__ void cuArraysAbs_kernel(float2 *image1, float *image2, int size)
+__global__ void cuArraysAbs_kernel(complex_type *image1, real_type *image2, int size)
 {
     int idx =  threadIdx.x + blockDim.x*blockIdx.x;
     if(idx < size)
@@ -585,7 +586,7 @@ __global__ void cuArraysAbs_kernel(float2 *image1, float *image2, int size)
  * @param[in] image1 input images
  * @param[out] image2 output images
  */
-void cuArraysAbs(cuArrays<float2> *image1, cuArrays<float> *image2, cudaStream_t stream)
+void cuArraysAbs(cuArrays<complex_type> *image1, cuArrays<real_type> *image2, cudaStream_t stream)
 {
     int size = image1->getSize();
     cuArraysAbs_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>(image1->devData, image2->devData, size);

@@ -13,7 +13,7 @@
 // my declarations
 #include "cuAmpcorUtil.h"
 // for FLT_EPSILON
-#include <float.h>
+
 
 // alias for cuda cooperative groups
 namespace cg = cooperative_groups;
@@ -32,16 +32,16 @@ namespace cg = cooperative_groups;
 
 #if __CUDACC_VER_MAJOR__ >= 11
 // use cg::reduce for NVCC 11 and above
-__global__ void sum_square_kernel(float *sum2, const float *images, int n, int batch)
+__global__ void sum_square_kernel(real_type *sum2, const real_type *images, int n, int batch)
 {
     // get block id for each image
     int imageid = blockIdx.x;
-    const float *image = images + imageid*n;
+    const real_type *image = images + imageid*n;
 
     // get the thread block
     cg::thread_block cta = cg::this_thread_block();
     // get the shared memory
-    extern float __shared__ sdata[];
+    extern real_type __shared__ sdata[];
 
     // get the current thread
     int tid = cta.thread_rank();
@@ -60,12 +60,12 @@ __global__ void sum_square_kernel(float *sum2, const float *images, int n, int b
     cg::thread_block_tile<32> tile32 = cg::tiled_partition<32>(cta);
 
     // reduce in each tile with warp
-    sdata[tid] = cg::reduce(tile32, sdata[tid], cg::plus<float>());
+    sdata[tid] = cg::reduce(tile32, sdata[tid], cg::plus<real_type>());
     cg::sync(cta);
 
     // reduce all tiles with thread 0
     if(tid == 0) {
-        float sum = 0.0;
+        real_type sum = 0.0;
         for (int i = 0; i < cta.size(); i += tile32.size())
             sum += sdata[i];
         // assign the value to results
@@ -75,23 +75,23 @@ __global__ void sum_square_kernel(float *sum2, const float *images, int n, int b
 
 #else
 // use warp-shuffle reduction for NVCC 9 & 10
-__global__ void sum_square_kernel(float *sum2, const float *images, int n, int batch)
+__global__ void sum_square_kernel(real_type *sum2, const real_type *images, int n, int batch)
 {
     // get block id for each image
     int imageid = blockIdx.x;
-    const float *image = images + imageid*n;
+    const real_type *image = images + imageid*n;
 
     // get the thread block
     cg::thread_block cta = cg::this_thread_block();
     // get the shared memory
-    extern float __shared__ sdata[];
+    extern real_type __shared__ sdata[];
 
     // get the current thread
     unsigned int tid = cta.thread_rank();
     unsigned int blockSize = cta.size();
 
     // stride over grid and add the values to the shared memory
-    float sum = 0;
+    real_type sum = 0;
 
     for(int i = tid; i < n; i += blockSize ) {
         auto value = image[i];
@@ -147,7 +147,7 @@ __global__ void sum_square_kernel(float *sum2, const float *images, int n, int b
  * @param[in] batch number of images
  **/
 
-__global__ void sat2d_kernel(float *sat, float * sat2, const float *data, int nx, int ny, int batch)
+__global__ void sat2d_kernel(real_type *sat, real_type * sat2, const real_type *data, int nx, int ny, int batch)
 {
     // get block id for each image
     int imageid = blockIdx.x;
@@ -159,13 +159,13 @@ __global__ void sat2d_kernel(float *sat, float * sat2, const float *data, int nx
     // the number of rows may be bigger than the number of threads, iterate
     for (int row = tid; row < nx; row += blockDim.x) {
         // running sum for value and value^2
-        float sum = 0.0f;
-        float sum2 = 0.0f;
+        real_type sum = 0.0f;
+        real_type sum2 = 0.0f;
         // starting position for this row
         int index = (imageid*nx+row)*ny;
         // iterative over column
         for (int i=0; i<ny; i++, index++) {
-            float val = data[index];
+            real_type val = data[index];
             sum += val;
             sat[index] = sum;
             sum2 += val*val;
@@ -183,8 +183,8 @@ __global__ void sat2d_kernel(float *sat, float * sat2, const float *data, int nx
         int index = col + imageid*nx*ny;
 
         // assign sum with the first line value
-        float sum = sat[index];
-        float sum2 = sat2[index];
+        real_type sum = sat[index];
+        real_type sum2 = sat2[index];
     	// iterative over rest lines
     	for (int i=1; i<nx; i++) {
             index += ny;
@@ -200,8 +200,8 @@ __global__ void sat2d_kernel(float *sat, float * sat2, const float *data, int nx
 
 
 
-__global__ void cuCorrNormalizeSAT_kernel(float *correlation, const float *referenceSum2, const float *secondarySat,
-    const float *secondarySat2, const int corNX, const int corNY, const int referenceNX, const int referenceNY,
+__global__ void cuCorrNormalizeSAT_kernel(real_type *correlation, const real_type *referenceSum2, const real_type *secondarySat,
+    const real_type *secondarySat2, const int corNX, const int corNY, const int referenceNX, const int referenceNY,
     const int secondaryNX, const int secondaryNY)
 {
     //get the image id from block z index
@@ -213,42 +213,42 @@ __global__ void cuCorrNormalizeSAT_kernel(float *correlation, const float *refer
     // check the range
     if (tx < corNX && ty < corNY) {
         // get the reference std
-        float refSum2 = referenceSum2[imageid];
+        real_type refSum2 = referenceSum2[imageid];
 
         // compute the sum and sum square of the search image from the sum area table
         // sum
-        const float *sat = secondarySat + imageid*secondaryNX*secondaryNY;
+        const real_type *sat = secondarySat + imageid*secondaryNX*secondaryNY;
         // get sat values for four corners
-        float topleft = (tx > 0 && ty > 0) ? sat[(tx-1)*secondaryNY+(ty-1)] : 0.0;
-        float topright = (tx > 0 ) ? sat[(tx-1)*secondaryNY+(ty+referenceNY-1)] : 0.0;
-        float bottomleft = (ty > 0) ? sat[(tx+referenceNX-1)*secondaryNY+(ty-1)] : 0.0;
-        float bottomright = sat[(tx+referenceNX-1)*secondaryNY+(ty+referenceNY-1)];
+        real_type topleft = (tx > 0 && ty > 0) ? sat[(tx-1)*secondaryNY+(ty-1)] : 0.0;
+        real_type topright = (tx > 0 ) ? sat[(tx-1)*secondaryNY+(ty+referenceNY-1)] : 0.0;
+        real_type bottomleft = (ty > 0) ? sat[(tx+referenceNX-1)*secondaryNY+(ty-1)] : 0.0;
+        real_type bottomright = sat[(tx+referenceNX-1)*secondaryNY+(ty+referenceNY-1)];
         // get the sum
-        float secondarySum = bottomright + topleft - topright - bottomleft;
+        real_type secondarySum = bottomright + topleft - topright - bottomleft;
         // sum of value^2
-        const float *sat2 = secondarySat2 + imageid*secondaryNX*secondaryNY;
+        const real_type *sat2 = secondarySat2 + imageid*secondaryNX*secondaryNY;
         // get sat2 values for four corners
         topleft = (tx > 0 && ty > 0) ? sat2[(tx-1)*secondaryNY+(ty-1)] : 0.0;
         topright = (tx > 0 ) ? sat2[(tx-1)*secondaryNY+(ty+referenceNY-1)] : 0.0;
         bottomleft = (ty > 0) ? sat2[(tx+referenceNX-1)*secondaryNY+(ty-1)] : 0.0;
         bottomright = sat2[(tx+referenceNX-1)*secondaryNY+(ty+referenceNY-1)];
-        float secondarySum2 = bottomright + topleft - topright - bottomleft;
+        real_type secondarySum2 = bottomright + topleft - topright - bottomleft;
 
         // compute the normalization
-        float norm2 = (secondarySum2-secondarySum*secondarySum/(referenceNX*referenceNY))*refSum2;
+        real_type norm2 = (secondarySum2-secondarySum*secondarySum/(referenceNX*referenceNY))*refSum2;
         // normalize the correlation surface
         correlation[(imageid*corNX+tx)*corNY+ty] *= rsqrtf(norm2 + FLT_EPSILON);
     }
 }
 
 
-void cuCorrNormalizeSAT(cuArrays<float> *correlation, cuArrays<float> *reference, cuArrays<float> *secondary,
-    cuArrays<float> * referenceSum2, cuArrays<float> *secondarySat, cuArrays<float> *secondarySat2, cudaStream_t stream)
+void cuCorrNormalizeSAT(cuArrays<real_type> *correlation, cuArrays<real_type> *reference, cuArrays<real_type> *secondary,
+    cuArrays<real_type> * referenceSum2, cuArrays<real_type> *secondarySat, cuArrays<real_type> *secondarySat2, cudaStream_t stream)
 {
     // compute the std of reference image
     // note that the mean is already subtracted
     int nthreads = 256;
-    int sMemSize = nthreads*sizeof(float);
+    int sMemSize = nthreads*sizeof(real_type);
     int nblocks = reference->count;
     sum_square_kernel<<<nblocks, nthreads, sMemSize, stream>>>(referenceSum2->devData, reference->devData,
         reference->width * reference->height, reference->count);
