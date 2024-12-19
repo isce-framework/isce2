@@ -12,8 +12,8 @@
 // @param[in] image1 input images
 // @param[inout] image2 output images - memset to 0 in prior
 __global__ void cuArraysPaddingMany_kernel(
-    const float2 *image1, const int height1, const int width1, const int size1,
-    float2 *image2, const int height2, const int width2, const int size2, const float factor )
+    const complex_type *image1, const int height1, const int width1, const int size1,
+    complex_type *image2, const int height2, const int width2, const int size2, const real_type factor )
 {
     // thread indices are for input image1
     int x1 = threadIdx.x + blockDim.x*blockIdx.x;
@@ -42,7 +42,7 @@ __global__ void cuArraysPaddingMany_kernel(
         if (width1 % 2 ==0 && y1 == ycenter1)
         {
             // split into 4
-            float2 input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
+            complex_type input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
             input *= 0.25f*factor;
             image2[IDX2R(x1, y1, width2)+imageIdx*size2] = input;
             int x2 = x1 + height2 - height1;
@@ -54,7 +54,7 @@ __global__ void cuArraysPaddingMany_kernel(
             return;
         }
         // odd width or not at the center
-        float2 input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
+        complex_type input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
         input *= 0.5f*factor;
         int x2 = x1 + height2 - height1;
         image2[IDX2R(x1, y1, width2)+imageIdx*size2] = input;
@@ -66,7 +66,7 @@ __global__ void cuArraysPaddingMany_kernel(
     {
         // even height even and at the center has been considered earlier
         // so just odd height or not at the center
-        float2 input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
+        complex_type input = image1[IDX2R(x1, y1, width1)+imageIdx*size1];
         input *= 0.5f*factor;
         int y2 = y1 + width2 - width1;
         image2[IDX2R(x1, y1, width2)+imageIdx*size2] = input;
@@ -89,7 +89,7 @@ __global__ void cuArraysPaddingMany_kernel(
  * @param[out] image2 output images
  * @note To keep the band center at (0,0), move quads to corners and pad zeros in the middle
  */
-void cuArraysFFTPaddingMany(cuArrays<float2> *image1, cuArrays<float2> *image2, cudaStream_t stream)
+void cuArraysFFTPaddingMany(cuArrays<complex_type> *image1, cuArrays<complex_type> *image2, cudaStream_t stream)
 {
     int ThreadsPerBlock = NTHREADS2D;
     // up to IDIVUP(dim, 2) for odd-length sequences
@@ -99,7 +99,7 @@ void cuArraysFFTPaddingMany(cuArrays<float2> *image1, cuArrays<float2> *image2, 
     dim3 dimGrid(BlockPerGridx, BlockPerGridy, image1->count);
 
     checkCudaErrors(cudaMemsetAsync(image2->devData, 0, image2->getByteSize(),stream));
-    float factor = 1.0f/image1->size;
+    real_type factor = 1.0f/image1->size;
     cuArraysPaddingMany_kernel<<<dimGrid, dimBlock, 0, stream>>>(
         image1->devData, image1->height, image1->width, image1->size,
         image2->devData, image2->height, image2->width, image2->size, factor);

@@ -28,7 +28,14 @@ cuAmpcorController::~cuAmpcorController()
     delete param;
 }
 
-
+bool cuAmpcorController::isDoublePrecision()
+{
+#ifdef CUAMPCOR_DOUBLE
+    return true;
+#else
+    return false;
+#endif
+}
 /**
  *  Run ampcor
  *

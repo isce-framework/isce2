@@ -142,9 +142,12 @@ void cuArrays<T>::outputHostToFile(std::string fn)
 }
 
 // instantiations, required by python extensions
-template class cuArrays<real_type>;
-template class cuArrays<complex_type>;
-template class cuArrays<real3_type>;
+template class cuArrays<float>;
+template class cuArrays<float2>;
+template class cuArrays<float3>;
+template class cuArrays<double>;
+template class cuArrays<double2>;
+template class cuArrays<double3>;
 template class cuArrays<int2>;
 template class cuArrays<int>;
 

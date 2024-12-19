@@ -21,6 +21,16 @@ cuFreqCorrelator::cuFreqCorrelator(int imageNX, int imageNY, int nImages, cudaSt
     int n[NRANK] ={imageNX, imageNY};
     
     // set up fft plans
+#ifdef CUAMPCOR_DOUBLE
+    cufft_Error(cufftPlanMany(&forwardPlan, NRANK, n,
+                              NULL, 1, imageSize,
+                              NULL, 1, fImageSize,
+                              CUFFT_D2Z, nImages));
+    cufft_Error(cufftPlanMany(&backwardPlan, NRANK, n,
+                              NULL, 1, fImageSize,
+                              NULL, 1, imageSize,
+                              CUFFT_Z2D, nImages));
+#else
     cufft_Error(cufftPlanMany(&forwardPlan, NRANK, n,
                               NULL, 1, imageSize,
                               NULL, 1, fImageSize, 
@@ -29,6 +39,7 @@ cuFreqCorrelator::cuFreqCorrelator(int imageNX, int imageNY, int nImages, cudaSt
                               NULL, 1, fImageSize,
                               NULL, 1, imageSize, 
                               CUFFT_C2R, nImages));
+#endif
     stream = stream_;
     cufftSetStream(forwardPlan, stream);
     cufftSetStream(backwardPlan, stream);

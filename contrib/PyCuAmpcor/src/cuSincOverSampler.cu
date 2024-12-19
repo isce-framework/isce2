@@ -45,7 +45,7 @@ __global__ void cuSetupSincKernel_kernel(float *r_filter_, const int i_filtercoe
     float r_wgt = (1.0f - r_wgthgt_) + r_wgthgt_*cos(PI*r_wa*r_soff_inverse_);
     float r_s = r_wa*r_beta_*r_decfactor_inverse_*PI;
     float r_fct;
-    if(r_s != 0.0f) {
+    if(r_s != 0.0) {
         r_fct = sin(r_s)/r_s;
     }
     else {
@@ -121,8 +121,8 @@ __global__ void cuSincInterpolation_kernel(const int nImages,
     int i_yfrac = int(r_yfrac*i_decfactor_);
 
     // temp variables
-    float intpData = 0.0f; // interpolated value
-    float r_sincwgt = 0.0f; // total filter weight
+    float intpData = 0.0; // interpolated value
+    float r_sincwgt = 0.0; // total filter weight
     float r_sinc_coef; // filter weight
 
     // iterate over lines of input image

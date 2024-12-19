@@ -13,8 +13,8 @@
  */
  
 #include "cuArrays.h" 
-#include "float2.h" 
-#include <cfloat>
+#include "float2.h"
+#include "data_types.h"
 #include "cudaError.h"
 #include "cudaUtil.h"
 #include "cuAmpcorUtil.h"
@@ -24,23 +24,23 @@
 #include <limits>
 
 
-// cuda does not have a good support on volatile vector struct, e.g. float2
-// have to use regular float type for shared memory (volatile) data
-// the following methods are defined to operate float2/complex objects through float
-inline static __device__ void copyToShared(volatile float *s, const int i, const float2 x, const int block) 
+// cuda does not have a good support on volatile vector struct, e.g. real2_type
+// have to use regular real_type type for shared memory (volatile) data
+// the following methods are defined to operate real2_type/complex objects through real_type
+inline static __device__ void copyToShared(volatile real_type *s, const int i, const real2_type x, const int block) 
 { s[i] = x.x; s[i+block] = x.y; }
 
-inline static __device__ void copyFromShared(float2 &x, volatile float *s, const int i, const int block) 
+inline static __device__ void copyFromShared(real2_type &x, volatile real_type *s, const int i, const int block) 
 { x.x = s[i]; x.y = s[i+block]; }
 
 
-inline static __device__ void addInShared(volatile float *s, const int i, const int j, const int block) 
+inline static __device__ void addInShared(volatile real_type *s, const int i, const int j, const int block) 
 { s[i] += s[i+j]; s[i+block] += s[i+j+block];}
 
 
-// kernel to do sum reduction for float2 within a block
+// kernel to do sum reduction for real2_type within a block
 template <const int nthreads>
-__device__ void complexSumReduceBlock(float2& sum, volatile float *shmem)
+__device__ void complexSumReduceBlock(real2_type& sum, volatile real_type *shmem)
 {
     const int tid = threadIdx.x;
     copyToShared(shmem, tid, sum, nthreads);
@@ -65,35 +65,35 @@ __device__ void complexSumReduceBlock(float2& sum, volatile float *shmem)
 
 // cuda kernel for cuDerampMethod1
 template<const int nthreads>
-__global__ void cuDerampMethod1_kernel(float2 *images, const int imageNX, int const imageNY, 
-    const int imageSize, const int nImages, const float normCoef)
+__global__ void cuDerampMethod1_kernel(real2_type *images, const int imageNX, int const imageNY, 
+    const int imageSize, const int nImages, const real_type normCoef)
 {
-    __shared__ float shmem[2*nthreads];
+    __shared__ real_type shmem[2*nthreads];
     int pixelIdx, pixelIdxX, pixelIdxY;
     
     const int bid = blockIdx.x;    
     if(bid >= nImages) return;
-    float2 *image = images+ bid*imageSize;
+    real2_type *image = images+ bid*imageSize;
     const int tid = threadIdx.x;  
-    float2 phaseDiffY  = make_float2(0.0f, 0.0f);
+    real2_type phaseDiffY  = make_real2(0.0, 0.0);
     for (int i = tid; i < imageSize; i += nthreads) {
         pixelIdxY = i % imageNY;
         if(pixelIdxY < imageNY -1) {
             pixelIdx = i;
-            float2 cprod = complexMulConj( image[pixelIdx], image[pixelIdx+1]);   
+            real2_type cprod = complexMulConj( image[pixelIdx], image[pixelIdx+1]);   
             phaseDiffY += cprod;
         } 
     }       
     complexSumReduceBlock<nthreads>(phaseDiffY, shmem);
     //phaseDiffY *= normCoef;
-    float phaseY=atan2f(phaseDiffY.y, phaseDiffY.x);
+    real_type phaseY=atan2(phaseDiffY.y, phaseDiffY.x);
 
-    float2 phaseDiffX  = make_float2(0.0f, 0.0f);
+    real2_type phaseDiffX  = make_real2(0.0, 0.0);
     for (int i = tid; i < imageSize; i += nthreads)  {
         pixelIdxX = i / imageNY; 
         if(pixelIdxX < imageNX -1) {
             pixelIdx = i;
-            float2 cprod = complexMulConj(image[i], image[i+imageNY]);
+            real2_type cprod = complexMulConj(image[i], image[i+imageNY]);
             phaseDiffX += cprod;
         }
     }   
@@ -101,14 +101,14 @@ __global__ void cuDerampMethod1_kernel(float2 *images, const int imageNX, int co
     complexSumReduceBlock<nthreads>(phaseDiffX, shmem);
    
     //phaseDiffX *= normCoef;
-    float phaseX = atan2f(phaseDiffX.y, phaseDiffX.x);  //+FLT_EPSILON
+    real_type phaseX = atan2(phaseDiffX.y, phaseDiffX.x);  //+FLT_EPSILON
      
     for (int i = tid; i < imageSize; i += nthreads)
     { 
         pixelIdxX = i%imageNY;
         pixelIdxY = i/imageNY;
-        float phase = pixelIdxX*phaseX + pixelIdxY*phaseY;
-        float2 phase_factor = make_float2(cosf(phase), sinf(phase));
+        real_type phase = pixelIdxX*phaseX + pixelIdxY*phaseY;
+        real2_type phase_factor = make_real2(cosf(phase), sinf(phase));
         image[i] *= phase_factor;
     }     
 }
@@ -120,12 +120,12 @@ __global__ void cuDerampMethod1_kernel(float2 *images, const int imageNX, int co
  * @param[inout] images input/output complex signals
  * @param[in] stream cuda stream
  */
-void cuDerampMethod1(cuArrays<float2> *images, cudaStream_t stream)
+void cuDerampMethod1(cuArrays<real2_type> *images, cudaStream_t stream)
 {
     
     const dim3 grid(images->count);
     const int imageSize = images->width*images->height;
-    const float invSize = 1.0f/imageSize;
+    const real_type invSize = 1.0f/imageSize;
 
     if(imageSize <=64) {
         cuDerampMethod1_kernel<64> <<<grid, 64, 0, stream>>>
@@ -147,7 +147,7 @@ void cuDerampMethod1(cuArrays<float2> *images, cudaStream_t stream)
 
 }
         
-void cuDeramp(int method, cuArrays<float2> *images, cudaStream_t stream)
+void cuDeramp(int method, cuArrays<real2_type> *images, cudaStream_t stream)
 {
     switch(method) {
     case 1:

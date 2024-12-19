@@ -12,7 +12,6 @@
 
 // my declarations
 #include "cuAmpcorUtil.h"
-// for FLT_EPSILON
 
 
 // alias for cuda cooperative groups
@@ -159,8 +158,8 @@ __global__ void sat2d_kernel(real_type *sat, real_type * sat2, const real_type *
     // the number of rows may be bigger than the number of threads, iterate
     for (int row = tid; row < nx; row += blockDim.x) {
         // running sum for value and value^2
-        real_type sum = 0.0f;
-        real_type sum2 = 0.0f;
+        real_type sum = 0.0;
+        real_type sum2 = 0.0;
         // starting position for this row
         int index = (imageid*nx+row)*ny;
         // iterative over column
@@ -237,7 +236,7 @@ __global__ void cuCorrNormalizeSAT_kernel(real_type *correlation, const real_typ
         // compute the normalization
         real_type norm2 = (secondarySum2-secondarySum*secondarySum/(referenceNX*referenceNY))*refSum2;
         // normalize the correlation surface
-        correlation[(imageid*corNX+tx)*corNY+ty] *= rsqrtf(norm2 + FLT_EPSILON);
+        correlation[(imageid*corNX+tx)*corNY+ty] *= rsqrt(norm2 + EPSILON);
     }
 }
 

@@ -34,7 +34,7 @@ class cuSincOverSamplerR2R
     static const int i_sincwindow = 2;
     ///< the oversampling is only performed within \pm i_sincwindow*i_covs around the peak
     static const int i_weight = 1;       ///< weight for cos() pedestal
-    const float r_pedestal = 0.0f;       ///< height of pedestal
+    const float r_pedestal = 0.0;       ///< height of pedestal
     const float r_beta = 0.75f;          ///< a low-band pass
     const float r_relfiltlen = 6.0f;     ///< relative filter length
 

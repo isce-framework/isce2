@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <math.h>
 
-inline __host__ __device__ void zero(float2 &a) { a.x = 0.0f; a.y = 0.0f; }
+inline __host__ __device__ void zero(float2 &a) { a.x = 0.0; a.y = 0.0; }
 
 // negative
 inline __host__ __device__ float2 operator-(float2 &a)
@@ -128,7 +128,7 @@ inline __host__ __device__ float2 complexExp(float arg)
 
 
 // double precision
-inline __host__ __device__ void zero(double2 &a) { a.x = 0.0f; a.y = 0.0f; }
+inline __host__ __device__ void zero(double2 &a) { a.x = 0.0; a.y = 0.0; }
 
 // negative
 inline __host__ __device__ double2 operator-(double2 &a)

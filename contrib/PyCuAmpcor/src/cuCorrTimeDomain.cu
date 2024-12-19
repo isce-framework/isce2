@@ -12,11 +12,11 @@
 template<const int nthreads, const int NPT>
 __global__ void cuArraysCorrTime_kernel(
     const int nImages,
-    const float *templateIn, const int templateNX, const int templateNY, const int templateSize,
-    const float *imageIn, const int imageNX, const int imageNY, const int imageSize,
-    float *resultOut, const int resultNX, const int resultNY, const int resultSize)
+    const real_type *templateIn, const int templateNX, const int templateNY, const int templateSize,
+    const real_type *imageIn, const int imageNX, const int imageNY, const int imageSize,
+    real_type *resultOut, const int resultNX, const int resultNY, const int resultSize)
 {
-    __shared__ float shmem[nthreads*(1+NPT)];
+    __shared__ real_type shmem[nthreads*(1+NPT)];
     const int tid = threadIdx.x;
     const int bid =  blockIdx.x;
     const int  yc =  blockIdx.y*NPT;
@@ -26,9 +26,9 @@ __global__ void cuArraysCorrTime_kernel(
     const int templateOffset = imageIdx * templateSize;
     const int   resultOffset = imageIdx *   resultSize;
 
-    const float *   imageD =    imageIn  +    imageOffset + tid;
-    const float *templateD = templateIn  + templateOffset + tid;
-     float *  resultD =   resultOut +   resultOffset;
+    const real_type *   imageD =    imageIn  +    imageOffset + tid;
+    const real_type *templateD = templateIn  + templateOffset + tid;
+     real_type *  resultD =   resultOut +   resultOffset;
 
     const int q  = min(nthreads/resultNY, 4);
     const int nt = nthreads/q;
@@ -39,18 +39,18 @@ __global__ void cuArraysCorrTime_kernel(
     const int jbeg = templateNYq * ty;
     const int jend = ty+1 >= q ? templateNY : templateNYq + jbeg;
 
-    float *shTemplate = shmem;
-    float *shImage    = shmem + nthreads;
-    float *shImage1   = shImage + tx;
+    real_type *shTemplate = shmem;
+    real_type *shImage    = shmem + nthreads;
+    real_type *shImage1   = shImage + tx;
 
-    float corrCoeff[NPT];
+    real_type corrCoeff[NPT];
     for (int k = 0; k < NPT; k++)
-        corrCoeff[k] = 0.0f;
+        corrCoeff[k] = 0.0;
 
     int iaddr = yc*imageNY;
 
 
-    float img[NPT];
+    real_type img[NPT];
     for (int k = 0; k < NPT-1; k++, iaddr += imageNY)
         img[k] = imageD[iaddr];
     for (int taddr = 0; taddr < templateSize; taddr += templateNY, iaddr += imageNY)
@@ -98,9 +98,9 @@ __global__ void cuArraysCorrTime_kernel(
  * @param[out] results Output correlation surface
  * @param[in] stream cudaStream
  */
-void cuCorrTimeDomain(cuArrays<float> *templates,
-               cuArrays<float> *images,
-               cuArrays<float> *results,
+void cuCorrTimeDomain(cuArrays<real_type> *templates,
+               cuArrays<real_type> *images,
+               cuArrays<real_type> *results,
                cudaStream_t stream)
 {
     /* compute correlation matrix */

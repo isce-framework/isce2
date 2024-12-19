@@ -28,7 +28,7 @@
 #include "data_types.h"
 
 // cuda kernel for cuArraysCopyToBatch
-__global__ void cuArraysCopyToBatch_kernel(const complex_type *imageIn, const int inNX, const int inNY,
+__global__ void cuArraysCopyToBatch_kernel(const image_complex_type *imageIn, const int inNX, const int inNY,
     complex_type *imageOut, const int outNX, const int outNY,
     const int nImagesX, const int nImagesY,
     const int strideX, const int strideY)
@@ -41,7 +41,7 @@ __global__ void cuArraysCopyToBatch_kernel(const complex_type *imageIn, const in
     int idxImageX = idxImage/nImagesY;
     int idxImageY = idxImage%nImagesY;
     int idxIn = (idxImageX*strideX+outx)*inNY + idxImageY*strideY+outy;
-    imageOut[idxOut] = imageIn[idxIn];
+    imageOut[idxOut] = make_complex_type(imageIn[idxIn].x, imageIn[idxIn].y);
 }
 
 /**
@@ -53,7 +53,7 @@ __global__ void cuArraysCopyToBatch_kernel(const complex_type *imageIn, const in
  * @param strideW stride along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatch(cuArrays<complex_type> *image1, cuArrays<complex_type> *image2,
+void cuArraysCopyToBatch(cuArrays<image_complex_type> *image1, cuArrays<complex_type> *image2,
     int strideH, int strideW, cudaStream_t stream)
 {
     const int nthreads = NTHREADS2D;
@@ -93,7 +93,36 @@ __global__ void cuArraysCopyToBatchWithOffset_kernel(const T_in *imageIn, const 
         imageOut[idxOut] = T_out{imageIn[idxIn]}; //true, copy
     }
     else
-        imageOut[idxOut] = T_out{0.0f}; //false, fill with 0
+        imageOut[idxOut] = T_out{0.0}; //false, fill with 0
+}
+
+// kernel for cuArraysCopyToBatchWithOffset
+template<>
+__global__ void cuArraysCopyToBatchWithOffset_kernel<image_complex_type, complex_type>(const image_complex_type *imageIn, const int inNX, const int inNY,
+    complex_type *imageOut, const int outNX, const int outNY, const int nImages,
+    const int *offsetX, const int *offsetY)
+{
+    // get image index
+    int idxImage = blockIdx.z;
+    // check the image index within range
+    if(idxImage>=nImages ) return;
+    // get the output pixel location
+    int outx = threadIdx.x + blockDim.x*blockIdx.x;
+    int outy = threadIdx.y + blockDim.y*blockIdx.y;
+     // check the output location within range (due to cuda threads)
+    if(outx >= outNX || outy >= outNY) return;
+    // flatten the output location to 1d
+    int idxOut = idxImage*outNX*outNY + outx*outNY + outy;
+    // find the input pixel location
+    int inx = offsetX[idxImage] + outx;
+    int iny = offsetY[idxImage] + outy;
+    // check whether the location is within the input image range
+    if(inx>=0 && inx<inNX && iny>=0 && iny<inNY) {
+        int idxIn = inx*inNY+iny;
+        imageOut[idxOut] = make_complex_type(imageIn[idxIn].x, imageIn[idxIn].x);
+    }
+    else
+        imageOut[idxOut] = make_complex_type(0.0, 0.0); //false, fill with 0
 }
 
 /**
@@ -106,7 +135,7 @@ __global__ void cuArraysCopyToBatchWithOffset_kernel(const T_in *imageIn, const 
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffset(cuArrays<complex_type> *image1, const int inNX, const int inNY,
+void cuArraysCopyToBatchWithOffset(cuArrays<image_complex_type> *image1, const int inNX, const int inNY,
     cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
@@ -120,7 +149,7 @@ void cuArraysCopyToBatchWithOffset(cuArrays<complex_type> *image1, const int inN
 }
 
 // same as above, but from complex to real(take amplitudes)
-__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const complex_type *imageIn, const int inNX, const int inNY,
+__global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const image_complex_type *imageIn, const int inNX, const int inNY,
     complex_type *imageOut, const int outNX, const int outNY, const int nImages,
     const int *offsetX, const int *offsetY)
 {
@@ -146,7 +175,7 @@ __global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const complex_type *imag
         imageOut[idxOut] = make_complex_type(complexAbs(imageIn[idxIn]), 0.0); //true, copy with abs value
     }
     else
-        imageOut[idxOut] = make_complex_type(0.0f, 0.0f); //false, fill with 0
+        imageOut[idxOut] = make_complex_type(0.0, 0.0); //false, fill with 0
 }
 
 /**
@@ -159,7 +188,7 @@ __global__ void cuArraysCopyToBatchAbsWithOffset_kernel(const complex_type *imag
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchAbsWithOffset(cuArrays<complex_type> *image1, const int inNX, const int inNY,
+void cuArraysCopyToBatchAbsWithOffset(cuArrays<image_complex_type> *image1, const int inNX, const int inNY,
     cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
@@ -182,7 +211,7 @@ void cuArraysCopyToBatchAbsWithOffset(cuArrays<complex_type> *image1, const int 
  * @param strideW (varying) offsets along width to extract chips
  * @param stream cudaStream
  */
-void cuArraysCopyToBatchWithOffsetR2C(cuArrays<real_type> *image1, const int inNX, const int inNY,
+void cuArraysCopyToBatchWithOffsetR2C(cuArrays<image_real_type> *image1, const int inNX, const int inNY,
     cuArrays<complex_type> *image2, const int *offsetH, const int* offsetW, cudaStream_t stream)
 {
     const int nthreads = 16;
@@ -310,7 +339,7 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const real_type *imageIn, c
         }
         else {
             // outside, set it to 0 and mark the pixel as invalid (0)
-            imageOut[idxOut] = 0.0f;
+            imageOut[idxOut] = 0.0;
             imageValid[idxOut] = 0;
         }
     }
@@ -532,7 +561,7 @@ __global__ void cuArraysR2C_kernel(real_type *image1, complex_type *image2, int 
     if(idx < size)
     {
         image2[idx].x = image1[idx];
-        image2[idx].y =  0.0f;
+        image2[idx].y =  0.0;
     }
 }
 

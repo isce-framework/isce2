@@ -77,6 +77,8 @@ PYBIND11_MODULE(PyCuAmpcor, m)
 
         .DEF_METHOD(runAmpcor)
 
+        .DEF_METHOD(isDoublePrecision)
+
         .def("checkPixelInImageRange", [](const cls& self) {
             self.param->checkPixelInImageRange();
         })

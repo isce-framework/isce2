@@ -409,7 +409,8 @@ def estimateOffsetField(reference, secondary, inps=None):
             return objOffset, geomDict
 
     # Run the code
-    print('Running PyCuAmpcor')
+    Precision = 'DOUBLE' if objOffset.isDoublePrecision() else 'FLOAT'
+    print(f'Running PyCuAmpcor in {Precision} precision')
 
     objOffset.runAmpcor()
     print('Finished')
@@ -420,7 +421,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # Finalize the results
     # offsetfield
     outImg = isceobj.createImage()
-    outImg.setDataType('FLOAT')
+    outImg.setDataType(Precision)
     outImg.setFilename(offsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIP'
@@ -431,7 +432,7 @@ def estimateOffsetField(reference, secondary, inps=None):
 
     # gross offsetfield
     outImg = isceobj.createImage()
-    outImg.setDataType('FLOAT')
+    outImg.setDataType(Precision)
     outImg.setFilename(grossOffsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIP'
@@ -443,7 +444,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # snr
     snrImg = isceobj.createImage()
     snrImg.setFilename(snrImageName)
-    snrImg.setDataType('FLOAT')
+    snrImg.setDataType(Precision)
     snrImg.setBands(1)
     snrImg.setWidth(objOffset.numberWindowAcross)
     snrImg.setLength(objOffset.numberWindowDown)
@@ -453,7 +454,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # cov
     covImg = isceobj.createImage()
     covImg.setFilename(covImageName)
-    covImg.setDataType('FLOAT')
+    covImg.setDataType(Precision)
     covImg.setBands(3)
     covImg.scheme = 'BIP'
     covImg.setWidth(objOffset.numberWindowAcross)

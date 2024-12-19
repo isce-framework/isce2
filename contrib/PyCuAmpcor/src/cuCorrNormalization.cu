@@ -65,7 +65,7 @@ __global__ void cuArraysMean_kernel(real_type *images, real_type *image_sum, int
     const int imageOffset = imageIdx * imageSize;
     real_type   *imageD = images + imageOffset;
 
-    real_type sum  = 0.0f;
+    real_type sum  = 0.0;
     // perform the reduction beyond one block
     // save the results for each thread in block
     for (int i = tid; i < imageSize; i += Nthreads)
@@ -109,7 +109,7 @@ __global__ void cuArraysSubtractMean_kernel(real_type *images, int imageSize, re
     real_type   *imageD = images + imageOffset;
 
     // compute the sum
-    real_type sum  = 0.0f;
+    real_type sum  = 0.0;
     for (int i = tid; i < imageSize; i += Nthreads)
             sum += imageD[i];
     sum = sumReduceBlock<Nthreads>(sum, shmem);
@@ -154,7 +154,7 @@ __global__ void cuArraysSumCorr_kernel(real_type *images, int *imagesValid, real
     real_type*    imageD = images + imageOffset;
     int*      imageValidD = imagesValid + imageOffset;
 
-    real_type sum  = 0.0f;
+    real_type sum  = 0.0;
     int count = 0;
 
     for (int i = tid; i < imageSize; i += Nthreads) {
@@ -250,7 +250,7 @@ __global__ void cuCorrNormalize_kernel(
     real_type *  resultD =   resultOut +   resultOffset;
 
     // template sum^2
-    real_type templateSum2 = 0.0f;
+    real_type templateSum2 = 0.0;
     for (int i = tid; i < templateSize; i += Nthreads)
         {
             const real_type t = templateD[i];
@@ -260,13 +260,13 @@ __global__ void cuCorrNormalize_kernel(
     __syncthreads();
 
     // reset shared memory value
-    shmem[tid] = shmem[tid + Nthreads] = shmem[tid + 2*Nthreads] = 0.0f;
+    shmem[tid] = shmem[tid + Nthreads] = shmem[tid + 2*Nthreads] = 0.0;
     __syncthreads();
 
     // perform the prefix sum and sum^2 for secondary window
     // see notes above
-    real_type imageSum  = 0.0f;
-    real_type imageSum2 = 0.0f;
+    real_type imageSum  = 0.0;
+    real_type imageSum2 = 0.0;
     int iaddr = 0;
     const int windowSize = templateNX*imageNY;
     // iterative till reaching the templateNX row of the secondary window
