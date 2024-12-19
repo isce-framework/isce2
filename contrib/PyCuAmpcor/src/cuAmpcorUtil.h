@@ -77,7 +77,7 @@ void cuCorrNormalizeSAT(cuArrays<real_type> *correlation, cuArrays<real_type> *r
 //in cuOffset.cu: utitilies for determining the max locaiton of cross correlations or the offset
 void cuArraysMaxloc2D(cuArrays<real_type> *images, cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, cudaStream_t stream);
 void cuArraysMaxloc2D(cuArrays<real_type> *images, const int2 start, const int2 range, cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, cudaStream_t stream);
-void cuSubPixelOffset(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetRoomIn, cuArrays<complex_type> *offsetFinal, const int2 initOrigin, const int initFactor, const int2 zoomInOrigin, const int zoomInFactor, cudaStream_t stream);
+void cuSubPixelOffset(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetRoomIn, cuArrays<real2_type> *offsetFinal, const int2 initOrigin, const int initFactor, const int2 zoomInOrigin, const int zoomInFactor, cudaStream_t stream);
 
 void cuDetermineSecondaryExtractOffset(cuArrays<int2> *maxLoc, cuArrays<int2> *maxLocShift,
         int xOldRange, int yOldRange, int xNewRange, int yNewRange, cudaStream_t stream);

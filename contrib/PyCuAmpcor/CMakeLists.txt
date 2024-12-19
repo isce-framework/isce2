@@ -8,6 +8,8 @@ endif()
 
 set(CMAKE_CUDA_STANDARD 11)
 set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --prec-div=true --prec-sqrt=true")
+
 
 pybind11_add_module(PyCuAmpcor
     src/PyCuAmpcor.cpp

@@ -15,7 +15,7 @@
 #include <float.h>
 
 // disable this for single precision version
-// #define CUAMPCOR_DOUBLE
+#define CUAMPCOR_DOUBLE
 
 #ifdef CUAMPCOR_DOUBLE
     #define real_type double

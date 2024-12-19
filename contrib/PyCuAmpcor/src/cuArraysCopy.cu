@@ -119,7 +119,7 @@ __global__ void cuArraysCopyToBatchWithOffset_kernel<image_complex_type, complex
     // check whether the location is within the input image range
     if(inx>=0 && inx<inNX && iny>=0 && iny<inNY) {
         int idxIn = inx*inNY+iny;
-        imageOut[idxOut] = make_complex_type(imageIn[idxIn].x, imageIn[idxIn].x);
+        imageOut[idxOut] = make_complex_type(imageIn[idxIn].x, imageIn[idxIn].y);
     }
     else
         imageOut[idxOut] = make_complex_type(0.0, 0.0); //false, fill with 0
