@@ -159,6 +159,12 @@ void cuCorrTimeDomain(cuArrays<real_type> *templates,
             results->devData, results->height, results->width, results->size);
         getLastCudaError("cuArraysCorrTime error");
     }
+#ifdef CUAMPCOR_DOUBLE
+    else {
+        fprintf(stderr, "The (oversampled) window size along the across direction %d should be smaller than 640.\n", imageNY);
+        throw;
+    }
+#else
     else if (imageNY <=  768) {
         cuArraysCorrTime_kernel< 768,NPT><<<grid, 768, 0, stream>>>(nImages,
             templates->devData, templates->height, templates->width, templates->size,
@@ -184,5 +190,6 @@ void cuCorrTimeDomain(cuArrays<real_type> *templates,
         fprintf(stderr, "The (oversampled) window size along the across direction %d should be smaller than 1024.\n", imageNY);
         throw;
     }
+#endif
 }
 // end of file
