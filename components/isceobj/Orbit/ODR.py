@@ -184,15 +184,17 @@ class Arclist(object):
 
     def parseLine(self,line):        
         arc = Arc()
-        arc.number = line[0:3] # Arc number
-        arc.start = datetime.datetime.strptime(line[5:17],'%y%m%d %H:%M') # Starting time for the arc
-        arc.stop = datetime.datetime.strptime(line[20:32],'%y%m%d %H:%M') # End time for the arc
-        arc.slrResidual = line[34:38] # Satellite laser ranging residual in cm        
-        arc.crossOver = line[39:43]
-        arc.altimeter = line[45:49]
-        arc.repeat = line[51:57] # Repeat cycle in days
-        arc.version = line[58:61] # Version number
-        arc.precise = datetime.datetime.strptime(line[63:78],'%y%m%d %H:%M:%S') # Starting time of the precise segment of the arc
+        ###### Change to also work for the new arclist format in the recalcuated ODR orbit files.#######
+        arc.number = line.split()[0] # Arc number
+        arc.start = datetime.datetime.strptime(" ".join(line.split()[1:3]),'%y%m%d %H:%M') # Starting time for the arc
+        arc.stop = datetime.datetime.strptime(" ".join(line.split()[4:6]),'%y%m%d %H:%M') # End time for the arc
+        ###### commented the following because it is not always present in the new arclist file ############
+        # arc.slrResidual = line[34:38] # Satellite laser ranging residual in cm        
+        # arc.crossOver = line[39:43]
+        # arc.altimeter = line[45:49]
+        # arc.repeat = line[51:57] # Repeat cycle in days
+        # arc.version = line[58:61] # Version number
+        arc.precise = datetime.datetime.strptime(" ".join(line.split()[-2:]),'%y%m%d %H:%M:%S') # Starting time of the precise segment of the arc
 
         return arc
 
