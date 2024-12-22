@@ -106,7 +106,13 @@ void cuCorrTimeDomain(cuArrays<real_type> *templates,
     /* compute correlation matrix */
     const int nImages = images->count;
     const int imageNY = images->width;
+
+#if defined(CUAMPCOR_DOUBLE) && __CUDA_ARCH__ < 800
+    // For GPUs older than A100, static shared memory limit is 48K
+    const int NPT = 4;
+#else
     const int NPT = 8;
+#endif
 
 
     const dim3 grid(nImages, (results->width-1)/NPT+1, 1);
@@ -159,12 +165,6 @@ void cuCorrTimeDomain(cuArrays<real_type> *templates,
             results->devData, results->height, results->width, results->size);
         getLastCudaError("cuArraysCorrTime error");
     }
-#ifdef CUAMPCOR_DOUBLE
-    else {
-        fprintf(stderr, "The (oversampled) window size along the across direction %d should be smaller than 640.\n", imageNY);
-        throw;
-    }
-#else
     else if (imageNY <=  768) {
         cuArraysCorrTime_kernel< 768,NPT><<<grid, 768, 0, stream>>>(nImages,
             templates->devData, templates->height, templates->width, templates->size,
@@ -190,6 +190,5 @@ void cuCorrTimeDomain(cuArrays<real_type> *templates,
         fprintf(stderr, "The (oversampled) window size along the across direction %d should be smaller than 1024.\n", imageNY);
         throw;
     }
-#endif
 }
 // end of file
