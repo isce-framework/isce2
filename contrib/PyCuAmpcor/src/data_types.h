@@ -23,6 +23,7 @@
     #define real2_type double2
     #define real3_type double3
     #define make_real2 make_double2
+    #define make_real3 make_double3
     #define make_complex_type make_double2
     #define EPSILON DBL_EPSILON
     #define REAL_MAX DBL_MAX
@@ -32,6 +33,7 @@
     #define real2_type float2
     #define real3_type float3
     #define make_real2 make_float2
+    #define make_real3 make_float3
     #define make_complex_type make_float2
     #define EPSILON FLT_EPSILON
     #define REAL_MAX FLT_MAX

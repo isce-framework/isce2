@@ -84,7 +84,6 @@ private:
     // SNR estimation
     cuArrays<real_type> *r_corrBatchRawZoomIn;
     cuArrays<real_type> *r_corrBatchSum;
-    cuArrays<int> *i_corrBatchZoomInValid, *i_corrBatchValidCount;
     cuArrays<real_type> *r_snrValue;
 
     // Variance estimation

@@ -91,20 +91,33 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
 #endif
 
     // extract a smaller chip around the peak {offsetInit}
-    cuArraysCopyExtractCorr(r_corrBatch, r_corrBatchZoomIn, i_corrBatchValidCount, offsetInit, stream);
+    // with extra pads, i_corrBatchValidCount is no longer needed
+    cuArraysCopyExtractCorr(r_corrBatch, r_corrBatchZoomIn, offsetInit, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the extracted correlation Surface
     r_corrBatchZoomIn->outputToFile("r_corrBatchZoomIn", stream);
 #endif
 
-    // TBD statistics of correlation surface
+    // statistics of correlation surface
+    // estimate variance on r_corrBatch
+    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, r_covValue, stream);
+
+    // snr on the extracted surface r_corrBatchZoomIn
+    cuArraysSumSquare(r_corrBatchZoomIn, r_corrBatchSum, stream);
+    int corrSurfaceSize = r_corrBatch->height*r_corrBatch->width;
+    cuEstimateSnr(r_corrBatchSum, r_maxval, r_snrValue, corrSurfaceSize, stream);
+
+#ifdef CUAMPCOR_DEBUG
+    r_snrValue->outputToFile("r_snrValue", stream);
+    r_covValue->outputToFile("r_covValue", stream);
+#endif
 
     // oversample the correlation surface
     if(param->oversamplingMethod) {
         // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversamplingfactor
         // we need the max loc as the center if shifted
-        std::cout << "Sinc oversampler needs to be checked\n";
+        std::cout << "Sinc oversampler does not work at this moment\n";
         exit(1);
         // corrSincOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled,
         //     maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
@@ -145,9 +158,9 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     // Insert the chunk results to final images
     cuArraysCopyInsert(offsetFinal, offsetImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // snr
-    // cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // Variance.
-    // cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // all done
 }
 
@@ -464,31 +477,21 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     corrMaxValue = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     corrMaxValue->allocate();
 
-
     r_corrBatchSum = new cuArrays<real_type> (
                     param->numberWindowDownInChunk,
                     param->numberWindowAcrossInChunk);
     r_corrBatchSum->allocate();
 
-    i_corrBatchValidCount = new cuArrays<int> (
-                        param->numberWindowDownInChunk,
-                        param->numberWindowAcrossInChunk);
-    i_corrBatchValidCount->allocate();
-
     i_maxloc = new cuArrays<int2> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-
     i_maxloc->allocate();
 
     r_maxval = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-
     r_maxval->allocate();
 
     r_snrValue = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-
     r_snrValue->allocate();
 
     r_covValue = new cuArrays<real3_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-
     r_covValue->allocate();
 
     // end of new arrays

@@ -308,7 +308,7 @@ template void cuArraysCopyExtract(cuArrays<complex_type> *in, cuArrays<complex_t
 
 // correlation surface extraction (Minyan Zhong)
 __global__ void cuArraysCopyExtractVaryingOffsetCorr(const real_type *imageIn, const int inNX, const int inNY,
-     real_type *imageOut, const int outNX, const int outNY, int *imageValid, const int nImages,
+     real_type *imageOut, const int outNX, const int outNY, const int nImages,
      const int2 *maxloc)
 {
 
@@ -328,20 +328,8 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const real_type *imageIn, c
 
         // Find the location in flattened array.
         int idxOut = (idxImage * outNX + outx) * outNY + outy;
-
-        // check whether inside of the input image
-        if (inx>=0 && iny>=0 && inx<inNX && iny<inNY)
-        {
-            // inside the boundary, copy over and mark the pixel as valid (1)
-            int idxIn = (idxImage * inNX + inx) * inNY + iny;
-            imageOut[idxOut] = imageIn[idxIn];
-            imageValid[idxOut] = 1;
-        }
-        else {
-            // outside, set it to 0 and mark the pixel as invalid (0)
-            imageOut[idxOut] = 0.0;
-            imageValid[idxOut] = 0;
-        }
+        int idxIn = (idxImage * inNX + inx) * inNY + iny;
+        imageOut[idxOut] = imageIn[idxIn];
     }
 }
 
@@ -350,7 +338,7 @@ __global__ void cuArraysCopyExtractVaryingOffsetCorr(const real_type *imageIn, c
  * @param[in] imageIn inut images
  * @param[out] imageOut output images of dimension nImages*outNX*outNY
  */
-void cuArraysCopyExtractCorr(cuArrays<real_type> *imagesIn, cuArrays<real_type> *imagesOut, cuArrays<int> *imagesValid, cuArrays<int2> *maxloc, cudaStream_t stream)
+void cuArraysCopyExtractCorr(cuArrays<real_type> *imagesIn, cuArrays<real_type> *imagesOut, cuArrays<int2> *maxloc, cudaStream_t stream)
 {
     //assert(imagesIn->height >= imagesOut && inNY >= outNY);
     const int nthreads = 16;
@@ -359,8 +347,10 @@ void cuArraysCopyExtractCorr(cuArrays<real_type> *imagesIn, cuArrays<real_type> 
 
     dim3 blockspergrid(IDIVUP(imagesOut->height,nthreads), IDIVUP(imagesOut->width,nthreads), imagesOut->count);
 
-    cuArraysCopyExtractVaryingOffsetCorr<<<blockspergrid, threadsperblock,0, stream>>>(imagesIn->devData, imagesIn->height, imagesIn->width,
-        imagesOut->devData, imagesOut->height, imagesOut->width, imagesValid->devData, imagesOut->count, maxloc->devData);
+    cuArraysCopyExtractVaryingOffsetCorr<<<blockspergrid, threadsperblock,0, stream>>>(
+        imagesIn->devData, imagesIn->height, imagesIn->width,
+        imagesOut->devData, imagesOut->height, imagesOut->width,
+        imagesOut->count, maxloc->devData);
     getLastCudaError("cuArraysCopyExtract error");
 }
 

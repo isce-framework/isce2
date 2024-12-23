@@ -140,7 +140,7 @@ void cuArraysSubtractMean(cuArrays<real_type> *images, cudaStream_t stream)
 
 // cuda kernel to compute summation on extracted correlation surface (Minyan)
 template<const int Nthreads>
-__global__ void cuArraysSumCorr_kernel(real_type *images, int *imagesValid, real_type *imagesSum, int *imagesValidCount, int imageSize, int nImages)
+__global__ void cuArraysSum_kernel(real_type *images, real_type *imagesSum, int imageSize, int nImages)
 {
     __shared__ real_type shmem[Nthreads];
 
@@ -152,22 +152,17 @@ __global__ void cuArraysSumCorr_kernel(real_type *images, int *imagesValid, real
     const int imageIdx = bid;
     const int imageOffset = imageIdx * imageSize;
     real_type*    imageD = images + imageOffset;
-    int*      imageValidD = imagesValid + imageOffset;
 
     real_type sum  = 0.0;
-    int count = 0;
 
     for (int i = tid; i < imageSize; i += Nthreads) {
             sum += imageD[i] * imageD[i];
-            count += imageValidD[i];
     }
 
     sum = sumReduceBlock<Nthreads>(sum, shmem);
-    count = sumReduceBlock<Nthreads>(count, shmem);
 
     if(tid ==0) {
         imagesSum[bid] = sum;
-        imagesValidCount[bid] = count;
     }
 }
 
@@ -179,15 +174,14 @@ __global__ void cuArraysSumCorr_kernel(real_type *images, int *imagesValid, real
  * @param[out] imagesValidCount count of total valid pixels
  * @param[in] stream cudaStream
  */
-void cuArraysSumCorr(cuArrays<real_type> *images, cuArrays<int> *imagesValid, cuArrays<real_type> *imagesSum,
-    cuArrays<int> *imagesValidCount, cudaStream_t stream)
+void cuArraysSumSquare(cuArrays<real_type> *images, cuArrays<real_type> *imagesSum, cudaStream_t stream)
 {
     const dim3 grid(images->count, 1, 1);
     const int imageSize = images->width*images->height;
 
-    cuArraysSumCorr_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, imagesValid->devData,
-        imagesSum->devData, imagesValidCount->devData, imageSize, images->count);
-    getLastCudaError("cuArraysSumValueCorr kernel error\n");
+    cuArraysSum_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData,
+        imagesSum->devData, imageSize, images->count);
+    getLastCudaError("cuArraysSumValue kernel error\n");
 }
 
 // intra-block inclusive prefix sum
