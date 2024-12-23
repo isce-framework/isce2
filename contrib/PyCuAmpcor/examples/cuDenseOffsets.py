@@ -335,10 +335,12 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.grossOffsetImageName = fbase + '_gross.bip'
     objOffset.snrImageName = fbase + '_snr.bip'
     objOffset.covImageName = fbase + '_cov.bip'
+    objOffset.peakValueImageName = fbase + '_peak.bip'
     print("offsetfield: ",objOffset.offsetImageName)
     print("gross offsetfield: ",objOffset.grossOffsetImageName)
     print("snr: ",objOffset.snrImageName)
     print("cov: ",objOffset.covImageName)
+    print("peak value: ", objOffset.peakValueImageName)
 
     # whether to include the gross offset in offsetImage
     objOffset.mergeGrossOffset = inps.merge_gross_offset
@@ -348,11 +350,14 @@ def estimateOffsetField(reference, secondary, inps=None):
         grossOffsetImageName = objOffset.grossOffsetImageName.decode('utf8')
         snrImageName = objOffset.snrImageName.decode('utf8')
         covImageName = objOffset.covImageName.decode('utf8')
+        peakValueImageName = objOffset.peakValueImageName.decode('utf8')
+
     except:
         offsetImageName = objOffset.offsetImageName
         grossOffsetImageName = objOffset.grossOffsetImageName
         snrImageName = objOffset.snrImageName
         covImageName = objOffset.covImageName
+        peakValueImageName = objOffset.peakValueImageName
 
     # generic control
     objOffset.numberWindowDownInChunk = inps.numWinDownInChunk
@@ -461,6 +466,17 @@ def estimateOffsetField(reference, secondary, inps=None):
     covImg.setLength(objOffset.numberWindowDown)
     covImg.setAccessMode('read')
     covImg.renderHdr()
+
+    # peak value
+    peakValueImg = isceobj.createImage()
+    peakValueImg.setFilename(peakValueImageName)
+    peakValueImg.setDataType(Precision)
+    peakValueImg.setBands(1)
+    peakValueImg.scheme = 'BIP'
+    peakValueImg.setWidth(objOffset.numberWindowAcross)
+    peakValueImg.setLength(objOffset.numberWindowDown)
+    peakValueImg.setAccessMode('read')
+    peakValueImg.renderHdr()
 
     return objOffset, geomDict
 

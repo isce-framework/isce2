@@ -43,10 +43,11 @@ cuAmpcorParameter::cuAmpcorParameter()
     secondaryImageName = "secondary.slc";
     secondaryImageWidth = 1000;
     secondaryImageHeight = 1000;
-    offsetImageName = "DenseOffset.off";
-    grossOffsetImageName = "GrossOffset.off";
-    snrImageName = "snr.snr";
-    covImageName = "cov.cov";
+    offsetImageName = "DenseOffset.bip";
+    grossOffsetImageName = "GrossOffset.bip";
+    snrImageName = "snr.bip";
+    covImageName = "cov.bip";
+    peakValueImageName = "peakValue.bip";
     numberWindowDown =  1;
     numberWindowAcross = 1;
     numberWindowDownInChunk = 1;

@@ -38,6 +38,7 @@ private:
     cuArrays<real2_type> *offsetImage; ///< output offsets image
     cuArrays<real_type> *snrImage;     ///< snr image
     cuArrays<real3_type> *covImage;    ///< cov image
+    cuArrays<real_type> *peakValueImage;     ///< peak value image
 
     // local variables and workers
     // gpu buffer to load images from file
@@ -94,7 +95,8 @@ public:
     cuAmpcorChunk(cuAmpcorParameter *param_,
         GDALImage *reference_, GDALImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
-        cuArrays<real3_type> *covImage_, cudaStream_t stream_);
+        cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
+        cudaStream_t stream_);
     // destructor
     ~cuAmpcorChunk();
 

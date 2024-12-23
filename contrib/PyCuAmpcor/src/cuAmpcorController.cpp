@@ -57,6 +57,7 @@ void cuAmpcorController::runAmpcor()
     cuArrays<real2_type> *offsetImage, *offsetImageRun;
     cuArrays<real_type> *snrImage, *snrImageRun;
     cuArrays<real3_type> *covImage, *covImageRun;
+    cuArrays<real_type> *peakValueImage, *peakValueImageRun;
 
     // nWindowsDownRun is defined as numberChunk * numberWindowInChunk
     // It may be bigger than the actual number of windows
@@ -72,6 +73,9 @@ void cuAmpcorController::runAmpcor()
     covImageRun = new cuArrays<real3_type>(nWindowsDownRun, nWindowsAcrossRun);
     covImageRun->allocate();
 
+    peakValueImageRun = new cuArrays<real_type>(nWindowsDownRun, nWindowsAcrossRun);
+    peakValueImageRun->allocate();
+
     // Offset fields.
     offsetImage = new cuArrays<real2_type>(param->numberWindowDown, param->numberWindowAcross);
     offsetImage->allocate();
@@ -84,6 +88,12 @@ void cuAmpcorController::runAmpcor()
     covImage = new cuArrays<real3_type>(param->numberWindowDown, param->numberWindowAcross);
     covImage->allocate();
 
+    // Correlation surface peak value
+    peakValueImage = new cuArrays<real_type>(param->numberWindowDown, param->numberWindowAcross);
+    peakValueImage->allocate();
+
+
+
     // set up the cuda streams
     cudaStream_t streams[param->nStreams];
     cuAmpcorChunk *chunk[param->nStreams];
@@ -94,7 +104,7 @@ void cuAmpcorController::runAmpcor()
         checkCudaErrors(cudaStreamCreate(&streams[ist]));
         // create the chunk processor for each stream
         chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage,
-            offsetImageRun, snrImageRun, covImageRun,
+            offsetImageRun, snrImageRun, covImageRun, peakValueImageRun,
             streams[ist]);
 
     }
@@ -137,6 +147,7 @@ void cuAmpcorController::runAmpcor()
     cuArraysCopyExtract(offsetImageRun, offsetImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(snrImageRun, snrImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(covImageRun, covImage, make_int2(0,0), streams[0]);
+    cuArraysCopyExtract(peakValueImageRun, peakValueImage, make_int2(0,0), streams[0]);
 
     /* save the offsets and gross offsets */
     // copy the offset to host
@@ -163,15 +174,18 @@ void cuAmpcorController::runAmpcor()
     // save the snr/cov images
     snrImage->outputToFile(param->snrImageName, streams[0]);
     covImage->outputToFile(param->covImageName, streams[0]);
+    peakValueImage->outputToFile(param->peakValueImageName, streams[0]);
 
     // Delete arrays.
     delete offsetImage;
     delete snrImage;
     delete covImage;
+    delete peakValueImage;
 
     delete offsetImageRun;
     delete snrImageRun;
     delete covImageRun;
+    delete peakValueImageRun;
 
     for (int ist=0; ist<param->nStreams; ist++)
     {

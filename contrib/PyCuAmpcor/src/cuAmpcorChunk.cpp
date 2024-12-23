@@ -161,6 +161,8 @@ void cuAmpcorChunk::run(int idxDown_, int idxAcross_)
     cuArraysCopyInsert(r_snrValue, snrImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // Variance.
     cuArraysCopyInsert(r_covValue, covImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
+    // peak value.
+    cuArraysCopyInsert(r_maxval, peakValueImage, idxDown_*param->numberWindowDownInChunk, idxAcross_*param->numberWindowAcrossInChunk,stream);
     // all done
 }
 
@@ -381,7 +383,7 @@ void cuAmpcorChunk::loadSecondaryChunk()
 
 /// constructor
 cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
-    cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_,
+    cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
     cudaStream_t stream_)
 
 {
@@ -391,6 +393,7 @@ cuAmpcorChunk::cuAmpcorChunk(cuAmpcorParameter *param_, GDALImage *reference_, G
     offsetImage = offsetImage_;
     snrImage = snrImage_;
     covImage = covImage_;
+    peakValueImage = peakValueImage_;
 
     stream = stream_;
 

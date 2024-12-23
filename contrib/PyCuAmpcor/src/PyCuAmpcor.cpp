@@ -51,6 +51,7 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM(int, mergeGrossOffset)
         .DEF_PARAM(str, snrImageName)
         .DEF_PARAM(str, covImageName)
+        .DEF_PARAM(str, peakValueImageName)
 
         .DEF_PARAM(int, rawDataOversamplingFactor)
         .DEF_PARAM(int, corrStatWindowSize)
