@@ -1,44 +1,22 @@
 /*
- * @file  cuAmpcorChunk.h
- * @brief Ampcor processor for a batch of windows
+ * @file  cuAmpcorProcessorGrIMP.h
+ * @brief Ampcor processor for a batch of windows with GrIMP workflow
  *
  *
  */
 
-#ifndef __CUAMPCORCHUNK_H
-#define __CUAMPCORCHUNK_H
+#ifndef __CUAMPCORPROCESSORGRIMP_H
+#define __CUAMPCORPROCESSORGRIMP_H
 
-#include "GDALImage.h"
-#include "data_types.h"
-#include "cuArrays.h"
-#include "cuAmpcorParameter.h"
-#include "cuOverSampler.h"
-#include "cuSincOverSampler.h"
-#include "cuCorrFrequency.h"
-#include "cuCorrNormalizer.h"
+#include "cuAmpcorProcessor.h"
 
 
 /**
  * cuAmpcor processor for a chunk (a batch of windows)
  */
-class cuAmpcorChunk{
+class cuAmpcorProcessorGrIMP : public cuAmpcorProcessor {
+
 private:
-    int idxChunkDown;     ///< index of the chunk in total batches, down
-    int idxChunkAcross;   ///< index of the chunk in total batches, across
-    int idxChunk;         ///<
-    int nWindowsDown;     ///< number of windows in one chunk, down
-    int nWindowsAcross;   ///< number of windows in one chunk, across
-
-    int devId;            ///< GPU device ID to use
-    cudaStream_t stream;  ///< CUDA stream to use
-
-    GDALImage *referenceImage;  ///< reference image object
-    GDALImage *secondaryImage;  ///< secondary image object
-    cuAmpcorParameter *param;   ///< reference to the (global) parameters
-    cuArrays<real2_type> *offsetImage; ///< output offsets image
-    cuArrays<real_type> *snrImage;     ///< snr image
-    cuArrays<real3_type> *covImage;    ///< cov image
-    cuArrays<real_type> *peakValueImage;     ///< peak value image
 
     // local variables and workers
     // gpu buffer to load images from file
@@ -47,17 +25,17 @@ private:
     cuArrays<image_complex_type> * c_referenceChunkRaw, * c_secondaryChunkRaw;
     cuArrays<image_real_type> * r_referenceChunkRaw, * r_secondaryChunkRaw;
 
+        // offset data
+    cuArrays<int> *ChunkOffsetDown, *ChunkOffsetAcross;
+
     // windows raw (not oversampled) data, complex and real
     cuArrays<complex_type> * c_referenceBatchRaw, * c_secondaryBatchRaw;
-    cuArrays<real_type> * r_referenceBatchRaw, * r_secondaryBatchRaw;
+    // cuArrays<real_type> * r_referenceBatchRaw, * r_secondaryBatchRaw;
 
     // windows oversampled data
     cuArrays<complex_type> * c_referenceBatchOverSampled, * c_secondaryBatchOverSampled;
     cuArrays<real_type> * r_referenceBatchOverSampled, * r_secondaryBatchOverSampled;
     cuArrays<real_type> * r_corrBatch, * r_corrBatchZoomIn, * r_corrBatchZoomInOverSampled;
-
-    // offset data
-    cuArrays<int> *ChunkOffsetDown, *ChunkOffsetAcross;
 
     // oversampling processors for complex images
     cuOverSamplerC2C *referenceBatchOverSampler, *secondaryBatchOverSampler;
@@ -92,23 +70,19 @@ private:
 
 public:
     // constructor
-    cuAmpcorChunk(cuAmpcorParameter *param_,
+    cuAmpcorProcessorGrIMP(cuAmpcorParameter *param_,
         GDALImage *reference_, GDALImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
         cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
         cudaStream_t stream_);
     // destructor
-    ~cuAmpcorChunk();
+    ~cuAmpcorProcessorGrIMP() override;
 
-    // local methods
-    void setIndex(int idxDown_, int idxAcross_);
+    // run the given chunk
+    void run(int, int) override;
+
     void loadReferenceChunk();
     void loadSecondaryChunk();
-    void getRelativeOffset(int *rStartPixel, const int *oStartPixel, int diff);
-    // run the given chunk
-    void run(int, int);
 };
 
-
-
-#endif
+#endif //__CUAMPCORPROCESSORGRIMP_H

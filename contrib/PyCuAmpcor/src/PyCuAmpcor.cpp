@@ -32,6 +32,7 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM(int, deviceID)
         .DEF_PARAM(int, nStreams)
         .DEF_PARAM(int, derampMethod)
+        .DEF_PARAM(int, workflow)
 
         .DEF_PARAM(str, referenceImageName)
         .DEF_PARAM(int, referenceImageHeight)

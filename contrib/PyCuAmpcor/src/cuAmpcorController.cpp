@@ -10,7 +10,7 @@
 #include "GDALImage.h"
 #include "cuArrays.h"
 #include "cudaUtil.h"
-#include "cuAmpcorChunk.h"
+#include "cuAmpcorProcessor.h"
 #include "cuAmpcorUtil.h"
 #include <cuda_runtime.h>
 #include <iostream>
@@ -96,17 +96,15 @@ void cuAmpcorController::runAmpcor()
 
     // set up the cuda streams
     cudaStream_t streams[param->nStreams];
-    cuAmpcorChunk *chunk[param->nStreams];
+    std::unique_ptr<cuAmpcorProcessor> chunk[param->nStreams];
     // iterate over cuda streams
     for(int ist=0; ist<param->nStreams; ist++)
     {
         // create each stream
         checkCudaErrors(cudaStreamCreate(&streams[ist]));
         // create the chunk processor for each stream
-        chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage,
-            offsetImageRun, snrImageRun, covImageRun, peakValueImageRun,
-            streams[ist]);
-
+        chunk[ist]= cuAmpcorProcessor::create(param->workflow, param, referenceImage, secondaryImage,
+            offsetImageRun, snrImageRun, covImageRun, peakValueImageRun, streams[ist]);
     }
 
     int nChunksDown = param->numberChunkDown;
@@ -190,7 +188,7 @@ void cuAmpcorController::runAmpcor()
     for (int ist=0; ist<param->nStreams; ist++)
     {
         // cufftplan etc are stream dependent, need to be deleted before stream is destroyed
-        delete chunk[ist];
+        chunk[ist].release();
         checkCudaErrors(cudaStreamDestroy(streams[ist]));
     }
 
