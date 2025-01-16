@@ -15,7 +15,8 @@ listFiles = ['GDALImage.cpp', 'cuArrays.cpp', 'cuArraysCopy.cu',
              'cuCorrNormalizationSAT.cu', 'cuCorrNormalizer.cpp',
              'cuAmpcorParameter.cpp', 'cuCorrTimeDomain.cu',
              'cuAmpcorController.cpp', 'cuCorrFrequency.cu',
-             'cuAmpcorChunk.cpp', 'cuEstimateStats.cu']
+             'cuAmpcorProcessor.cpp', 'cuEstimateStats.cu',
+             'cuAmpcorProcessorROIPAC.cpp', 'cuAmpcorProcessorGrIMP.cpp']
 
 lib = envPyCuAmpcor.SharedLibrary(target = 'PyCuAmpcor', source= listFiles, SHLIBPREFIX='')
 

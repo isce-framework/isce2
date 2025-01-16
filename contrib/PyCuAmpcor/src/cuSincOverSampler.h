@@ -23,6 +23,7 @@
 // dependencites
 #include "cuArrays.h"
 #include "cudaUtil.h"
+#include "data_types.h"
 
 #ifndef PI
 #define PI 3.14159265359f
@@ -34,9 +35,9 @@ class cuSincOverSamplerR2R
     static const int i_sincwindow = 2;
     ///< the oversampling is only performed within \pm i_sincwindow*i_covs around the peak
     static const int i_weight = 1;       ///< weight for cos() pedestal
-    const float r_pedestal = 0.0;       ///< height of pedestal
-    const float r_beta = 0.75f;          ///< a low-band pass
-    const float r_relfiltlen = 6.0f;     ///< relative filter length
+    const real_type r_pedestal = 0.0;       ///< height of pedestal
+    const real_type r_beta = 0.75f;          ///< a low-band pass
+    const real_type r_relfiltlen = 6.0f;     ///< relative filter length
 
     static const int i_decfactor = 4096; ///< max decimals between original grid to set up the sinc kernel
 
@@ -54,7 +55,9 @@ class cuSincOverSamplerR2R
     // set up sinc interpolation coefficients
     void cuSetupSincKernel();
     // execute interface
-    void execute(cuArrays<float> *imagesIn, cuArrays<float> *imagesOut, cuArrays<int2> *center, int oversamplingFactor);
+    void execute(cuArrays<real_type> *imagesIn, cuArrays<real_type> *imagesOut, cuArrays<int2> *center, int oversamplingFactor);
+    void execute(cuArrays<real_type> *imagesIn, cuArrays<real_type> *imagesOut, int2 center, int oversamplingFactor);
+
     // destructor
     ~cuSincOverSamplerR2R();
 };

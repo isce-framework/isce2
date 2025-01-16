@@ -184,6 +184,59 @@ void cuArraysSumSquare(cuArrays<real_type> *images, cuArrays<real_type> *imagesS
     getLastCudaError("cuArraysSumValue kernel error\n");
 }
 
+// cuda kernel to compute summation on extracted correlation surface (Minyan)
+template<const int Nthreads>
+__global__ void cuArraysSumCorr_kernel(float *images, int *imagesValid, float *imagesSum, int *imagesValidCount, int imageSize, int nImages)
+{
+    __shared__ float shmem[Nthreads];
+
+    const int tid = threadIdx.x;
+    const int bid = blockIdx.x;
+
+    if (bid >= nImages) return;
+
+    const int imageIdx = bid;
+    const int imageOffset = imageIdx * imageSize;
+    float*    imageD = images + imageOffset;
+    int*      imageValidD = imagesValid + imageOffset;
+
+    float sum  = 0.0f;
+    int count = 0;
+
+    for (int i = tid; i < imageSize; i += Nthreads) {
+            sum += imageD[i] * imageD[i];
+            count += imageValidD[i];
+    }
+
+    sum = sumReduceBlock<Nthreads>(sum, shmem);
+    count = sumReduceBlock<Nthreads>(count, shmem);
+
+    if(tid ==0) {
+        imagesSum[bid] = sum;
+        imagesValidCount[bid] = count;
+    }
+}
+
+/**
+ * Compute the variance of images (for SNR)
+ * @param[in] images Input images
+ * @param[in] imagesValid validity flags for each pixel
+ * @param[out] imagesSum variance
+ * @param[out] imagesValidCount count of total valid pixels
+ * @param[in] stream cudaStream
+ */
+void cuArraysSumCorr(cuArrays<float> *images, cuArrays<int> *imagesValid, cuArrays<float> *imagesSum,
+    cuArrays<int> *imagesValidCount, cudaStream_t stream)
+{
+    const dim3 grid(images->count, 1, 1);
+    const int imageSize = images->width*images->height;
+
+    cuArraysSumCorr_kernel<NTHREADS> <<<grid,NTHREADS,0,stream>>>(images->devData, imagesValid->devData,
+        imagesSum->devData, imagesValidCount->devData, imageSize, images->count);
+    getLastCudaError("cuArraysSumValueCorr kernel error\n");
+}
+
+
 // intra-block inclusive prefix sum
 template<int Nthreads2>
 __device__ void inclusive_prefix_sum(real_type sum, volatile real_type *shmem)

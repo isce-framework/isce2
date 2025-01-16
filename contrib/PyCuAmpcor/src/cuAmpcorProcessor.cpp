@@ -1,5 +1,5 @@
 #include "cuAmpcorProcessor.h"
-//#include "cuAmpcorProcessorROIPAC.h"
+#include "cuAmpcorProcessorROIPAC.h"
 #include "cuAmpcorProcessorGrIMP.h"
 
 
@@ -13,8 +13,10 @@ std::unique_ptr<cuAmpcorProcessor> cuAmpcorProcessor::create(int workflow,
     cudaStream_t stream_)
 {
     if (workflow == 0) {
-    //    return std::make_unique<cuAmpcorProcessorROIPAC>();
-    //} else if (workflow == 1) {
+        return std::unique_ptr<cuAmpcorProcessor>(new cuAmpcorProcessorROIPAC(
+            param_, reference_, secondary_, offsetImage_,
+            snrImage_, covImage_, peakValueImage_, stream_));
+    } else if (workflow == 1) {
         return std::unique_ptr<cuAmpcorProcessor>(new cuAmpcorProcessorGrIMP(
             param_, reference_, secondary_, offsetImage_,
             snrImage_, covImage_, peakValueImage_, stream_));

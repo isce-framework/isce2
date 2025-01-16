@@ -49,9 +49,37 @@ void cuEstimateSnr(cuArrays<real_type> *corrSum, cuArrays<real_type> *maxval, cu
     getLastCudaError("cuda kernel estimate stats error\n");
 }
 
+__global__ void cudaKernel_estimateSnr(const float* corrSum, const int* corrValidCount, const float* maxval, float* snrValue, const int size)
+
+{
+    int idx = threadIdx.x + blockDim.x*blockIdx.x;
+
+    if (idx >= size) return;
+
+    float mean = (corrSum[idx] - maxval[idx] * maxval[idx]) / (corrValidCount[idx] - 1);
+
+    snrValue[idx] = maxval[idx] * maxval[idx] / mean;
+}
+
+/**
+ * Estimate the signal to noise ratio (SNR) of the correlation surface
+ * @param[in] corrSum the sum of the correlation surface
+ * @param[in] corrValidCount the number of valid pixels contributing to sum
+ * @param[out] snrValue return snr value
+ * @param[in] stream cuda stream
+ */
+void cuEstimateSnr(cuArrays<float> *corrSum, cuArrays<int> *corrValidCount, cuArrays<float> *maxval, cuArrays<float> *snrValue, cudaStream_t stream)
+{
+
+    int size = corrSum->getSize();
+    cudaKernel_estimateSnr<<< IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
+        (corrSum->devData, corrValidCount->devData, maxval->devData, snrValue->devData, size);
+    getLastCudaError("cuda kernel estimate stats error\n");
+}
+
 // cuda kernel for cuEstimateVariance
 __global__ void cudaKernel_estimateVar(const real_type* corrBatchRaw, const int NX, const int NY, const int2* maxloc,
-        const real_type* maxval, const int templateSize, real3_type* covValue, const int size)
+        const real_type* maxval, const int templateSize, const int distance, real3_type* covValue, const int size)
 {
 
     // Find image id.
@@ -65,22 +93,22 @@ __global__ void cudaKernel_estimateVar(const real_type* corrBatchRaw, const int 
     real_type peak = maxval[idxImage];
 
     // Check if maxval is on the margin.
-    if (px-1 < 0 || py-1 <0 || px + 1 >=NX || py+1 >=NY)  {
+    if (px-distance < 0 || py-distance <0 || px + distance >=NX || py+distance >=NY)  {
 
         covValue[idxImage] = make_real3(99.0, 99.0, 0.0);
 
     }
     else {
         int offset = NX * NY * idxImage;
-        int idx00 = offset + (px - 1) * NY + py - 1;
-        int idx01 = offset + (px - 1) * NY + py    ;
-        int idx02 = offset + (px - 1) * NY + py + 1;
-        int idx10 = offset + (px    ) * NY + py - 1;
+        int idx00 = offset + (px - distance) * NY + py - distance;
+        int idx01 = offset + (px - distance) * NY + py    ;
+        int idx02 = offset + (px - distance) * NY + py + distance;
+        int idx10 = offset + (px    ) * NY + py - distance;
         int idx11 = offset + (px    ) * NY + py    ;
-        int idx12 = offset + (px    ) * NY + py + 1;
-        int idx20 = offset + (px + 1) * NY + py - 1;
-        int idx21 = offset + (px + 1) * NY + py    ;
-        int idx22 = offset + (px + 1) * NY + py + 1;
+        int idx12 = offset + (px    ) * NY + py + distance;
+        int idx20 = offset + (px + distance) * NY + py - distance;
+        int idx21 = offset + (px + distance) * NY + py    ;
+        int idx22 = offset + (px + distance) * NY + py + distance;
 
         // second-order derivatives
         real_type dxx = - ( corrBatchRaw[idx21] + corrBatchRaw[idx01] - 2.0*corrBatchRaw[idx11] );
@@ -116,18 +144,19 @@ __global__ void cudaKernel_estimateVar(const real_type* corrBatchRaw, const int 
 /**
  * Estimate the variance of the correlation surface
  * @param[in] templateSize size of reference chip
+ * @param[in] distance distance between a pixel
  * @param[in] corrBatchRaw correlation surface
  * @param[in] maxloc maximum location
  * @param[in] maxval maximum value
  * @param[out] covValue variance value
  * @param[in] stream cuda stream
  */
-void cuEstimateVariance(cuArrays<real_type> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, int templateSize, cuArrays<real3_type> *covValue, cudaStream_t stream)
+void cuEstimateVariance(cuArrays<real_type> *corrBatchRaw, cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, const int templateSize, const int distance, cuArrays<real3_type> *covValue, cudaStream_t stream)
 {
     int size = corrBatchRaw->count;
     // One dimensional launching parameters to loop over every correlation surface.
     cudaKernel_estimateVar<<< IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
-        (corrBatchRaw->devData, corrBatchRaw->height, corrBatchRaw->width, maxloc->devData, maxval->devData, templateSize, covValue->devData, size);
+        (corrBatchRaw->devData, corrBatchRaw->height, corrBatchRaw->width, maxloc->devData, maxval->devData, templateSize, distance, covValue->devData, size);
     getLastCudaError("cudaKernel_estimateVar error\n");
 }
 //end of file

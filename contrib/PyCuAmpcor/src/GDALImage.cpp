@@ -53,7 +53,7 @@ GDALImage::GDALImage(std::string filename, int band, int cacheSizeInGB, int useM
     // determine the pixel size in bytes
     _pixelSize = GDALGetDataTypeSize(_dataType);
 
-    _bufferSize = 1024*1024*cacheSizeInGB;
+    _bufferSize = 1024*1024*1024*cacheSizeInGB;
 
     // checking whether using memory map
     if(_useMmap) {

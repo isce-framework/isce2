@@ -101,6 +101,8 @@ def createParser():
 
 
     # cross-correlation algorithm
+    parser.add_argument('--wf', '--workflow', dest='workflow', type=int, default=0,
+                        help='workflow (0 = ROIPAC, 1 = GrIMP) (default: %(default)s).')
     parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
                         help='cross-correlation algorithm (0 = frequency domain, 1 = time domain) (default: %(default)s).')
     parser.add_argument('--raw-osf','--raw-over-samp-factor', type=int, dest='raw_oversample',
@@ -211,6 +213,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # create a PyCuAmpcor instance
     objOffset = PyCuAmpcor()
 
+    objOffset.workflow = inps.workflow
     objOffset.algorithm = inps.algorithm
     objOffset.deviceID = inps.gpuid
     objOffset.nStreams = inps.nstreams #cudaStreams

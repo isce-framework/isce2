@@ -1,4 +1,4 @@
-# PyCuAmpcor - Amplitude Cross-Correlation with GPU
+# PyCuAmpcor - Amplitude Cross-Correlation with GPU (Version 2)
 
 ## Contents
 
@@ -24,7 +24,12 @@ In practice, we
 
 A detailed formulation can be found, e.g., by J. P. Lewis with [the frequency domain approach](http://scribblethink.org/Work/nvisionInterface/nip.html).
 
-PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of PyCuAmpcor, as well as their differences.
+PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. ROIPAC/ampcor workflow adopts a two-pass procedure. In the first pass, the cross-correlation is performed over the entire search range, but on the raw image, to obtain an estimated offset $(r_x^0, r_y^0}$ (in units of a pixel). In the second pass, another cross-correlation is performed over a much smaller search range centered at $(r_x^0, r_y^0}$, on (anti-aliasing) oversampled windows. The obtained correlation surface is further oversampled to achieve sub-pixel resolutions.  
+
+In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of this workflow, as well as its difference to the Fortran code.
+
+In PyCuAmpcor Version 2, we have also added a workflow following [GrIMP/SpeckleSource](https://github.com/fastice/speckleSource). It skips the first pass on ROIPAC/ampcor, while starting from the second pass with (anti-aliasing) oversampled secondary chip over the entire search range. It increases computational cost but is found to be more accurate in cases with low signal to noise ratio (SNR).   
+
 
 ## 2. Installation
 
@@ -55,10 +60,15 @@ You may also install PyCuAmpcor as a standalone package.
 
 ```bash
     # go to PyCuAmpcor source directory
-    cd contrib/PyCuAmpcor/src
-    # edit Makefile to provide the correct gdal include path and gpu architecture to NVCCFLAGS
-    # call make to compile
-    make
+    cd contrib/PyCuAmpcor/
+    cp CMakeLists.txt.standalone CMakeLists.txt
+    # follow CMake routines
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=$CONDA_PREFIX \
+      -DCMAKE_CUDA_ARCHITECTURES=native \
+      -DCMAKE_PREFIX_PATH=${CONDA_PREFIX} \
+      -DCMAKE_BUILD_TYPE=Release 
+    make -j && make install
  ```
 
 ## 3. User Guide
@@ -83,25 +93,30 @@ ww=64  # template window width
 wh=64  # template window height
 sw=20   # (half) search range along width
 sh=20   # (half) search range along height
-kw=300   # skip between windows along width
-kh=100   # skip between windows along height
+kw=32   # skip between windows along width
+kh=32   # skip between windows along height
 mm=0   # margin to be neglected 
 gross=0  # whether to use a varying gross offset
 azshift=0 # constant gross offset along height/azimuth 
 rgshift=0 # constant gross offset along width/range
 deramp=0 # 0 for mag (TOPS), 1 for complex linear ramp, 2 for complex no deramping  
-oo=32  # correlation surface oversampling factor 
+oo=16  # correlation surface oversampling factor 
 outprefix=./merged/20151120_20151214/offset  # output prefix
 outsuffix=_ww64_wh64   # output suffix
 gpuid=0   # GPU device ID
 nstreams=2 # number of CUDA streams
 usemmap=1 # whether to use memory-map i/o
-mmapsize=8 # buffer size in GB for memory map
-nwac=32 # number of windows in a batch along width
+mmapsize=4 # buffer size in GB for memory map
+nwac=8 # number of windows in a batch along width
 nwdc=1  # number of windows in a batch along height
+workflow=0 # 0=ROIPAC/ampcor 1=GrIMP/SpeckleSource
 
 rm $outprefix$outsuffix*
-cuDenseOffsets.py --reference $reference --secondary $secondary --ww $ww --wh $wh --sw $sw --sh $sh --mm $mm --kw $kw --kh $kh --gross $gross --rr $rgshift --aa $azshift --oo $oo --deramp $deramp --outprefix $outprefix --outsuffix $outsuffix --gpuid $gpuid  --usemmap $usemmap --mmapsize $mmapsize --nwac $nwac --nwdc $nwdc 
+cuDenseOffsets.py --reference $reference --secondary $secondary --ww $ww --wh $wh --sw $sw --sh $sh \
+    --mm $mm --kw $kw --kh $kh --gross $gross --rr $rgshift --aa $azshift --oo $oo \
+    --deramp $deramp --outprefix $outprefix --outsuffix $outsuffix \
+    --gpuid $gpuid  --usemmap $usemmap --mmapsize $mmapsize \
+    --nwac $nwac --nwdc $nwdc --workflow $workflow
  ```
 
 Note that in PyCuAmpcor, the following names for directions are equivalent:
@@ -181,7 +196,7 @@ objOffset.checkPixelInImageRange()
 objOffset.runAmpcor()
 ```
 
-## 4. List of Parameters
+## 4. List of Parameters (ROIPAC/ampcor workflow)
 
 **Image Parameters**
 

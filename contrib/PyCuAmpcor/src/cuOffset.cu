@@ -176,6 +176,60 @@ void cuSubPixelOffset(cuArrays<int2> *offsetInit,
 
 }
 
+// cuda kernel for cuSubPixelOffset
+__global__ void cuSubPixelOffset2Pass_kernel(const int2 *offsetInit, const int2 *offsetZoomIn,
+                                        float2 *offsetFinal,
+                                        const float OSratio,
+                                        const float xoffset, const float yoffset, const int size)
+{
+    int idx = threadIdx.x + blockDim.x*blockIdx.x;
+    if (idx >= size) return;
+    offsetFinal[idx].x = OSratio*(offsetZoomIn[idx].x ) + offsetInit[idx].x  - xoffset;
+    offsetFinal[idx].y = OSratio*(offsetZoomIn[idx].y ) + offsetInit[idx].y - yoffset;
+}
+
+
+/**
+ * Determine the final offset value
+ * @param[in] offsetInit max location (adjusted to the starting location for extraction) determined from
+ *   the cross-correlation before oversampling, in dimensions of pixel
+ * @param[in] offsetZoomIn max location from the oversampled cross-correlation surface
+ * @param[out] offsetFinal the combined offset value
+ * @param[in] OversampleRatioZoomIn the correlation surface oversampling factor
+ * @param[in] OversampleRatioRaw the oversampling factor of reference/secondary windows before cross-correlation
+ * @param[in] xHalfRangInit the original half search range along x, to be subtracted
+ * @param[in] yHalfRangInit the original half search range along y, to be subtracted
+ *
+ * 1. Cross-correlation is performed at first for the un-oversampled data with a larger search range.
+ *   The secondary window is then extracted to a smaller size (a smaller search range) around the max location.
+ *   The extraction starting location (offsetInit) - original half search range (xHalfRangeInit, yHalfRangeInit)
+ *        = pixel size offset
+ * 2. Reference/secondary windows are then oversampled by OversampleRatioRaw, and cross-correlated.
+ * 3. The correlation surface is further oversampled by OversampleRatioZoomIn.
+ *    The overall oversampling factor is OversampleRatioZoomIn*OversampleRatioRaw.
+ *    The max location in oversampled correlation surface (offsetZoomIn) / overall oversampling factor
+ *        = subpixel offset
+ *    Final offset =  pixel size offset +  subpixel offset
+ */
+void cuSubPixelOffset2Pass(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn,
+    cuArrays<float2> *offsetFinal,
+    int OverSampleRatioZoomin, int OverSampleRatioRaw,
+    int xHalfRangeInit,  int yHalfRangeInit,
+    cudaStream_t stream)
+{
+    int size = offsetInit->getSize();
+    float OSratio = 1.0f/(float)(OverSampleRatioZoomin*OverSampleRatioRaw);
+    float xoffset = xHalfRangeInit ;
+    float yoffset = yHalfRangeInit ;
+
+    cuSubPixelOffset2Pass_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
+        (offsetInit->devData, offsetZoomIn->devData,
+         offsetFinal->devData, OSratio, xoffset, yoffset, size);
+    getLastCudaError("cuSubPixelOffset2Pass_kernel");
+
+}
+
+
 // cuda device function to compute the shift of center
 static inline __device__ int2 dev_adjustOffset(
     const int oldRange, const int newRange, const int maxloc)

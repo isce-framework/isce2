@@ -101,7 +101,7 @@ void cuAmpcorProcessorGrIMP::run(int idxDown_, int idxAcross_)
 
     // statistics of correlation surface
     // estimate variance on r_corrBatch
-    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, r_covValue, stream);
+    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, param->oversamplingFactor, r_covValue, stream);
 
     // snr on the extracted surface r_corrBatchZoomIn
     cuArraysSumSquare(r_corrBatchZoomIn, r_corrBatchSum, stream);
@@ -117,11 +117,9 @@ void cuAmpcorProcessorGrIMP::run(int idxDown_, int idxAcross_)
     if(param->oversamplingMethod) {
         // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversamplingfactor
         // we need the max loc as the center if shifted
-        std::cout << "Sinc oversampler does not work at this moment\n";
-        exit(1);
-        // corrSincOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled,
-        //     maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
-        //    );
+        corrSincOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled,
+             maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
+            );
 
     }
     else {
@@ -253,8 +251,9 @@ cuAmpcorProcessorGrIMP::cuAmpcorProcessorGrIMP(cuAmpcorParameter *param_, GDALIm
     offsetFinal = new cuArrays<real2_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     offsetFinal->allocate();
 
-    maxLocShift = new cuArrays<int2> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
-    maxLocShift->allocate();
+    // the sinc interpolation center is at the correlation surface center
+    // E.g. (10, 10) for 21x21.
+    maxLocShift = make_int2(param->corrWindowSize.x/2,  param->corrWindowSize.y/2);
 
     corrMaxValue = new cuArrays<real_type> (param->numberWindowDownInChunk, param->numberWindowAcrossInChunk);
     corrMaxValue->allocate();
@@ -513,7 +512,6 @@ cuAmpcorProcessorGrIMP::~cuAmpcorProcessorGrIMP()
     delete offsetInit;
     delete offsetZoomIn;
     delete offsetFinal;
-    delete maxLocShift;
     delete corrMaxValue;
 
     delete r_corrBatchSum;
