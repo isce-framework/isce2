@@ -24,7 +24,7 @@ In practice, we
 
 A detailed formulation can be found, e.g., by J. P. Lewis with [the frequency domain approach](http://scribblethink.org/Work/nvisionInterface/nip.html).
 
-PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. ROIPAC/ampcor workflow adopts a two-pass procedure. In the first pass, the cross-correlation is performed over the entire search range, but on the raw image, to obtain an estimated offset $(r_x^0, r_y^0}$ (in units of a pixel). In the second pass, another cross-correlation is performed over a much smaller search range centered at $(r_x^0, r_y^0}$, on (anti-aliasing) oversampled windows. The obtained correlation surface is further oversampled to achieve sub-pixel resolutions.  
+PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. ROIPAC/ampcor workflow adopts a two-pass procedure. In the first pass, the cross-correlation is performed over the entire search range, but on the raw image, to obtain an estimated offset $(r_x^0, r_y^0)$ (in units of a pixel). In the second pass, another cross-correlation is performed over a much smaller search range centered at $(r_x^0, r_y^0)$, on (anti-aliasing) oversampled windows. The obtained correlation surface is further oversampled to achieve sub-pixel resolutions.  
 
 In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of this workflow, as well as its difference to the Fortran code.
 
