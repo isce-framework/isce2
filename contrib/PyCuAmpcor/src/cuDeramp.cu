@@ -97,12 +97,18 @@ __global__ void cuDerampMethod1_kernel(real2_type *images, const int imageNX, in
             phaseDiffX += cprod;
         }
     }   
-    
     complexSumReduceBlock<nthreads>(phaseDiffX, shmem);
-   
     //phaseDiffX *= normCoef;
     real_type phaseX = atan2(phaseDiffX.y, phaseDiffX.x);  //+FLT_EPSILON
-     
+
+#ifdef CUAMPCOR_DEBUG
+    // output the phase ramp in debug mode
+    if (threadIdx.x==0)
+    {
+        printf("debug deramp az: %g rg: %g\n", phaseX, phaseY);
+    }
+#endif
+
     for (int i = tid; i < imageSize; i += nthreads)
     { 
         pixelIdxX = i%imageNY;
