@@ -81,7 +81,7 @@ void cuAmpcorProcessorGrIMP::run(int idxDown_, int idxAcross_)
     // find the maximum location of the correlation surface, in a rectangle area {range} from {start}
     int extraPadSize = param->halfZoomWindowSizeRaw*param->rawDataOversamplingFactor;
     int2 start = make_int2(extraPadSize, extraPadSize);
-    int2 range = make_int2(r_corrBatch->height-extraPadSize, r_corrBatch->width-extraPadSize);
+    int2 range = make_int2(r_corrBatch->height-2*extraPadSize, r_corrBatch->width-2*extraPadSize);
     cuArraysMaxloc2D(r_corrBatch, start, range, offsetInit, r_maxval, stream);
 
 #ifdef CUAMPCOR_DEBUG
