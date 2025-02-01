@@ -101,7 +101,7 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
 
     // statistics of correlation surface
     // estimate variance on r_corrBatch
-    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, param->oversamplingFactor, r_covValue, stream);
+    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, param->corrSurfaceOverSamplingFactor, r_covValue, stream);
 
     // snr on the extracted surface r_corrBatchZoomIn
     cuArraysSumSquare(r_corrBatchZoomIn, r_corrBatchSum, stream);
@@ -114,11 +114,11 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
 #endif
 
     // oversample the correlation surface
-    if(param->oversamplingMethod) {
+    if(param->corrSurfaceOverSamplingMethod) {
         // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversamplingfactor
         // we need the max loc as the center if shifted
         corrSincOverSampler->execute(r_corrBatchZoomIn, r_corrBatchZoomInOverSampled,
-             maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
+             maxLocShift, param->corrSurfaceOverSamplingFactor*param->rawDataOversamplingFactor
             );
 
     }
@@ -144,8 +144,8 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
     cuSubPixelOffset(offsetInit, offsetZoomIn, offsetFinal,
         make_int2(param->corrWindowSize.x/2, param->corrWindowSize.y/2), // init offset origin
         param->rawDataOversamplingFactor, // init offset factor
-        make_int2(param->corrZoomInSize.x/2*param->oversamplingFactor, param->corrZoomInSize.y/2*param->oversamplingFactor),
-        param->rawDataOversamplingFactor*param->oversamplingFactor,
+        make_int2(param->corrZoomInSize.x/2*param->corrSurfaceOverSamplingFactor, param->corrZoomInSize.y/2*param->corrSurfaceOverSamplingFactor),
+        param->rawDataOversamplingFactor*param->corrSurfaceOverSamplingFactor,
         stream);
 
 #ifdef CUAMPCOR_DEBUG
@@ -277,8 +277,8 @@ cuAmpcorProcessorOnePass::cuAmpcorProcessorOnePass(cuAmpcorParameter *param_, GD
 
     // end of new arrays
 
-    if(param->oversamplingMethod) {
-        corrSincOverSampler = new cuSincOverSamplerR2R(param->oversamplingFactor, stream);
+    if(param->corrSurfaceOverSamplingMethod) {
+        corrSincOverSampler = new cuSincOverSamplerR2R(param->corrSurfaceOverSamplingFactor, stream);
     }
     else {
         corrOverSampler= new cuOverSamplerR2R(
@@ -485,7 +485,7 @@ cuAmpcorProcessorOnePass::~cuAmpcorProcessorOnePass()
 {
     corrNormalizerOverSampled.release();
 
-    if(param->oversamplingMethod) {
+    if(param->corrSurfaceOverSamplingMethod) {
         delete corrSincOverSampler;
     }
     else {

@@ -174,11 +174,11 @@ void cuAmpcorProcessorTwoPass::run(int idxDown_, int idxAcross_)
 #endif
 
     // oversample the correlation surface
-    if(param->oversamplingMethod) {
-        // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversamplingfactor
+    if(param->corrSurfaceOverSamplingMethod) {
+        // sinc interpolator only computes (-i_sincwindow, i_sincwindow)*oversampling factor
         // we need the max loc as the center if shifted
         corrSincOverSampler->execute(r_corrBatchZoomInAdjust, r_corrBatchZoomInOverSampled,
-            maxLocShift, param->oversamplingFactor*param->rawDataOversamplingFactor
+            maxLocShift, param->corrSurfaceOverSamplingFactor*param->rawDataOversamplingFactor
             );
     }
     else {
@@ -202,7 +202,7 @@ void cuAmpcorProcessorTwoPass::run(int idxDown_, int idxAcross_)
     // determine the final offset from non-oversampled (pixel) and oversampled (sub-pixel)
     // = (Init-HalfsearchRange) + ZoomIn/(2*ovs)
     cuSubPixelOffset2Pass(offsetInit, offsetZoomIn, offsetFinal,
-        param->oversamplingFactor, param->rawDataOversamplingFactor,
+        param->corrSurfaceOverSamplingFactor, param->rawDataOversamplingFactor,
         param->halfSearchRangeDownRaw, param->halfSearchRangeAcrossRaw,
         stream);
 
@@ -456,8 +456,8 @@ cuAmpcorProcessorTwoPass::cuAmpcorProcessorTwoPass(cuAmpcorParameter *param_, GD
 
 
     r_corrBatchZoomInOverSampled = new cuArrays<real_type> (
-        param->zoomWindowSize * param->oversamplingFactor,
-        param->zoomWindowSize * param->oversamplingFactor,
+        param->zoomWindowSize * param->corrSurfaceOverSamplingFactor,
+        param->zoomWindowSize * param->corrSurfaceOverSamplingFactor,
         param->numberWindowDownInChunk,
         param->numberWindowAcrossInChunk);
     r_corrBatchZoomInOverSampled->allocate();
@@ -522,13 +522,13 @@ cuAmpcorProcessorTwoPass::cuAmpcorProcessorTwoPass(cuAmpcorParameter *param_, GD
 
     // end of new arrays
 
-    if(param->oversamplingMethod) {
-        corrSincOverSampler = new cuSincOverSamplerR2R(param->oversamplingFactor, stream);
+    if(param->corrSurfaceOverSamplingMethod) {
+        corrSincOverSampler = new cuSincOverSamplerR2R(param->corrSurfaceOverSamplingFactor, stream);
     }
     else {
         corrOverSampler= new cuOverSamplerR2R(param->zoomWindowSize, param->zoomWindowSize,
-            (param->zoomWindowSize)*param->oversamplingFactor,
-            (param->zoomWindowSize)*param->oversamplingFactor,
+            (param->zoomWindowSize)*param->corrSurfaceOverSamplingFactor,
+            (param->zoomWindowSize)*param->corrSurfaceOverSamplingFactor,
             param->numberWindowDownInChunk*param->numberWindowAcrossInChunk,
             stream);
     }
@@ -568,7 +568,7 @@ cuAmpcorProcessorTwoPass::~cuAmpcorProcessorTwoPass()
     corrNormalizerOverSampled.release();
     corrNormalizerRaw.release();
 
-    if(param->oversamplingMethod) {
+    if(param->corrSurfaceOverSamplingMethod) {
         delete corrSincOverSampler;
     }
     else {

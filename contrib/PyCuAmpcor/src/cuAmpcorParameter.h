@@ -36,7 +36,7 @@ public:
     int deviceID;       ///< Targeted GPU device ID: use -1 to auto select
     int nStreams;       ///< Number of streams to asynchonize data transfers and compute kernels
     int derampMethod;   ///< Method for deramping 0=None, 1=average
-    int workflow;       ///< Workflow 0=ROIPAC, 1=GrIMP
+    int workflow;       ///< Workflow 0: two passes, first pass without antialiasing oversampling, 1: one pass with antialiasing oversampling
 
     // chip or window size for raw data
     int windowSizeHeightRaw;        ///< Template window height (original size)
@@ -71,8 +71,8 @@ public:
     int zoomWindowSize;      ///< Zoom-in window size in correlation surface (same for down and across directions)
     int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
 
-    int oversamplingFactor;  ///< Oversampling factor for interpolating correlation surface
-    int oversamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc
+    int corrSurfaceOverSamplingFactor;  ///< Oversampling factor for interpolating correlation surface
+    int corrSurfaceOverSamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc
 
     // correlation surface
     int2 corrWindowSize; // 2*halfSearchRange + 1
@@ -81,9 +81,7 @@ public:
 
     int corrStatWindowSize;     ///< correlation surface size used to estimate snr
 
-    float thresholdSNR;      ///< Threshold of Signal noise ratio to remove noisy data
-
-        // parameters used in the first pass in ROIPAC workflow
+    // parameters used in the first pass in two-pass workflow
     // @TODO move them to workflow specific files
     int searchWindowSizeHeightRawZoomIn;
     int searchWindowSizeWidthRawZoomIn;
@@ -149,7 +147,7 @@ public:
     std::string offsetImageName;       ///< Offset fields output filename
     std::string snrImageName;          ///< Output SNR filename
     std::string covImageName;          ///< Output variance filename
-    std::string peakValueImageName;      ///< Output correlation surface peak value filename
+    std::string peakValueImageName;      ///< Output normalized correlation surface peak value filename
 
     // Class constructor and default parameters setter
     cuAmpcorParameter();
@@ -175,8 +173,8 @@ public:
     void checkPixelInImageRange();
     // Process other parameters after Python Input
     void setupParameters();
-    void _setupParameters_ROIPAC();
-    void _setupParameters_GrIMP();
+    void _setupParameters_TwoPass();
+    void _setupParameters_OnePass();
 
 };
 

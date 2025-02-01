@@ -24,12 +24,15 @@ In practice, we
 
 A detailed formulation can be found, e.g., by J. P. Lewis with [the frequency domain approach](http://scribblethink.org/Work/nvisionInterface/nip.html).
 
-PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, in ROIPAC. ROIPAC/ampcor workflow adopts a two-pass procedure. In the first pass, the cross-correlation is performed over the entire search range, but on the raw image, to obtain an estimated offset $(r_x^0, r_y^0)$ (in units of a pixel). In the second pass, another cross-correlation is performed over a much smaller search range centered at $(r_x^0, r_y^0)$, on (anti-aliasing) oversampled windows. The obtained correlation surface is further oversampled to achieve sub-pixel resolutions.  
+InSAR images are band-limited, which enables the correlation surface interpolation to achieve sub-pixel resolutions on the displacements. To mitigate the aliasing in cross-correlation and improve the accuracy in displacement estimation, the input raw images are typically oversampled (2x or more) beforehand. The antialiasing oversampling increases the window sizes to be processed and therefore the computation cost. Two workflows are offered to balance the efficiency and accuracy:
 
-In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of this workflow, as well as its difference to the Fortran code.
+1) A two-pass workflow (implemented in Version 1). In the first pass, an initial offset $(r_x^0, r_y^0)$ (in units of a pixel) is estimated from the cross-correlation over a large search range, but without the anti-aliasing oversampling. In the second pass, a much smaller search range centered $(r_x^0, r_y^0)$ may be chosen for a second cross-correlation, for which the windows are oversampled.
 
-In PyCuAmpcor Version 2, we have also added a workflow following [GrIMP/SpeckleSource](https://github.com/fastice/speckleSource). It skips the first pass on ROIPAC/ampcor, while starting from the second pass with (anti-aliasing) oversampled secondary chip over the entire search range. It increases computational cost but is found to be more accurate in cases with low signal to noise ratio (SNR).   
+2) A one-pass workflow (added in Version 2). The anti-aliasing oversampling of SAR images is performed over the entire search range before cross-correlation. The first pass, to estimate an initial offset, is therefore no longer required.
 
+In general, the two-pass workflow performs more efficiently than the one-pass workflow, and is adequate in most situations. However, when high frequency noises are present, manifested as noisy correlation surfaces, the one-pass workflow is recommended for its improved accuracy.
+
+PyCuAmpcor follows the same procedure as the FORTRAN code, ampcor.F, from the ROIPAC package. In order to optimize the performance on GPU, some implementations are slightly different. In the [list the procedures](#5-list-of-procedures), we show the detailed steps of this workflow, as well as its difference to the Fortran code.
 
 ## 2. Installation
 
@@ -46,13 +49,13 @@ Some special notices for PyCuAmpcor:
     * CMake, use the Release build type *-DCMAKE_BUILD_TYPE=Release*
     * SCons, it is disabled by default with the -DNDEBUG flag in SConscript
 
-* PyCuAmpcor requires CUDA-Enabled GPUs with compute capabilities >=2.0. You may  specify the targeted architecture by
+* PyCuAmpcor requires CUDA-Enabled GPUs with compute capabilities >=2.0. You may specify the targeted architecture by, e.g., for P100
 
-    * CMake, add the flag *-DCMAKE_CUDA_FLAGS="-arch=sm_60"*, sm_35 for K40/80, sm_60 for P100, sm_70 for V100.
+    * CMake, add the flag *-DCMAKE_CUDA_ARCHITECTURES=60*. (35 for K40/80, 70 for V100, or use *native* to instruct cmake to automatically detect the CUDA-capable GPU(s) on the system where cmake is being run).
 
     * SCons, modify the *scons_tools/cuda.py* file by adding *-arch=sm_60* to *env['ENABLESHAREDNVCCFLAG']*.
 
-  Note that if the *-arch* option is not specified, CUDA 10 uses sm_30 as default while CUDA 11 uses sm_52 as default. GPU architectures with lower compute capabilities will not run the compiled code properly.
+  Note that if the *-arch* option is not specified, CUDA 10 uses sm_30 as default while CUDA 11 and 12 use sm_52 as default. GPU architectures with lower compute capabilities will not run the compiled code properly.
 
 ### 2.2 Standalone Installation
 
@@ -80,10 +83,10 @@ The main procedures of PyCuAmpcor are implemented with CUDA/C++. A Python interf
 *cuDenseOffsets.py*, as also included in InSAR processing stacks, serves as a general purpose script to run PyCuAmpcor. It uses *argparse* to pass parameters, either from a command line
 
 ```bash
-cuDenseOffsets.py -r 20151120.slc.full -s 20151214.slc.full --outprefix ./20151120_20151214/offset --ww 64 --wh 64 --oo 32 --kw 300 --kh 100 --nwac 32 --nwdc 1 --sw  20 --sh 20 --gpuid 2
+cuDenseOffsets.py -r 20151120.slc.full -s 20151214.slc.full --outprefix ./20151120_20151214/offset --ww 64 --wh 64 --oo 32 --kw 32 --kh 32 --nwac 8 --nwdc 1 --sw  20 --sh 20 --gpuid 0 --workflow 0
  ```
 
- or by a shell script
+ or by a shell script which may expose more options o
 
  ```
 #!/bin/bash
@@ -109,7 +112,7 @@ usemmap=1 # whether to use memory-map i/o
 mmapsize=4 # buffer size in GB for memory map
 nwac=8 # number of windows in a batch along width
 nwdc=1  # number of windows in a batch along height
-workflow=0 # 0=ROIPAC/ampcor 1=GrIMP/SpeckleSource
+workflow=0 # 0=two pass 1=one pass
 
 rm $outprefix$outsuffix*
 cuDenseOffsets.py --reference $reference --secondary $secondary --ww $ww --wh $wh --sw $sw --sh $sh \
@@ -139,15 +142,13 @@ If you prefer to provide the location of the last pixel instead of the number of
 
 The program will calculate the number of windows based on the skip size and the window size. 
 
-If you prefer to provide the locations for the center of the starting/ending window, rather than those of the first/last pixels, you may add *--use-center 1* together with the above options, e.g., 
+When comparing results from various windows sizes and search ranges, you may prefer to fix the center location for the search window.  To achieve that, use *--use-center 1* together with the *--startpixel* options, e.g., 
 
 ```
 --startpixelac $startPixelAcross --startpixeldw $startPixelDown --use-center 1 --nwa $numberOfWindowsAcross --nwd $numberOfWindowsDown
 ```
 
-Here, *($startPixelDown, $startPixelAcross)* is the coordinate of the first window center, and will be fixed if you vary the window size or search range. 
-
-But please note, the provided starting/ending pixels may go beyond the original reference/secondary image range. The program will still run but the offset results on the edge may be incorrect.
+Please be advised, by enforcing the window locations and sizes, the windows near the image edge may exceed the range of the original image (zeros are padded in this case), and their results may be incorrect.
 
 PyCuAmpcor supports two types of gross offset fields,
 * static (--gross=0), i.e., a constant shift between reference and secondary images. The static gross offsets can be passed by *--rr $rgshift --aa $azshift*. Note that the margin as well as the starting pixel may be adjusted.
@@ -155,7 +156,7 @@ PyCuAmpcor supports two types of gross offset fields,
 
 ### 3.2 Customized Python Scripts
 
-If you need more control of the computation, you may follow the examples to create your own Python script. The general steps are
+If you need more control of the computation, or incorporate the PyCuAmpcor procedure in your InSAR processing stacks, you may follow the *cuDenseOffsets.py* example to create your own Python script. The general steps are
 * create a PyCuAmpcor instance
 ```python
 # if installed with ISCE2
@@ -187,8 +188,6 @@ objOffset.referenceStartPixelAcrossStatic = objOffset.halfSearchRangeDown
 objOffset.setConstantGrossOffset(0, 0)
 # if dynamic gross offset, computed and stored in vD, vA 
 objOffset.setVaryingGrossOffset(vD, vA)
-# check whether all windows are within the image range
-objOffset.checkPixelInImageRange() 
 ```
 
 * and finally, run PyCuAmpcor
@@ -200,18 +199,19 @@ objOffset.runAmpcor()
 
 **Image Parameters**
 
-| PyCuAmpcor           | Notes                     |
-| :---                 | :----                     |
-| referenceImageName   | The file name of the reference/template image |
-| referenceImageHeight | The height of the reference image |
-| referenceImageWidth  | The width of the reference image |
-| secondaryImageName   | The file name of the secondary/search image   |
-| secondaryImageHeight | The height of the secondary image |
-| secondaryImageWidth  | The width of the secondary image |
-| grossOffsetImageName | The output file name for gross offsets  |
-| offsetImageName      | The output file name for dense offsets  |
-| snrImageName         | The output file name for signal-noise-ratio of the correlation |
-| covImageName         | The output file name for variance of the correlation surface |
+| PyCuAmpcor           | Notes                                                                   |
+| :---                 |:------------------------------------------------------------------------|
+| referenceImageName   | The file name of the reference/template image                           |
+| referenceImageHeight | The height of the reference image                                       |
+| referenceImageWidth  | The width of the reference image                                        |
+| secondaryImageName   | The file name of the secondary/search image                             |
+| secondaryImageHeight | The height of the secondary image                                       |
+| secondaryImageWidth  | The width of the secondary image                                        |
+| grossOffsetImageName | The output file name for gross offsets                                  |
+| offsetImageName      | The output file name for dense offsets                                  |
+| snrImageName         | The output file name for signal-noise-ratio of the correlation          |
+| covImageName         | The output file name for variance of the correlation surface            |
+| covImageName         | The output file name for the normalized correlation surface peak values |
 
 PyCuAmpcor now uses exclusively the GDAL driver to read images, only single-precision binary data are supported. (Image heights/widths are still required as inputs; they are mainly for dimension checking.  We will update later to read them with the GDAL driver). Multi-band is not currently supported, but can be added if desired.
 
@@ -300,7 +300,7 @@ With a constant gross offset, call
 ```python
    objOffset.setConstantGrossOffset(grossOffsetDown, grossOffsetAcross)
 ```
-
+ 
 to set the starting pixels of all reference and secondary windows.
 
 The starting pixel for the secondary window will be (referenceStartPixelDownStatic-halfSearchRangeDown+grossOffsetDown, referenceStartPixelAcrossStatic-halfSearchRangeAcross+grossOffsetAcross).
@@ -361,10 +361,11 @@ This step provides an initial estimate of the offset, usually with a large searc
 
 **Parameters**
 
-| PyCuAmpcor          | CUDA variable       | ampcor.F equivalent   | Notes                     |
-| :---                | :---                | :----                 | :---                      |
-| algorithm           | algorithm           | N/A                   |  the cross-correlation computation method 0=Freq 1=time   |
-| corrStatWindowSize  | corrStatWindowSize  | 21               | the size of correlation surface around the peak position used for statistics, may be adjusted   |
+| PyCuAmpcor         | CUDA variable      | ampcor.F equivalent   | Notes                                                                                         |
+|:-------------------|:-------------------| :----                 |:----------------------------------------------------------------------------------------------|
+| algorithm          | algorithm          | N/A                   | the cross-correlation computation method 0=Freq (default) 1=time                              |
+| workflow           | workflow           | N/A                   | the offset estimation workflow 0=Two-Pass (default) 1=One-Pass                                |
+| corrStatWindowSize | corrStatWindowSize | 21               | the size of correlation surface around the peak position used for statistics, may be adjusted |
 
 
 **Difference to ROIPAC**
@@ -399,7 +400,7 @@ ROIPAC extracts the secondary window centering at the correlation surface peak. 
 | PyCuAmpcor          | CUDA variable       | ampcor.F equivalent   | Notes                     |
 | :---                | :---                | :----                 | :---                      |
 | rawDataOversamplingFactor | rawDataOversamplingFactor | i_ovs=2   | the oversampling factor for reference and secondary windows, use 2 for InSAR SLCs. |
-| derampMethod        | derampMethod        | 1 or no effect on TOPS | Only for complex: 0=take mag (TOPS), 1=linear deramp (default), else=skip deramp.
+| derampMethod        | derampMethod        | 1 or no effect on TOPS | the phase ramp removal method 0=take magnitude (TOPS, default), 1=linear phase ramp, 2=skip deramp. |
 
 **Difference to ROIPAC**
 

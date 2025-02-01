@@ -23,11 +23,11 @@ except ModuleNotFoundError:
 
 EXAMPLE = '''example
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 8 --nwdc 1 --gpuid 0
 
   # offset and its geometry
   # tip: re-run with --full/out-geom and without --redo to generate geometry only
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 0 --full-geom ./geom_reference --out-geom ./offset/geom_reference
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 8 --nwdc 1 --gpuid 0 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
 
@@ -80,9 +80,9 @@ def createParser():
     parser.add_argument('--mm', type=int, dest='margin', default=0,
                         help='Margin (default: %(default)s).')
     parser.add_argument('--nwa', type=int, dest='numWinAcross', default=-1,
-                        help='Number of window across (default: %(default)s to be auto-determined).')
+                        help='Number of windows across (default: %(default)s to be auto-determined).')
     parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
-                        help='Number of window down (default: %(default)s).')
+                        help='Number of windows down (default: %(default)s).')
     parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=None,
                         help='Starting Pixel across of the reference image.' +
                              'Default: %(default)s to use the first pixel.')
@@ -102,14 +102,14 @@ def createParser():
 
     # cross-correlation algorithm
     parser.add_argument('--wf', '--workflow', dest='workflow', type=int, default=0,
-                        help='workflow (0 = ROIPAC, 1 = GrIMP) (default: %(default)s).')
+                        help='workflow (0: two passes, first pass without antialiasing oversampling, 1: one pass with antialiasing oversampling) (default: %(default)s).')
     parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
                         help='cross-correlation algorithm (0 = frequency domain, 1 = time domain) (default: %(default)s).')
     parser.add_argument('--raw-osf','--raw-over-samp-factor', type=int, dest='raw_oversample',
                         default=2, choices=range(2,5),
                         help='anti-aliasing oversampling factor, equivalent to i_ovs in RIOPAC (default: %(default)s).')
     parser.add_argument('--drmp', '--deramp', dest='deramp', type=int, default=0,
-                        help='deramp method (0: mag for TOPS, 1:complex with linear ramp) (default: %(default)s).')
+                        help='remove phase ramp of complex signals before antialiasing oversampling (0: use magnitude instead (for TOPS), 1: linear phase ramp, 2: skip deramping) (default: %(default)s).')
 
     # gross offset
     gross = parser.add_argument_group('Initial gross offset')
@@ -129,7 +129,7 @@ def createParser():
                       help='Zoom-in window size of the correlation surface for statistics(snr/variance) (default: %(default)s).')
     corr.add_argument('--corr-srch-size', type=int, dest='corr_srch_size', default=4,
                       help='(half) Zoom-in window size of the correlation surface for oversampling, ' \
-                      'equivalent to i_srcp in RIOPAC (default: %(default)s).')
+                      'equivalent to i_srcp in ROIPAC (default: %(default)s).')
     corr.add_argument('--corr-osf', '--oo', '--corr-over-samp-factor', type=int, dest='corr_oversample', default=32,
                       help = 'Oversampling factor of the zoom-in correlation surface (default: %(default)s).')
     corr.add_argument('--corr-osm', '--corr-over-samp-method', type=int, dest='corr_oversamplemethod', default=0,
@@ -145,13 +145,13 @@ def createParser():
     proc = parser.add_argument_group('Processing parameters')
     proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=0,
                         help='GPU ID (default: %(default)s).')
-    proc.add_argument('--nstreams', dest='nstreams', type=int, default=2,
+    proc.add_argument('--nstreams', dest='nstreams', type=int, default=1,
                         help='Number of cuda streams (default: %(default)s).')
     proc.add_argument('--usemmap', dest='usemmap', type=int, default=1,
                         help='Whether to use memory map for loading image files (default: %(default)s).')
     proc.add_argument('--mmapsize', dest='mmapsize', type=int, default=8,
                         help='The memory map buffer size in GB (default: %(default)s).')
-    proc.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=10,
+    proc.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=8,
                         help='Number of window across in a chunk/batch (default: %(default)s).')
     proc.add_argument('--nwdc', type=int, dest='numWinDownInChunk', default=1,
                         help='Number of window down in a chunk/batch (default: %(default)s).')
@@ -218,7 +218,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.deviceID = inps.gpuid
     objOffset.nStreams = inps.nstreams #cudaStreams
     objOffset.derampMethod = inps.deramp
-    print('deramp method (0 for magnitude, 1 for complex): ', objOffset.derampMethod)
+    print('deramp method (0: magnitude, 1: linear phase ramp, 2: skip deramping): ', objOffset.derampMethod)
 
     objOffset.referenceImageName = reference+'.vrt'
     objOffset.referenceImageHeight = length
