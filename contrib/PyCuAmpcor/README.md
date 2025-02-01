@@ -195,23 +195,45 @@ objOffset.setVaryingGrossOffset(vD, vA)
 objOffset.runAmpcor()
 ```
 
+### 3.3 Offset visualization
+
+The output offset fields may be visualized by the *mdx.py* tool in the *ISCE2* package. Here, we also provide a python script *plotOffsets.py* for more visualization options. 
+
+```
+usage: plotOffsets.py [-h] [--plot_3d] [--plot_velocity] [--velocity_grid VELOCITY_GRID]
+                      [--range RANGE] [--pixel_unit_azimuth PIXEL_UNIT_AZIMUTH]
+                      [--pixel_unit_range PIXEL_UNIT_RANGE] [--vmin_azimuth VMIN_AZIMUTH]
+                      [--vmax_azimuth VMAX_AZIMUTH] [--vmin_range VMIN_RANGE]
+                      [--vmax_range VMAX_RANGE]
+                      vrt_file
+```
+
+A simple example to plot the offset fields in a color map with range (-10, 10) is 
+
+```commandline
+python3 plotOffsets.py offset.bip.vrt --range 10
+```
+
+If you prefer to plot the offsets in 3D or overlay the velocity vectors (quiver), use *--plot_3d* and *--plot_velocity* options. Other options help to adjust the details, e.g., *--vmin_azimuth* and *--vmax_azimutu* specify the minimum and maximum ranges of azimuth offsets; *--pixel_unit_azimuth* and *--pixel_unit_range* scale the offsets with the real pixel dimensions; and *--velocity_grid* adjusts the plot density of the velocity vectors.     
+
+
 ## 4. List of Parameters (ROIPAC/ampcor workflow)
 
 **Image Parameters**
 
-| PyCuAmpcor           | Notes                                                                   |
-| :---                 |:------------------------------------------------------------------------|
-| referenceImageName   | The file name of the reference/template image                           |
-| referenceImageHeight | The height of the reference image                                       |
-| referenceImageWidth  | The width of the reference image                                        |
-| secondaryImageName   | The file name of the secondary/search image                             |
-| secondaryImageHeight | The height of the secondary image                                       |
-| secondaryImageWidth  | The width of the secondary image                                        |
-| grossOffsetImageName | The output file name for gross offsets                                  |
-| offsetImageName      | The output file name for dense offsets                                  |
-| snrImageName         | The output file name for signal-noise-ratio of the correlation          |
-| covImageName         | The output file name for variance of the correlation surface            |
-| covImageName         | The output file name for the normalized correlation surface peak values |
+| PyCuAmpcor                | Notes                                                                   |
+|:--------------------------|:------------------------------------------------------------------------|
+| referenceImageName        | The file name of the reference/template image                           |
+| referenceImageHeight      | The height of the reference image                                       |
+| referenceImageWidth       | The width of the reference image                                        |
+| secondaryImageName        | The file name of the secondary/search image                             |
+| secondaryImageHeight      | The height of the secondary image                                       |
+| secondaryImageWidth       | The width of the secondary image                                        |
+| grossOffsetImageName      | The output file name for gross offsets                                  |
+| offsetImageName           | The output file name for dense offsets                                  |
+| snrImageName              | The output file name for signal-noise-ratio of the correlation          |
+| covImageName              | The output file name for variance of the correlation surface            |
+| peakValueImageName        | The output file name for the normalized correlation surface peak values |
 
 PyCuAmpcor now uses exclusively the GDAL driver to read images, only single-precision binary data are supported. (Image heights/widths are still required as inputs; they are mainly for dimension checking.  We will update later to read them with the GDAL driver). Multi-band is not currently supported, but can be added if desired.
 
@@ -293,7 +315,6 @@ The starting pixel for the first reference window is usually set as
 ```
 
 you may also choose other values, e.g., for a particular region of the image, or a certain location for debug purposes.
-
 
 With a constant gross offset, call
 
