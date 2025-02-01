@@ -1,4 +1,4 @@
-#include "cuAmpcorProcessorGrIMP.h"
+#include "cuAmpcorProcessorOnePass.h"
 
 #include "cuAmpcorUtil.h"
 #include <cufft.h>
@@ -9,7 +9,7 @@
  * @param[in] idxDown_  index of the chunk along Down/Azimuth direction
  * @param[in] idxAcross_ index of the chunk along Across/Range direction
  */
-void cuAmpcorProcessorGrIMP::run(int idxDown_, int idxAcross_)
+void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
 {
     // set chunk index
     setIndex(idxDown_, idxAcross_);
@@ -167,7 +167,7 @@ void cuAmpcorProcessorGrIMP::run(int idxDown_, int idxAcross_)
 
 
 /// constructor
-cuAmpcorProcessorGrIMP::cuAmpcorProcessorGrIMP(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
+cuAmpcorProcessorOnePass::cuAmpcorProcessorOnePass(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
     cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
     cudaStream_t stream_)
     : cuAmpcorProcessor(param_, reference_, secondary_, offsetImage_, snrImage_, covImage_, peakValueImage_, stream_)
@@ -308,7 +308,7 @@ cuAmpcorProcessorGrIMP::cuAmpcorProcessorGrIMP(cuAmpcorParameter *param_, GDALIm
 #endif
 }
 
-void cuAmpcorProcessorGrIMP::loadReferenceChunk()
+void cuAmpcorProcessorOnePass::loadReferenceChunk()
 {
 
     // we first load the whole chunk of image from cpu to a gpu buffer c(r)_referenceChunkRaw
@@ -413,7 +413,7 @@ void cuAmpcorProcessorGrIMP::loadReferenceChunk()
     } // end of if all pixels out of range
 }
 
-void cuAmpcorProcessorGrIMP::loadSecondaryChunk()
+void cuAmpcorProcessorOnePass::loadSecondaryChunk()
 {
     // get the chunk size to be loaded to gpu
     int height =  param->secondaryChunkHeight[idxChunk]; // number of pixels along height
@@ -481,7 +481,7 @@ void cuAmpcorProcessorGrIMP::loadSecondaryChunk()
 }
 
 // destructor
-cuAmpcorProcessorGrIMP::~cuAmpcorProcessorGrIMP()
+cuAmpcorProcessorOnePass::~cuAmpcorProcessorOnePass()
 {
     corrNormalizerOverSampled.release();
 

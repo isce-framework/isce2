@@ -16,8 +16,8 @@ pybind11_add_module(PyCuAmpcor
     src/GDALImage.cpp
     src/SConscript
     src/cuAmpcorProcessor.cpp
-    src/cuAmpcorProcessorROIPAC.cpp
-    src/cuAmpcorProcessorGrIMP.cpp
+    src/cuAmpcorProcessorTwoPass.cpp
+    src/cuAmpcorProcessorOnePass.cpp
     src/cuAmpcorController.cpp
     src/cuAmpcorParameter.cpp
     src/cuArrays.cpp

@@ -51,8 +51,8 @@ pybind11_add_module(PyCuAmpcor
     src/cudaError.cpp
     src/cudaUtil.cpp
     src/cuAmpcorProcessor.cpp
-    src/cuAmpcorProcessorROIPAC.cpp
-    src/cuAmpcorProcessorGrIMP.cpp
+    src/cuAmpcorProcessorTwoPass.cpp
+    src/cuAmpcorProcessorOnePass.cpp
     )
 
 # set_property(TARGET PyCuAmpcor PROPERTY CUDA_SEPARABLE_COMPILATION ON)

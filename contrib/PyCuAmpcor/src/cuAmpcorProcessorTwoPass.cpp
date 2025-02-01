@@ -1,4 +1,4 @@
-#include "cuAmpcorProcessorROIPAC.h"
+#include "cuAmpcorProcessorTwoPass.h"
 
 #include "cuAmpcorUtil.h"
 #include <cufft.h>
@@ -9,7 +9,7 @@
  * @param[in] idxDown_  index of the chunk along Down/Azimuth direction
  * @param[in] idxAcross_ index of the chunk along Across/Range direction
  */
-void cuAmpcorProcessorROIPAC::run(int idxDown_, int idxAcross_)
+void cuAmpcorProcessorTwoPass::run(int idxDown_, int idxAcross_)
 {
     // set chunk index
     setIndex(idxDown_, idxAcross_);
@@ -218,7 +218,7 @@ void cuAmpcorProcessorROIPAC::run(int idxDown_, int idxAcross_)
 
 }
 
-void cuAmpcorProcessorROIPAC::loadReferenceChunk()
+void cuAmpcorProcessorTwoPass::loadReferenceChunk()
 {
 
     // we first load the whole chunk of image from cpu to a gpu buffer c(r)_referenceChunkRaw
@@ -291,7 +291,7 @@ void cuAmpcorProcessorROIPAC::loadReferenceChunk()
     } // end of if all pixels out of range
 }
 
-void cuAmpcorProcessorROIPAC::loadSecondaryChunk()
+void cuAmpcorProcessorTwoPass::loadSecondaryChunk()
 {
     // get the chunk size to be loaded to gpu
     int height =  param->secondaryChunkHeight[idxChunk]; // number of pixels along height
@@ -359,7 +359,7 @@ void cuAmpcorProcessorROIPAC::loadSecondaryChunk()
 }
 
 /// constructor
-cuAmpcorProcessorROIPAC::cuAmpcorProcessorROIPAC(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
+cuAmpcorProcessorTwoPass::cuAmpcorProcessorTwoPass(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
     cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
     cudaStream_t stream_)
     : cuAmpcorProcessor(param_, reference_, secondary_, offsetImage_, snrImage_, covImage_, peakValueImage_, stream_)
@@ -563,7 +563,7 @@ cuAmpcorProcessorROIPAC::cuAmpcorProcessorROIPAC(cuAmpcorParameter *param_, GDAL
 }
 
 // destructor
-cuAmpcorProcessorROIPAC::~cuAmpcorProcessorROIPAC()
+cuAmpcorProcessorTwoPass::~cuAmpcorProcessorTwoPass()
 {
     corrNormalizerOverSampled.release();
     corrNormalizerRaw.release();
