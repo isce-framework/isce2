@@ -8,7 +8,7 @@
 #ifndef __CUAMPCORPROCESSOR_H
 #define __CUAMPCORPROCESSOR_H
 
-#include "GDALImage.h"
+#include "SlcImage.h"
 #include "data_types.h"
 #include "cuArrays.h"
 #include "cuAmpcorParameter.h"
@@ -16,6 +16,7 @@
 #include "cuSincOverSampler.h"
 #include "cuCorrFrequency.h"
 #include "cuCorrNormalizer.h"
+#include <memory>
 
 
 /**
@@ -33,8 +34,8 @@ protected:
     int devId;            ///< GPU device ID to use
     cudaStream_t stream;  ///< CUDA stream to use
 
-    GDALImage *referenceImage;  ///< reference image object
-    GDALImage *secondaryImage;  ///< secondary image object
+    SlcImage *referenceImage;  ///< reference image object
+    SlcImage *secondaryImage;  ///< secondary image object
     cuAmpcorParameter *param;   ///< reference to the (global) parameters
     cuArrays<real2_type> *offsetImage; ///< output offsets image
     cuArrays<real_type> *snrImage;     ///< snr image
@@ -45,7 +46,7 @@ protected:
 public:
     // default constructor and destructor
     cuAmpcorProcessor(cuAmpcorParameter *param_,
-        GDALImage *reference_, GDALImage *secondary_,
+        SlcImage *reference_, SlcImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
         cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
         cudaStream_t stream_);
@@ -54,7 +55,7 @@ public:
     // Factory method (virtual constructor)
     static std::unique_ptr<cuAmpcorProcessor> create(int workflow,
         cuAmpcorParameter *param_,
-        GDALImage *reference_, GDALImage *secondary_,
+        SlcImage *reference_, SlcImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
         cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
         cudaStream_t stream_);

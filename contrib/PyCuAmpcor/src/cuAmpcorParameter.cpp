@@ -43,9 +43,11 @@ cuAmpcorParameter::cuAmpcorParameter()
     referenceImageName = "reference.slc";
     referenceImageWidth = 1000;
     referenceImageHeight = 1000;
+    referenceImageDataType = 2; // complex
     secondaryImageName = "secondary.slc";
     secondaryImageWidth = 1000;
     secondaryImageHeight = 1000;
+    secondaryImageDataType = 2; // complex
     offsetImageName = "DenseOffset.bip";
     grossOffsetImageName = "GrossOffset.bip";
     snrImageName = "snr.bip";

@@ -71,7 +71,7 @@ private:
 public:
     // constructor
     cuAmpcorProcessorOnePass(cuAmpcorParameter *param_,
-        GDALImage *reference_, GDALImage *secondary_,
+        SlcImage *reference_, SlcImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
         cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
         cudaStream_t stream_);

@@ -2,12 +2,13 @@
 #include "cuAmpcorProcessorTwoPass.h"
 #include "cuAmpcorProcessorOnePass.h"
 
+#include <stdexcept>
 
 // Factory method implementation
 // create the batch processor for a given {workflow}
 std::unique_ptr<cuAmpcorProcessor> cuAmpcorProcessor::create(int workflow,
     cuAmpcorParameter *param_,
-    GDALImage *reference_, GDALImage *secondary_,
+    SlcImage *reference_, SlcImage *secondary_,
     cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
     cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
     cudaStream_t stream_)
@@ -27,7 +28,7 @@ std::unique_ptr<cuAmpcorProcessor> cuAmpcorProcessor::create(int workflow,
 
 // constructor
 cuAmpcorProcessor::cuAmpcorProcessor(cuAmpcorParameter *param_,
-        GDALImage *reference_, GDALImage *secondary_,
+        SlcImage *reference_, SlcImage *secondary_,
         cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_,
         cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
         cudaStream_t stream_)

@@ -13,7 +13,7 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --prec-div=true --prec-sqrt=true")
 
 pybind11_add_module(PyCuAmpcor
     src/PyCuAmpcor.cpp
-    src/GDALImage.cpp
+    src/SlcImage.cpp
     src/SConscript
     src/cuAmpcorProcessor.cpp
     src/cuAmpcorProcessorTwoPass.cpp

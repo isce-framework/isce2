@@ -91,13 +91,13 @@ public:
 
     //reference image
     std::string referenceImageName;    ///< reference SLC image name
-    int imageDataType1;                ///< reference image data type, 2=cfloat=complex=float2 1=float
+    int referenceImageDataType;        ///< reference image data type, 2=cfloat=complex=float2 1=float
     int referenceImageHeight;          ///< reference image height
     int referenceImageWidth;           ///< reference image width
 
     //secondary image
     std::string secondaryImageName;     ///< secondary SLC image name
-    int imageDataType2;                 ///< secondary image data type, 2=cfloat=complex=float2 1=float
+    int secondaryImageDataType;         ///< secondary image data type, 2=cfloat=complex=float2 1=float
     int secondaryImageHeight;           ///< secondary image height
     int secondaryImageWidth;            ///< secondary image width
 

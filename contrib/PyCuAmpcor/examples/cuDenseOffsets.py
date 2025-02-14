@@ -220,12 +220,14 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.derampMethod = inps.deramp
     print('deramp method (0: magnitude, 1: linear phase ramp, 2: skip deramping): ', objOffset.derampMethod)
 
-    objOffset.referenceImageName = reference+'.vrt'
+    objOffset.referenceImageName = reference
     objOffset.referenceImageHeight = length
     objOffset.referenceImageWidth = width
-    objOffset.secondaryImageName = secondary+'.vrt'
+    objOffset.referenceImageDataType = 2 if sar.getDataType().upper().startswith('C')  else 1
+    objOffset.secondaryImageName = secondary
     objOffset.secondaryImageHeight = length
     objOffset.secondaryImageWidth = width
+    objOffset.secondaryImageDataType = 2 if sim.getDataType().upper().startswith('C') else 1
 
     print("image length:",length)
     print("image width:",width)

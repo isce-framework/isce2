@@ -7,7 +7,7 @@
 #include "cuAmpcorController.h"
 
 // dependencies
-#include "GDALImage.h"
+#include "SlcImage.h"
 #include "cuArrays.h"
 #include "cudaUtil.h"
 #include "cuAmpcorProcessor.h"
@@ -45,14 +45,15 @@ void cuAmpcorController::runAmpcor()
 {
     // set the gpu id
     param->deviceID = gpuDeviceInit(param->deviceID);
-    // initialize the gdal driver
-    GDALAllRegister();
-    // reference and secondary images; use band=1 as default
+
+    // reference and secondary images
     // TODO: selecting band
     std::cout << "Opening reference image " << param->referenceImageName << "...\n";
-    GDALImage *referenceImage = new GDALImage(param->referenceImageName, 1, param->mmapSizeInGB);
+    SlcImage *referenceImage = new SlcImage(param->referenceImageName, param->referenceImageHeight, param->referenceImageWidth,
+        param->referenceImageDataType*sizeof(float), param->mmapSizeInGB);
     std::cout << "Opening secondary image " << param->secondaryImageName << "...\n";
-    GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
+    SlcImage *secondaryImage = new SlcImage(param->secondaryImageName, param->secondaryImageHeight, param->secondaryImageWidth,
+        param->secondaryImageDataType*sizeof(float), param->mmapSizeInGB);
 
     cuArrays<real2_type> *offsetImage, *offsetImageRun;
     cuArrays<real_type> *snrImage, *snrImageRun;

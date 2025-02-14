@@ -167,7 +167,7 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
 
 
 /// constructor
-cuAmpcorProcessorOnePass::cuAmpcorProcessorOnePass(cuAmpcorParameter *param_, GDALImage *reference_, GDALImage *secondary_,
+cuAmpcorProcessorOnePass::cuAmpcorProcessorOnePass(cuAmpcorParameter *param_, SlcImage *reference_, SlcImage *secondary_,
     cuArrays<real2_type> *offsetImage_, cuArrays<real_type> *snrImage_, cuArrays<real3_type> *covImage_, cuArrays<real_type> *peakValueImage_,
     cudaStream_t stream_)
     : cuAmpcorProcessor(param_, reference_, secondary_, offsetImage_, snrImage_, covImage_, peakValueImage_, stream_)
@@ -370,7 +370,7 @@ void cuAmpcorProcessorOnePass::loadReferenceChunk()
 #endif
 
         // check whether the image is complex (e.g., SLC) or real( e.g. TIFF)
-        if(referenceImage->isComplex())
+        if(param->referenceImageDataType==2)
         {
             // allocate a gpu buffer to load data from cpu/file
             // try allocate/deallocate the buffer on the fly to save gpu memory 07/09/19
@@ -433,7 +433,7 @@ void cuAmpcorProcessorOnePass::loadSecondaryChunk()
         getRelativeOffset(ChunkOffsetAcross->hostData, param->secondaryStartPixelAcross, param->secondaryChunkStartPixelAcross[idxChunk]);
         ChunkOffsetAcross->copyToDevice(stream);
 
-        if(secondaryImage->isComplex())
+        if(param->secondaryImageDataType==2)
         {
             c_secondaryChunkRaw = new cuArrays<image_complex_type> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
             c_secondaryChunkRaw->allocate();

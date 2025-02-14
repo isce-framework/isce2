@@ -32,7 +32,7 @@ find_package(GDAL REQUIRED)
 # python module
 pybind11_add_module(PyCuAmpcor
     src/PyCuAmpcor.cpp
-    src/GDALImage.cpp
+    src/SlcImage.cpp
     src/cuAmpcorController.cpp
     src/cuAmpcorParameter.cpp
     src/cuArrays.cpp
