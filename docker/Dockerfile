@@ -42,6 +42,7 @@ FROM ubuntu:20.04
 
 # Set an encoding to make things work smoothly.
 ENV FC=gfortran
+ENV PATH="/usr/bin:$PATH"
 ENV LANG en_US.UTF-8
 ENV TZ US/Pacific
 ARG DEBIAN_FRONTEND=noninteractive
