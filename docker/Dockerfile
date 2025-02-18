@@ -10,6 +10,7 @@ RUN set -ex \
  && apt-get install -y \
     cmake \
     cython3 \
+    gfortran \ # Added to set for rebuild
     git \
     libfftw3-dev \
     libgdal-dev \
@@ -40,6 +41,7 @@ RUN set -ex \
 FROM ubuntu:20.04
 
 # Set an encoding to make things work smoothly.
+ENV FC=gfortran
 ENV LANG en_US.UTF-8
 ENV TZ US/Pacific
 ARG DEBIAN_FRONTEND=noninteractive
