@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13...3.18)
 
 if(NOT CMAKE_Fortran_COMPILER)
-    set(CMAKE_Fortran_COMPILER "/bin/gfortran")
+    set(CMAKE_Fortran_COMPILER "$ENV{GFORTRAN}")
 endif()
 
 project(isce2 LANGUAGES C CXX Fortran)
