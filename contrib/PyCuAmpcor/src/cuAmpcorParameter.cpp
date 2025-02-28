@@ -5,7 +5,7 @@
 
 #include "cuAmpcorParameter.h"
 #include <stdio.h>
-
+#include <iostream>
 #include <stdexcept>
 
 
@@ -158,8 +158,8 @@ void cuAmpcorParameter::_setupParameters_OnePass()
     halfSearchRangeAcrossRaw += halfZoomWindowSizeRaw;
 
     // add extra search range to ensure enough area to oversample correlation surface
-    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeDownRaw;
-    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeAcrossRaw;
+    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeAcrossRaw;
+    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeDownRaw;
 
     windowSizeHeightRawEnlarged = searchWindowSizeHeightRaw;
     windowSizeWidthRawEnlarged = searchWindowSizeWidthRaw;

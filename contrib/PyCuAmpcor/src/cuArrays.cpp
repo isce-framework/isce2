@@ -139,6 +139,7 @@ void cuArrays<T>::outputHostToFile(std::string fn)
     file.open(fn.c_str(),  std::ios_base::binary);
     file.write((char *)hostData, getByteSize());
     file.close();
+    std::cout << fn << "size: height " << height << " width "<< width << " count " << count << "\n";
 }
 
 // instantiations, required by python extensions

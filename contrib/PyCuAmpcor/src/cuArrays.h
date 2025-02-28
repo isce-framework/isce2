@@ -13,7 +13,7 @@
 
 // cuda dependencies
 #include <driver_types.h>
-
+#include <iostream>
 #include <string>
 
 template <typename T>
@@ -103,6 +103,12 @@ public:
     void outputHostToFile(std::string fn);
 
 };
+
+std::ostream& operator<<(std::ostream& os, const float2& p);
+std::ostream& operator<<(std::ostream& os, const float3& p);
+std::ostream& operator<<(std::ostream& os, const double2& p);
+std::ostream& operator<<(std::ostream& os, const float3& p);
+std::ostream& operator<<(std::ostream& os, const int2& p);
 
 #endif //__CUARRAYS_H
 //end of file
