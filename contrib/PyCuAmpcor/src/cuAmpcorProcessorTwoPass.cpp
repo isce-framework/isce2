@@ -275,7 +275,7 @@ void cuAmpcorProcessorTwoPass::loadReferenceChunk()
         }
         // if the image is real
         else {
-            r_referenceChunkRaw = new cuArrays<real_type> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
+            r_referenceChunkRaw = new cuArrays<image_real_type> (param->maxReferenceChunkHeight, param->maxReferenceChunkWidth);
             r_referenceChunkRaw->allocate();
 
             // load the data from cpu
@@ -313,7 +313,7 @@ void cuAmpcorProcessorTwoPass::loadSecondaryChunk()
 
         if(param->secondaryImageDataType==2)
         {
-            c_secondaryChunkRaw = new cuArrays<complex_type> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
+            c_secondaryChunkRaw = new cuArrays<image_complex_type> (param->maxSecondaryChunkHeight, param->maxSecondaryChunkWidth);
             c_secondaryChunkRaw->allocate();
 
             //load a chunk from mmap to gpu

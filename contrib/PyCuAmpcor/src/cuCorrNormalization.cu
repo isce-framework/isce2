@@ -186,9 +186,9 @@ void cuArraysSumSquare(cuArrays<real_type> *images, cuArrays<real_type> *imagesS
 
 // cuda kernel to compute summation on extracted correlation surface (Minyan)
 template<const int Nthreads>
-__global__ void cuArraysSumCorr_kernel(float *images, int *imagesValid, float *imagesSum, int *imagesValidCount, int imageSize, int nImages)
+__global__ void cuArraysSumCorr_kernel(real_type *images, int *imagesValid, real_type *imagesSum, int *imagesValidCount, int imageSize, int nImages)
 {
-    __shared__ float shmem[Nthreads];
+    __shared__ real_type shmem[Nthreads];
 
     const int tid = threadIdx.x;
     const int bid = blockIdx.x;
@@ -197,11 +197,11 @@ __global__ void cuArraysSumCorr_kernel(float *images, int *imagesValid, float *i
 
     const int imageIdx = bid;
     const int imageOffset = imageIdx * imageSize;
-    float*    imageD = images + imageOffset;
+    real_type*    imageD = images + imageOffset;
     int*      imageValidD = imagesValid + imageOffset;
 
-    float sum  = 0.0f;
-    int count = 0;
+    real_type sum  = 0.0f;
+    real_type count = 0;
 
     for (int i = tid; i < imageSize; i += Nthreads) {
             sum += imageD[i] * imageD[i];
@@ -213,7 +213,7 @@ __global__ void cuArraysSumCorr_kernel(float *images, int *imagesValid, float *i
 
     if(tid ==0) {
         imagesSum[bid] = sum;
-        imagesValidCount[bid] = count;
+        imagesValidCount[bid] = (int)count;
     }
 }
 
@@ -225,7 +225,7 @@ __global__ void cuArraysSumCorr_kernel(float *images, int *imagesValid, float *i
  * @param[out] imagesValidCount count of total valid pixels
  * @param[in] stream cudaStream
  */
-void cuArraysSumCorr(cuArrays<float> *images, cuArrays<int> *imagesValid, cuArrays<float> *imagesSum,
+void cuArraysSumCorr(cuArrays<real_type> *images, cuArrays<int> *imagesValid, cuArrays<real_type> *imagesSum,
     cuArrays<int> *imagesValidCount, cudaStream_t stream)
 {
     const dim3 grid(images->count, 1, 1);

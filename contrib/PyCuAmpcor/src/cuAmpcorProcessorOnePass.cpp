@@ -131,8 +131,8 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
     r_corrBatchZoomInOverSampled->outputToFile("r_corrBatchZoomInOverSampled", stream);
 #endif
 
-    //find the max again
-    cuArraysMaxloc2D(r_corrBatchZoomInOverSampled, offsetZoomIn, corrMaxValue, stream);
+    //find the max again, within the range of \pm 1 pixel * totalOS
+    cuArraysMaxloc2D(r_corrBatchZoomInOverSampled, param->corrZoomInOversampledSearchStart, param->corrZoomInOversampledSearchRange, offsetZoomIn, corrMaxValue, stream);
 
 #ifdef CUAMPCOR_DEBUG
     // dump the max location on oversampled correlation surface

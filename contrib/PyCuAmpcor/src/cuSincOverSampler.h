@@ -45,7 +45,7 @@ class cuSincOverSamplerR2R
     int i_intplength;   ///< actual filter length = r_relfiltlen/r_beta
     int i_filtercoef;   //< length of the sinc kernel i_intplength*i_decfactor+1
 
-    float * r_filter;   // sinc kernel with size i_filtercoef
+    real_type * r_filter;   // sinc kernel with size i_filtercoef
 
     cudaStream_t stream;
 

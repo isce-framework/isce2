@@ -78,6 +78,8 @@ public:
     int2 corrWindowSize; // 2*halfSearchRange + 1
     int2 corrZoomInSize; // zoomWindowSize+1
     int2 corrZoomInOversampledSize; // corrZoomInSize * oversamplingFactor
+    int2 corrZoomInOversampledSearchStart; // search start position in the oversampled correlation surface
+    int2 corrZoomInOversampledSearchRange; // search range in the oversampled correlation surface
 
     int corrStatWindowSize;     ///< correlation surface size used to estimate snr
 

@@ -193,6 +193,14 @@ void cuAmpcorParameter::_setupParameters_OnePass()
     // oversampled correlation surface size
     corrZoomInOversampledSize = make_int2(corrZoomInSize.x * corrSurfaceOverSamplingFactor,
                                               corrZoomInSize.y * corrSurfaceOverSamplingFactor);
+
+    int totalOS = rawDataOversamplingFactor*corrSurfaceOverSamplingFactor;
+    // search start : image center - 1 pixel * totalOS
+    corrZoomInOversampledSearchStart = make_int2((corrZoomInSize.x-1)*corrSurfaceOverSamplingFactor/2 - totalOS,
+        (corrZoomInSize.y-1)*corrSurfaceOverSamplingFactor/2 - totalOS);
+    // search range \pm 1 pixel * totalOS
+    corrZoomInOversampledSearchRange = make_int2(2*totalOS, 2*totalOS);
+
     fprintf(stderr, "zoomWindowSize is (%d, %d)!\n",
             corrZoomInSize.x, corrZoomInSize.y );
 

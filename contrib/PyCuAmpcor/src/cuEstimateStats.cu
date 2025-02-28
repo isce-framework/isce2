@@ -49,14 +49,14 @@ void cuEstimateSnr(cuArrays<real_type> *corrSum, cuArrays<real_type> *maxval, cu
     getLastCudaError("cuda kernel estimate stats error\n");
 }
 
-__global__ void cudaKernel_estimateSnr(const float* corrSum, const int* corrValidCount, const float* maxval, float* snrValue, const int size)
+__global__ void cudaKernel_estimateSnr(const real_type* corrSum, const int* corrValidCount, const real_type* maxval, real_type* snrValue, const int size)
 
 {
     int idx = threadIdx.x + blockDim.x*blockIdx.x;
 
     if (idx >= size) return;
 
-    float mean = (corrSum[idx] - maxval[idx] * maxval[idx]) / (corrValidCount[idx] - 1);
+    real_type mean = (corrSum[idx] - maxval[idx] * maxval[idx]) / (corrValidCount[idx] - 1);
 
     snrValue[idx] = maxval[idx] * maxval[idx] / mean;
 }
@@ -68,7 +68,7 @@ __global__ void cudaKernel_estimateSnr(const float* corrSum, const int* corrVali
  * @param[out] snrValue return snr value
  * @param[in] stream cuda stream
  */
-void cuEstimateSnr(cuArrays<float> *corrSum, cuArrays<int> *corrValidCount, cuArrays<float> *maxval, cuArrays<float> *snrValue, cudaStream_t stream)
+void cuEstimateSnr(cuArrays<real_type> *corrSum, cuArrays<int> *corrValidCount, cuArrays<real_type> *maxval, cuArrays<real_type> *snrValue, cudaStream_t stream)
 {
 
     int size = corrSum->getSize();

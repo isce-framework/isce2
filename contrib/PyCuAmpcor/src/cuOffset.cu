@@ -178,9 +178,9 @@ void cuSubPixelOffset(cuArrays<int2> *offsetInit,
 
 // cuda kernel for cuSubPixelOffset
 __global__ void cuSubPixelOffset2Pass_kernel(const int2 *offsetInit, const int2 *offsetZoomIn,
-                                        float2 *offsetFinal,
-                                        const float OSratio,
-                                        const float xoffset, const float yoffset, const int size)
+                                        real2_type *offsetFinal,
+                                        const real_type OSratio,
+                                        const real_type xoffset, const real_type yoffset, const int size)
 {
     int idx = threadIdx.x + blockDim.x*blockIdx.x;
     if (idx >= size) return;
@@ -212,7 +212,7 @@ __global__ void cuSubPixelOffset2Pass_kernel(const int2 *offsetInit, const int2 
  *    Final offset =  pixel size offset +  subpixel offset
  */
 void cuSubPixelOffset2Pass(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn,
-    cuArrays<float2> *offsetFinal,
+    cuArrays<real2_type> *offsetFinal,
     int OverSampleRatioZoomin, int OverSampleRatioRaw,
     int xHalfRangeInit,  int yHalfRangeInit,
     cudaStream_t stream)
