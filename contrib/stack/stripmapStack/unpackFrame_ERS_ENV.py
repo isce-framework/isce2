@@ -63,22 +63,6 @@ def unpack(fname, slcname, orbitdir, orbittype):
     obj.frame.getImage().renderHdr()
     obj.extractDoppler()
 
-    # ####  computation of "poly" adapted from line 339 - line 353 of  Components/isceobj/Sensor/ERS_EnviSAT_SLC.py ###
-    #######  removed this section and added  obj.extractDoppler() above instead. Doesn't seem to change anything in the processing. The latter is required for cropFrame.
-    # coeffs = obj.dopplerRangeTime
-    # dr = obj.frame.getInstrument().getRangePixelSize()
-    # rref = 0.5 * Const.c * obj.rangeRefTime
-    # r0 = obj.frame.getStartingRange()
-    # norm = 0.5 * Const.c / dr
-
-    # dcoeffs = []
-    # for ind, val in enumerate(coeffs):
-    #     dcoeffs.append( val / (norm**ind))
-    
-    # poly = Poly1D.Poly1D()
-    # poly.initPoly(order=len(coeffs)-1)
-    # poly.setMean( (rref - r0)/dr - 1.0)
-    # poly.setCoeffs(dcoeffs)
 
 
     pickName = os.path.join(slcname, 'data')
