@@ -129,37 +129,15 @@ def download_file(file_id, outdir='.', session=None, token=None):
     return success
 
 
-<<<<<<< HEAD
 if __name__ == '__main__':
-=======
-def fileToRange(fname):
-    '''
-    Derive datetime range from orbit file name.
-    '''
-
-    fields = os.path.basename(fname).split('_')
-    start = datetime.datetime.strptime(fields[-2][1:16], datefmt)
-    stop = datetime.datetime.strptime(fields[-1][:15], datefmt)
-    mission = fields[0]
-
-    return (start, stop, mission)
-
-
-def run_main(inps, input_file=None):
->>>>>>> d13c124 (fetchOrbit.py: allow reading SLC zip files from a given folder, -d option)
     '''
     Run the major thing
     '''
 
-<<<<<<< HEAD
     inps = cmdLineParse()
     username = inps.username
     password = inps.password
     token_file = os.path.expanduser(inps.token_file)
-=======
-    if input_file:
-        inps.input = input_file
->>>>>>> d13c124 (fetchOrbit.py: allow reading SLC zip files from a given folder, -d option)
 
     print('Fetching for: ', inps.input)
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
