@@ -53,10 +53,13 @@ inline int nextpower2(int value)
 }
 
 // General GPU Device CUDA Initialization
-int gpuDeviceInit(int devID);
+int gpuDeviceInit(int devID=0);
 
 // This function lists all available GPUs
 void gpuDeviceList();
+
+// Get the number of StreamMultiprocessor
+int getSMCount(int devID=0);
 
 #endif //__CUDAUTIL_H
 //end of file
