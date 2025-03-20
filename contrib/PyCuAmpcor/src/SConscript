@@ -7,7 +7,7 @@ package = envPyCuAmpcor['PACKAGE']
 project = envPyCuAmpcor['PROJECT']
 build = envPyCuAmpcor['PRJ_LIB_DIR']
 install = envPyCuAmpcor['PRJ_SCONS_INSTALL'] + '/' + package + '/' + project
-listFiles = ['GDALImage.cpp', 'cuArrays.cpp', 'cuArraysCopy.cu',
+listFiles = ['SlcImage.cpp', 'cuArrays.cpp', 'cuArraysCopy.cu',
              'cudaError.cpp', 'cudaUtil.cpp',
              'cuArraysPadding.cu', 'cuOverSampler.cpp',
              'cuSincOverSampler.cu', 'cuDeramp.cu',
@@ -15,7 +15,8 @@ listFiles = ['GDALImage.cpp', 'cuArrays.cpp', 'cuArraysCopy.cu',
              'cuCorrNormalizationSAT.cu', 'cuCorrNormalizer.cpp',
              'cuAmpcorParameter.cpp', 'cuCorrTimeDomain.cu',
              'cuAmpcorController.cpp', 'cuCorrFrequency.cu',
-             'cuAmpcorChunk.cpp', 'cuEstimateStats.cu']
+             'cuAmpcorProcessor.cpp', 'cuEstimateStats.cu',
+             'cuAmpcorProcessorTwoPass.cpp', 'cuAmpcorProcessorOnePass.cpp']
 
 lib = envPyCuAmpcor.SharedLibrary(target = 'PyCuAmpcor', source= listFiles, SHLIBPREFIX='')
 

@@ -10,6 +10,7 @@
 #define __CUAMPCORPARAMETER_H
 
 #include <string>
+#include <cuda_runtime.h> // for int2
 
 /// Class container for all parameters
 ///
@@ -35,28 +36,30 @@ public:
     int deviceID;       ///< Targeted GPU device ID: use -1 to auto select
     int nStreams;       ///< Number of streams to asynchonize data transfers and compute kernels
     int derampMethod;   ///< Method for deramping 0=None, 1=average
+    int workflow;       ///< Workflow 0: two passes, first pass without antialiasing oversampling, 1: one pass with antialiasing oversampling
 
     // chip or window size for raw data
     int windowSizeHeightRaw;        ///< Template window height (original size)
     int windowSizeWidthRaw;         ///< Template window width (original size)
+
+    int windowSizeHeightRawEnlarged; ///< Template window height Enlarged to search window size for oversampling
+    int windowSizeWidthRawEnlarged; ///< Template window width Enlarged to search window size for oversampling
+
     int searchWindowSizeHeightRaw;  ///< Search window height (original size)
     int searchWindowSizeWidthRaw;   ///< Search window width (orignal size)
 
     int halfSearchRangeDownRaw;   ///< (searchWindowSizeHeightRaw-windowSizeHeightRaw)/2
     int halfSearchRangeAcrossRaw;    ///< (searchWindowSizeWidthRaw-windowSizeWidthRaw)/2
     // search range is (-halfSearchRangeRaw, halfSearchRangeRaw)
-
-    int searchWindowSizeHeightRawZoomIn; ///< search window height used for zoom in
-    int searchWindowSizeWidthRawZoomIn;  ///< search window width used for zoom in
-
-    int corrStatWindowSize;     ///< correlation surface size used to estimate snr
-    int corrRawZoomInHeight;    ///< correlation surface height used for oversampling
-    int corrRawZoomInWidth;     ///< correlation surface width used for oversampling
+    // note the search range now includes extra margin for the correlation surface extraction
 
     // chip or window size after oversampling
-    int rawDataOversamplingFactor;  ///< Raw data overampling factor (from original size to oversampled size)
+    int rawDataOversamplingFactor;  ///< Raw data oversampling factor (from original size to oversampled size)
     int windowSizeHeight;           ///< Template window length (oversampled size)
     int windowSizeWidth;            ///< Template window width (original size)
+    int windowSizeHeightEnlarged;           ///< Template window length enlarged (oversampled size)
+    int windowSizeWidthEnlarged;            ///< Template window width enlarged (original size)
+
     int searchWindowSizeHeight;     ///< Search window height (oversampled size)
     int searchWindowSizeWidth;      ///< Search window width (oversampled size)
 
@@ -68,21 +71,35 @@ public:
     int zoomWindowSize;      ///< Zoom-in window size in correlation surface (same for down and across directions)
     int halfZoomWindowSizeRaw; ///<  half of zoomWindowSize/rawDataOversamplingFactor
 
-    int oversamplingFactor;  ///< Oversampling factor for interpolating correlation surface
-    int oversamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc
+    int corrSurfaceOverSamplingFactor;  ///< Oversampling factor for interpolating correlation surface
+    int corrSurfaceOverSamplingMethod;  ///< correlation surface oversampling method 0 = fft (default)  1 = sinc
 
+    // correlation surface
+    int2 corrWindowSize; // 2*halfSearchRange + 1
+    int2 corrZoomInSize; // zoomWindowSize+1
+    int2 corrZoomInOversampledSize; // corrZoomInSize * oversamplingFactor
+    int2 corrZoomInOversampledSearchStart; // search start position in the oversampled correlation surface
+    int2 corrZoomInOversampledSearchRange; // search range in the oversampled correlation surface
 
-    float thresholdSNR;      ///< Threshold of Signal noise ratio to remove noisy data
+    int corrStatWindowSize;     ///< correlation surface size used to estimate snr
+
+    // parameters used in the first pass in two-pass workflow
+    // @TODO move them to workflow specific files
+    int searchWindowSizeHeightRawZoomIn;
+    int searchWindowSizeWidthRawZoomIn;
+    int corrRawZoomInHeight;    ///< correlation surface height used for oversampling
+    int corrRawZoomInWidth;     ///< correlation surface width used for oversampling
+
 
     //reference image
     std::string referenceImageName;    ///< reference SLC image name
-    int imageDataType1;                ///< reference image data type, 2=cfloat=complex=float2 1=float
+    int referenceImageDataType;        ///< reference image data type, 2=cfloat=complex=float2 1=float
     int referenceImageHeight;          ///< reference image height
     int referenceImageWidth;           ///< reference image width
 
     //secondary image
     std::string secondaryImageName;     ///< secondary SLC image name
-    int imageDataType2;                 ///< secondary image data type, 2=cfloat=complex=float2 1=float
+    int secondaryImageDataType;         ///< secondary image data type, 2=cfloat=complex=float2 1=float
     int secondaryImageHeight;           ///< secondary image height
     int secondaryImageWidth;            ///< secondary image width
 
@@ -125,10 +142,14 @@ public:
     int maxReferenceChunkHeight, maxReferenceChunkWidth; ///< max reference chunk size
     int maxSecondaryChunkHeight, maxSecondaryChunkWidth; ///< max secondary chunk size
 
+    int referenceLoadingOffsetDown, referenceLoadingOffsetAcross; ///< reference loading offset, depending on workflow (e.g, matching secondary)
+    int secondaryLoadingOffsetDown, secondaryLoadingOffsetAcross; ///< secondary loading offset, depending on workflow (e.g., with extra pads)
+
     std::string grossOffsetImageName;  ///< gross offset output filename
     std::string offsetImageName;       ///< Offset fields output filename
     std::string snrImageName;          ///< Output SNR filename
     std::string covImageName;          ///< Output variance filename
+    std::string peakValueImageName;      ///< Output normalized correlation surface peak value filename
 
     // Class constructor and default parameters setter
     cuAmpcorParameter();
@@ -154,6 +175,8 @@ public:
     void checkPixelInImageRange();
     // Process other parameters after Python Input
     void setupParameters();
+    void _setupParameters_TwoPass();
+    void _setupParameters_OnePass();
 
 };
 
