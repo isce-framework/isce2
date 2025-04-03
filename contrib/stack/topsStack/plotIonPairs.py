@@ -86,7 +86,7 @@ if __name__ == '__main__':
     for ipair in pairs:
         ion = os.path.join(idir, ipair, 'ion_cal', 'filt.ion')
         runCmd('mdx {} -s {} -rhdr {} -cmap cmy -wrap 6.283185307179586 -addr -3.141592653589793 -P -workdir {}'.format(ion, width, width*4, odir))
-        runCmd("montage -pointsize {} -label '{}' {} -geometry +{} -compress LZW{} {}.tif".format(
+        runCmd("montage -font DejaVu-Sans -pointsize {} -label '{}' {} -geometry +{} -compress LZW{} {}.tif".format(
             int((ratio*width)/111*9+0.5),
             ipair,
             os.path.join(odir, 'out.ppm'),

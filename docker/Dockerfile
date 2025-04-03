@@ -10,6 +10,7 @@ RUN set -ex \
  && apt-get install -y \
     cmake \
     cython3 \
+    gfortran \
     git \
     libfftw3-dev \
     libgdal-dev \

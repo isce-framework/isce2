@@ -677,7 +677,7 @@ char a_data[3360];
            if (i_db > 8-1) printf("a_lll = %d %s %d %d %d\n",a_lll,a_lll,*(a_lll+0),*(a_lll+1),*(a_lll+2));
 
            XtAddCallback(textwin, XmNactivateCallback,
-              XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
+              (XtCallbackProc)XmProcessTraversal, (XtPointer)XmTRAVERSE_NEXT_TAB_GROUP);
 
            }
 

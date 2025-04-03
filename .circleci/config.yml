@@ -14,7 +14,7 @@ jobs:
             pwd
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
-            apt-get install -y cmake cython3 git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libopencv-dev python3-gdal python3-h5py python3-numpy python3-scipy
+            apt-get install -y cmake cython3 gfortran git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libopencv-dev python3-gdal python3-h5py python3-numpy python3-scipy
 
       - run:
           name: Build and Install ISCE
@@ -58,7 +58,7 @@ jobs:
             mkdir config build install
             export DEBIAN_FRONTEND=noninteractive
             apt-get update
-            apt-get install -y scons cython3 git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libmotif-dev libopencv-dev libx11-dev python3-gdal python3-h5py python3-numpy python3-scipy
+            apt-get install -y scons cython3 gfortran git libfftw3-dev libgdal-dev libhdf4-alt-dev libhdf5-dev libmotif-dev libopencv-dev libx11-dev python3-gdal python3-h5py python3-numpy python3-scipy
 
       - run:
           name: Build SConfigISCE and setup dirs
