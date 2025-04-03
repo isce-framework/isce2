@@ -32,15 +32,17 @@ protected:
     int nWindowsAcross;   ///< number of windows in one chunk, across
 
     int devId;            ///< GPU device ID to use
-    cudaStream_t stream;  ///< CUDA stream to use
 
+
+    cuAmpcorParameter *param;   ///< reference to the (global) parameters
     SlcImage *referenceImage;  ///< reference image object
     SlcImage *secondaryImage;  ///< secondary image object
-    cuAmpcorParameter *param;   ///< reference to the (global) parameters
     cuArrays<real2_type> *offsetImage; ///< output offsets image
     cuArrays<real_type> *snrImage;     ///< snr image
     cuArrays<real3_type> *covImage;    ///< cov image
     cuArrays<real_type> *peakValueImage;     ///< peak value image
+
+    cudaStream_t stream;  ///< CUDA stream to use
 
 
 public:

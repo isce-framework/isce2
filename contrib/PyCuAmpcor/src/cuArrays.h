@@ -23,44 +23,35 @@ public:
     int height; ///< x, row, down, length, azimuth, along the track
     int width;  // y, col, across, range, along the sight
     int size;   // one image size, height*width
-    int countW; // number of images along width direction
     int countH; // number of images along height direction
+    int countW; // number of images along width direction
     int count;  // countW*countH, number of images
-    T* devData; // pointer to data in device (gpu) memory
-    T* hostData; // pointer to data in host (cpu) memory
 
     bool is_allocated; // whether the data is allocated in device memory
     bool is_allocatedHost; // whether the data is allocated in host memory
 
+    T* devData; // pointer to data in device (gpu) memory
+    T* hostData; // pointer to data in host (cpu) memory
+
     // default constructor, empty
-    cuArrays() : width(0), height(0), size(0), countW(0), countH(0), count(0),
+    cuArrays() : height(0), width(0), size(0), countH(0), countW(0), count(0),
         is_allocated(0), is_allocatedHost(0),
-        devData(0), hostData(0) {}
+        devData(nullptr), hostData(nullptr) {}
 
     // constructor for single image
-    cuArrays(size_t h, size_t w) : width(w), height(h), countH(1), countW(1), count(1),
+    cuArrays(size_t h, size_t w) : height(h), width(w), size(h*w), countH(1), countW(1), count(1),
         is_allocated(0), is_allocatedHost(0),
-        devData(0), hostData(0)
-    {
-        size = w*h;
-    }
+        devData(nullptr), hostData(nullptr) {}
 
     // constructor for multiple images with a total count
-    cuArrays(size_t h, size_t w, size_t n) : width(w), height(h), countH(1), countW(n), count(n),
+    cuArrays(size_t h, size_t w, size_t n) : height(h), width(w), size(h*w), countH(1), countW(n), count(n),
         is_allocated(0), is_allocatedHost(0),
-        devData(0), hostData(0)
-    {
-        size = w*h;
-    }
+        devData(nullptr), hostData(nullptr) {}
 
     // constructor for multiple images with (countH, countW)
-    cuArrays(size_t h, size_t w, size_t ch, size_t cw) : width(w), height(h), countW(cw), countH(ch),
+    cuArrays(size_t h, size_t w, size_t ch, size_t cw) : height(h), width(w), size(h*w), countH(ch), countW(cw), count(ch*cw),
         is_allocated(0), is_allocatedHost(0),
-        devData(0), hostData(0)
-    {
-        size = w*h;
-        count = countH*countW;
-    }
+        devData(nullptr), hostData(nullptr) {}
 
     // memory allocation
     void allocate();
