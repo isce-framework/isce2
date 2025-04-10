@@ -82,6 +82,7 @@ def runDenseOffsetsCPU(self):
 
 #    objOffset.numberThreads = 1
     ### Configure dense Ampcor object
+    print('Workflow: %d\n' % (self.off_workflow))
     print('\nReference frame: %s' % (mf))
     print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
@@ -95,10 +96,9 @@ def runDenseOffsetsCPU(self):
     print('Gross offset across: %d' % (self.rgshift))
     print('Gross offset down: %d\n' % (self.azshift))
 
+    objOffset.workflow = self.off_workflow
     objOffset.setWindowSizeWidth(self.winwidth)
-    objOffset.setWindowSizeHeight(self.winhgt)
     objOffset.setSearchWindowSizeWidth(self.srcwidth)
-    objOffset.setSearchWindowSizeHeight(self.srchgt)
     objOffset.skipSampleAcross = self.skipwidth
     objOffset.skipSampleDown = self.skiphgt
     objOffset.oversamplingFactor = self.oversample
@@ -252,6 +252,7 @@ def runDenseOffsetsGPU(self):
     objOffset.mergeGrossOffset = 1
 
     ### print the settings
+    print('Workflow: %d\n' % (self.off_workflow))
     print('\nReference frame: %s' % (mf))
     print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
@@ -281,10 +282,8 @@ def runDenseOffsetsGPU(self):
     print('======================================\n')
 
     # run ampcor
-    objOffset.runAmpcor()
-
+    objOffset.workflow = self.off_workflow
     ### Store params for later
-    # offset width x length, also number of windows
     self._insar.offset_width = objOffset.numberWindowAcross
     self._insar.offset_length = objOffset.numberWindowDown
     # the center of the first reference window

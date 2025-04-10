@@ -3,19 +3,19 @@
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Copyright 2012 California Institute of Technology. ALL RIGHTS RESERVED.
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 # http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
+#
 # United States Government Sponsorship acknowledged. This software is subject to
 # U.S. export control laws and regulations and has been classified as 'EAR99 NLR'
 # (No [Export] License Required except when exporting to an embargoed country,
@@ -295,6 +295,15 @@ GEOCODE_LIST = Application.Parameter(
 
 
 ######Adding stuff from topsOffsetApp for integration
+OFFSET_WORKFLOW = Application.Parameter(
+    'off_workflow',
+    public_name='Ampcor workflow',
+    default=0,
+    type=int,
+    mandatory=False,
+    doc='Ampcor workflow. 0 for Two-pass search (integer search then oversampled search). 1 for One-pass straight oversampled search.'
+                                        )
+
 WINDOW_SIZE_WIDTH = Application.Parameter(
     'winwidth',
     public_name='Ampcor window width',
@@ -660,6 +669,7 @@ class TopsInSAR(Application):
                       USE_VIRTUAL_FILES,
                       SWATHS,
                       ROI,
+                      OFFSET_WORKFLOW,
                       WINDOW_SIZE_HEIGHT,
                       WINDOW_SIZE_WIDTH,
                       SEARCH_WINDOW_HEIGHT,
