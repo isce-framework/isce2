@@ -82,7 +82,6 @@ def runDenseOffsetsCPU(self):
 
 #    objOffset.numberThreads = 1
     ### Configure dense Ampcor object
-    print('Workflow: %d\n' % (self.off_workflow))
     print('\nReference frame: %s' % (mf))
     print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
@@ -190,6 +189,8 @@ def runDenseOffsetsGPU(self):
     ### Set parameters
     # cross-correlation method, 0=Frequency domain, 1= Time domain
     objOffset.algorithm = 0
+    # ampcor workflow, 0=two-pass workflow, 1= one-pass workflow
+    objOffset.workflow = self.off_workflow
     # deramping method: 0 to take magnitude (fixed for Tops)
     objOffset.derampMethod = 0
     objOffset.referenceImageName = reference
@@ -235,9 +236,9 @@ def runDenseOffsetsGPU(self):
     objOffset.nStreams = 2
     # number of windows in a chunk/batch
     objOffset.numberWindowDownInChunk = 1
-    objOffset.numberWindowAcrossInChunk = 64
+    objOffset.numberWindowAcrossInChunk = 20
     # memory map cache size in GB
-    objOffset.mmapSize = 16
+    objOffset.mmapSize = 4
 
     # Modify BIL in filename to BIP if needed and store for future use
     prefix, ext = os.path.splitext(self._insar.offsetfile)
@@ -274,6 +275,7 @@ def runDenseOffsetsGPU(self):
     print('Output SNR file name: %s' % (objOffset.snrImageName))
     print('Output COV file name: %s' % (objOffset.covImageName))
     print('Output Correlation Surface Peak Value file name: %s' % (objOffset.peakValueImageName))
+    print(f'Number of windows: {objOffset.numberWindowDown} x {objOffset.numberWindowAcross}')
 
     # pass the parameters to C++ programs
     objOffset.setupParams()
@@ -287,7 +289,8 @@ def runDenseOffsetsGPU(self):
     print('======================================\n')
 
     # run ampcor
-    objOffset.workflow = self.off_workflow
+    objOffset.runAmpcor()
+
     ### Store params for later
     self._insar.offset_width = objOffset.numberWindowAcross
     self._insar.offset_length = objOffset.numberWindowDown
