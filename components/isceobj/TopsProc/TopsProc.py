@@ -328,6 +328,14 @@ OFFSET_COV_FILE = Component.Parameter(
         mandatory=False,
         doc='Filename for gross dense offsets covariance. Used in runDenseOffsets.')
 
+OFFSET_PEAKVALUE_FILE = Component.Parameter(
+        'peakvaluefile',
+        public_name='Offset correlation surface peak value filename',
+        default='dense_offsets_peakvalue.bil',
+        type=str,
+        mandatory=False,
+        doc='Filename for gross offsets correlation surface peak values. Used in runDenseOffsets.')
+
 FILT_OFFSET_OUTPUT_FILE = Component.Parameter(
     'filt_offsetfile',
     public_name='Filtered offset filename',

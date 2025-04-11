@@ -192,12 +192,15 @@ def runDenseOffsetsGPU(self):
     objOffset.algorithm = 0
     # deramping method: 0 to take magnitude (fixed for Tops)
     objOffset.derampMethod = 0
-    objOffset.referenceImageName = reference + '.vrt'
+    objOffset.referenceImageName = reference
     objOffset.referenceImageHeight = length
     objOffset.referenceImageWidth = width
-    objOffset.secondaryImageName = secondary + '.vrt'
+    objOffset.referenceImageDataType = 2 if m.getDataType().upper().startswith('C') else 1
+    objOffset.secondaryImageName = secondary
     objOffset.secondaryImageHeight = length
     objOffset.secondaryImageWidth = width
+    objOffset.secondaryImageDataType = 2 if s.getDataType().upper().startswith('C') else 1
+
 
     # adjust the margin
     margin = max(self.margin, abs(self.azshift), abs(self.rgshift))
@@ -247,6 +250,7 @@ def runDenseOffsetsGPU(self):
     objOffset.grossOffsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile + ".gross")
     objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
     objOffset.covImageName = os.path.join(self._insar.mergedDirname, self._insar.covfile)
+    objOffset.peakValueImageName = os.path.join(self._insar.mergedDirname, self._insar.peakvaluefile)
 
     # merge gross offset to final offset
     objOffset.mergeGrossOffset = 1
@@ -269,6 +273,7 @@ def runDenseOffsetsGPU(self):
     print('Output gross offsets file name: %s' % (objOffset.grossOffsetImageName))
     print('Output SNR file name: %s' % (objOffset.snrImageName))
     print('Output COV file name: %s' % (objOffset.covImageName))
+    print('Output Correlation Surface Peak Value file name: %s' % (objOffset.peakValueImageName))
 
     # pass the parameters to C++ programs
     objOffset.setupParams()
@@ -330,6 +335,16 @@ def runDenseOffsetsGPU(self):
     covImg.setLength(objOffset.numberWindowDown)
     covImg.setAccessMode('read')
     covImg.renderHdr()
+
+    peakValueImg = isceobj.createImage()
+    peakValueImg.setFilename(objOffset.peakValueImageName)
+    peakValueImg.setDataType('FLOAT')
+    peakValueImg.setBands(1)
+    peakValueImg.scheme = 'BIP'
+    peakValueImg.setWidth(objOffset.numberWindowAcross)
+    peakValueImg.setLength(objOffset.numberWindowDown)
+    peakValueImg.setAccessMode('read')
+    peakValueImg.renderHdr()
 
 
 if __name__ == '__main__' :
