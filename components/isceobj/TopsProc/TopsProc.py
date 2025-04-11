@@ -350,6 +350,7 @@ OFFSET_GEOCODE_LIST = Component.Parameter('off_geocode_list',
         default = [OFFSET_OUTPUT_FILE,
                    OFFSET_SNR_FILE,
                    OFFSET_COV_FILE,
+                   OFFSET_PEAKVALUE_FILE,
                    FILT_OFFSET_OUTPUT_FILE],
         container = list,
         type=str,
@@ -403,6 +404,7 @@ class TopsProc(Component):
                       OFFSET_OUTPUT_FILE,
                       OFFSET_SNR_FILE,
                       OFFSET_COV_FILE,
+                      OFFSET_PEAKVALUE_FILE,
                       FILT_OFFSET_OUTPUT_FILE,
                       OFFSET_GEOCODE_LIST)
 
