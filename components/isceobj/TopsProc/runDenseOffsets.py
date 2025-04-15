@@ -97,7 +97,9 @@ def runDenseOffsetsCPU(self):
 
     objOffset.workflow = self.off_workflow
     objOffset.setWindowSizeWidth(self.winwidth)
+    objOffset.setWindowSizeHeight(self.winhgt)
     objOffset.setSearchWindowSizeWidth(self.srcwidth)
+    objOffset.setSearchWindowSizeHeight(self.srchgt)
     objOffset.skipSampleAcross = self.skipwidth
     objOffset.skipSampleDown = self.skiphgt
     objOffset.oversamplingFactor = self.oversample
@@ -292,6 +294,7 @@ def runDenseOffsetsGPU(self):
     objOffset.runAmpcor()
 
     ### Store params for later
+    # offset width x length, also number of windows
     self._insar.offset_width = objOffset.numberWindowAcross
     self._insar.offset_length = objOffset.numberWindowDown
     # the center of the first reference window
