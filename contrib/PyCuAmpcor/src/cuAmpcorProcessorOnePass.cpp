@@ -101,7 +101,7 @@ void cuAmpcorProcessorOnePass::run(int idxDown_, int idxAcross_)
 
     // statistics of correlation surface
     // estimate variance on r_corrBatch
-    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, param->corrSurfaceOverSamplingFactor, r_covValue, stream);
+    cuEstimateVariance(r_corrBatch, offsetInit, r_maxval, r_referenceBatchOverSampled->size, param->rawDataOversamplingFactor, r_covValue, stream);
 
     // snr on the extracted surface r_corrBatchZoomIn
     cuArraysSumSquare(r_corrBatchZoomIn, r_corrBatchSum, stream);
