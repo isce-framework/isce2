@@ -1,11 +1,11 @@
 c!@##$%^&012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
-c!       1         2         3         4         5         6         7         8         9        10        11        12        13
+c!       1         2         3         4         5         6         7         8         9        10        11        12        13  
 c
 c Copyright 2001, by the California Institute of Technology.
 c ALL RIGHTS RESERVED. United States Government Sponsorship acknowledged.
 c Any commercial use must be negotiated with the Office of Technology
 c Transfer at the California Institute of Technology.
-c
+c 
 c This software may be subject to U.S. export control laws and regulations.
 c By accepting this document, the user agrees to comply with all applicable
 c U.S. export laws and regulations.  User has the responsibility to obtain
@@ -64,6 +64,11 @@ cc*   v193 2012-03-21  SJS - Increased maximum number of channels to 8, added -r
 cc*
 cc*   v194 2013-03-29  SJS - Incorporated initialization that Ron suggested to fix printing with -P, also increased to 10 channels
 cc*
+cc*   v195 2014-04-30  RJM - added code at CRJM1, need larger a_cmd line length
+cc*
+cc*   v196 2021-03-27  SJS - added c16 
+cc*
+cc*   v197 2025-03-07  SJS - Clean up code 
 c*****************************************************************
 
           implicit none
@@ -76,7 +81,7 @@ c*****************************************************************
 
           integer rdflen
           external rdflen
-
+  
 #ifdef IO64
           integer*8 mdxfunc_sample
           external mdxfunc_sample
@@ -94,28 +99,32 @@ c*****************************************************************
 
           character*18 version_mdx
           external version_mdx
+  
+          character*18 version_gpx
+          external version_gpx
 
-          integer version_gx
-          external version_gx
+          character*50 rdfversion
+          external rdfversion
 
           integer i,j
           byte   b_data(4000000)
           real*4 r_data(1000000)
           equivalence(b_data,r_data)
-
-          a_cmd = '-V'
+  
+          a_cmd = ' '
           i_inarg = command_argument_count()
           if (i_inarg .eq. 0) then
             write(6,*) '  '
-            write(6,'(1x,a,a18,a)'     ) '   <<  mdx    Version  ',version_mdx(),        '  >>   '
-            write(6,'(1x,a,f5.1,13x,a)') '   <<  graphx Version  ',float(version_gx()),'  >>   '
-            write(6,*) '  '
+            write(6,'(1x,a,a17,a)'     ) '   <<  mdx    Version ',version_mdx(),'  >>   '
+            write(6,'(1x,a,a18,a)'     ) '   <<  graphx Version ',version_gpx(),'  >>   '
+            write(6,*) rdfversion()
+            write(6,*) '  '   
             call write_greeting()
             stop 'done'
           else
             do i_arg =1, i_inarg
               call getarg(i_arg,a_value)
-c             write(6,*) i_arg,':',a_value(1:20)
+c              write(6,*) i_arg,':',a_value(1:20)
               do i=1,rdflen(a_value)+1
                 if (ichar(a_value(i:i)) .eq. 0) a_value(i:i)=' '
               end do
@@ -126,7 +135,7 @@ c             write(6,*) i_arg,':',a_value(1:20)
               end if
             end do
           end if
-c         write(6,*) a_cmd
+c          write(6,*) a_cmd
 
 
           do i=1,500
@@ -134,8 +143,8 @@ c         write(6,*) a_cmd
               r_data(i+(j-1)*500) = i+j/500.
             end do
           end do
-          i=mdxfunc_sample(2,1,i_eight(0),4*500*500,b_data)
-c         write(6,*) 'Calling mdxsub'
+          i=int(mdxfunc_sample(2,1,i_eight(0),4*500*500,b_data))   
+c          write(6,*) 'Calling mdxsub'
           call mdxsub(a_cmd,i_eight(4000000),mdxfunc_sample)
         end
 
@@ -222,8 +231,3 @@ c
           return
         end
 
-        character*(*) function version_mdx()
-
-            version_mdx = '194.0 29-Mar-2013'
-          return
-        end
