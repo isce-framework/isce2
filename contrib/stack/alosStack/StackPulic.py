@@ -323,3 +323,99 @@ def formInterferogram(slcReference, slcSecondary, interferogram, amplitude, numb
     create_xml(interferogram, width2, length2, 'int')
     create_xml(amplitude, width2, length2, 'amp')
 
+
+def formInterferogramStack(slcs, pairs, interferograms, amplitudes=None, numberRangeLooks=1, numberAzimuthLooks=1):
+    '''
+    create a stack of interferograms and amplitudes
+    slcs:                slc file list
+    pairs:               the indices of reference and secondary of each pair in slc file list
+                         2-d list. format [[ref index, sec index], [ref index, sec index], [ref index, sec index]...]
+                         length of pairs = length of interferograms = length of amplitudes
+                         there should be one-to-one relationship between them
+    interferograms:      interferogram file list
+    amplitudes:          amplitude file list
+    numberRangeLooks:    number of range looks
+    numberAzimuthLooks:  number of azimuth looks
+    '''
+
+    import os
+    import numpy as np
+    import isce, isceobj
+    from isceobj.Alos2Proc.Alos2ProcPublic import multilook
+    from isceobj.Alos2Proc.Alos2ProcPublic import create_xml
+
+    img = isceobj.createImage()
+    img.load(slcs[0]+'.xml')
+    width = img.width
+    length = img.length
+
+    width2 = int(width / numberRangeLooks)
+    length2 = int(length / numberAzimuthLooks)
+
+    nslcs = len(slcs)
+    npairs = len(pairs)
+
+    print('openning {} slc files'.format(nslcs))
+    slcfps = []
+    for i in range(nslcs):
+        slcfps.append(open(slcs[i],'rb'))
+
+    print('openning {} interferogram files'.format(npairs))
+    interferogramfps = []
+    for i in range(npairs):
+        interferogramfps.append(open(interferograms[i],'wb'))
+
+    slcDates = np.zeros((nslcs, numberAzimuthLooks, width), dtype=np.complex64)
+    if amplitudes is not None:
+        amplitudeDates = np.zeros((nslcs, length2, width2), dtype=np.float32)
+
+
+    print('forming {} interferograms'.format(npairs))
+    for k in range(length2):
+        if (((k+1)%10) == 0):
+            print("processing line %6d of %6d" % (k+1, length2), end='\r', flush=True)
+
+        for i in range(nslcs):
+            slcDates[i, :, :] = np.fromfile(slcfps[i], dtype=np.complex64, count=numberAzimuthLooks * width).reshape(numberAzimuthLooks, width)
+            if amplitudes is not None:
+                amplitudeDates[i, k, :] = np.sqrt(multilook(slcDates[i, :, :].real*slcDates[i, :, :].real+slcDates[i, :, :].imag*slcDates[i, :, :].imag, numberAzimuthLooks, numberRangeLooks, mean=False)).reshape(width2)
+
+        for i in range(npairs):
+            inf = multilook(slcDates[pairs[i][0], :, :]*np.conjugate(slcDates[pairs[i][1], :, :]), numberAzimuthLooks, numberRangeLooks, mean=False)
+            inf.tofile(interferogramfps[i])
+    print("processing line %6d of %6d" % (length2, length2))
+    
+    print('closing {} slc files'.format(nslcs))
+    for i in range(nslcs):
+        slcfps[i].close()
+
+    print('closing {} interferograms'.format(npairs))
+    for i in range(npairs):
+        interferogramfps[i].close()
+
+    print('creating interferogram vrt and xml files')
+    cwd = os.getcwd()
+    for i in range(npairs):
+        os.chdir(os.path.dirname(os.path.abspath(interferograms[i])))
+        create_xml(os.path.basename(interferograms[i]), width2, length2, 'int')
+        os.chdir(cwd)
+
+
+    #create amplitude files
+    if amplitudes is not None:
+        print('writing amplitude files')
+        for i in range(npairs):
+            print("writing amplitude file %6d of %6d" % (i+1, npairs), end='\r', flush=True)
+            amp = amplitudeDates[pairs[i][0], :, :] + 1j * amplitudeDates[pairs[i][1], :, :]
+            index = np.nonzero( (np.real(amp)==0) + (np.imag(amp)==0) )
+            #it has been tested, this would not change the original values in amplitudeDates
+            amp[index]=0
+            amp.astype(np.complex64).tofile(amplitudes[i])
+        print("writing amplitude file %6d of %6d" % (npairs, npairs))
+
+        #create vrt and xml files
+        cwd = os.getcwd()
+        for i in range(npairs):
+            os.chdir(os.path.dirname(os.path.abspath(amplitudes[i])))
+            create_xml(os.path.basename(amplitudes[i]), width2, length2, 'amp')
+            os.chdir(cwd)

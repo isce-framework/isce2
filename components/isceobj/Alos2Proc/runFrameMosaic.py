@@ -134,7 +134,7 @@ def runFrameMosaic(self):
     self._insar.procDoc.addAllFromCatalog(catalog)
 
 
-def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateTrack=False, phaseCompensation=False, phaseDiffFixed=None, snapThreshold=None, resamplingMethod=0):
+def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, numberOfRangeLooks, numberOfAzimuthLooks, updateTrack=False, phaseCompensation=False, phaseDiffFixed=None, snapThreshold=None, snapFrame=None, corFrame=None, waterBody=None, resamplingMethod=0):
     '''
     mosaic frames
     
@@ -149,6 +149,14 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     phaseCompensation:     whether do phase compensation for each frame
     phaseDiffFixed:        if provided, the estimated value will snap to one of these values, which is nearest to the estimated one.
     snapThreshold:         this is used with phaseDiffFixed
+    snapFrame:             indicate whether snap to fixed values for each frame phase diff, must be specified if phaseDiffFixed!=None. default: false
+    corFrame:              indicate whether use individual frame coherence to exclude low quality pixels. default: false
+    waterBody:             use water body to exclude water bodies (in these areas data upper frame and lower frame may not be consistently coregistered
+                           and then lead to large phase differences, e.g. a whole swath is water and only geometrical offset is used).
+                           Both corFrame and waterBody are for this purposes. waterBody definetely works better, so when it is specified, there is no
+                           need for corFrame.
+                           waterBody is provided in mosaicked geometry and size.
+                           default: no
     resamplingMethod:      0: amp resampling. 1: int resampling. 2: slc resampling
     '''
     import numpy as np
@@ -166,6 +174,11 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     numberOfFrames = len(track.frames)
     frames = track.frames
 
+    if snapFrame is None:
+        snapFrame = [False for x in range(numberOfFrames-1)]
+    if corFrame is None:
+        corFrame = [False for x in range(numberOfFrames-1)]
+
     rectWidth = []
     rectLength = []
     for i in range(numberOfFrames):
@@ -178,6 +191,18 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
     #use list instead of np.array to make it consistent with the rest of the code
     rangeOffsets1 = [i/numberOfRangeLooks for i in rangeOffsets]
     azimuthOffsets1 = [i/numberOfAzimuthLooks for i in azimuthOffsets]
+
+    #consider frame/swath azimuth sensing start differences caused by swath mosaicking
+    for j in range(numberOfFrames):
+        if j == 0:
+            continue
+        else:
+            swath1 = track.frames[j-1].swaths[0]
+            swath2 = track.frames[j].swaths[0]
+            frame1 = track.frames[j-1]
+            frame2 = track.frames[j]
+            delta_az = -((frame2.sensingStart - frame1.sensingStart).total_seconds() - (swath2.sensingStart - swath1.sensingStart).total_seconds()) / swath1.azimuthLineInterval
+            azimuthOffsets1[j] += delta_az / numberOfAzimuthLooks
 
     #get offset relative to the first frame
     rangeOffsets2 = [0.0]
@@ -358,42 +383,78 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
                 lowerframe[:,xs[i]:xe[i]+1] = readImage(rinfs[i], rectWidth[i], rectLength[i], 0, rectWidth[i]-1, 0, ye[i-1]-ys[i])
             else:
                 lowerframe[:,xs[i]:xe[i]+1] = readImageFromVrt(rinfs[i], 0, rectWidth[i]-1, 0, ye[i-1]-ys[i])
-            #get a polynomial
-            diff = np.sum(upperframe * np.conj(lowerframe), axis=0)
-            (firstLine, lastLine, firstSample, lastSample) = findNonzero(np.reshape(diff, (1, outWidth)))
-            #here i use mean value(deg=0) in case difference is around -pi or pi.
-            #!!!!!there have been updates, now deg must be 0
-            deg = 0
-            p = np.polyfit(np.arange(firstSample, lastSample+1), np.angle(diff[firstSample:lastSample+1]), deg)
+
+            if waterBody is not None:
+                #SRTM convention: water body. (0) --- land; (-1) --- water; (-2) --- no data.
+                #wbd = np.zeros((ye[i-1]-ys[i]+1, outWidth), dtype=np.int8)
+                wbd = readImage(waterBody, outWidth, ye[i-1]-ys[i]+1, 0, outWidth-1, ys[i], ye[i-1], dataType=np.int8)
+                msk = (wbd==0)+0
+                upperframe *= msk
+                lowerframe *= msk
+                del wbd, msk
+
+            # #get a polynomial
+            # diff = np.sum(upperframe * np.conj(lowerframe), axis=0)
+            # (firstLine, lastLine, firstSample, lastSample) = findNonzero(np.reshape(diff, (1, outWidth)))
+            # #here i use mean value(deg=0) in case difference is around -pi or pi.
+            # #!!!!!there have been updates, now deg must be 0
+            # deg = 0
+            # p = np.polyfit(np.arange(firstSample, lastSample+1), np.angle(diff[firstSample:lastSample+1]), deg)
 
             #need to use a more sophisticated method to compute the mean phase difference
-            (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80)
+            #(phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80)
+
+            DEBUG = False
+            if DEBUG == True:
+                diffile = 'phase_difference_frame{}-frame{}_valid.int'.format(i, i+1)
+                corfile = 'coherence_diff_frame{}-frame{}.float'.format(i, i+1)
+                corfile1 = 'coherence_upper_frame{}-frame{}.float'.format(i, i+1)
+                corfile2 = 'coherence_lower_frame{}-frame{}.float'.format(i, i+1)
+                corfile = None
+                corfile1 = None
+                corfile2 = None
+
+                if corFrame[i-1] == True:
+                    (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80, coherenceThreshold1=0.3, coherenceThreshold2=0.3, diffile=diffile, corfile=corfile, corfile1=corfile1, corfile2=corfile2)
+                else:
+                    (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80, diffile=diffile, corfile=corfile, corfile1=corfile1, corfile2=corfile2)
+
+                diffDir = 'frame_mosaic'
+                os.makedirs(diffDir, exist_ok=True)
+
+                for fx in [diffile, corfile, corfile1, corfile2]:
+                    os.rename(fx, os.path.join(diffDir, fx))
+                    os.rename(fx+'.vrt', os.path.join(diffDir, fx+'.vrt'))
+                    os.rename(fx+'.xml', os.path.join(diffDir, fx+'.xml'))
+
+            else:
+                if corFrame[i-1] == True:
+                    (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80, coherenceThreshold1=0.3, coherenceThreshold2=0.3)
+                else:
+                    (phaseDiffEst[i], numberOfValidSamples[i]) = computePhaseDiff(upperframe, lowerframe, coherenceWindowSize=9, coherenceThreshold=0.80)
+
+
+            phaseDiffUsed[i] = phaseDiffEst[i]
+            phaseDiffSource[i] = 'estimated'
 
             #snap phase difference to fixed values
             if phaseDiffFixed is not None:
-                (outputValue, snapped) = snap(phaseDiffEst[i], phaseDiffFixed, snapThreshold)
-                if snapped == True:
-                    phaseDiffUsed[i] = outputValue
-                    phaseDiffSource[i] = 'estimated+snap'
-                else:
-                    phaseDiffUsed[i] = phaseDiffEst[i]
-                    phaseDiffSource[i] = 'estimated'
-            else:
-                phaseDiffUsed[i] = phaseDiffEst[i]
-                phaseDiffSource[i] = 'estimated'
+                if snapFrame[i-1] == True:
+                    (outputValue, snapped) = snap(phaseDiffEst[i], phaseDiffFixed, snapThreshold)
+                    if snapped == True:
+                        phaseDiffUsed[i] = outputValue
+                        phaseDiffSource[i] = 'estimated+snap'
+
 
             #use new phase constant value
-            p[-1] = phaseDiffUsed[i]
+            # p[-1] = phaseDiffUsed[i]
 
-            phaseOffsetPolynomials.append(p)
+            # phaseOffsetPolynomials.append(p)
 
 
             #check fit result
-            DEBUG = False
             if DEBUG:
-                #create a dir and work in this dir
-                diffDir = 'frame_mosaic'
-                os.makedirs(diffDir, exist_ok=True)
+                #work in this dir
                 os.chdir(diffDir)
 
                 #dump phase difference
@@ -401,21 +462,21 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
                 (upperframe * np.conj(lowerframe)).astype(np.complex64).tofile(diffFilename)
                 create_xml(diffFilename, outWidth, ye[i-1]-ys[i]+1, 'int')
 
-                #plot phase difference vs range
-                import matplotlib.pyplot as plt
-                x = np.arange(firstSample, lastSample+1)
-                y = np.angle(diff[firstSample:lastSample+1])
-                plt.plot(x, y, label='original phase difference')
-                plt.plot(x, np.polyval(p, x), label='fitted phase difference')
-                plt.legend()
+                # #plot phase difference vs range
+                # import matplotlib.pyplot as plt
+                # x = np.arange(firstSample, lastSample+1)
+                # y = np.angle(diff[firstSample:lastSample+1])
+                # plt.plot(x, y, label='original phase difference')
+                # plt.plot(x, np.polyval(p, x), label='fitted phase difference')
+                # plt.legend()
 
-                plt.minorticks_on()
-                plt.tick_params('both', length=10, which='major')
-                plt.tick_params('both', length=5, which='minor')
+                # plt.minorticks_on()
+                # plt.tick_params('both', length=10, which='major')
+                # plt.tick_params('both', length=5, which='minor')
 
-                plt.xlabel('Range Sample Number [Samples]')
-                plt.ylabel('Phase Difference [Rad]')
-                plt.savefig('phase_difference_frame{}-frame{}.pdf'.format(i, i+1))
+                # plt.xlabel('Range Sample Number [Samples]')
+                # plt.ylabel('Phase Difference [Rad]')
+                # plt.savefig('phase_difference_frame{}-frame{}.pdf'.format(i, i+1))
 
                 os.chdir('../')
 
@@ -430,7 +491,8 @@ def frameMosaic(track, inputFiles, outputfile, rangeOffsets, azimuthOffsets, num
             cJ = np.complex64(1j)
             phaseOffset = np.ones(outWidth, dtype=np.complex64)
             for j in range(i+1):
-                phaseOffset *= np.exp(cJ*np.polyval(phaseOffsetPolynomials[j], np.arange(outWidth)))
+                #phaseOffset *= np.exp(cJ*np.polyval(phaseOffsetPolynomials[j], np.arange(outWidth)))
+                phaseOffset *= np.exp(cJ*phaseDiffUsed[j])
 
         #get start line number (starts with zero)
         if i == 0:

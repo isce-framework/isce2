@@ -69,6 +69,20 @@ WBD = Application.Parameter('wbd',
                                 mandatory=False,
                                 doc='water body file')
 
+NUMBER_OF_PARALLEL_THREADS = Application.Parameter('numberOfParallelThreads',
+                                public_name='number of parallel threads',
+                                default=4,
+                                type=int,
+                                mandatory=False,
+                                doc="number of parallel threads")
+
+NUMBER_OF_PARALLEL_RUNS = Application.Parameter('numberOfParallelRuns',
+                                public_name='number of parallel runs',
+                                default=10,
+                                type=int,
+                                mandatory=False,
+                                doc="number of parallel runs")
+
 DATE_REFERENCE_STACK = Application.Parameter('dateReferenceStack',
                                 public_name='reference date of the stack',
                                 default=None,
@@ -317,6 +331,8 @@ from alos2App import SWATH_PHASE_DIFF_UPPER_ION
 from alos2App import FIT_ION
 from alos2App import FILT_ION
 from alos2App import FIT_ADAPTIVE_ION
+from alos2App import FIT_ADAPTIVE_ORDER_ION
+from alos2App import RM_OUTLIERS_ION
 from alos2App import FILT_SECONDARY_ION
 from alos2App import FILTERING_WINSIZE_MAX_ION
 from alos2App import FILTERING_WINSIZE_MIN_ION
@@ -340,6 +356,8 @@ class Stack(Application):
                         DEM,
                         DEM_GEO,
                         WBD,
+                        NUMBER_OF_PARALLEL_THREADS,
+                        NUMBER_OF_PARALLEL_RUNS,
                         DATE_REFERENCE_STACK,
                         GRID_FRAME,
                         GRID_SWATH,
@@ -400,6 +418,8 @@ class Stack(Application):
                         FIT_ION,
                         FILT_ION,
                         FIT_ADAPTIVE_ION,
+                        FIT_ADAPTIVE_ORDER_ION,
+                        RM_OUTLIERS_ION,
                         FILT_SECONDARY_ION,
                         FILTERING_WINSIZE_MAX_ION,
                         FILTERING_WINSIZE_MIN_ION,
