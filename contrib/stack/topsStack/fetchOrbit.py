@@ -5,6 +5,8 @@ import json
 import requests
 import re
 import os
+import sys
+import glob
 import argparse
 import datetime
 import time
@@ -21,8 +23,10 @@ def cmdLineParse():
     '''
 
     parser = argparse.ArgumentParser(description='Fetch orbits corresponding to given SAFE package')
-    parser.add_argument('-i', '--input', dest='input', type=str, required=True,
+    parser.add_argument('-i', '--input', dest='input', type=str, default=None,
                         help='Path to SAFE package of interest')
+    parser.add_argument('-d', '--indir', dest='indir', type=str, default=None,
+                        help='Directory to SAFE package(s) of interest')
     parser.add_argument('-o', '--output', dest='outdir', type=str, default='.',
                         help='Path to output directory')
     parser.add_argument('-t', '--token-file', dest='token_file', type=str, default='.copernicus_dataspace_token',
@@ -127,7 +131,7 @@ def download_file(file_id, outdir='.', session=None, token=None):
 
 if __name__ == '__main__':
     '''
-    Main driver.
+    Run the major thing
     '''
 
     inps = cmdLineParse()
@@ -135,6 +139,7 @@ if __name__ == '__main__':
     password = inps.password
     token_file = os.path.expanduser(inps.token_file)
 
+    print('Fetching for: ', inps.input)
     fileTS, satName, fileTSStart = FileToTimeStamp(inps.input)
     print('Reference time: ', fileTS)
     print('Satellite name: ', satName)
@@ -178,6 +183,7 @@ if __name__ == '__main__':
 
             if match is not None:
                 success = True
+                print('fetch success, orbit type: ', oType)
         except:
             raise
 
@@ -217,3 +223,20 @@ if __name__ == '__main__':
             print('Failed to download orbit ID:', match)
     else:
         print('Failed to find {1} orbits for tref {0}'.format(fileTS, satName))
+
+
+if __name__ == '__main__':
+    '''
+    Main driver.
+    '''
+
+    inps = cmdLineParse()
+    if (inps.input is None) and (inps.indir is None):
+        sys.exit('Both input files and input folder is missing!')
+
+    if inps.indir:
+        input_files = glob.glob(os.path.join(inps.indir, '*.zip'))
+        for infile in input_files:
+            run_main(inps, input_file=infile)
+    else:
+        run_main(inps)
