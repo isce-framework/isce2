@@ -103,6 +103,33 @@ inst = env['PRJ_SCONS_INSTALL']
 ####new part
 #####PSA. Check for header files and libraries up front
 confinst = Configure(env)
+
+# Try to autodetect numpy
+if confinst.CheckCHeader("numpy/arrayobject.h"):
+    print("Numpy header found.")
+else:
+    print("Numpy not found.")
+
+    if sys.version_info[0] == 2:
+        raise RuntimeError("Cannot autodetect numpy from python2")
+
+    print("Attempting to autodetect...")
+    try:
+        import numpy
+        confinst.env["CPPPATH"].append(numpy.get_include())
+        print("Added autodetected numpy include to CPPPATH.")
+    except ImportError:
+        raise RuntimeError("""Could not autodetect numpy include.
+            Please add the numpy include dir to your CPPPATH.""")
+
+# Check for OpenCV
+if confinst.CheckCXXHeader("opencv2/imgproc/imgproc.hpp"):
+    confinst.env["HAVE_OPENCV"] = True
+    print("OpenCV detected - enabled.")
+else:
+    confinst.env["HAVE_OPENCV"] = False
+    print("OpenCV not detected - disabled.")
+
 hdrparams = [('python3 header', 'Python.h', 'Install python3-dev or add path to Python.h to CPPPATH'),
           ('fftw3', 'fftw3.h', 'Install fftw3 or libfftw3-dev or add path to fftw3.h to CPPPATH and FORTRANPATH'),
           ('hdf5', 'hdf5.h', 'Install HDF5 of libhdf5-dev or add path to hdf5.h to CPPPATH'),

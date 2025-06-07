@@ -80,4 +80,8 @@ SConscript('splitSpectrum/SConscript')
 SConscript('alos2filter/SConscript')
 SConscript('alos2proc/SConscript')
 SConscript('alos2proc_f/SConscript')
-SConscript('geo_autoRIFT/SConscript')
+
+if envcontrib["HAVE_OPENCV"]:
+    SConscript('geo_autoRIFT/SConscript')
+else:
+    print("Skipping autoRIFT, due to lack of OpenCV support.")
