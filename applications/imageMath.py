@@ -230,7 +230,7 @@ def parseInputFile(varname, args):
 
     if (inarg != inarg.lower()):
         raise IOError('Input variable names should be lower case. \n' +
-                'Invalud variable name: %s'%varname)
+                'Invalid variable name: %s'%varname)
 
     #####Create a simple parser
     parser = IML.customArgumentParser(description='Parser for band math.',
@@ -270,15 +270,10 @@ def mergeBbox(inlist):
 
     ref = np.array(inlist[0])
 
-    diff = np.zeros((len(inlist), 4))
-    for ind in range(1, len(inlist)):
-        cand = np.array(inlist[ind])
-        diff[ind,: ] = cand - ref
-
-    diff = np.max(np.abs(diff), axis=0)
+    diff = np.max(np.abs(np.array(inlist) - ref), axis=0)
 
     if np.any(diff > 1.0e-5):
-        print('Bounding boxes dont match. Not adding bbox info.')
+        print("Bounding boxes don't match. Not adding bbox info.")
         return None
     else:
         return ref
@@ -294,6 +289,7 @@ def main(args, files):
     #######Determine number of input and output bands
     bandList = []
     iMath['equations'] = []
+    compiled_eqs = []
     for ii,expr in enumerate(args.equation.split(';')):
 
         #####Now parse the equation to get the file names used
@@ -304,6 +300,7 @@ def main(args, files):
         logger.debug('Known variables: ' + str(known))
 
         iMath['equations'].append(expr)
+        compiled_eqs.append(compile(expr, '<string>', 'eval'))
         bandList = bandList + bands
 
     bandList = IML.uniqueList(bandList)
@@ -428,7 +425,7 @@ def main(args, files):
             dataDict[band] = bands[band][lineno,:]
 
         ####For each output band
-        for kk,expr in enumerate(iMath['equations']):
+        for kk,expr in enumerate(compiled_eqs):
             res = eval(expr, dataDict)
             outBands[kk][lineno,:] = res
 
