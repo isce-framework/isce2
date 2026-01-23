@@ -228,13 +228,71 @@ class Capella(Sensor):
         # Extract orbit
         self.extractOrbit(state_vectors)
 
-        # Save Doppler centroid coefficients
-        # Capella provides doppler_centroid_polynomial in the image_geometry
-        dc_poly = image_geometry.get('doppler_centroid_polynomial', [0.0])
-        if isinstance(dc_poly, list) and len(dc_poly) > 0:
-            self.doppler_coeff = dc_poly
-        else:
-            self.doppler_coeff = [0.0]
+        # Extract Doppler centroid coefficients
+        # Capella provides a 2D polynomial (azimuth, range), but isce2 needs 1D (range only)
+        # We evaluate the 2D poly at mid-azimuth to get 1D coefficients vs range pixel
+        self.doppler_coeff = self._extractDopplerCoeffs(image_geometry, lines, samples)
+
+    def _extractDopplerCoeffs(self, image_geometry, lines, samples):
+        """
+        Extract 1D Doppler coefficients from Capella's 2D polynomial.
+
+        Capella provides a 2D polynomial: doppler(az, rg) = sum_{i,j} c[i][j] * az^i * rg^j
+        where az and rg are in pixel coordinates.
+
+        ISCE2 expects a 1D polynomial as a function of range pixel.
+        We evaluate at mid-azimuth (~1 second from start or mid-scene) to get 1D coeffs.
+        """
+        dc_poly = image_geometry.get('doppler_centroid_polynomial', {})
+
+        # Handle case where it's not a dict (legacy or missing)
+        if not isinstance(dc_poly, dict):
+            return [0.0]
+
+        coeffs_2d = dc_poly.get('coefficients', [[0.0]])
+        dimension = dc_poly.get('dimension', 1)
+
+        # If it's actually 1D, just return the coefficients
+        if dimension == 1 or not isinstance(coeffs_2d[0], list):
+            if isinstance(coeffs_2d, list):
+                return coeffs_2d if coeffs_2d else [0.0]
+            return [0.0]
+
+        # 2D polynomial: evaluate at a specific azimuth to get 1D in range
+        # Use ~1 second from start, or mid-scene if scene is shorter
+        delta_line_time = image_geometry.get('delta_line_time', 1.0 / 3000.0)
+        az_time_1sec = 1.0  # 1 second from start
+        az_pixel_1sec = az_time_1sec / delta_line_time
+
+        # Use mid-scene if 1 second is past the scene
+        mid_az_pixel = lines / 2.0
+        az_eval = min(az_pixel_1sec, mid_az_pixel)
+
+        # Evaluate 2D poly at az_eval to get 1D coefficients in range
+        # doppler(rg) = sum_j [sum_i c[i][j] * az^i] * rg^j
+        # new_coeff[j] = sum_i c[i][j] * az^i
+        try:
+            coeffs_2d = np.array(coeffs_2d, dtype=np.float64)
+            degree_az = coeffs_2d.shape[0] - 1
+            degree_rg = coeffs_2d.shape[1] - 1
+
+            # Compute 1D coefficients by evaluating at az_eval
+            coeffs_1d = []
+            for j in range(degree_rg + 1):
+                coeff_j = 0.0
+                for i in range(degree_az + 1):
+                    coeff_j += coeffs_2d[i, j] * (az_eval ** i)
+                coeffs_1d.append(coeff_j)
+
+            # Check if all coefficients are essentially zero
+            if all(abs(c) < 1e-15 for c in coeffs_1d):
+                return [0.0]
+
+            return coeffs_1d
+
+        except (ValueError, IndexError) as e:
+            print(f"Warning: Could not parse 2D Doppler polynomial: {e}")
+            return [0.0]
 
     def _parseDateTime(self, timeStr):
         """Parse Capella timestamp string to datetime object."""
