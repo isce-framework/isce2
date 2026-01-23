@@ -124,8 +124,11 @@ class Capella(Sensor):
         """Create metadata objects from the JSON metadata."""
 
         collect = self._metadata.get('collect', {})
-        radar = self._metadata.get('radar', {})
-        state_vectors = self._metadata.get('state_vectors', [])
+        # Radar and state vectors can be at top level (extended JSON) or inside collect (TIFF embedded)
+        radar = self._metadata.get('radar', collect.get('radar', {}))
+        state_obj = self._metadata.get('state_vectors', collect.get('state', {}).get('state_vectors', []))
+        # Handle both list format and nested state object
+        state_vectors = state_obj if isinstance(state_obj, list) else []
         image = collect.get('image', {})
 
         # Platform info
@@ -172,8 +175,8 @@ class Capella(Sensor):
 
         # Image geometry for starting range
         image_geometry = image.get('image_geometry', {})
-        range_time_origin = image_geometry.get('range_time_origin', 0.0)
-        startingRange = range_time_origin * Const.c / 2.0
+        # range_to_first_sample is in meters
+        startingRange = image_geometry.get('range_to_first_sample', 0.0)
 
         # Incidence angle
         center_pixel = image.get('center_pixel', {})
@@ -187,8 +190,10 @@ class Capella(Sensor):
 
         # Pass direction from state vectors
         if len(state_vectors) >= 2:
-            z0 = state_vectors[0].get('position', [0, 0, 0])[2]
-            z1 = state_vectors[-1].get('position', [0, 0, 0])[2]
+            pos0 = state_vectors[0].get('position', [0, 0, 0])
+            pos1 = state_vectors[-1].get('position', [0, 0, 0])
+            z0 = pos0['z'] if isinstance(pos0, dict) else pos0[2]
+            z1 = pos1['z'] if isinstance(pos1, dict) else pos1[2]
             passDirection = 'Ascending' if z1 > z0 else 'Descending'
         else:
             passDirection = 'Descending'
@@ -323,8 +328,22 @@ class Capella(Sensor):
             vec = StateVector()
             timeStr = sv.get('time', '')
             vec.setTime(self._parseDateTime(timeStr))
-            position = sv.get('position', [0, 0, 0])
-            velocity = sv.get('velocity', [0, 0, 0])
+
+            # Handle both list format [x, y, z] and dict format {x:, y:, z:}
+            pos = sv.get('position', [0, 0, 0])
+            if isinstance(pos, dict):
+                position = [pos.get('x', 0), pos.get('y', 0), pos.get('z', 0)]
+            else:
+                position = pos
+
+            vel = sv.get('velocity', [0, 0, 0])
+            if isinstance(vel, dict):
+                velocity = [vel.get('vx', vel.get('x', 0)),
+                           vel.get('vy', vel.get('y', 0)),
+                           vel.get('vz', vel.get('z', 0))]
+            else:
+                velocity = vel
+
             vec.setPosition(position)
             vec.setVelocity(velocity)
             orbit.addStateVector(vec)
