@@ -71,25 +71,18 @@ def unpack(capellaDir, slcname):
     obj.extractImage()
     obj.frame.getImage().renderHdr()
 
-    # Save the doppler polynomial
+    # Save the doppler polynomial (Capella provides doppler_centroid_polynomial)
     coeffs = obj.doppler_coeff
     poly = Poly1D.Poly1D()
     poly.initPoly(order=len(coeffs) - 1)
     poly.setCoeffs(coeffs)
 
-    # Save the FM rate polynomial
-    fcoeffs = obj.azfmrate_coeff
-    fpoly = Poly1D.Poly1D()
-    fpoly.initPoly(order=len(fcoeffs) - 1)
-    fpoly.setCoeffs(fcoeffs)
-
     # Save required metadata for further use
-    # All data is output to a shelve file
+    # Note: Capella does not provide FM rate polynomial, so we don't save it
     pickName = os.path.join(slcname, 'data')
     with shelve.open(pickName) as db:
         db['frame'] = obj.frame
         db['doppler'] = poly
-        db['fmrate'] = fpoly
 
 
 if __name__ == '__main__':

@@ -78,7 +78,6 @@ class Capella(Sensor):
         self.frame.configure()
         self._metadata = None
         self.doppler_coeff = None
-        self.azfmrate_coeff = None
 
     def getFrame(self):
         return self.frame
@@ -205,13 +204,9 @@ class Capella(Sensor):
         # Capella provides doppler_centroid_polynomial in the image_geometry
         dc_poly = image_geometry.get('doppler_centroid_polynomial', [0.0])
         if isinstance(dc_poly, list) and len(dc_poly) > 0:
-            # Convert from Hz/m to Hz/pixel if needed
             self.doppler_coeff = dc_poly
         else:
             self.doppler_coeff = [0.0]
-
-        # FM rate is often not directly provided; use zeros as placeholder
-        self.azfmrate_coeff = [0.0, 0.0, 0.0]
 
     def _parseDateTime(self, timeStr):
         """Parse Capella timestamp string to datetime object."""
