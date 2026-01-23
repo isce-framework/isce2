@@ -29,18 +29,22 @@
 
 import datetime
 import json
-import os
 import numpy as np
 
 import isceobj
 from isceobj.Scene.Frame import Frame
 from isceobj.Planet.Planet import Planet
-from isceobj.Orbit.Orbit import StateVector, Orbit
+from isceobj.Orbit.Orbit import StateVector
 from isceobj.Planet.AstronomicalHandbook import Const
 from iscesys.Component.Component import Component
 from iscesys.DateTimeUtil.DateTimeUtil import DateTimeUtil as DTUtil
 
+from .Sensor import Sensor
+
 lookMap = {'RIGHT': -1, 'LEFT': 1}
+
+# Supported modes for stripmapStack processing
+SUPPORTED_MODES = {'stripmap', 'SM'}
 
 TIFF = Component.Parameter(
     'tiff',
@@ -51,26 +55,18 @@ TIFF = Component.Parameter(
     doc='Capella SLC GeoTIFF imagery file'
 )
 
-METADATA = Component.Parameter(
-    'metadataFile',
-    public_name='METADATA',
-    default='',
-    type=str,
-    mandatory=True,
-    doc='Capella extended JSON metadata file'
-)
-
-from .Sensor import Sensor
-
 
 class Capella(Sensor):
     """
     A class representing Capella Space SAR SLC data.
+
+    Metadata is read from the TIFF ImageDescription tag (embedded JSON).
+    Only stripmap (SM) mode is currently supported for stripmapStack processing.
     """
 
     family = 'capella'
     logging_name = 'isce.sensor.Capella'
-    parameter_list = (TIFF, METADATA) + Sensor.parameter_list
+    parameter_list = (TIFF,) + Sensor.parameter_list
 
     def __init__(self, family='', name=''):
         super().__init__(family if family else self.__class__.family, name=name)
@@ -82,15 +78,47 @@ class Capella(Sensor):
     def getFrame(self):
         return self.frame
 
-    def parse(self):
-        """Parse the Capella metadata JSON file."""
+    def _loadMetadataFromTiff(self):
+        """Load metadata from TIFF ImageDescription tag using GDAL."""
         try:
-            with open(self.metadataFile, 'r') as fp:
-                self._metadata = json.load(fp)
-        except IOError as strerr:
-            print("IOError: %s" % strerr)
-            return
+            from osgeo import gdal
+        except ImportError:
+            raise Exception('GDAL python bindings not found. Need this for Capella data.')
+
+        ds = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
+        if ds is None:
+            raise Exception(f'Could not open TIFF file: {self.tiff}')
+
+        # Get ImageDescription from TIFF metadata
+        image_desc = ds.GetMetadataItem('TIFFTAG_IMAGEDESCRIPTION')
+        ds = None
+
+        if not image_desc:
+            raise Exception(f'No ImageDescription tag found in TIFF: {self.tiff}')
+
+        try:
+            self._metadata = json.loads(image_desc)
+        except json.JSONDecodeError as e:
+            raise Exception(f'Failed to parse JSON from TIFF ImageDescription: {e}')
+
+    def parse(self):
+        """Parse the Capella metadata from TIFF ImageDescription tag."""
+        self._loadMetadataFromTiff()
+        self._validateMode()
         self.populateMetadata()
+
+    def _validateMode(self):
+        """Validate that the acquisition mode is supported (stripmap only)."""
+        collect = self._metadata.get('collect', {})
+        mode = collect.get('mode', '')
+
+        if mode.lower() not in {m.lower() for m in SUPPORTED_MODES}:
+            raise Exception(
+                f"Capella mode '{mode}' is not supported for stripmapStack. "
+                f"Only stripmap (SM) mode is supported. "
+                f"Spotlight (SP) and Sliding Spotlight (SL) modes require "
+                f"additional post-processing to reramp phase."
+            )
 
     def populateMetadata(self):
         """Create metadata objects from the JSON metadata."""
@@ -107,8 +135,8 @@ class Capella(Sensor):
 
         # Radar parameters
         frequency = radar.get('center_frequency', 9.65e9)
-        txPol = radar.get('transmit_polarization', 'H')
-        rxPol = radar.get('receive_polarization', 'H')
+        txPol = radar.get('transmit_polarization', 'V')
+        rxPol = radar.get('receive_polarization', 'V')
         polarization = txPol + rxPol
 
         # Get PRF from time_varying_parameters or prf array
@@ -265,7 +293,6 @@ class Capella(Sensor):
         src = gdal.Open(self.tiff.strip(), gdal.GA_ReadOnly)
 
         # Capella SLC GeoTIFFs are complex int16 (CInt16) stored as a single band
-        # or as two bands (real/imag)
         nbands = src.RasterCount
 
         if nbands == 1:
