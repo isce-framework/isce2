@@ -249,13 +249,15 @@ class Capella(Sensor):
         if not isinstance(dc_poly, dict):
             return [0.0]
 
-        coeffs_2d = dc_poly.get('coefficients', [[0.0]])
-        dimension = dc_poly.get('dimension', 1)
+        coeffs = dc_poly.get('coefficients', [[0.0]])
 
-        # If it's actually 1D, just return the coefficients
-        if dimension == 1 or not isinstance(coeffs_2d[0], list):
-            if isinstance(coeffs_2d, list):
-                return coeffs_2d if coeffs_2d else [0.0]
+        # Check if coefficients are 2D (list of lists) or 1D (flat list)
+        is_2d = isinstance(coeffs, list) and len(coeffs) > 0 and isinstance(coeffs[0], list)
+
+        if not is_2d:
+            # Already 1D coefficients
+            if isinstance(coeffs, list):
+                return coeffs if coeffs else [0.0]
             return [0.0]
 
         # 2D polynomial: evaluate at mid-azimuth to get 1D in range
@@ -265,7 +267,7 @@ class Capella(Sensor):
         # doppler(rg) = sum_j [sum_i c[i][j] * az^i] * rg^j
         # new_coeff[j] = sum_i c[i][j] * az^i
         try:
-            coeffs_2d = np.array(coeffs_2d, dtype=np.float64)
+            coeffs_2d = np.array(coeffs, dtype=np.float64)
             degree_az = coeffs_2d.shape[0] - 1
             degree_rg = coeffs_2d.shape[1] - 1
 
