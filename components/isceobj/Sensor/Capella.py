@@ -241,7 +241,7 @@ class Capella(Sensor):
         where az and rg are in pixel coordinates.
 
         ISCE2 expects a 1D polynomial as a function of range pixel.
-        We evaluate at mid-azimuth (~1 second from start or mid-scene) to get 1D coeffs.
+        We evaluate at mid-azimuth to get 1D coeffs.
         """
         dc_poly = image_geometry.get('doppler_centroid_polynomial', {})
 
@@ -258,17 +258,10 @@ class Capella(Sensor):
                 return coeffs_2d if coeffs_2d else [0.0]
             return [0.0]
 
-        # 2D polynomial: evaluate at a specific azimuth to get 1D in range
-        # Use ~1 second from start, or mid-scene if scene is shorter
-        delta_line_time = image_geometry.get('delta_line_time', 1.0 / 3000.0)
-        az_time_1sec = 1.0  # 1 second from start
-        az_pixel_1sec = az_time_1sec / delta_line_time
-
-        # Use mid-scene if 1 second is past the scene
+        # 2D polynomial: evaluate at mid-azimuth to get 1D in range
         mid_az_pixel = lines / 2.0
-        az_eval = min(az_pixel_1sec, mid_az_pixel)
 
-        # Evaluate 2D poly at az_eval to get 1D coefficients in range
+        # Evaluate 2D poly at mid_az_pixel to get 1D coefficients in range
         # doppler(rg) = sum_j [sum_i c[i][j] * az^i] * rg^j
         # new_coeff[j] = sum_i c[i][j] * az^i
         try:
@@ -276,12 +269,12 @@ class Capella(Sensor):
             degree_az = coeffs_2d.shape[0] - 1
             degree_rg = coeffs_2d.shape[1] - 1
 
-            # Compute 1D coefficients by evaluating at az_eval
+            # Compute 1D coefficients by evaluating at mid_az_pixel
             coeffs_1d = []
             for j in range(degree_rg + 1):
                 coeff_j = 0.0
                 for i in range(degree_az + 1):
-                    coeff_j += coeffs_2d[i, j] * (az_eval ** i)
+                    coeff_j += coeffs_2d[i, j] * (mid_az_pixel ** i)
                 coeffs_1d.append(coeff_j)
 
             # Check if all coefficients are essentially zero
