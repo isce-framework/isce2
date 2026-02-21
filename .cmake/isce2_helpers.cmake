@@ -32,6 +32,11 @@ macro(isce2_add_cdll target)
         PREFIX ""
         OUTPUT_NAME ${target}
         SUFFIX .so)
+    # On macOS, conda-forge gfortran may produce dylibs without libSystem linked.
+    # Explicitly link against System to ensure valid shared libraries.
+    if(APPLE)
+        target_link_libraries(${target} PRIVATE "-lSystem")
+    endif()
 
     # If we're the root cmake project (e.g. not add_subdirectory):
     if("${CMAKE_SOURCE_DIR}" STREQUAL "${PROJECT_SOURCE_DIR}")
