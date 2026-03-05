@@ -76,22 +76,22 @@ def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     objOffset.configure()
     objOffset.setAcrossGrossOffset(rgoffset)
     objOffset.setDownGrossOffset(azoffset)
-    objOffset.setWindowSizeWidth(64)
-    objOffset.setWindowSizeHeight(64)
-    objOffset.setSearchWindowSizeWidth(20)
-    objOffset.setSearchWindowSizeHeight(20)
+    objOffset.setWindowSizeWidth(128)
+    objOffset.setWindowSizeHeight(128)
+    objOffset.setSearchWindowSizeWidth(40)
+    objOffset.setSearchWindowSizeHeight(40)
     margin = 2*objOffset.searchWindowSizeWidth + objOffset.windowSizeWidth
 
-    offAc = max(51,-rgoffset)+margin
-    offDn = max(51,-azoffset)+margin
+    nAcross = 60
+    nDown = 60
 
+   
+    offAc = max(101,-rgoffset)+margin
+    offDn = max(101,-azoffset)+margin
+
+    
     lastAc = int( min(width, sim.getWidth() - offAc) - margin)
     lastDn = int( min(length, sim.getLength() - offDn) - margin)
-
-    # Scale window count to image size: enough for robust constant/low-order
-    # offset estimation, but not so many that ampcor takes hours.
-    nAcross = min(10, max(3, (lastAc - offAc) // objOffset.windowSizeWidth))
-    nDown = min(10, max(3, (lastDn - offDn) // objOffset.windowSizeHeight))
 
 #    print('Across: ', offAc, lastAc, width, sim.getWidth(), margin)
 #    print('Down: ', offDn, lastDn, length, sim.getLength(), margin)
@@ -108,8 +108,11 @@ def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     if not objOffset.lastSampleDown:
         objOffset.setLastSampleDown(lastDn)
 
-    objOffset.setNumberLocationAcross(nAcross)
-    objOffset.setNumberLocationDown(nDown)        
+    if not objOffset.numberLocationAcross:
+        objOffset.setNumberLocationAcross(nAcross)
+
+    if not objOffset.numberLocationDown:
+        objOffset.setNumberLocationDown(nDown)        
 
     objOffset.setFirstPRF(1.0)
     objOffset.setSecondPRF(1.0)
