@@ -79,7 +79,13 @@ class Capella(Sensor):
         return self.frame
 
     def _loadMetadataFromTiff(self):
-        """Load metadata from TIFF ImageDescription tag using GDAL."""
+        """Load metadata from TIFF ImageDescription tag using GDAL.
+
+        Uses the actual TIFF dimensions (from GDAL) for image size rather than
+        the metadata rows/columns, since properly cropped TIFFs (e.g. from
+        sarlet crop-slc) update the timing/range metadata but may not update
+        the rows/columns fields.
+        """
         try:
             from osgeo import gdal
         except ImportError:
@@ -91,6 +97,8 @@ class Capella(Sensor):
 
         # Get ImageDescription from TIFF metadata
         image_desc = ds.GetMetadataItem('TIFFTAG_IMAGEDESCRIPTION')
+        self._tiff_width = ds.RasterXSize
+        self._tiff_height = ds.RasterYSize
         ds = None
 
         if not image_desc:
@@ -150,9 +158,9 @@ class Capella(Sensor):
             pulseBandwidth = 500e6
             pulseLength = 10e-6
 
-        # Image dimensions
-        lines = image.get('rows', image.get('length', 0))
-        samples = image.get('columns', image.get('width', 0))
+        # Image dimensions — use actual TIFF size (handles cropped TIFFs correctly)
+        lines = self._tiff_height
+        samples = self._tiff_width
 
         # Image geometry defines the actual SLC pixel grid
         # These are the ground truth for timing and range spacing
