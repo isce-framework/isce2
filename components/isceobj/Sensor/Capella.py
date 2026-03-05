@@ -142,17 +142,6 @@ class Capella(Sensor):
         rxPol = radar.get('receive_polarization', 'V')
         polarization = txPol + rxPol
 
-        # Get PRF from time_varying_parameters or prf array
-        prf_list = radar.get('prf', [])
-        if prf_list:
-            prf = prf_list[0].get('prf', 3000.0)
-        else:
-            tvp = radar.get('time_varying_parameters', [])
-            if tvp:
-                prf = tvp[0].get('prf', 3000.0)
-            else:
-                prf = 3000.0
-
         # Pulse parameters from time_varying_parameters
         tvp = radar.get('time_varying_parameters', [])
         if tvp:
@@ -162,31 +151,40 @@ class Capella(Sensor):
             pulseBandwidth = 500e6
             pulseLength = 10e-6
 
-        # Sampling rate
-        samplingFrequency = radar.get('sampling_frequency', 600e6)
-
         # Image dimensions
         lines = image.get('rows', image.get('length', 0))
         samples = image.get('columns', image.get('width', 0))
 
-        # Pixel spacing
-        rangePixelSize = image.get('pixel_spacing_column', 0.5)
-        azimuthPixelSize = image.get('pixel_spacing_row', 0.5)
-
-        # Image geometry for starting range
+        # Image geometry defines the actual SLC pixel grid
+        # These are the ground truth for timing and range spacing
         image_geometry = image.get('image_geometry', {})
-        # range_to_first_sample is in meters
         startingRange = image_geometry.get('range_to_first_sample', 0.0)
+        delta_range_sample = image_geometry.get('delta_range_sample', 0.0)
+        delta_line_time = image_geometry.get('delta_line_time', 0.0)
+        assert delta_range_sample > 0, f"Missing delta_range_sample in image_geometry"
+        assert delta_line_time > 0, f"Missing delta_line_time in image_geometry"
+
+        # PRF = 1/delta_line_time (the processed SLC line rate, not the raw radar PRF)
+        prf = 1.0 / delta_line_time
+
+        # Slant range pixel size from the SLC grid (not ground pixel spacing)
+        rangePixelSize = delta_range_sample
+
+        # Sampling rate consistent with SLC range pixel spacing
+        samplingFrequency = Const.c / (2.0 * delta_range_sample)
 
         # Incidence angle
         center_pixel = image.get('center_pixel', {})
         incidenceAngle = center_pixel.get('incidence_angle', 35.0)
 
-        # Timing information
-        startTimeStr = collect.get('start_timestamp', '')
-        stopTimeStr = collect.get('stop_timestamp', '')
-        dataStartTime = self._parseDateTime(startTimeStr)
-        dataStopTime = self._parseDateTime(stopTimeStr)
+        # Timing: use first_line_time from image_geometry (actual SLC grid start),
+        # NOT collect start/stop timestamps (which span the full acquisition window)
+        firstLineTimeStr = image_geometry.get('first_line_time', '')
+        assert firstLineTimeStr, "Missing first_line_time in image_geometry"
+        dataStartTime = self._parseDateTime(firstLineTimeStr)
+        dataStopTime = dataStartTime + datetime.timedelta(
+            seconds=(lines - 1) * delta_line_time
+        )
 
         # Pass direction from state vectors
         if len(state_vectors) >= 2:
@@ -218,8 +216,9 @@ class Capella(Sensor):
         # Populate Frame
         self.frame.setSensingStart(dataStartTime)
         self.frame.setSensingStop(dataStopTime)
-        diffTime = DTUtil.timeDeltaToSeconds(dataStopTime - dataStartTime) / 2.0
-        sensingMid = dataStartTime + datetime.timedelta(microseconds=int(diffTime * 1e6))
+        sensingMid = dataStartTime + datetime.timedelta(
+            seconds=(lines - 1) * delta_line_time / 2.0
+        )
         self.frame.setSensingMid(sensingMid)
         self.frame.setPassDirection(passDirection)
         self.frame.setPolarization(polarization)
