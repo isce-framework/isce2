@@ -44,7 +44,7 @@ from .Sensor import Sensor
 lookMap = {'RIGHT': -1, 'LEFT': 1}
 
 # Supported modes for stripmapStack processing
-SUPPORTED_MODES = {'stripmap', 'SM'}
+SUPPORTED_MODES = {'stripmap', 'SM', 'spotlight', 'SP'}
 
 TIFF = Component.Parameter(
     'tiff',
@@ -108,16 +108,15 @@ class Capella(Sensor):
         self.populateMetadata()
 
     def _validateMode(self):
-        """Validate that the acquisition mode is supported (stripmap only)."""
+        """Validate that the acquisition mode is supported."""
         collect = self._metadata.get('collect', {})
         mode = collect.get('mode', '')
 
         if mode.lower() not in {m.lower() for m in SUPPORTED_MODES}:
             raise Exception(
                 f"Capella mode '{mode}' is not supported for stripmapStack. "
-                f"Only stripmap (SM) mode is supported. "
-                f"Spotlight (SP) and Sliding Spotlight (SL) modes require "
-                f"additional post-processing to reramp phase."
+                f"Supported modes: {SUPPORTED_MODES}. "
+                f"Sliding Spotlight (SL) mode is not yet supported."
             )
 
     def populateMetadata(self):
@@ -236,6 +235,22 @@ class Capella(Sensor):
         # Capella provides a 2D polynomial (azimuth, range), but isce2 needs 1D (range only)
         # We evaluate the 2D poly at mid-azimuth to get 1D coefficients vs range pixel
         self.doppler_coeff = self._extractDopplerCoeffs(image_geometry, lines, samples)
+
+        # Spotlight-specific metadata for phase correction
+        # reference_antenna_position and reference_target_position are ECEF coordinates
+        # used to compute the geometric phase that must be restored after coregistration
+        mode = collect.get('mode', '')
+        if mode.lower() in {'spotlight', 'sp'}:
+            ref_ant = image.get('reference_antenna_position', {})
+            ref_tgt = image.get('reference_target_position', {})
+            assert ref_ant, "Spotlight mode requires reference_antenna_position in metadata"
+            assert ref_tgt, "Spotlight mode requires reference_target_position in metadata"
+            self.frame.spotlightReferenceAntennaPosition = [
+                ref_ant['x'], ref_ant['y'], ref_ant['z']
+            ]
+            self.frame.spotlightReferenceTargetPosition = [
+                ref_tgt['x'], ref_tgt['y'], ref_tgt['z']
+            ]
 
     def _extractDopplerCoeffs(self, image_geometry, lines, samples):
         """
