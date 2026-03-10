@@ -44,13 +44,13 @@ import matplotlib.pyplot as plt
 
 # %%
 # Input Capella SLC GeoTIFFs
-slc_tiff_dir = "/Volumes/WD_BLACK_SN7100_4TB/Documents/Learning/capella/mexico_city/cropped_slcs"
+slc_tiff_dir = "mexico_city/cropped_slcs"
 
 # DEM file (GeoTIFF - will be converted to ISCE format)
-dem_tiff = "/Volumes/WD_BLACK_SN7100_4TB/Documents/Learning/capella/mexico_city/dem_3dep.tif"
+dem_tiff = "mexico_city/dem_3dep.tif"
 
 # Working directory for ISCE2 processing
-work_dir = os.path.expanduser("~/repos/isce2/data_notebook")
+work_dir = os.path.expanduser("data_notebook")
 os.makedirs(work_dir, exist_ok=True)
 
 # Unpacked SLC output directory
