@@ -151,11 +151,21 @@ def main(iargs=None):
     print(f'Reference antenna position: {ref_ant}')
     print(f'Reference target position: {ref_tgt}')
 
-    # Load SLC image
-    slc_img = isceobj.createImage()
-    slc_img.load(inps.slc + '.xml')
-    width = slc_img.width
-    length = slc_img.length
+    # Load SLC image dimensions (prefer XML, fall back to VRT via GDAL)
+    xml_path = inps.slc + '.xml'
+    vrt_path = inps.slc + '.vrt'
+    if os.path.exists(xml_path):
+        slc_img = isceobj.createImage()
+        slc_img.load(xml_path)
+        width = slc_img.width
+        length = slc_img.length
+    else:
+        from osgeo import gdal
+        ds = gdal.Open(vrt_path, gdal.GA_ReadOnly)
+        assert ds is not None, f'Cannot open {vrt_path}'
+        width = ds.RasterXSize
+        length = ds.RasterYSize
+        ds = None
 
     print(f'SLC dimensions: {length} x {width}')
 

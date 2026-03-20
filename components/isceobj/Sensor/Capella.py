@@ -249,16 +249,13 @@ class Capella(Sensor):
         # used to compute the geometric phase that must be restored after coregistration
         mode = collect.get('mode', '')
         if mode.lower() in {'spotlight', 'sp'}:
-            ref_ant = image.get('reference_antenna_position', {})
-            ref_tgt = image.get('reference_target_position', {})
+            ref_ant = image.get('reference_antenna_position')
+            ref_tgt = image.get('reference_target_position')
             assert ref_ant, "Spotlight mode requires reference_antenna_position in metadata"
             assert ref_tgt, "Spotlight mode requires reference_target_position in metadata"
-            self.frame.spotlightReferenceAntennaPosition = [
-                ref_ant['x'], ref_ant['y'], ref_ant['z']
-            ]
-            self.frame.spotlightReferenceTargetPosition = [
-                ref_tgt['x'], ref_tgt['y'], ref_tgt['z']
-            ]
+            # Positions are [x, y, z] ECEF coordinates in meters
+            self.frame.spotlightReferenceAntennaPosition = list(ref_ant)
+            self.frame.spotlightReferenceTargetPosition = list(ref_tgt)
 
     def _extractDopplerCoeffs(self, image_geometry, lines, samples):
         """
