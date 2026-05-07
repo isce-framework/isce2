@@ -371,7 +371,6 @@ class Image(DataAccessor, Configurable):
         self.init(prop,fac,misc)
     '''
     def load(self, filename, parser='xml'):
-        import os
         super(Image, self).load(filename, parser=parser)
         base_dir = os.path.dirname(os.path.abspath(filename))
 
