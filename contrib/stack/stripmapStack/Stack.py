@@ -474,19 +474,21 @@ class run(object):
             self.runf.write(self.text_cmd + 'stripmapWrapper.py -c '+ configName+'\n')
 
   
-    def invertMisregPoly(self):
+    def invertMisregPoly(self, stackReference):
 
         pairDirs = os.path.join(self.workDir, 'refineSecondaryTiming/pairs/')
         dateDirs = os.path.join(self.workDir, 'refineSecondaryTiming/dates/')
-        cmd = self.text_cmd + 'invertMisreg.py -i ' + pairDirs + ' -o ' + dateDirs
+        cmd = self.text_cmd + 'invertMisreg.py -i ' + pairDirs + ' -o ' + dateDirs + ' -r ' + stackReference
         self.runf.write(cmd + '\n')
 
 
-    def  invertDenseOffsets(self):
+    def  invertDenseOffsets(self, stackReference=None):
 
         pairDirs = os.path.join(self.workDir, self.dense_offsets_folder, 'pairs')
         dateDirs = os.path.join(self.workDir, self.dense_offsets_folder, 'dates')
         cmd = self.text_cmd + 'invertOffsets.py -i ' + pairDirs + ' -o ' + dateDirs
+        if stackReference is not None:
+            cmd += ' -r ' + stackReference
         self.runf.write(cmd + '\n')
 
     def rubbersheet(self, secondaryDates, config_prefix):

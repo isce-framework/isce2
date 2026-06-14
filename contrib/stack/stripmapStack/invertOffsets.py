@@ -29,6 +29,8 @@ def createParser():
             help='Directory with the pair directories that includes dense offsets for each pair')
     parser.add_argument('-o', '--output', type=str, dest='output', required=True,
             help='output directory to save dense-offsets for each date with respect to the stack Reference date')
+    parser.add_argument('-r', '--reference', type=str, dest='reference', default=None,
+            help='Reference date (YYYY-MM-DD HH:MM:SS format from h5 file, or YYYYMMDD format). If not provided, the first date in sorted dateList will be used.')
 
     return parser
 
@@ -104,7 +106,7 @@ def date_list(h5file):
 
 #####################################
 
-def design_matrix(h5File):
+def design_matrix(h5File, referenceDate=None):
   tbase,dateList,dateDict, references, secondarys = date_list(h5File)
   numDates = len(dateDict)
   numPairs = len(references)
@@ -118,17 +120,31 @@ def design_matrix(h5File):
      A[ni,ndxt2] = 1
      B[ni,ndxt1:ndxt2] = tbase[ndxt1+1:ndxt2+1]-tbase[ndxt1:ndxt2]
 
-  #print('A',A)
-  #print('%%%%%%%%%%%%%%% %%%%%')  
-  A = A[:,1:]
-  B = B[:,:-1]
+  if referenceDate is not None and referenceDate not in dateList:
+    referenceDate = datetime.datetime(
+        *time.strptime(referenceDate, "%Y%m%d")[0:5]
+    ).strftime("%Y-%m-%d %H:%M:%S")
 
-  return A, B  
+  if referenceDate is None:
+    refIdx = 0
+  elif referenceDate not in dateList:
+    print('Warning: Reference date {} not found in dateList. Using first date as reference.'.format(referenceDate))
+    refIdx = 0
+  else:
+    refIdx = dateList.index(referenceDate)
+
+  A = np.delete(A, refIdx, axis=1)
+  B = np.delete(B, refIdx, axis=1)
+
+  return A, B, refIdx  
 
 def invert_wlq(inps,h5File):
     tbase,dateList,dateDict, references, secondarys = date_list(h5File)
+    referenceDate = inps.reference
+    if referenceDate is None:
+      referenceDate = dateList[0]
     numPairs = len(references)
-    A,B = design_matrix(h5File)
+    A,B,refIdx = design_matrix(h5File, referenceDate=referenceDate)
    
     h5 = h5py.File(h5File,'r')
     data = h5['/platform-track/observations'].get('offset-azimuth')
@@ -168,9 +184,12 @@ def invert_wlq(inps,h5File):
         #Cm = np.vstack((np.zeros((1,ts.shape[1]), dtype=np.float32), ts))
 
            ts = ts.reshape([NumValidPixels,Npar]).T
-        #ts = np.vstack((np.zeros((1,ts.shape[1]), dtype=np.float32), ts))
-           ds[1:,j,ind] = ts
-           dsq[1:,j,ind] = Cm
+           zero_row = np.zeros((1, ts.shape[1]), dtype=np.float32)
+           ts = np.vstack([ts[:refIdx], zero_row, ts[refIdx:]])
+           ds[:,j,ind] = ts
+           Cm_zero = np.zeros((1, Cm.shape[1]), dtype=np.float32)
+           Cm = np.vstack([Cm[:refIdx], Cm_zero, Cm[refIdx:]])
+           dsq[:,j,ind] = Cm
 
     dateListE = [d.encode("ascii", "ignore") for d in dateList]
     dateListE = np.array(dateListE)
@@ -219,8 +238,11 @@ def invert_wlq(inps,h5File):
 def invert(inps,h5File):
 
     tbase,dateList,dateDict, references, secondarys = date_list(h5File)
+    referenceDate = inps.reference
+    if referenceDate is None:
+      referenceDate = dateList[0]
     numPairs = len(references)
-    A,B = design_matrix(h5File)
+    A,B,refIdx = design_matrix(h5File, referenceDate=referenceDate)
 
     h5 = h5py.File(h5File,'r')
     data = h5['/platform-track/observations'].get('offset-azimuth')    
@@ -245,7 +267,8 @@ def invert(inps,h5File):
         #dsr[:,i,:] =  L_residual
         dst[i,:] = np.absolute(np.sum(np.exp(1j*L_residual),0))/Nz
 
-        ts = np.vstack((np.zeros((1,ts.shape[1]), dtype=np.float32), ts))
+        zero_row = np.zeros((1, ts.shape[1]), dtype=np.float32)
+        ts = np.vstack([ts[:refIdx], zero_row, ts[refIdx:]])
         ds[:,i,:] = ts
 
     dateListE = [d.encode("ascii", "ignore") for d in dateList]
