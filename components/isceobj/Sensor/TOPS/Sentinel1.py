@@ -604,7 +604,10 @@ class Sentinel1(Component):
             elif mission == 'S1B':
                 burst.trackNumber = (orbitnumber-27)%175 + 1
             elif mission == 'S1C':
-                burst.trackNumber = (orbitnumber-172)%175 + 1
+                if orbitnumber <= 8018:
+                    burst.trackNumber = (orbitnumber-172)%175 + 1
+                else:
+                    burst.trackNumber = (orbitnumber-99)%175 + 1
             else:
                 raise ValueError('Encountered unknown mission id {0}'.format(mission))
 
