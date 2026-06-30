@@ -182,7 +182,7 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
     i+=1
     runObj = run()
     runObj.configure(inps, 'run_{:02d}_invertMisreg'.format(i))
-    runObj.invertMisregPoly()
+    runObj.invertMisregPoly(stackReferenceDate)
     runObj.finalize()
 
     i+=1
@@ -203,7 +203,7 @@ def slcStack(inps, acquisitionDates, stackReferenceDate, secondaryDates, pairs, 
         i+=1
         runObj = run()
         runObj.configure(inps, 'run_{:02d}_invertDenseOffsets'.format(i))
-        runObj.invertDenseOffsets()
+        runObj.invertDenseOffsets(stackReferenceDate)
         runObj.finalize()
 
         i+=1
