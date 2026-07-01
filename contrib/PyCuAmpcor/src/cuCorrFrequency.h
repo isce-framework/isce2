@@ -9,6 +9,7 @@
 
 // dependencies
 #include "cuArrays.h"
+#include "data_types.h"
 #include <cufft.h>
 
 class cuFreqCorrelator
@@ -18,9 +19,9 @@ private:
     cufftHandle forwardPlan;
     cufftHandle backwardPlan;
     // work data
-    cuArrays<float2> *workFM;
-    cuArrays<float2> *workFS;
-    cuArrays<float> *workT;
+    cuArrays<complex_type> *workFM;
+    cuArrays<complex_type> *workFS;
+    cuArrays<real_type> *workT;
     // cuda stream
     cudaStream_t stream;
 
@@ -30,7 +31,7 @@ public:
     // destructor
     ~cuFreqCorrelator();
     // executor
-    void execute(cuArrays<float> *templates, cuArrays<float> *images, cuArrays<float> *results);
+    void execute(cuArrays<real_type> *templates, cuArrays<real_type> *images, cuArrays<real_type> *results);
 };
 
 #endif //__CUCORRFREQUENCY_H

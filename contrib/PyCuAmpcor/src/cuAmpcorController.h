@@ -27,6 +27,7 @@ public:
     ~cuAmpcorController();
     // run interface
     void runAmpcor();
+    bool isDoublePrecision();
 };
 #endif
 

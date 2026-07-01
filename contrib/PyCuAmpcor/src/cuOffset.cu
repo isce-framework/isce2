@@ -6,11 +6,9 @@
 
 // my module dependencies
 #include "cuAmpcorUtil.h"
-// for FLT_MAX
-#include <cfloat>
 
 // find the max between two elements
-inline static __device__ void maxPairReduce(volatile float* maxval, volatile int* maxloc,
+inline static __device__ void maxPairReduce(volatile real_type* maxval, volatile int* maxloc,
       size_t gid, size_t strideid)
 {
     if(maxval[gid] < maxval[strideid]) {
@@ -19,32 +17,38 @@ inline static __device__ void maxPairReduce(volatile float* maxval, volatile int
     }
 }
 
-// max reduction kernel
+// max reduction kernel for a 2d image
+// start from (start.x, start.y) in a rectangle range (range.x, range.y)
+// start + range <= imageSize
 template<const int BLOCKSIZE>
-__device__ void max_reduction(const float* const images,
-    const size_t imageSize,
-    const size_t nImages,
-    volatile float* shval,
+__device__ void max_reduction_2d(const real_type* const image,
+    const int2 imageSize,
+    const int2 start, const int2 range,
+    volatile real_type* shval,
     volatile int* shloc)
 {
     int tid = threadIdx.x;
-    shval[tid] = -FLT_MAX;
-    int imageStart = blockIdx.x*imageSize;
-    int imagePixel;
+    shval[tid] = -REAL_MAX;
 
     // reduction for intra-block elements
     // i.e., for elements with i, i+BLOCKSIZE, i+2*BLOCKSIZE ...
-    for(int gid = tid; gid < imageSize; gid+=blockDim.x)
+    for(int gid = tid; gid < range.x*range.y; gid+=blockDim.x)
     {
-        imagePixel = imageStart+gid;
-        if(shval[tid] < images[imagePixel]) {
-            shval[tid] = images[imagePixel];
-            shloc[tid] = gid;
+        // gid is the flattened pixel id in the search range
+        // get the pixel 2d coordinate in whole image
+        int idx = start.x + gid / range.y;
+        int idy = start.y + gid % range.y;
+        // get the flattened 1d coordinate
+        int pixelId = IDX2R(idx, idy, imageSize.y);
+        real_type pixelValue = image[pixelId];
+        if(shval[tid] < pixelValue) {
+            shval[tid] = pixelValue;
+            shloc[tid] = pixelId;
         }
     }
     __syncthreads();
 
-    // reduction within a block
+    // reduction within a block with shared memory
     if (BLOCKSIZE >=1024){ if (tid < 512) { maxPairReduce(shval, shloc, tid, tid + 512); } __syncthreads(); }
     if (BLOCKSIZE >=512) { if (tid < 256) { maxPairReduce(shval, shloc, tid, tid + 256); } __syncthreads(); }
     if (BLOCKSIZE >=256) { if (tid < 128) { maxPairReduce(shval, shloc, tid, tid + 128); } __syncthreads(); }
@@ -65,21 +69,24 @@ __device__ void max_reduction(const float* const images,
 
 // kernel for 2D array(image), find max location only
 template <const int BLOCKSIZE>
-__global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, float* maxval,
-    const size_t imageNX, const size_t imageNY, const size_t nImages)
+__global__ void  cudaKernel_maxloc2D(const real_type* const images, int2* maxloc, real_type* maxval,
+    const int2 imageSize, const size_t nImages, const int2 start, const int2 range)
 {
-    __shared__ float shval[BLOCKSIZE];
+    __shared__ real_type shval[BLOCKSIZE];
     __shared__ int shloc[BLOCKSIZE];
 
-    int bid = blockIdx.x;
-    if(bid >= nImages) return;
+    int imageIdx = blockIdx.x;
+    if(imageIdx >= nImages) return;
 
-    const int imageSize = imageNX * imageNY;
-    max_reduction<BLOCKSIZE>(images, imageSize, nImages, shval, shloc);
+    // get the starting pointer for this image
+    const real_type *image = images + imageIdx*imageSize.x*imageSize.y;
 
+    max_reduction_2d<BLOCKSIZE>(image, imageSize, start, range, shval, shloc);
+
+    // thread 0 contains the final result, convert it to 2d coordinate
     if (threadIdx.x == 0) {
-        maxloc[bid] = make_int2(shloc[0]/imageNY, shloc[0]%imageNY);
-        maxval[bid] = shval[0];
+        maxloc[imageIdx] = make_int2(shloc[0]/imageSize.y, shloc[0]%imageSize.y);
+        maxval[imageIdx] = shval[0];
     }
 }
 
@@ -88,56 +95,92 @@ __global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, fl
  * @param[in] images input batch of images
  * @param[out] maxval arrays to hold the max values
  * @param[out] maxloc arrays to hold the max locations
+ * @param[in] start starting search pixel
+ * @param[in] range search range
  * @param[in] stream cudaStream
  * @note This routine is overloaded with the routine without maxval
  */
-void cuArraysMaxloc2D(cuArrays<float> *images, cuArrays<int2> *maxloc,
-                      cuArrays<float> *maxval, cudaStream_t stream)
+void cuArraysMaxloc2D(cuArrays<real_type> *images,
+                      const int2 start, const int2 range,
+                      cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, cudaStream_t stream)
 {
     cudaKernel_maxloc2D<NTHREADS><<<images->count, NTHREADS, 0, stream>>>
-        (images->devData, maxloc->devData, maxval->devData, images->height, images->width, images->count);
+        (images->devData,
+        maxloc->devData, maxval->devData,
+        make_int2(images->height, images->width), images->count,
+        start, range
+        );
     getLastCudaError("cudaKernel find max location 2D error\n");
 }
 
-//kernel and function for 2D array(image), find max location only, use overload
-template <const int BLOCKSIZE>
-__global__ void  cudaKernel_maxloc2D(const float* const images, int2* maxloc, const size_t imageNX, const size_t imageNY, const size_t nImages)
-{
-    __shared__ float shval[BLOCKSIZE];
-    __shared__ int shloc[BLOCKSIZE];
-
-    int bid = blockIdx.x;
-    if(bid >= nImages) return;
-
-    const int imageSize = imageNX * imageNY;
-    max_reduction<BLOCKSIZE>(images, imageSize, nImages, shval, shloc);
-
-    if (threadIdx.x == 0) {
-        int xloc = shloc[0]/imageNY;
-        int yloc = shloc[0]%imageNY;
-        maxloc[bid] = make_int2(xloc, yloc);
-    }
-}
-
 /**
- * Find (only) the maximum location for a batch of 2D images
+ * Find both the maximum value and the location for a batch of 2D images
  * @param[in] images input batch of images
+ * @param[out] maxval arrays to hold the max values
  * @param[out] maxloc arrays to hold the max locations
  * @param[in] stream cudaStream
- * @note This routine is overloaded with the routine with maxval
  */
-void cuArraysMaxloc2D(cuArrays<float> *images, cuArrays<int2> *maxloc, cudaStream_t stream)
+void cuArraysMaxloc2D(cuArrays<real_type> *images,
+                      cuArrays<int2> *maxloc, cuArrays<real_type> *maxval, cudaStream_t stream)
 {
+    // if no start and range are provided, use the whole image
+    int2 start = make_int2(0, 0);
+    int2 imageSize = make_int2(images->height, images->width);
     cudaKernel_maxloc2D<NTHREADS><<<images->count, NTHREADS, 0, stream>>>
-        (images->devData, maxloc->devData, images->height, images->width, images->count);
+        (images->devData,
+        maxloc->devData, maxval->devData,
+        imageSize, images->count,
+        start, imageSize
+        );
     getLastCudaError("cudaKernel find max location 2D error\n");
 }
 
 // cuda kernel for cuSubPixelOffset
 __global__ void cuSubPixelOffset_kernel(const int2 *offsetInit, const int2 *offsetZoomIn,
-                                        float2 *offsetFinal,
-                                        const float OSratio,
-                                        const float xoffset, const float yoffset, const int size)
+                                        real2_type *offsetFinal, const int size,
+                                        const int2 initOrigin, const real_type initRatio,
+                                        const int2 zoomInOrigin, const real_type zoomInRatio)
+{
+    int idx = threadIdx.x + blockDim.x*blockIdx.x;
+    if (idx >= size) return;
+    offsetFinal[idx].x = initRatio*(offsetInit[idx].x-initOrigin.x) + zoomInRatio*(offsetZoomIn[idx].x - zoomInOrigin.x);
+    offsetFinal[idx].y = initRatio*(offsetInit[idx].y-initOrigin.y) + zoomInRatio*(offsetZoomIn[idx].y - zoomInOrigin.y);
+}
+
+
+/**
+ * Determine the final offset value
+ * @param[in] offsetInit max location (adjusted to the starting location for extraction) determined from
+ *   the cross-correlation before oversampling, in dimensions of pixel
+ * @param[in] offsetZoomIn max location from the oversampled cross-correlation surface
+ * @param[out] offsetFinal the combined offset value
+ */
+void cuSubPixelOffset(cuArrays<int2> *offsetInit,
+    cuArrays<int2> *offsetZoomIn,
+    cuArrays<real2_type> *offsetFinal,
+    const int2 initOrigin, const int initFactor,
+    const int2 zoomInOrigin, const int zoomInFactor,
+    cudaStream_t stream)
+{
+    int size = offsetInit->getSize();
+
+    // GPU performs multiplication faster
+    real_type initRatio = 1.0f/(real_type)(initFactor);
+    real_type zoomInRatio = 1.0f/(real_type)(zoomInFactor);
+
+
+    cuSubPixelOffset_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
+        (offsetInit->devData, offsetZoomIn->devData,
+         offsetFinal->devData, size, initOrigin, initRatio, zoomInOrigin, zoomInRatio);
+    getLastCudaError("cuSubPixelOffset_kernel");
+
+}
+
+// cuda kernel for cuSubPixelOffset
+__global__ void cuSubPixelOffset2Pass_kernel(const int2 *offsetInit, const int2 *offsetZoomIn,
+                                        real2_type *offsetFinal,
+                                        const real_type OSratio,
+                                        const real_type xoffset, const real_type yoffset, const int size)
 {
     int idx = threadIdx.x + blockDim.x*blockIdx.x;
     if (idx >= size) return;
@@ -168,8 +211,8 @@ __global__ void cuSubPixelOffset_kernel(const int2 *offsetInit, const int2 *offs
  *        = subpixel offset
  *    Final offset =  pixel size offset +  subpixel offset
  */
-void cuSubPixelOffset(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn,
-    cuArrays<float2> *offsetFinal,
+void cuSubPixelOffset2Pass(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn,
+    cuArrays<real2_type> *offsetFinal,
     int OverSampleRatioZoomin, int OverSampleRatioRaw,
     int xHalfRangeInit,  int yHalfRangeInit,
     cudaStream_t stream)
@@ -179,12 +222,13 @@ void cuSubPixelOffset(cuArrays<int2> *offsetInit, cuArrays<int2> *offsetZoomIn,
     float xoffset = xHalfRangeInit ;
     float yoffset = yHalfRangeInit ;
 
-    cuSubPixelOffset_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
+    cuSubPixelOffset2Pass_kernel<<<IDIVUP(size, NTHREADS), NTHREADS, 0, stream>>>
         (offsetInit->devData, offsetZoomIn->devData,
          offsetFinal->devData, OSratio, xoffset, yoffset, size);
-    getLastCudaError("cuSubPixelOffset_kernel");
+    getLastCudaError("cuSubPixelOffset2Pass_kernel");
 
 }
+
 
 // cuda device function to compute the shift of center
 static inline __device__ int2 dev_adjustOffset(

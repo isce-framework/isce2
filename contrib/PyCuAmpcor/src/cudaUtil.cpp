@@ -56,3 +56,16 @@ void gpuDeviceList()
         current_device++;
     }
 }
+
+int getSMCount(int devID)
+{
+    // Get the ID of the currently active CUDA device
+    checkCudaErrors(cudaGetDevice(&devID));
+
+    // Retrieve device properties
+    cudaDeviceProp prop;
+    checkCudaErrors(cudaGetDeviceProperties(&prop, devID));
+
+    // Return the SM (Streaming Multiprocessor) count
+    return prop.multiProcessorCount;
+}

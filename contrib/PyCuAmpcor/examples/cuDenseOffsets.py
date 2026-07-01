@@ -23,11 +23,11 @@ except ModuleNotFoundError:
 
 EXAMPLE = '''example
   cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 8 --nwdc 1 --gpuid 0
 
   # offset and its geometry
   # tip: re-run with --full/out-geom and without --redo to generate geometry only
-  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 100 --nwdc 1 --gpuid 2 --full-geom ./geom_reference --out-geom ./offset/geom_reference
+  cuDenseOffsets.py -r ./SLC/20151120/20151120.slc.full -s ./SLC/20151214/20151214.slc.full --outprefix ./offsets/20151120_20151214/offset --ww 256 --wh 256 --sw 8 --sh 8 --oo 32 --kw 300 --kh 100 --nwac 8 --nwdc 1 --gpuid 0 --full-geom ./geom_reference --out-geom ./offset/geom_reference
 '''
 
 
@@ -70,30 +70,46 @@ def createParser():
     parser.add_argument('--kh', type=int, dest='skiphgt', default=64,
                         help='Skip down (default: %(default)s).')
 
+    # use the chip center coordinates for starting pixels
+
+
+
     # determine the number of windows
     # either specify the starting pixel and the number of windows,
     # or by setting them to -1, let the script to compute these parameters
     parser.add_argument('--mm', type=int, dest='margin', default=0,
                         help='Margin (default: %(default)s).')
     parser.add_argument('--nwa', type=int, dest='numWinAcross', default=-1,
-                        help='Number of window across (default: %(default)s to be auto-determined).')
+                        help='Number of windows across (default: %(default)s to be auto-determined).')
     parser.add_argument('--nwd', type=int, dest='numWinDown', default=-1,
-                        help='Number of window down (default: %(default)s).')
-    parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=-1,
+                        help='Number of windows down (default: %(default)s).')
+    parser.add_argument('--startpixelac', dest='startpixelac', type=int, default=None,
                         help='Starting Pixel across of the reference image.' +
-                             'Default: %(default)s to be determined by margin and search range.')
-    parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=-1,
+                             'Default: %(default)s to use the first pixel.')
+    parser.add_argument('--startpixeldw', dest='startpixeldw', type=int, default=None,
                         help='Starting Pixel down of the reference image.' +
-                             'Default: %(default)s to be determined by margin and search range.')
+                             'Default: %(default)s to use the first pixel.')
+    parser.add_argument('--use-center', dest='use_center', type=int, default=0,
+                        help='whether to use the chip center coordinate as the starting pixel.' +
+                             'Default: %(default)s not to use center coordinate.')
+    parser.add_argument('--endpixelac', dest='endpixelac', type=int, default=None,
+                        help='Ending Pixel across of the reference image.' +
+                             'Default: %(default)s to be determined by the image width.')
+    parser.add_argument('--endpixeldw', dest='endpixeldw', type=int, default=None,
+                        help='Ending Pixel down of the reference image.' +
+                             'Default: %(default)s to be determined by margin, search range and the image height.')
+
 
     # cross-correlation algorithm
+    parser.add_argument('--wf', '--workflow', dest='workflow', type=int, default=0,
+                        help='workflow (0: two passes, first pass without antialiasing oversampling, 1: one pass with antialiasing oversampling) (default: %(default)s).')
     parser.add_argument('--alg', '--algorithm', dest='algorithm', type=int, default=0,
                         help='cross-correlation algorithm (0 = frequency domain, 1 = time domain) (default: %(default)s).')
     parser.add_argument('--raw-osf','--raw-over-samp-factor', type=int, dest='raw_oversample',
                         default=2, choices=range(2,5),
                         help='anti-aliasing oversampling factor, equivalent to i_ovs in RIOPAC (default: %(default)s).')
     parser.add_argument('--drmp', '--deramp', dest='deramp', type=int, default=0,
-                        help='deramp method (0: mag for TOPS, 1:complex with linear ramp) (default: %(default)s).')
+                        help='remove phase ramp of complex signals before antialiasing oversampling (0: use magnitude instead (for TOPS), 1: linear phase ramp, 2: skip deramping) (default: %(default)s).')
 
     # gross offset
     gross = parser.add_argument_group('Initial gross offset')
@@ -113,7 +129,7 @@ def createParser():
                       help='Zoom-in window size of the correlation surface for statistics(snr/variance) (default: %(default)s).')
     corr.add_argument('--corr-srch-size', type=int, dest='corr_srch_size', default=4,
                       help='(half) Zoom-in window size of the correlation surface for oversampling, ' \
-                      'equivalent to i_srcp in RIOPAC (default: %(default)s).')
+                      'equivalent to i_srcp in ROIPAC (default: %(default)s).')
     corr.add_argument('--corr-osf', '--oo', '--corr-over-samp-factor', type=int, dest='corr_oversample', default=32,
                       help = 'Oversampling factor of the zoom-in correlation surface (default: %(default)s).')
     corr.add_argument('--corr-osm', '--corr-over-samp-method', type=int, dest='corr_oversamplemethod', default=0,
@@ -129,13 +145,13 @@ def createParser():
     proc = parser.add_argument_group('Processing parameters')
     proc.add_argument('--gpuid', '--gid', '--gpu-id', dest='gpuid', type=int, default=0,
                         help='GPU ID (default: %(default)s).')
-    proc.add_argument('--nstreams', dest='nstreams', type=int, default=2,
+    proc.add_argument('--nstreams', dest='nstreams', type=int, default=1,
                         help='Number of cuda streams (default: %(default)s).')
     proc.add_argument('--usemmap', dest='usemmap', type=int, default=1,
                         help='Whether to use memory map for loading image files (default: %(default)s).')
     proc.add_argument('--mmapsize', dest='mmapsize', type=int, default=8,
                         help='The memory map buffer size in GB (default: %(default)s).')
-    proc.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=10,
+    proc.add_argument('--nwac', type=int, dest='numWinAcrossInChunk', default=8,
                         help='Number of window across in a chunk/batch (default: %(default)s).')
     proc.add_argument('--nwdc', type=int, dest='numWinDownInChunk', default=1,
                         help='Number of window down in a chunk/batch (default: %(default)s).')
@@ -197,18 +213,21 @@ def estimateOffsetField(reference, secondary, inps=None):
     # create a PyCuAmpcor instance
     objOffset = PyCuAmpcor()
 
+    objOffset.workflow = inps.workflow
     objOffset.algorithm = inps.algorithm
     objOffset.deviceID = inps.gpuid
     objOffset.nStreams = inps.nstreams #cudaStreams
     objOffset.derampMethod = inps.deramp
-    print('deramp method (0 for magnitude, 1 for complex): ', objOffset.derampMethod)
+    print('deramp method (0: magnitude, 1: linear phase ramp, 2: skip deramping): ', objOffset.derampMethod)
 
-    objOffset.referenceImageName = reference+'.vrt'
+    objOffset.referenceImageName = reference
     objOffset.referenceImageHeight = length
     objOffset.referenceImageWidth = width
-    objOffset.secondaryImageName = secondary+'.vrt'
+    objOffset.referenceImageDataType = 2 if sar.getDataType().upper().startswith('C')  else 1
+    objOffset.secondaryImageName = secondary
     objOffset.secondaryImageHeight = length
     objOffset.secondaryImageWidth = width
+    objOffset.secondaryImageDataType = 2 if sim.getDataType().upper().startswith('C') else 1
 
     print("image length:",length)
     print("image width:",width)
@@ -216,13 +235,6 @@ def estimateOffsetField(reference, secondary, inps=None):
     # if using gross offset, adjust the margin
     margin = max(inps.margin, abs(inps.azshift), abs(inps.rgshift))
 
-    # determine the number of windows down and across
-    # that's also the size of the output offset field
-    objOffset.numberWindowDown = inps.numWinDown if inps.numWinDown > 0 \
-        else (length-2*margin-2*inps.srchgt-inps.winhgt)//inps.skiphgt
-    objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
-        else (width-2*margin-2*inps.srcwidth-inps.winwidth)//inps.skipwidth
-    print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
 
     # window size
     objOffset.windowSizeHeight = inps.winhgt
@@ -234,19 +246,79 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.halfSearchRangeAcross = inps.srcwidth
     print('initial search range: {} by {}'.format(inps.srchgt, inps.srcwidth))
 
-    # starting pixel
-    objOffset.referenceStartPixelDownStatic = inps.startpixeldw if inps.startpixeldw != -1 \
-        else margin + objOffset.halfSearchRangeDown    # use margin + halfSearchRange instead
-    objOffset.referenceStartPixelAcrossStatic = inps.startpixelac if inps.startpixelac != -1 \
-        else margin + objOffset.halfSearchRangeAcross
-
-    print('the first pixel in reference image is: ({}, {})'.format(
-        objOffset.referenceStartPixelDownStatic, objOffset.referenceStartPixelAcrossStatic))
-
     # skip size
     objOffset.skipSampleDown = inps.skiphgt
     objOffset.skipSampleAcross = inps.skipwidth
     print('search step: {} by {}'.format(inps.skiphgt, inps.skipwidth))
+
+    # starting pixel in the reference image
+    # along down direction
+    if inps.startpixeldw is not None:
+        # use the given starting pixel coordinate
+        startPixelDown = inps.startpixeldw
+        if inps.use_center != 0:
+            # the given starting coordinate is the center, adjust it
+            startPixelDown -= inps.winhgt//2
+    else:
+        # use margin + halfSearchHeight instead
+        startPixelDown = margin + inps.srchgt
+    # do the same for across direction
+    if inps.startpixelac is not None:
+        # use the given starting pixel coordinate
+        startPixelAcross = inps.startpixelac
+        if inps.use_center != 0:
+            # the given starting coordinate is the center, adjust it
+            startPixelAcross -= inps.winwidth//2
+    else:
+        # use margin + halfSearchRange instead
+        startPixelAcross = margin + inps.srcwidth
+
+    print('the first pixel in reference image is: ({}, {})'.format(
+        startPixelDown, startPixelAcross))
+    print('the center pixel of the first window is : ({}, {})'.format(
+        startPixelDown + inps.winhgt//2,
+        startPixelAcross + inps.winwidth//2))
+    if startPixelDown < inps.srchgt:
+        print(f'Warning: the starting pixel down {startPixelDown} is less than the search range {inps.srchgt}. Zeros will be patched')
+    if startPixelAcross < inps.srcwidth:
+        print(f'Warning: the starting pixel across {startPixelAcross} is less than the search range {inps.srcwidth}. Zeros will be patched')
+
+    # assign the values to objOffset
+    objOffset.referenceStartPixelDownStatic = startPixelDown
+    objOffset.referenceStartPixelAcrossStatic = startPixelAcross
+
+    # the ending pixel in the reference image
+    if inps.endpixeldw is not None:
+        endPixelDown =  inps.endpixeldw
+        if inps.use_center !=0:
+            endPixelDown += inps.winhgt//2
+    else:
+        endPixelDown = length - margin - inps.srchgt
+    if inps.endpixelac is not None:
+        endPixelAcross =  inps.endpixelac
+        if inps.use_center !=0:
+            endPixelAcross += inps.winwidth//2
+    else:
+        endPixelAcross = width - margin - inps.srcwidth
+
+
+    # determine the number of windows down and across
+    # that's also the size of the output offset field
+    objOffset.numberWindowDown = inps.numWinDown if inps.numWinDown > 0 \
+        else (endPixelDown-startPixelDown-inps.winhgt)//inps.skiphgt
+    objOffset.numberWindowAcross = inps.numWinAcross if inps.numWinAcross > 0 \
+        else (endPixelAcross-startPixelAcross-inps.winwidth)//inps.skipwidth
+    print('the number of windows: {} by {}'.format(objOffset.numberWindowDown, objOffset.numberWindowAcross))
+
+    # get the actual location for the last pixel in reference image
+    endPixelDown = startPixelDown + (objOffset.numberWindowDown-1)*inps.skiphgt + inps.winhgt
+    endPixelAcross = startPixelAcross + (objOffset.numberWindowAcross-1)*inps.skipwidth + inps.winwidth
+    print('the last pixel in reference image is: ({}, {})'.format(
+        endPixelDown-1, endPixelAcross-1))
+    if endPixelDown > length - inps.srchgt:
+        print(f'Warning: the ending pixel down {endPixelDown} is more than length {length} - search range {inps.srchgt}')
+    if endPixelAcross > width - inps.srcwidth:
+        print(f'Warning: the ending pixel across {endPixelAcross} is more than width {width} - search range {inps.srcwidth} ')
 
     # oversample raw data (SLC)
     objOffset.rawDataOversamplingFactor = inps.raw_oversample
@@ -268,10 +340,12 @@ def estimateOffsetField(reference, secondary, inps=None):
     objOffset.grossOffsetImageName = fbase + '_gross.bip'
     objOffset.snrImageName = fbase + '_snr.bip'
     objOffset.covImageName = fbase + '_cov.bip'
+    objOffset.peakValueImageName = fbase + '_peak.bip'
     print("offsetfield: ",objOffset.offsetImageName)
     print("gross offsetfield: ",objOffset.grossOffsetImageName)
     print("snr: ",objOffset.snrImageName)
     print("cov: ",objOffset.covImageName)
+    print("peak value: ", objOffset.peakValueImageName)
 
     # whether to include the gross offset in offsetImage
     objOffset.mergeGrossOffset = inps.merge_gross_offset
@@ -281,11 +355,14 @@ def estimateOffsetField(reference, secondary, inps=None):
         grossOffsetImageName = objOffset.grossOffsetImageName.decode('utf8')
         snrImageName = objOffset.snrImageName.decode('utf8')
         covImageName = objOffset.covImageName.decode('utf8')
+        peakValueImageName = objOffset.peakValueImageName.decode('utf8')
+
     except:
         offsetImageName = objOffset.offsetImageName
         grossOffsetImageName = objOffset.grossOffsetImageName
         snrImageName = objOffset.snrImageName
         covImageName = objOffset.covImageName
+        peakValueImageName = objOffset.peakValueImageName
 
     # generic control
     objOffset.numberWindowDownInChunk = inps.numWinDownInChunk
@@ -342,7 +419,8 @@ def estimateOffsetField(reference, secondary, inps=None):
             return objOffset, geomDict
 
     # Run the code
-    print('Running PyCuAmpcor')
+    Precision = 'DOUBLE' if objOffset.isDoublePrecision() else 'FLOAT'
+    print(f'Running PyCuAmpcor in {Precision} precision')
 
     objOffset.runAmpcor()
     print('Finished')
@@ -353,7 +431,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # Finalize the results
     # offsetfield
     outImg = isceobj.createImage()
-    outImg.setDataType('FLOAT')
+    outImg.setDataType(Precision)
     outImg.setFilename(offsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIP'
@@ -364,7 +442,7 @@ def estimateOffsetField(reference, secondary, inps=None):
 
     # gross offsetfield
     outImg = isceobj.createImage()
-    outImg.setDataType('FLOAT')
+    outImg.setDataType(Precision)
     outImg.setFilename(grossOffsetImageName)
     outImg.setBands(2)
     outImg.scheme = 'BIP'
@@ -376,7 +454,7 @@ def estimateOffsetField(reference, secondary, inps=None):
     # snr
     snrImg = isceobj.createImage()
     snrImg.setFilename(snrImageName)
-    snrImg.setDataType('FLOAT')
+    snrImg.setDataType(Precision)
     snrImg.setBands(1)
     snrImg.setWidth(objOffset.numberWindowAcross)
     snrImg.setLength(objOffset.numberWindowDown)
@@ -386,13 +464,24 @@ def estimateOffsetField(reference, secondary, inps=None):
     # cov
     covImg = isceobj.createImage()
     covImg.setFilename(covImageName)
-    covImg.setDataType('FLOAT')
+    covImg.setDataType(Precision)
     covImg.setBands(3)
     covImg.scheme = 'BIP'
     covImg.setWidth(objOffset.numberWindowAcross)
     covImg.setLength(objOffset.numberWindowDown)
     covImg.setAccessMode('read')
     covImg.renderHdr()
+
+    # peak value
+    peakValueImg = isceobj.createImage()
+    peakValueImg.setFilename(peakValueImageName)
+    peakValueImg.setDataType(Precision)
+    peakValueImg.setBands(1)
+    peakValueImg.scheme = 'BIP'
+    peakValueImg.setWidth(objOffset.numberWindowAcross)
+    peakValueImg.setLength(objOffset.numberWindowDown)
+    peakValueImg.setAccessMode('read')
+    peakValueImg.renderHdr()
 
     return objOffset, geomDict
 

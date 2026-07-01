@@ -3,6 +3,7 @@
 
 #include "cuAmpcorController.h"
 #include "cuAmpcorParameter.h"
+#include "cudaUtil.h"
 
 PYBIND11_MODULE(PyCuAmpcor, m)
 {
@@ -32,13 +33,16 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM(int, deviceID)
         .DEF_PARAM(int, nStreams)
         .DEF_PARAM(int, derampMethod)
+        .DEF_PARAM(int, workflow)
 
         .DEF_PARAM(str, referenceImageName)
         .DEF_PARAM(int, referenceImageHeight)
         .DEF_PARAM(int, referenceImageWidth)
+        .DEF_PARAM(int, referenceImageDataType)
         .DEF_PARAM(str, secondaryImageName)
         .DEF_PARAM(int, secondaryImageHeight)
         .DEF_PARAM(int, secondaryImageWidth)
+        .DEF_PARAM(int, secondaryImageDataType)
 
         .DEF_PARAM(int, numberWindowDown)
         .DEF_PARAM(int, numberWindowAcross)
@@ -51,6 +55,7 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM(int, mergeGrossOffset)
         .DEF_PARAM(str, snrImageName)
         .DEF_PARAM(str, covImageName)
+        .DEF_PARAM(str, peakValueImageName)
 
         .DEF_PARAM(int, rawDataOversamplingFactor)
         .DEF_PARAM(int, corrStatWindowSize)
@@ -66,8 +71,8 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM_RENAME(int, referenceStartPixelAcrossStatic, referenceStartPixelAcross0)
         .DEF_PARAM_RENAME(int, referenceStartPixelDownStatic,   referenceStartPixelDown0)
 
-        .DEF_PARAM_RENAME(int, corrSurfaceOverSamplingMethod, oversamplingMethod)
-        .DEF_PARAM_RENAME(int, corrSurfaceOverSamplingFactor, oversamplingFactor)
+        .DEF_PARAM(int, corrSurfaceOverSamplingMethod)
+        .DEF_PARAM(int, corrSurfaceOverSamplingFactor)
 
         .DEF_PARAM_RENAME(int, mmapSize, mmapSizeInGB)
 
@@ -76,6 +81,8 @@ PYBIND11_MODULE(PyCuAmpcor, m)
         .DEF_PARAM_RENAME(int, corrSurfaceZoomInWindow, zoomWindowSize)
 
         .DEF_METHOD(runAmpcor)
+
+        .DEF_METHOD(isDoublePrecision)
 
         .def("checkPixelInImageRange", [](const cls& self) {
             self.param->checkPixelInImageRange();
@@ -99,5 +106,19 @@ PYBIND11_MODULE(PyCuAmpcor, m)
                     self.param->referenceStartPixelAcross0,
                     vD.data(), vA.data());
         })
-        ;
+
+        .def_static("device_init", [](int device = 0) {
+            return gpuDeviceInit(device);
+        },
+        "Init the given cuda device (default = 0)")
+
+        .def_static("get_sm_count", [](int device = 0) {
+            return getSMCount(device);
+        },
+        "Returns the number of SMs (streaming multiprocessors) on the given device.")
+
+        .def("device_list", &::gpuDeviceList,
+        "List all available cuda devices")
+
+    ;
 }

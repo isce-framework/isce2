@@ -39,7 +39,7 @@
                     integer*8 :: acc
                     integer :: irow,band,n,i
 
-                    call getLineBand(acc,carr,band,irow)
+                    call getLineBand_c(acc,carr,band,irow)
                     !call getLine(acc, carr, irow)
                     do i=1,n
                         arr(i) = cabs(carr(i))
@@ -52,7 +52,7 @@
                     integer*8 :: acc
                     integer :: irow,band,n
 
-                    call getLineBand(acc,arr,band,irow)
+                    call getLineBand_r4(acc,arr,band,irow)
                 end subroutine
 
         end module estimateoffsetsRead 

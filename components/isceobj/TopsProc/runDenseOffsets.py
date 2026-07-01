@@ -95,6 +95,7 @@ def runDenseOffsetsCPU(self):
     print('Gross offset across: %d' % (self.rgshift))
     print('Gross offset down: %d\n' % (self.azshift))
 
+    objOffset.workflow = self.off_workflow
     objOffset.setWindowSizeWidth(self.winwidth)
     objOffset.setWindowSizeHeight(self.winhgt)
     objOffset.setSearchWindowSizeWidth(self.srcwidth)
@@ -190,14 +191,19 @@ def runDenseOffsetsGPU(self):
     ### Set parameters
     # cross-correlation method, 0=Frequency domain, 1= Time domain
     objOffset.algorithm = 0
+    # ampcor workflow, 0=two-pass workflow, 1= one-pass workflow
+    objOffset.workflow = self.off_workflow
     # deramping method: 0 to take magnitude (fixed for Tops)
     objOffset.derampMethod = 0
-    objOffset.referenceImageName = reference + '.vrt'
+    objOffset.referenceImageName = reference
     objOffset.referenceImageHeight = length
     objOffset.referenceImageWidth = width
-    objOffset.secondaryImageName = secondary + '.vrt'
+    objOffset.referenceImageDataType = 2 if m.getDataType().upper().startswith('C') else 1
+    objOffset.secondaryImageName = secondary
     objOffset.secondaryImageHeight = length
     objOffset.secondaryImageWidth = width
+    objOffset.secondaryImageDataType = 2 if s.getDataType().upper().startswith('C') else 1
+
 
     # adjust the margin
     margin = max(self.margin, abs(self.azshift), abs(self.rgshift))
@@ -232,9 +238,9 @@ def runDenseOffsetsGPU(self):
     objOffset.nStreams = 2
     # number of windows in a chunk/batch
     objOffset.numberWindowDownInChunk = 1
-    objOffset.numberWindowAcrossInChunk = 64
+    objOffset.numberWindowAcrossInChunk = 20
     # memory map cache size in GB
-    objOffset.mmapSize = 16
+    objOffset.mmapSize = 4
 
     # Modify BIL in filename to BIP if needed and store for future use
     prefix, ext = os.path.splitext(self._insar.offsetfile)
@@ -247,11 +253,13 @@ def runDenseOffsetsGPU(self):
     objOffset.grossOffsetImageName = os.path.join(self._insar.mergedDirname, self._insar.offsetfile + ".gross")
     objOffset.snrImageName = os.path.join(self._insar.mergedDirname, self._insar.snrfile)
     objOffset.covImageName = os.path.join(self._insar.mergedDirname, self._insar.covfile)
+    objOffset.peakValueImageName = os.path.join(self._insar.mergedDirname, self._insar.peakvaluefile)
 
     # merge gross offset to final offset
     objOffset.mergeGrossOffset = 1
 
     ### print the settings
+    print('Workflow: %d\n' % (self.off_workflow))
     print('\nReference frame: %s' % (mf))
     print('Secondary frame: %s' % (sf))
     print('Main window size width: %d' % (self.winwidth))
@@ -268,6 +276,8 @@ def runDenseOffsetsGPU(self):
     print('Output gross offsets file name: %s' % (objOffset.grossOffsetImageName))
     print('Output SNR file name: %s' % (objOffset.snrImageName))
     print('Output COV file name: %s' % (objOffset.covImageName))
+    print('Output Correlation Surface Peak Value file name: %s' % (objOffset.peakValueImageName))
+    print(f'Number of windows: {objOffset.numberWindowDown} x {objOffset.numberWindowAcross}')
 
     # pass the parameters to C++ programs
     objOffset.setupParams()
@@ -331,6 +341,16 @@ def runDenseOffsetsGPU(self):
     covImg.setLength(objOffset.numberWindowDown)
     covImg.setAccessMode('read')
     covImg.renderHdr()
+
+    peakValueImg = isceobj.createImage()
+    peakValueImg.setFilename(objOffset.peakValueImageName)
+    peakValueImg.setDataType('FLOAT')
+    peakValueImg.setBands(1)
+    peakValueImg.scheme = 'BIP'
+    peakValueImg.setWidth(objOffset.numberWindowAcross)
+    peakValueImg.setLength(objOffset.numberWindowDown)
+    peakValueImg.setAccessMode('read')
+    peakValueImg.renderHdr()
 
 
 if __name__ == '__main__' :

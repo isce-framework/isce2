@@ -35,13 +35,13 @@ cuNormalizeSAT::cuNormalizeSAT(int secondaryNX, int secondaryNY, int count)
 {
     // allocate the work array
     // reference sum square
-    referenceSum2 = new cuArrays<float>(1, 1, count);
+    referenceSum2 = new cuArrays<real_type>(1, 1, count);
     referenceSum2->allocate();
 
     // secondary sum and sum square
-    secondarySAT = new cuArrays<float>(secondaryNX, secondaryNY, count);
+    secondarySAT = new cuArrays<real_type>(secondaryNX, secondaryNY, count);
     secondarySAT->allocate();
-    secondarySAT2 = new cuArrays<float>(secondaryNX, secondaryNY, count);
+    secondarySAT2 = new cuArrays<real_type>(secondaryNX, secondaryNY, count);
     secondarySAT2->allocate();
 };
 
@@ -52,16 +52,16 @@ cuNormalizeSAT::~cuNormalizeSAT()
     delete secondarySAT2;
 }
 
-void cuNormalizeSAT::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+void cuNormalizeSAT::execute(cuArrays<real_type> *correlation,
+    cuArrays<real_type> *reference, cuArrays<real_type> *secondary, cudaStream_t stream)
 {
     cuCorrNormalizeSAT(correlation, reference, secondary,
         referenceSum2, secondarySAT, secondarySAT2, stream);
 }
 
 template<int Size>
-void cuNormalizeFixed<Size>::execute(cuArrays<float> *correlation,
-    cuArrays<float> *reference, cuArrays<float> *secondary, cudaStream_t stream)
+void cuNormalizeFixed<Size>::execute(cuArrays<real_type> *correlation,
+    cuArrays<real_type> *reference, cuArrays<real_type> *secondary, cudaStream_t stream)
 {
     cuCorrNormalizeFixed<Size>(correlation, reference, secondary, stream);
 }

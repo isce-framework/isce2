@@ -5,6 +5,9 @@
 
 #include "cuAmpcorParameter.h"
 #include <stdio.h>
+#include <iostream>
+#include <stdexcept>
+
 
 #ifndef IDIVUP
 #define IDIVUP(i,j) ((i+j-1)/j)
@@ -22,7 +25,8 @@ cuAmpcorParameter::cuAmpcorParameter()
     algorithm = 0; //0 freq; 1 time
     deviceID = 0;
     nStreams = 1;
-    derampMethod = 1;
+    derampMethod = 0;
+    workflow = 0;
 
     windowSizeWidthRaw = 64;
     windowSizeHeightRaw = 64;
@@ -31,21 +35,24 @@ cuAmpcorParameter::cuAmpcorParameter()
 
     skipSampleAcrossRaw = 64;
     skipSampleDownRaw = 64;
-    rawDataOversamplingFactor = 2;
-    zoomWindowSize = 16;
-    oversamplingFactor = 16;
-    oversamplingMethod = 0;
+    rawDataOversamplingFactor = 2; //antialiasing
+    zoomWindowSize = 16;  // correlation surface oversampling zoom
+    corrSurfaceOverSamplingFactor = 16; // correlation surface oversampling
+    corrSurfaceOverSamplingMethod = 0;
 
     referenceImageName = "reference.slc";
     referenceImageWidth = 1000;
     referenceImageHeight = 1000;
+    referenceImageDataType = 2; // complex
     secondaryImageName = "secondary.slc";
     secondaryImageWidth = 1000;
     secondaryImageHeight = 1000;
-    offsetImageName = "DenseOffset.off";
-    grossOffsetImageName = "GrossOffset.off";
-    snrImageName = "snr.snr";
-    covImageName = "cov.cov";
+    secondaryImageDataType = 2; // complex
+    offsetImageName = "DenseOffset.bip";
+    grossOffsetImageName = "GrossOffset.bip";
+    snrImageName = "snr.bip";
+    covImageName = "cov.bip";
+    peakValueImageName = "peakValue.bip";
     numberWindowDown =  1;
     numberWindowAcross = 1;
     numberWindowDownInChunk = 1;
@@ -69,6 +76,34 @@ cuAmpcorParameter::cuAmpcorParameter()
 
 void cuAmpcorParameter::setupParameters()
 {
+    // workflow specific parameter settings
+    //
+    switch (workflow) {
+        case 0:
+            _setupParameters_TwoPass();
+            break;
+        case 1:
+            _setupParameters_OnePass();
+            break;
+        default:
+            throw std::invalid_argument("Unsupported workflow");
+    }
+
+    // common parameter settings
+    numberWindows = numberWindowDown*numberWindowAcross;
+    if(numberWindows <=0) {
+        fprintf(stderr, "Incorrect number of windows! (%d, %d)\n", numberWindowDown, numberWindowAcross);
+        exit(EXIT_FAILURE);
+    }
+
+    numberChunkDown = IDIVUP(numberWindowDown, numberWindowDownInChunk);
+    numberChunkAcross = IDIVUP(numberWindowAcross, numberWindowAcrossInChunk);
+    numberChunks = numberChunkDown*numberChunkAcross;
+    allocateArrays();
+}
+
+void cuAmpcorParameter::_setupParameters_TwoPass()
+{
     // Size to extract the raw correlation surface for snr/cov
     corrRawZoomInHeight = std::min(corrStatWindowSize, 2*halfSearchRangeDownRaw+1);
     corrRawZoomInWidth = std::min(corrStatWindowSize, 2*halfSearchRangeAcrossRaw+1);
@@ -87,8 +122,8 @@ void cuAmpcorParameter::setupParameters()
     windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //
     windowSizeHeight = windowSizeHeightRaw*rawDataOversamplingFactor;
 
-    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeDownRaw;
-    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeAcrossRaw;
+    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeAcrossRaw;
+    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeDownRaw;
 
     searchWindowSizeWidthRawZoomIn = windowSizeWidthRaw + 2*halfZoomWindowSizeRaw;
     searchWindowSizeHeightRawZoomIn = windowSizeHeightRaw + 2*halfZoomWindowSizeRaw;
@@ -96,16 +131,79 @@ void cuAmpcorParameter::setupParameters()
     searchWindowSizeWidth = searchWindowSizeWidthRawZoomIn*rawDataOversamplingFactor;
     searchWindowSizeHeight = searchWindowSizeHeightRawZoomIn*rawDataOversamplingFactor;
 
-    numberWindows = numberWindowDown*numberWindowAcross;
-    if(numberWindows <=0) {
-        fprintf(stderr, "Incorrect number of windows! (%d, %d)\n", numberWindowDown, numberWindowAcross);
-        exit(EXIT_FAILURE);
-    }
+    windowSizeWidthRawEnlarged = windowSizeWidthRaw;
+    windowSizeHeightRawEnlarged = windowSizeHeightRaw;
 
-    numberChunkDown = IDIVUP(numberWindowDown, numberWindowDownInChunk);
-    numberChunkAcross = IDIVUP(numberWindowAcross, numberWindowAcrossInChunk);
-    numberChunks = numberChunkDown*numberChunkAcross;
-    allocateArrays();
+    // loading offsets
+    referenceLoadingOffsetDown = 0;
+    referenceLoadingOffsetAcross = 0;
+    // secondary loading offset relative to reference
+    secondaryLoadingOffsetDown = -halfSearchRangeDownRaw;
+    secondaryLoadingOffsetAcross = -halfSearchRangeAcrossRaw;
+
+}
+
+void cuAmpcorParameter::_setupParameters_OnePass()
+{
+
+    // template window size (after antialiasing oversampling)
+    windowSizeWidth = windowSizeWidthRaw*rawDataOversamplingFactor;  //
+    windowSizeHeight = windowSizeHeightRaw*rawDataOversamplingFactor;
+
+    // serve as extra margin for search range
+    halfZoomWindowSizeRaw = zoomWindowSize/(2*rawDataOversamplingFactor);
+
+    // add extra search range to ensure enough area to oversample correlation surface
+    halfSearchRangeDownRaw += halfZoomWindowSizeRaw;
+    halfSearchRangeAcrossRaw += halfZoomWindowSizeRaw;
+
+    // search window size before antialiasing oversampling
+    searchWindowSizeWidthRaw =  windowSizeWidthRaw + 2*halfSearchRangeAcrossRaw;
+    searchWindowSizeHeightRaw = windowSizeHeightRaw + 2*halfSearchRangeDownRaw;
+
+    windowSizeHeightRawEnlarged = searchWindowSizeHeightRaw;
+    windowSizeWidthRawEnlarged = searchWindowSizeWidthRaw;
+
+    // search window size (after antialiasing oversampling)
+    searchWindowSizeWidth = searchWindowSizeWidthRaw*rawDataOversamplingFactor;
+    searchWindowSizeHeight = searchWindowSizeHeightRaw*rawDataOversamplingFactor;
+
+    windowSizeHeightEnlarged = searchWindowSizeHeight;
+    windowSizeWidthEnlarged = searchWindowSizeWidth;
+
+    // loading offsets
+    // reference size matching the secondary size
+    referenceLoadingOffsetDown = -halfSearchRangeDownRaw;
+    referenceLoadingOffsetAcross = -halfSearchRangeAcrossRaw;
+    // secondary loading offset relative to reference
+    secondaryLoadingOffsetDown = 0;
+    secondaryLoadingOffsetAcross = 0;
+
+    // correlation surface size
+    corrWindowSize = make_int2(searchWindowSizeHeight - windowSizeHeight + 1,
+                               searchWindowSizeWidth - windowSizeWidth +1);
+    // check zoom in window size, if larger, issue a warning
+    if(zoomWindowSize >= corrWindowSize.x || zoomWindowSize >= corrWindowSize.y)
+        fprintf(stderr, "Warning: zoomWindowSize %d is bigger than the original correlation surface size (%d, %d)!\n",
+            zoomWindowSize, corrWindowSize.x, corrWindowSize.y );
+    // use the smaller values
+    corrZoomInSize = make_int2(std::min(zoomWindowSize+1, corrWindowSize.x),
+                               std::min(zoomWindowSize+1, corrWindowSize.y));
+
+    // oversampled correlation surface size
+    corrZoomInOversampledSize = make_int2(corrZoomInSize.x * corrSurfaceOverSamplingFactor,
+                                              corrZoomInSize.y * corrSurfaceOverSamplingFactor);
+
+    int totalOS = rawDataOversamplingFactor*corrSurfaceOverSamplingFactor;
+    // search start : image center - 1 pixel * totalOS
+    corrZoomInOversampledSearchStart = make_int2((corrZoomInSize.x-1)*corrSurfaceOverSamplingFactor/2 - totalOS,
+        (corrZoomInSize.y-1)*corrSurfaceOverSamplingFactor/2 - totalOS);
+    // search range \pm 1 pixel * totalOS
+    corrZoomInOversampledSearchRange = make_int2(2*totalOS, 2*totalOS);
+
+    fprintf(stderr, "zoomWindowSize is (%d, %d)!\n",
+            corrZoomInSize.x, corrZoomInSize.y );
+
 }
 
 
@@ -149,6 +247,10 @@ void cuAmpcorParameter::deallocateArrays()
 }
 
 
+// ****************
+// make reference window the same as secondary for oversampling
+// ****************
+
 /// Set starting pixels for reference and secondary windows from arrays
 /// set also gross offsets between reference and secondary windows
 ///
@@ -156,12 +258,12 @@ void cuAmpcorParameter::setStartPixels(int *mStartD, int *mStartA, int *gOffsetD
 {
     for(int i=0; i<numberWindows; i++)
     {
-        referenceStartPixelDown[i] = mStartD[i];
+        referenceStartPixelDown[i] = mStartD[i] + referenceLoadingOffsetDown;
         grossOffsetDown[i] = gOffsetD[i];
-        secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-        referenceStartPixelAcross[i] = mStartA[i];
+        secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] + secondaryLoadingOffsetDown;
+        referenceStartPixelAcross[i] = mStartA[i] + referenceLoadingOffsetAcross;
         grossOffsetAcross[i] = gOffsetA[i];
-        secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+        secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] + secondaryLoadingOffsetAcross;
     }
     setChunkStartPixels();
 }
@@ -174,12 +276,12 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int *gOffsetD, 
         for(int col = 0; col < numberWindowAcross; col++)
         {
             int i = row*numberWindowAcross + col;
-            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw + referenceLoadingOffsetDown;
             grossOffsetDown[i] = gOffsetD[i];
-            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] + secondaryLoadingOffsetDown;
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw + referenceLoadingOffsetAcross;
             grossOffsetAcross[i] = gOffsetA[i];
-            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] + secondaryLoadingOffsetAcross;
         }
     }
     setChunkStartPixels();
@@ -193,12 +295,12 @@ void cuAmpcorParameter::setStartPixels(int mStartD, int mStartA, int gOffsetD, i
         for(int col = 0; col < numberWindowAcross; col++)
         {
             int i = row*numberWindowAcross + col;
-            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw;
+            referenceStartPixelDown[i] = mStartD + row*skipSampleDownRaw + referenceLoadingOffsetDown;
             grossOffsetDown[i] = gOffsetD;
-            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] - halfSearchRangeDownRaw;
-            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw;
+            secondaryStartPixelDown[i] = referenceStartPixelDown[i] + grossOffsetDown[i] + secondaryLoadingOffsetDown;
+            referenceStartPixelAcross[i] = mStartA + col*skipSampleAcrossRaw + referenceLoadingOffsetAcross;
             grossOffsetAcross[i] = gOffsetA;
-            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] - halfSearchRangeAcrossRaw;
+            secondaryStartPixelAcross[i] = referenceStartPixelAcross[i] + grossOffsetAcross[i] + secondaryLoadingOffsetAcross;
         }
     }
     setChunkStartPixels();
@@ -217,8 +319,9 @@ void cuAmpcorParameter::setChunkStartPixels()
     {
         for (int jchunk =0; jchunk<numberChunkAcross; jchunk++)
         {
-
+            // index of chunk
             int idxChunk = ichunk*numberChunkAcross+jchunk;
+            // variables to keep track of the first(s) and last(e) pixels in the chunk
             int mChunkSD = referenceImageHeight;
             int mChunkSA = referenceImageWidth;
             int mChunkED = 0;
@@ -236,6 +339,8 @@ void cuAmpcorParameter::setChunkStartPixels()
             if(jchunk == numberChunkAcross -1)
                 numberWindowAcrossInChunkRun = numberWindowAcross - numberWindowAcrossInChunk*(numberChunkAcross -1);
 
+            // iterate over windows in the chunk to find the starting pixels and the chunk height/windowSizeWidth
+            // these parameters are needed to copy the chunk from the whole image file
             for(int i=0; i<numberWindowDownInChunkRun; i++)
             {
                 for(int j=0; j<numberWindowAcrossInChunkRun; j++)
@@ -255,14 +360,31 @@ void cuAmpcorParameter::setChunkStartPixels()
                     if(sChunkEA < vpixel) sChunkEA = vpixel;
                 }
             }
+
+            // check whether the starting pixel exceeds the image range
+            if (mChunkSD < 0) mChunkSD = 0;
+            if (mChunkSA < 0) mChunkSA = 0;
+            if (sChunkSD < 0) sChunkSD = 0;
+            if (sChunkSA < 0) sChunkSA = 0;
+            // set and check the last pixel
+            mChunkED += windowSizeHeightRawEnlarged;
+            if (mChunkED > referenceImageHeight) mChunkED = referenceImageHeight;
+            mChunkEA += windowSizeWidthRawEnlarged;
+            if (mChunkEA > referenceImageWidth) mChunkED = referenceImageWidth;
+            sChunkED += searchWindowSizeHeightRaw;
+            if (sChunkED > secondaryImageHeight) sChunkED = secondaryImageHeight;
+            sChunkEA += searchWindowSizeWidthRaw;
+            if (sChunkEA > secondaryImageWidth) sChunkED = secondaryImageWidth;
+            // set the starting pixel and size of the chunk
             referenceChunkStartPixelDown[idxChunk]   = mChunkSD;
             referenceChunkStartPixelAcross[idxChunk] = mChunkSA;
             secondaryChunkStartPixelDown[idxChunk]    = sChunkSD;
             secondaryChunkStartPixelAcross[idxChunk]  = sChunkSA;
-            referenceChunkHeight[idxChunk] = mChunkED - mChunkSD + windowSizeHeightRaw;
-            referenceChunkWidth[idxChunk]  = mChunkEA - mChunkSA + windowSizeWidthRaw;
-            secondaryChunkHeight[idxChunk]  = sChunkED - sChunkSD + searchWindowSizeHeightRaw;
-            secondaryChunkWidth[idxChunk]   = sChunkEA - sChunkSA + searchWindowSizeWidthRaw;
+            referenceChunkHeight[idxChunk] = mChunkED - mChunkSD;
+            referenceChunkWidth[idxChunk]  = mChunkEA - mChunkSA;
+            secondaryChunkHeight[idxChunk]  = sChunkED - sChunkSD;
+            secondaryChunkWidth[idxChunk]   = sChunkEA - sChunkSA;
+            // search the max chunk size, used to determine the allocated read buffer size
             if(maxReferenceChunkHeight < referenceChunkHeight[idxChunk]) maxReferenceChunkHeight = referenceChunkHeight[idxChunk];
             if(maxReferenceChunkWidth  < referenceChunkWidth[idxChunk] ) maxReferenceChunkWidth  = referenceChunkWidth[idxChunk];
             if(maxSecondaryChunkHeight  < secondaryChunkHeight[idxChunk]) maxSecondaryChunkHeight = secondaryChunkHeight[idxChunk];
@@ -272,8 +394,11 @@ void cuAmpcorParameter::setChunkStartPixels()
 }
 
 /// check whether reference and secondary windows are within the image range
+// now issue warning rather than errors
 void cuAmpcorParameter::checkPixelInImageRange()
 {
+// check range is no longer required, but offered as an option in DEBUG
+#ifdef CUAMPCOR_DEBUG
     int endPixel;
     for(int row=0; row<numberWindowDown; row++)
     {
@@ -282,52 +407,45 @@ void cuAmpcorParameter::checkPixelInImageRange()
             int i = row*numberWindowAcross + col;
             if(referenceStartPixelDown[i] <0)
             {
-                fprintf(stderr, "Reference Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, referenceStartPixelDown[i]);
-                exit(EXIT_FAILURE); //or raise range error
+                printf("Warning: Reference Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, referenceStartPixelDown[i]);
             }
             if(referenceStartPixelAcross[i] <0)
             {
-                fprintf(stderr, "Reference Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, referenceStartPixelAcross[i]);
-                exit(EXIT_FAILURE);
+                printf("Warning: Reference Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, referenceStartPixelAcross[i]);
             }
             endPixel = referenceStartPixelDown[i] + windowSizeHeightRaw;
             if(endPixel >= referenceImageHeight)
             {
-                fprintf(stderr, "Reference Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
-                exit(EXIT_FAILURE);
+                printf("Warning: Warning: Reference Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
             }
             endPixel = referenceStartPixelAcross[i] + windowSizeWidthRaw;
             if(endPixel >= referenceImageWidth)
             {
-                fprintf(stderr, "Reference Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
-                exit(EXIT_FAILURE);
+                printf("Warning: Reference Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
             }
             //secondary
             if(secondaryStartPixelDown[i] <0)
             {
-                fprintf(stderr, "Secondary Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelDown[i]);
-                exit(EXIT_FAILURE);
+                printf("Warning: Secondary Window start pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelDown[i]);
             }
             if(secondaryStartPixelAcross[i] <0)
             {
-                fprintf(stderr, "Secondary Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelAcross[i]);
-                exit(EXIT_FAILURE);
+                printf("Warning: Secondary Window start pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, secondaryStartPixelAcross[i]);
             }
             endPixel = secondaryStartPixelDown[i] + searchWindowSizeHeightRaw;
             if(endPixel >= secondaryImageHeight)
             {
-                fprintf(stderr, "Secondary Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
-                exit(EXIT_FAILURE);
+                printf("Warning: Secondary Window end pixel out ot range in Down, window (%d,%d), pixel %d\n", row, col, endPixel);
             }
             endPixel = secondaryStartPixelAcross[i] + searchWindowSizeWidthRaw;
             if(endPixel >= secondaryImageWidth)
             {
-                fprintf(stderr, "Secondary Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
-                exit(EXIT_FAILURE);
+                printf("Warning: Secondary Window end pixel out ot range in Across, window (%d,%d), pixel %d\n", row, col, endPixel);
             }
 
         }
     }
+#endif // CUAMPCOR_DEBUG
 }
 
 

@@ -7,10 +7,10 @@
 #include "cuAmpcorController.h"
 
 // dependencies
-#include "GDALImage.h"
+#include "SlcImage.h"
 #include "cuArrays.h"
 #include "cudaUtil.h"
-#include "cuAmpcorChunk.h"
+#include "cuAmpcorProcessor.h"
 #include "cuAmpcorUtil.h"
 #include <cuda_runtime.h>
 #include <iostream>
@@ -28,7 +28,14 @@ cuAmpcorController::~cuAmpcorController()
     delete param;
 }
 
-
+bool cuAmpcorController::isDoublePrecision()
+{
+#ifdef CUAMPCOR_DOUBLE
+    return true;
+#else
+    return false;
+#endif
+}
 /**
  *  Run ampcor
  *
@@ -38,58 +45,67 @@ void cuAmpcorController::runAmpcor()
 {
     // set the gpu id
     param->deviceID = gpuDeviceInit(param->deviceID);
-    // initialize the gdal driver
-    GDALAllRegister();
-    // reference and secondary images; use band=1 as default
+
+    // reference and secondary images
     // TODO: selecting band
     std::cout << "Opening reference image " << param->referenceImageName << "...\n";
-    GDALImage *referenceImage = new GDALImage(param->referenceImageName, 1, param->mmapSizeInGB);
+    SlcImage *referenceImage = new SlcImage(param->referenceImageName, param->referenceImageHeight, param->referenceImageWidth,
+        param->referenceImageDataType*sizeof(float), param->mmapSizeInGB);
     std::cout << "Opening secondary image " << param->secondaryImageName << "...\n";
-    GDALImage *secondaryImage = new GDALImage(param->secondaryImageName, 1, param->mmapSizeInGB);
+    SlcImage *secondaryImage = new SlcImage(param->secondaryImageName, param->secondaryImageHeight, param->secondaryImageWidth,
+        param->secondaryImageDataType*sizeof(float), param->mmapSizeInGB);
 
-    cuArrays<float2> *offsetImage, *offsetImageRun;
-    cuArrays<float> *snrImage, *snrImageRun;
-    cuArrays<float3> *covImage, *covImageRun;
+    cuArrays<real2_type> *offsetImage, *offsetImageRun;
+    cuArrays<real_type> *snrImage, *snrImageRun;
+    cuArrays<real3_type> *covImage, *covImageRun;
+    cuArrays<real_type> *peakValueImage, *peakValueImageRun;
 
     // nWindowsDownRun is defined as numberChunk * numberWindowInChunk
     // It may be bigger than the actual number of windows
     int nWindowsDownRun = param->numberChunkDown * param->numberWindowDownInChunk;
     int nWindowsAcrossRun = param->numberChunkAcross * param->numberWindowAcrossInChunk;
 
-    offsetImageRun = new cuArrays<float2>(nWindowsDownRun, nWindowsAcrossRun);
+    offsetImageRun = new cuArrays<real2_type>(nWindowsDownRun, nWindowsAcrossRun);
     offsetImageRun->allocate();
 
-    snrImageRun = new cuArrays<float>(nWindowsDownRun, nWindowsAcrossRun);
+    snrImageRun = new cuArrays<real_type>(nWindowsDownRun, nWindowsAcrossRun);
     snrImageRun->allocate();
 
-    covImageRun = new cuArrays<float3>(nWindowsDownRun, nWindowsAcrossRun);
+    covImageRun = new cuArrays<real3_type>(nWindowsDownRun, nWindowsAcrossRun);
     covImageRun->allocate();
 
+    peakValueImageRun = new cuArrays<real_type>(nWindowsDownRun, nWindowsAcrossRun);
+    peakValueImageRun->allocate();
+
     // Offset fields.
-    offsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    offsetImage = new cuArrays<real2_type>(param->numberWindowDown, param->numberWindowAcross);
     offsetImage->allocate();
 
     // SNR.
-    snrImage = new cuArrays<float>(param->numberWindowDown, param->numberWindowAcross);
+    snrImage = new cuArrays<real_type>(param->numberWindowDown, param->numberWindowAcross);
     snrImage->allocate();
 
     // Variance.
-    covImage = new cuArrays<float3>(param->numberWindowDown, param->numberWindowAcross);
+    covImage = new cuArrays<real3_type>(param->numberWindowDown, param->numberWindowAcross);
     covImage->allocate();
+
+    // Correlation surface peak value
+    peakValueImage = new cuArrays<real_type>(param->numberWindowDown, param->numberWindowAcross);
+    peakValueImage->allocate();
+
+
 
     // set up the cuda streams
     cudaStream_t streams[param->nStreams];
-    cuAmpcorChunk *chunk[param->nStreams];
+    std::unique_ptr<cuAmpcorProcessor> chunk[param->nStreams];
     // iterate over cuda streams
     for(int ist=0; ist<param->nStreams; ist++)
     {
         // create each stream
         checkCudaErrors(cudaStreamCreate(&streams[ist]));
         // create the chunk processor for each stream
-        chunk[ist]= new cuAmpcorChunk(param, referenceImage, secondaryImage,
-            offsetImageRun, snrImageRun, covImageRun,
-            streams[ist]);
-
+        chunk[ist]= cuAmpcorProcessor::create(param->workflow, param, referenceImage, secondaryImage,
+            offsetImageRun, snrImageRun, covImageRun, peakValueImageRun, streams[ist]);
     }
 
     int nChunksDown = param->numberChunkDown;
@@ -130,16 +146,17 @@ void cuAmpcorController::runAmpcor()
     cuArraysCopyExtract(offsetImageRun, offsetImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(snrImageRun, snrImage, make_int2(0,0), streams[0]);
     cuArraysCopyExtract(covImageRun, covImage, make_int2(0,0), streams[0]);
+    cuArraysCopyExtract(peakValueImageRun, peakValueImage, make_int2(0,0), streams[0]);
 
     /* save the offsets and gross offsets */
     // copy the offset to host
     offsetImage->allocateHost();
     offsetImage->copyToHost(streams[0]);
     // construct the gross offset
-    cuArrays<float2> *grossOffsetImage = new cuArrays<float2>(param->numberWindowDown, param->numberWindowAcross);
+    cuArrays<real2_type> *grossOffsetImage = new cuArrays<real2_type>(param->numberWindowDown, param->numberWindowAcross);
     grossOffsetImage->allocateHost();
     for(int i=0; i< param->numberWindows; i++)
-        grossOffsetImage->hostData[i] = make_float2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
+        grossOffsetImage->hostData[i] = make_real2(param->grossOffsetDown[i], param->grossOffsetAcross[i]);
 
     // check whether to merge gross offset
     if (param->mergeGrossOffset)
@@ -156,20 +173,24 @@ void cuAmpcorController::runAmpcor()
     // save the snr/cov images
     snrImage->outputToFile(param->snrImageName, streams[0]);
     covImage->outputToFile(param->covImageName, streams[0]);
+    peakValueImage->outputToFile(param->peakValueImageName, streams[0]);
 
     // Delete arrays.
     delete offsetImage;
     delete snrImage;
     delete covImage;
+    delete peakValueImage;
 
     delete offsetImageRun;
     delete snrImageRun;
     delete covImageRun;
+    delete peakValueImageRun;
 
     for (int ist=0; ist<param->nStreams; ist++)
     {
+        // cufftplan etc are stream dependent, need to be deleted before stream is destroyed
+        chunk[ist].release();
         checkCudaErrors(cudaStreamDestroy(streams[ist]));
-        delete chunk[ist];
     }
 
     delete referenceImage;
