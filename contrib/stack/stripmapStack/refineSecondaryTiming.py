@@ -46,6 +46,19 @@ def createParser():
     parser.add_argument('-t', '--thresh', dest='snrthresh', type=float, default=5.0,
             help='SNR threshold')
 
+    parser.add_argument('--nwa', dest='nwa', type=int, default=None,
+            help='Number of ampcor windows across (default: scale to image, max 10)')
+    parser.add_argument('--nwd', dest='nwd', type=int, default=None,
+            help='Number of ampcor windows down (default: scale to image, max 10)')
+    parser.add_argument('--ww', dest='windowWidth', type=int, default=64,
+            help='Ampcor window width (default: 64)')
+    parser.add_argument('--wh', dest='windowHeight', type=int, default=64,
+            help='Ampcor window height (default: 64)')
+    parser.add_argument('--sw', dest='searchWidth', type=int, default=20,
+            help='Ampcor search window half-width (default: 20)')
+    parser.add_argument('--sh', dest='searchHeight', type=int, default=20,
+            help='Ampcor search window half-height (default: 20)')
+
     return parser
 
 def cmdLineParse(iargs = None):
@@ -53,11 +66,13 @@ def cmdLineParse(iargs = None):
     return parser.parse_args(args=iargs)
 
 
-def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
+def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0,
+                        windowWidth=64, windowHeight=64,
+                        searchWidth=20, searchHeight=20,
+                        nwa=None, nwd=None):
     '''
     Estimate offset field between burst and simamp.
     '''
-
 
     sim = isceobj.createSlcImage()
     sim.load(secondary+'.xml')
@@ -76,48 +91,38 @@ def estimateOffsetField(reference, secondary, azoffset=0, rgoffset=0):
     objOffset.configure()
     objOffset.setAcrossGrossOffset(rgoffset)
     objOffset.setDownGrossOffset(azoffset)
-    objOffset.setWindowSizeWidth(128)
-    objOffset.setWindowSizeHeight(128)
-    objOffset.setSearchWindowSizeWidth(40)
-    objOffset.setSearchWindowSizeHeight(40)
+    objOffset.setWindowSizeWidth(windowWidth)
+    objOffset.setWindowSizeHeight(windowHeight)
+    objOffset.setSearchWindowSizeWidth(searchWidth)
+    objOffset.setSearchWindowSizeHeight(searchHeight)
     margin = 2*objOffset.searchWindowSizeWidth + objOffset.windowSizeWidth
 
-    nAcross = 60
-    nDown = 60
+    # Scale grid to image size (default: max 10 windows per dimension)
+    usableAc = int(min(width, sim.getWidth()) - 2 * margin)
+    usableDn = int(min(length, sim.getLength()) - 2 * margin)
+    nAcross = nwa if nwa is not None else min(10, max(3, usableAc // windowWidth))
+    nDown = nwd if nwd is not None else min(10, max(3, usableDn // windowHeight))
 
-   
     offAc = max(101,-rgoffset)+margin
     offDn = max(101,-azoffset)+margin
 
-    
     lastAc = int( min(width, sim.getWidth() - offAc) - margin)
     lastDn = int( min(length, sim.getLength() - offDn) - margin)
 
-#    print('Across: ', offAc, lastAc, width, sim.getWidth(), margin)
-#    print('Down: ', offDn, lastDn, length, sim.getLength(), margin)
-
-    if not objOffset.firstSampleAcross:
-        objOffset.setFirstSampleAcross(offAc)
-
-    if not objOffset.lastSampleAcross:
-        objOffset.setLastSampleAcross(lastAc)
-
-    if not objOffset.firstSampleDown:
-        objOffset.setFirstSampleDown(offDn)
-
-    if not objOffset.lastSampleDown:
-        objOffset.setLastSampleDown(lastDn)
-
-    if not objOffset.numberLocationAcross:
-        objOffset.setNumberLocationAcross(nAcross)
-
-    if not objOffset.numberLocationDown:
-        objOffset.setNumberLocationDown(nDown)        
+    # Unconditionally set grid parameters (configure() defaults prevent conditional override)
+    objOffset.setFirstSampleAcross(offAc)
+    objOffset.setLastSampleAcross(lastAc)
+    objOffset.setFirstSampleDown(offDn)
+    objOffset.setLastSampleDown(lastDn)
+    objOffset.setNumberLocationAcross(nAcross)
+    objOffset.setNumberLocationDown(nDown)
 
     objOffset.setFirstPRF(1.0)
     objOffset.setSecondPRF(1.0)
     objOffset.setImageDataType1('complex')
-    objOffset.setImageDataType2('complex') 
+    objOffset.setImageDataType2('complex')
+
+    print(f'  ampcor: {nAcross}x{nDown} grid, {windowWidth}x{windowHeight} window, {searchWidth}px search')
 
     objOffset.ampcor(sar, sim)
 
@@ -174,7 +179,10 @@ def main(iargs=None):
 
 
     field = estimateOffsetField(inps.reference, inps.secondary,
-            azoffset=inps.azoff, rgoffset=inps.rgoff)
+            azoffset=inps.azoff, rgoffset=inps.rgoff,
+            windowWidth=inps.windowWidth, windowHeight=inps.windowHeight,
+            searchWidth=inps.searchWidth, searchHeight=inps.searchHeight,
+            nwa=inps.nwa, nwd=inps.nwd)
 
     if os.path.exists(inps.outfile):
         os.remove(inps.outfile)

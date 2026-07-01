@@ -65,11 +65,12 @@ def main(iargs=None):
     RSAT2_str2 = 'imagery_HH.tif'   # RSAT2 extracted files
     TSX_TDX_str = 'dims_op*'        # TSX zip files
     TSX_TDX_str2 = 'T*X*.xml'       # TSX extracted files
+    CAPELLA_str = 'CAPELLA*.tif'    # Capella SLC GeoTIFF files
 
     # combine together
-    sensor_str_list = (ENV_str,ALOS1_str,CSK_str,CSK_str2,RSAT2_str,RSAT2_str2,TSX_TDX_str,TSX_TDX_str2)
-    sensor_list = ('Envisat','ALOS1','CSK','CSK','RSAT2','RSAT2','TSX/TDX','TSX/TDX')
-    sensor_unpackcommand = ('TODO','TODO','TODO','TODO','prepSlcRSAT2.py','prepSlcRSAT2.py','TODO','TODO')
+    sensor_str_list = (ENV_str,ALOS1_str,CSK_str,CSK_str2,RSAT2_str,RSAT2_str2,TSX_TDX_str,TSX_TDX_str2,CAPELLA_str)
+    sensor_list = ('Envisat','ALOS1','CSK','CSK','RSAT2','RSAT2','TSX/TDX','TSX/TDX','Capella')
+    sensor_unpackcommand = ('TODO','TODO','TODO','TODO','prepSlcRSAT2.py','prepSlcRSAT2.py','TODO','TODO','prepSlcCapella.py')
     Sensors = dict(zip(sensor_str_list,sensor_list))
     Sensors_unpack = dict(zip(sensor_str_list,sensor_unpackcommand))
 
