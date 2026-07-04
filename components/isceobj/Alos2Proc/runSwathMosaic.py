@@ -640,19 +640,21 @@ def swathMosaicParameters(frame, rangeOffsets, azimuthOffsets, numberOfRangeLook
     frame.azimuthLineInterval = frame.swaths[0].azimuthLineInterval
 
 
-def readImage(inputfile, numberOfSamples, numberOfLines, startSample, endSample, startLine, endLine):
+def readImage(inputfile, numberOfSamples, numberOfLines, startSample, endSample, startLine, endLine, dataType=np.complex64):
     '''
     read a chunk of image
     the indexes (startSample, endSample, startLine, endLine) are included and start with zero
 
     memmap is not used, because it is much slower
+
+    dataType: must be numpy data type
     '''
-    data = np.zeros((endLine-startLine+1, endSample-startSample+1), dtype=np.complex64)
+    data = np.zeros((endLine-startLine+1, endSample-startSample+1), dtype=dataType)
     with open(inputfile,'rb') as fp:
         #for i in range(endLine-startLine+1):
         for i in range(startLine, endLine+1):
-            fp.seek((i*numberOfSamples+startSample)*8, 0)
-            data[i-startLine] = np.fromfile(fp, dtype=np.complex64, count=endSample-startSample+1)
+            fp.seek((i*numberOfSamples+startSample)*np.dtype(dataType).itemsize, 0)
+            data[i-startLine] = np.fromfile(fp, dtype=dataType, count=endSample-startSample+1)
     return data
 
 

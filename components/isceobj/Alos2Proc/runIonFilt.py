@@ -122,6 +122,8 @@ def runIonFilt(self):
     fit = self.fitIon
     filt = self.filtIon
     fitAdaptive = self.fitAdaptiveIon
+    fitAdaptiveOrder = self.fitAdaptiveOrderIon
+    rmOutliers = self.rmOutliersIon
     filtSecondary = self.filtSecondaryIon
     if (fit == False) and (filt == False):
         raise Exception('either fit ionosphere or filt ionosphere should be True when doing ionospheric correction\n')
@@ -190,6 +192,10 @@ def runIonFilt(self):
     #remove possible wired values in coherence
     cor[np.nonzero(cor<0)] = 0.0
     cor[np.nonzero(cor>1)] = 0.0
+
+    #remove these values so that there are no outliers in the computed std
+    cor[np.nonzero(cor<0.05)] = 0.05
+    cor[np.nonzero(cor>0.95)] = 0.95
 
     #remove water body. Not helpful, just leave it here
     wbd = np.fromfile('wbd'+ml2+'.wbd', dtype=np.int8).reshape(length, width)
@@ -289,7 +295,7 @@ def runIonFilt(self):
         ion -= ion_fit * (ion!=0)
     #filter the rest of the ionosphere
     if filt:
-        (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive)
+        (ion_filt, std_out, window_size_out) = adaptive_gaussian(ion, std, size_min, size_max, std_out0, fit=fitAdaptive, order=fitAdaptiveOrder, rm_outliers=rmOutliers)
         if filtSecondary:
             print('applying secondary filtering with window size {}'.format(size_secondary))
             g2d = gaussian(size_secondary, size_secondary/2.0, scale=1.0)
@@ -553,7 +559,45 @@ def polyfit_2d(data, weight, order):
     return (data_fit, coeff)
 
 
-def adaptive_gaussian(data, std, size_min, size_max, std_out0, fit=True):
+def remove_outliers(data, multiples_of_sigma=3.0, invalid_value=0, number_of_valid=25):
+    '''
+    remove outliers in a 2d numpy array
+    CRL, 16-FEB-2024
+
+    data:               input data, 2d numpy array
+    multiples_of_sigma: data values > multiples_of_sigma*std are outliers
+                        this value should depend on number of valid samples?
+    invalid_value:      invalid values in data that are excluded in the analysis
+    number_of_valid:    if number of valid samples are larger than this value, outliers
+                        removal is performed. default value: 25, 1/4 of a 10*10 array
+    '''
+
+    index = np.nonzero(data!=invalid_value)
+
+    #if two few valid samples, do not remove outliers
+    if index[0].size <= number_of_valid:
+       std = None
+       mean = None
+    else:
+        #empty array not allowed in np.mean and np.std
+        mean = np.mean(data[index], dtype=np.float64)
+        std = np.std(data[index], dtype=np.float64)
+
+        #find outliers, exclude only large outliers
+        #data[index] is 1d array
+        #index_outlier = np.nonzero(np.absolute(data[index]-mean) > multiples_of_sigma*std)
+        index_outlier = np.nonzero(data[index]-mean > multiples_of_sigma*std)
+        if index_outlier[0].size != 0:
+            #compute mean value without outliers, and give it to outlier samples
+            data[(index[0][index_outlier], index[1][index_outlier])] = invalid_value
+            mean = np.mean(data[np.nonzero(data!=invalid_value)], dtype=np.float64)
+            #std = np.std(data[np.nonzero(data!=invalid_value)], dtype=np.float64)
+            data[(index[0][index_outlier], index[1][index_outlier])] = mean
+
+    return mean, std
+
+
+def adaptive_gaussian(data, std, size_min, size_max, std_out0, fit=True, order=2, rm_outliers=False):
     '''
     This program performs Gaussian filtering with adaptive window size.
     Cunren Liang, 11-JUN-2020
@@ -564,9 +608,21 @@ def adaptive_gaussian(data, std, size_min, size_max, std_out0, fit=True):
     size_max: maximum filter window size (size_min <= size_max, size_min == size_max is allowed)
     std_out0: standard deviation of output data
     fit:      whether do fitting before gaussian filtering
+    order:    fit order, 1, or 2, other orders are not allowed
+               1: if ionosphere is not spatially fast changing, this is better. result is smoother.
+               2: if ionosphere is spatially fast changing, this is better.
+    rm_outliers: whether remove outliers in the weight in each filtering window, pretty slow
     '''
     import scipy.signal as ss
 
+
+    if fit:
+        if order == 1:
+            n_coeff = 3
+        elif order == 2:
+            n_coeff = 6
+        else:
+            raise Exception('order supported: 1, 2\n')
 
     (length, width) = data.shape
 
@@ -670,30 +726,38 @@ def adaptive_gaussian(data, std, size_min, size_max, std_out0, fit=True):
             width_valid = last_column - first_column + 1
 
             #index in filter window
-            if first_line == 0:
-                last_line2 = size - 1
-                first_line2 = last_line2 - (length_valid - 1)
-            else:
-                first_line2 = 0
-                last_line2 = first_line2 + (length_valid - 1)
-            if first_column == 0:
-                last_column2 = size - 1
-                first_column2 = last_column2 - (width_valid - 1)
-            else:
-                first_column2 = 0
-                last_column2 = first_column2 + (width_valid - 1)
+            # if first_line == 0:
+            #     last_line2 = size - 1
+            #     first_line2 = last_line2 - (length_valid - 1)
+            # else:
+            #     first_line2 = 0
+            #     last_line2 = first_line2 + (length_valid - 1)
+            # if first_column == 0:
+            #     last_column2 = size - 1
+            #     first_column2 = last_column2 - (width_valid - 1)
+            # else:
+            #     first_column2 = 0
+            #     last_column2 = first_column2 + (width_valid - 1)
+
+            first_line2 = first_line - i + size_half
+            last_line2 = last_line - i + size_half
+            first_column2 = first_column - j + size_half
+            last_column2 = last_column - j + size_half
 
             #prepare data and weight within the window
             data_window = np.zeros((size, size))
             wgt_window = np.zeros((size, size))
             data_window[first_line2:last_line2+1, first_column2:last_column2+1] = data[first_line:last_line+1, first_column:last_column+1]
             wgt_window[first_line2:last_line2+1, first_column2:last_column2+1] = wgt[first_line:last_line+1, first_column:last_column+1]
+
+            #this is pretty slow
+            if rm_outliers:
+                remove_outliers(wgt_window, multiples_of_sigma=5.0, invalid_value=0, number_of_valid=25)
+
             #number of valid samples in the filtering window
             n_valid = np.sum(data_window!=0)
 
             #2. fit
-            #order, n_coeff = (1, 3)
-            order, n_coeff = (2, 6)
             if fit:
                 #must have enough samples to do fitting
                 #even if order is 2, n_coeff * 3 is much smaller than size_min*size_min in most cases.

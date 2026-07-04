@@ -1198,7 +1198,7 @@ def create_multi_index2(width2, l1, l2):
     return ((l2 - l1) / 2.0  + np.arange(width2) * l2) / l1
 
 
-def computePhaseDiff(data1, data22, coherenceWindowSize=5, coherenceThreshold=0.85):
+def computePhaseDiff(data1, data22, coherenceWindowSize=5, coherenceThreshold=0.85, coherenceThreshold1=None, coherenceThreshold2=None, diffile=None, corfile=None, corfile1=None, corfile2=None):
     import copy
     import numpy as np
     from isceobj.Alos2Proc.Alos2ProcPublic import cal_coherence_1
@@ -1208,7 +1208,44 @@ def computePhaseDiff(data1, data22, coherenceWindowSize=5, coherenceThreshold=0.
 
     dataDiff = data1 * np.conj(data2)
     cor = cal_coherence_1(dataDiff, win=coherenceWindowSize)
-    index = np.nonzero(np.logical_and(cor>coherenceThreshold, dataDiff!=0))
+    cor1 = cal_coherence_1(data1, win=coherenceWindowSize)
+    cor2 = cal_coherence_1(data2, win=coherenceWindowSize)
+
+    if (coherenceThreshold1 is None) and (coherenceThreshold2 is None):
+        tof = np.logical_and(cor>coherenceThreshold, dataDiff!=0)
+
+    elif (coherenceThreshold1 is not None) and (coherenceThreshold2 is None):
+        tof = np.logical_and(np.logical_and(cor>coherenceThreshold, cor1>coherenceThreshold1), dataDiff!=0)
+
+    elif (coherenceThreshold1 is None) and (coherenceThreshold2 is not None):
+        tof = np.logical_and(np.logical_and(cor>coherenceThreshold, cor2>coherenceThreshold2), dataDiff!=0)
+
+    else:
+        tof = np.logical_and(np.logical_and(np.logical_and(cor>coherenceThreshold, cor1>coherenceThreshold1), cor2>coherenceThreshold2), dataDiff!=0)
+
+    index = np.nonzero(tof)
+    index_invalid = np.nonzero(np.logical_not(tof))
+
+    print('number of invalid samples: {}'.format(index_invalid[0].size))
+    print('total number of samples: {}'.format(dataDiff.size))
+    print('percentage of invalid samples: {}%'.format(index_invalid[0].size/dataDiff.size*100.0))
+
+    length, width = dataDiff.shape
+    if diffile is not None:
+        dataDiff2 = copy.deepcopy(dataDiff)
+        dataDiff2[index_invalid] = 0
+        dataDiff2.astype(np.complex64).tofile(diffile)
+        create_xml(diffile, width, length, 'int')
+        del dataDiff2
+    if corfile is not None:
+        cor.astype(np.float32).tofile(corfile)
+        create_xml(corfile, width, length, 'float')
+    if corfile1 is not None:
+        cor1.astype(np.float32).tofile(corfile1)
+        create_xml(corfile1, width, length, 'float')
+    if corfile2 is not None:
+        cor2.astype(np.float32).tofile(corfile2)
+        create_xml(corfile2, width, length, 'float')
 
     #check if there are valid pixels
     if index[0].size == 0:
