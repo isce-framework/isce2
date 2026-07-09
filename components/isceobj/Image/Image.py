@@ -370,6 +370,18 @@ class Image(DataAccessor, Configurable):
         prop, fac, misc = parser.parse(filename)
         self.init(prop,fac,misc)
     '''
+    def load(self, filename, parser='xml'):
+        super(Image, self).load(filename, parser=parser)
+        base_dir = os.path.dirname(os.path.abspath(filename))
+
+        # Resolve basename-only image paths relative to the XML file.
+        # Relative paths that already include a directory are kept unchanged.
+        if self.filename and not os.path.isabs(self.filename) and not os.path.dirname(self.filename):
+            self.filename = os.path.join(base_dir, self.filename)
+
+        if self._extraFilename and not os.path.isabs(self._extraFilename) and not os.path.dirname(self._extraFilename):
+            self._extraFilename = os.path.join(base_dir, self._extraFilename)
+
     @use_api
     def renderHdr(self, outfile=None):
         from datetime import datetime
