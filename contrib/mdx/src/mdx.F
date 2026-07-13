@@ -1,3 +1,242 @@
+c!@##$%^&012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012
+c!       1         2         3         4         5         6         7         8         9        10        11        12        13  
+c
+c Copyright 2001, by the California Institute of Technology.
+c ALL RIGHTS RESERVED. United States Government Sponsorship acknowledged.
+c Any commercial use must be negotiated with the Office of Technology
+c Transfer at the California Institute of Technology.
+c 
+c This software may be subject to U.S. export control laws and regulations.
+c By accepting this document, the user agrees to comply with all applicable
+c U.S. export laws and regulations.  User has the responsibility to obtain
+c export licenses, or other export authority as may be required before
+c exporting such information to foreign countries or providing access to
+c foreign persons.
+c
+c***************************************************************
+
+        program mdx
+
+c****************************************************************
+c**
+c**   FILE NAME: mdx.f
+c**
+c**   PROGRAM NAME: mdx
+c**
+c**   DATE STARTED: 12/7/2001
+c**
+c**   PROGRAMMER:   Scott Shaffer
+c**   Jet Propulsion Lab
+c**
+c**   DESCRIPTION:  This program displays images
+c**   in a variaty of image formats including byte,
+c**   integer*2, integer*4, real*4, and complex.
+c**
+c**   ROUTINES CALLED:
+c**     init_gx
+c**     get_wininfo
+c**     getevent
+c**     setcolor
+c**     display_label
+c**     display_rmg
+c**     getarg
+c**     plus others
+c**
+c**   NOTES:        Tons of Fun
+c**
+c**
+c**   UPDATE LOG:
+cc*
+cc*   v178 2009-03-13  Fixed error created in v177 that caused an extra squaring of magnitude for c8 images
+cc*                    added flag for GFORTRAN compiling to handle declaration of iargc
+cc*
+cc*   v186 2010-01-11  Fixed initialization on entry windows for unsed fields
+cc*
+cc*   v187 2010-01-12  Increased PPM conversion array sizes to handle same limit as screen display
+cc*
+cc*   v190 2010-03-07  SJS - added flag (shift key) to show position in meters when clicking on image
+cc*
+cc*   v191 2012-02-22  SJS - Minor changes to report buffer overrun info and allow addr/mult to be entered in .mdx file
+cc*
+cc*   v192 2012-03-13  SJS - Added flag for reading SRTM 30mx30m tiles
+cc*
+cc*   v193 2012-03-21  SJS - Increased maximum number of channels to 8, added -r4mag data type
+cc*
+cc*   v194 2013-03-29  SJS - Incorporated initialization that Ron suggested to fix printing with -P, also increased to 10 channels
+cc*
+cc*   v195 2014-04-30  RJM - added code at CRJM1, need larger a_cmd line length
+cc*
+cc*   v196 2021-03-27  SJS - added c16 
+cc*
+cc*   v197 2025-03-07  SJS - Clean up code 
+c*****************************************************************
+
+          implicit none
+
+          character*10000 a_cmd
+          character*1000 a_value
+
+          integer i_arg
+          integer i_inarg
+
+          integer rdflen
+          external rdflen
+  
+#ifdef IO64
+          integer*8 mdxfunc_sample
+          external mdxfunc_sample
+
+          integer*8 i_eight
+          external i_eight
+#else
+          integer*4 mdxfunc_sample
+          external mdxfunc_sample
+
+          integer*4 i_eight
+          external i_eight
+#endif
+
+
+          character*18 version_mdx
+          external version_mdx
+  
+          character*18 version_gpx
+          external version_gpx
+
+          character*50 rdfversion
+          external rdfversion
+
+          integer i,j
+          byte   b_data(4000000)
+          real*4 r_data(1000000)
+          equivalence(b_data,r_data)
+  
+          a_cmd = ' '
+          i_inarg = command_argument_count()
+          if (i_inarg .eq. 0) then
+            write(6,*) '  '
+            write(6,'(1x,a,a17,a)'     ) '   <<  mdx    Version ',version_mdx(),'  >>   '
+            write(6,'(1x,a,a18,a)'     ) '   <<  graphx Version ',version_gpx(),'  >>   '
+            write(6,*) rdfversion()
+            write(6,*) '  '   
+            call write_greeting()
+            stop 'done'
+          else
+            do i_arg =1, i_inarg
+              call getarg(i_arg,a_value)
+c              write(6,*) i_arg,':',a_value(1:20)
+              do i=1,rdflen(a_value)+1
+                if (ichar(a_value(i:i)) .eq. 0) a_value(i:i)=' '
+              end do
+              if (a_cmd .eq. ' ') then
+                a_cmd = a_value
+              else
+                a_cmd = a_cmd(:max(rdflen(a_cmd),1))//' '//a_value
+              end if
+            end do
+          end if
+c          write(6,*) a_cmd
+
+
+          do i=1,500
+            do j=1,500
+              r_data(i+(j-1)*500) = i+j/500.
+            end do
+          end do
+          i=int(mdxfunc_sample(2,1,i_eight(0),4*500*500,b_data))   
+c          write(6,*) 'Calling mdxsub'
+          call mdxsub(a_cmd,i_eight(4000000),mdxfunc_sample)
+        end
+
+
+#ifdef IO64
+        integer*8 function mdxfunc_sample(i_flag,i_chn,i_start,i_num,b_data)
+
+          implicit none
+
+c
+c  Input Variables
+c
+          integer*4 i_flag          ! Controls weather the function is returning data or the size of the buffer.  Can also do other functions
+          integer*4 i_chn           ! Provides subroutine with the channel number 
+          integer*8 i_start         ! Start byte of data to be displayed - Is also an output 
+          integer*4 i_num           ! Number of bytes to be displayed
+          byte b_data(*)            ! Data buffer
+
+c
+c  Local Variables
+c
+          integer*4 i               ! Counter
+          integer*8 i_back          ! Returned value - number of bytes read or total bytes in file
+          integer*8 i_bmax          ! Max number of bytes in the internal file
+          byte b_buff(4000000)      ! Internal buffer of image data
+
+          data i_bmax /0/
+
+          save i_bmax
+          save b_buff
+#else
+        integer*4 function mdxfunc_sample(i_flag,i_chn,i_start,i_num,b_data)
+
+          implicit none
+
+c
+c  Input Variables
+c
+          integer*4 i_flag
+          integer*4 i_chn
+          integer*4 i_start
+          integer*4 i_num
+          byte b_data(1)
+
+c
+c  Local Variables
+c
+          integer*4 i               ! Counter
+          integer*4 i_back          ! Returned value -
+          integer*4 i_bmax
+          byte b_buff(4000000)
+
+          data i_bmax /0/
+
+          save i_bmax
+          save b_buff
+
+#endif
+
+            if (i_flag .eq. 0) then        !  return image data in byte array
+              i_back = 0
+              do i=1,i_num
+                if (i_start+i .ge. 1 .and. i_start+i .le. i_bmax) then
+                  b_data(i)=b_buff(i_start+i)
+                  i_back=i_back+1
+                end if
+              end do
+            else if (i_flag .eq. 1) then   ! return number of bytes in image array
+              i_back = i_bmax
+            else if (i_flag .eq. 2) then   ! load data into image array (not called within mdx)
+              i_back=0
+              do i=1,i_num
+                if (i_start+i .ge. 1 .and. i_start+i .le. 4000000) then
+                  b_buff(i_start+i) = b_data(i)
+                  i_back = i_back+1
+                  if (i_start+i .gt. i_bmax) i_bmax=i_start+i
+                end if
+              end do
+            else if (i_flag .eq. 3) then   ! clears image array buffer (not called inside mdx)
+              i_bmax = 0
+              i_back = 0
+            end if
+            mdxfunc_sample = i_back
+          return
+        end
+
+        character*(*) function version_mdx()
+
+            version_mdx = '197.0 07-Mar-2025'
+          return
+        end
+
         subroutine mdxsub(a_cmd,i_maxbuff,readfunc)
 
           implicit none
@@ -5,11 +244,9 @@
           integer I_WKSPACE
           integer I_MAXCOLS
           integer I_MAXROWS
-          integer I_MAXSAMP
-          parameter(I_WKSPACE =  100000)
-          parameter(I_MAXCOLS =  100000)
-          parameter(I_MAXROWS =  100000)
-          parameter(I_MAXSAMP =  100000)
+          parameter(I_WKSPACE =  200000)  ! CRJM1
+          parameter(I_MAXCOLS =  200000)  ! CRJM1
+          parameter(I_MAXROWS =  200000)  ! CRJM1
 
           integer I_BMAX
           parameter(I_BMAX=200)     ! Maximum number of buffered commands
@@ -57,7 +294,6 @@ c     Some Useful Local Variables
 
           integer i
           integer j
-          integer ix
           integer iy
           integer ib
           integer ie
@@ -84,14 +320,11 @@ c     Some Useful Local Variables
           integer i_sset
           integer i_tset
 
-          integer i_loop
-          integer i_flip
+
           integer i_stat
           integer i_dflag
           integer i_value
           integer i_field
-
-          integer i_default
 
           byte b_buff(4)
           integer i_buff
@@ -104,7 +337,6 @@ c     Some Useful Local Variables
           integer i_flg
           integer i_pos
           integer i_max
-          integer i_roff
           integer i_log
           integer i_dec
 
@@ -112,47 +344,52 @@ c     Some Useful Local Variables
           real*4 r_data2(0:I_MAXCOLS)
           integer*4 i_data(0:I_MAXCOLS)
           integer*4 i_data2(0:I_MAXCOLS)
+          save r_data
+          save r_data2
+          save i_data
+          save i_data2
+
           real*8 r_sqr
           real*8 r_sum
           real*8 r_avg
           real*8 r_std
-          real*4 r_zmstrt
-          real*4 r_expn
-          real*4 r_setmin
-          real*4 r_setmax
 
           real*4 r_dnx(3)
           real*4 r_eux(3)
-          real*4 r_loc(3)
 
-          real*4 r_pi
-          real*4 r_rtod
-
-          real*4  r_a
-          real*4  r_e2
+          real*8 r_pi
+          real*8 r_rtod
 
           integer i_smode
           integer i_samps
-          integer i_rsamps(I_MAXSAMP)
-          integer i_csamps(I_MAXSAMP)
-          integer i_tsamps(I_MAXSAMP)
-          real*4  r_wsamps(I_MAXSAMP)
-          real*4  r_ssamps(I_MAXSAMP)
-          real*4  r_vsamps(I_MAXSAMP,I_CMAX)
-          real*4  r_row(I_MAXSAMP)
-          real*4  r_col(I_MAXSAMP)
+          integer i_rsamps(I_MAXCOLS)
+          integer i_csamps(I_MAXCOLS)
+          integer i_tsamps(I_MAXCOLS)
+          real*4  r_wsamps(I_MAXCOLS)
+          real*4  r_ssamps(I_MAXCOLS)
+          real*4  r_vsamps(I_MAXCOLS,I_CMAX)
+          save i_rsamps
+          save i_csamps
+          save i_tsamps
+          save r_wsamps
+          save r_ssamps
+          save r_vsamps
+
+          real*4  r_row(I_MAXROWS)
+          real*4  r_col(I_MAXCOLS)
           real*4  r_rowlow
           real*4  r_rowhigh
           real*4  r_collow
           real*4  r_colhigh
           real*4  r_path
+          save r_row
+          save r_col
 
           real*4 r_wdth
           real*4 r_spce
           real*4 r_dist
 
           integer ii
-          integer jj
           integer iii
           integer i_cc
           integer i_rr
@@ -195,7 +432,6 @@ c     end structure
           integer i_dspselect
 c     structure / dspinfo / s_dsp
           character*200 a_dspctbl(-I_FMAX:I_CMAX) ! Color table file
-          integer i_dspcnt
           integer i_dspchnl         ! Number of sets to display
           integer i_dspaddr(-I_FMAX:I_CMAX) ! Add  auto Scale flag
           integer i_dspmult(-I_FMAX:I_CMAX) ! Mult auto Scale flag
@@ -221,7 +457,6 @@ c     structure / dspinfo / s_dsp
 c     end structure
 
 c     structure / dspinfo / s_win
-          character*200 a_dsptitle(0:I_DMAX) ! Window title
           integer i_winactv(0:I_DMAX)
           integer i_winrows(0:I_DMAX) ! rows offset
           integer i_wincols(0:I_DMAX) ! sample offset
@@ -234,12 +469,12 @@ c     end structure
           integer i_winx                ! initial window size on screen
           integer i_winy                ! initial window size on screen
 
-          integer i_wxs(6,-10:10)   ! window x size
-          integer i_wys(6,-10:10)   ! window y size
-          integer i_vxs(6,-10:10)   ! viewport x size
-          integer i_vys(6,-10:10)   ! viewport y size
-          integer i_vxo(6,-10:10)   ! viewport x offset
-          integer i_vyo(6,-10:10)   ! viewport y offset
+          integer i_wxs(I_DMAX,-10:10)   ! window x size
+          integer i_wys(I_DMAX,-10:10)   ! window y size
+          integer i_vxs(I_DMAX,-10:10)   ! viewport x size
+          integer i_vys(I_DMAX,-10:10)   ! viewport y size
+          integer i_vxo(I_DMAX,-10:10)   ! viewport x offset
+          integer i_vyo(I_DMAX,-10:10)   ! viewport y offset
 
           integer i_int
           integer i_bpl
@@ -251,7 +486,7 @@ c     end structure
           real*4  r_rdat(0:I_WKSPACE)
           real*4  r_gdat(0:I_WKSPACE)
           real*4  r_bdat(0:I_WKSPACE)
-c          save r_rdat, r_gdat,r_bdat
+          save i_indx, r_rdat, r_gdat,r_bdat
 
           character*255 a_file
           character*120 a_filename
@@ -265,7 +500,6 @@ c          save r_rdat, r_gdat,r_bdat
           character*120 a_nullclr
           character*120 a_lcolor
           integer*4     i_nullclr(3)
-          integer*4     stat,i_stat32(13),i_err32
 
           integer*4 i_msgid
           character*160 a_message
@@ -276,6 +510,7 @@ c          save r_rdat, r_gdat,r_bdat
 
           real*4 r_value
           real*4 r_val(I_WKSPACE)
+          save r_val
 
           integer i_w
           integer i_win
@@ -320,8 +555,6 @@ c          save r_rdat, r_gdat,r_bdat
 
           integer i_bcnt
           integer i_bdat(0:10,I_BMAX) ! Action Buffer data
-          integer i_brow           ! Number of lines in action
-          integer i_blks            ! Number of blocks needed to complete action
           integer i_strt
           integer i_stop
           integer i_incr
@@ -330,8 +563,6 @@ c          save r_rdat, r_gdat,r_bdat
           integer i_close
 
           integer i_redraw(I_DMAX)
-          integer i_cw
-          integer i_ch
           integer i_widget
           integer i_menu
 
@@ -373,7 +604,6 @@ c          save r_rdat, r_gdat,r_bdat
           real r_space
 
           integer i_ewupdate
-          integer i_rstat
           byte b_data(0:3)
 
           character*20  a_tname(5)
@@ -409,11 +639,17 @@ c     FUNCTIONS
           integer i_setvbyt
           external i_setvbyt
 
+          byte cnvt_to_byte
+          external cnvt_to_byte
+
           character*18 version_mdx
           external version_mdx
 
-          integer version_gx
-          external version_gx
+          character*18 version_gpx
+          external version_gpx
+
+          character*50 rdfversion
+          external rdfversion
 
 #ifdef IO64
           integer*8 i_fbytes
@@ -452,12 +688,6 @@ c
           r_pi = 4.d0*atan(1.0d0)
           r_rtod = 180.0d0/r_pi
 
-
-c
-c     Initialize datum stuff
-c
-          r_a =  6378137.0
-          r_e2 = 0.00669438
 
 c
 c     Determine endian ness of machine
@@ -516,8 +746,8 @@ c
 
           r_setvmlt(0) =  1.0d0
           r_setvadr(0) =  0.0d0
-          r_setvmin(0) = -1.0d27
-          r_setvmax(0) =  1.0d27
+          r_setvmin(0) = real(-1.0d27)
+          r_setvmax(0) = real( 1.0d27)
           a_setvnul(0) = ' '
 
           a_filename = ' '
@@ -726,11 +956,12 @@ c
 c              write(6,*) 'i_arg,a_value=',i_arg,' ',a_value(1:60)
               if (a_value .eq. ' ') then
                                 ! error
-              else if (a_value .eq. '-V') then
+              else if (a_value .eq. '-V' .or. a_value .eq. '-v') then
                 write(6,*) '  '
-                write(6,'(1x,a,a18,a)'     ) '   <<  mdx    Version  ',version_mdx(),        '  >>   '
-                write(6,'(1x,a,f5.1,13x,a)') '   <<  graphx Version  ',float(version_gx()),'  >>   '
-                write(6,*) '  '
+                write(6,'(1x,a,a17,a)'     ) '   <<  mdx    Version ',version_mdx(),'  >>   '
+                write(6,'(1x,a,a18,a)'     ) '   <<  graphx Version ',version_gpx(),'  >>   '
+                write(6,*) rdfversion()
+                write(6,*) ' '
 
               else if (a_value .eq. '-s' .or. a_value .eq. '-samples' .or.
      &              a_value .eq. '-cols' .or. a_value .eq. '-columns') then
@@ -884,7 +1115,7 @@ c              write(6,*) 'i_arg,a_value=',i_arg,' ',a_value(1:60)
                 i_arg=i_arg+1
                 a_value = a_inarg(i_arg)
                 read(a_value,*) r_dspwrap(i_tmp)
-                if (r_dspwrap(i_tmp) .ne. 0.0) then
+                if (abs(r_dspwrap(i_tmp)) .gt. 0.0) then
                   r_dspmult(i_tmp) = r_dspwrap(i_tmp)
                   i_dspmult(i_tmp) = 0
                   i_dspaddr(i_tmp) = 0
@@ -937,7 +1168,7 @@ c              write(6,*) 'i_arg,a_value=',i_arg,' ',a_value(1:60)
                 r_dspaddr(i_tmp) = 0.
               else if (a_value .eq. '-WRAP' ) then
                 i_dspmode(i_tmp) = 6
-                r_dspwrap(i_tmp) = r_pi
+                r_dspwrap(i_tmp) = real(r_pi)
                 i_dspaddr(i_tmp) = 0
                 r_dspaddr(i_tmp) = 0.
               else if (a_value .eq. '-z' .or. a_value .eq. '-zoom') then
@@ -978,21 +1209,21 @@ c              write(6,*) 'i_arg,a_value=',i_arg,' ',a_value(1:60)
                 end if
               else if (a_value .eq. '-cmap' .or. a_value .eq. '-ctable') then
                 i_arg=i_arg+1
-                a_dspctbl(i_tmp)=a_inarg(i_arg)
+                a_dspctbl(i_tmp)=a_inarg(i_arg)(1:len(a_dspctbl(i_tmp)))
                 do i=1,i_colormax
-                  if (a_dspctbl(i_tmp) .eq. a_colorname(i)) a_dspctbl(i_tmp)=a_colorfile(i)
+                  if (a_dspctbl(i_tmp) .eq. a_colorname(i)) a_dspctbl(i_tmp)=a_colorfile(i)(1:len(a_dspctbl(i_tmp)))
                 end do
               else if (a_value .eq. '-null') then
                 i_arg=i_arg+1
-                a_setvnul(i_tmp)=a_inarg(i_arg)
+                a_setvnul(i_tmp)=a_inarg(i_arg)(1:len(a_setvnul))
               else if (a_value .eq. '-nc' .or. a_value .eq. '-null_color' .or
      &              . a_value .eq. '-cnull') then
                 i_arg=i_arg+1
-                a_nullclr = a_inarg(i_arg)
+                a_nullclr = a_inarg(i_arg)(1:len(a_nullclr))
               else if (a_value .eq. '-lc' .or. a_value .eq. '-line_color' .or
      &              . a_value .eq. '-cline') then
                 i_arg=i_arg+1
-                a_lcolor = a_inarg(i_arg)
+                a_lcolor = a_inarg(i_arg)(1:len(a_lcolor))
               else if (a_value .eq. '-workdir' .or. a_value .eq. '-work_dir') then
                 i_arg=i_arg+1
                 a_workdir = a_inarg(i_arg)
@@ -1028,7 +1259,7 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
                 call buffer_cmd(i_event,i_bdat,i_bcnt,2,I_BMAX,i_abort,i_debug)
               else if (a_value .eq. '-click' .or. a_value .eq. '-clk') then
                 i_arg=i_arg+1
-                a_clickcmd(1) = a_inarg(i_arg)
+                a_clickcmd(1) = a_inarg(i_arg)(1:len(a_clickcmd(1)))
               else if (a_value .eq. '-ON' .or. a_value .eq. '-on') then
                 i_dspactv(1,i_tmp) = 1
               else if (a_value .eq. '-OFF' .or. a_value .eq. '-off') then
@@ -1065,6 +1296,11 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
                 i_setchdr(-i_dat) = 0
                 i_setctlr(-i_dat) = 0
                 i_setvfmt(-i_dat) = 6
+              else if (a_value .eq. '-c16' .or. a_value .eq. '-complex*16') then
+                a_setname(-i_dat) = 'C16-Mag C16-Pha'
+                i_setchdr(-i_dat) = 0
+                i_setctlr(-i_dat) = 0
+                i_setvfmt(-i_dat) = 15
               else if (a_value .eq. '-c2' .or. a_value .eq. '-complex*2') then
                 a_setname(-i_dat) = 'C2-Mag C2-Pha'
                 i_setchdr(-i_dat) = 0
@@ -1080,6 +1316,11 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
                 i_setchdr(-i_dat) = 0
                 i_setctlr(-i_dat) = 0
                 i_setvfmt(-i_dat) = 6
+              else if (a_value .eq. '-c16iq' .or. a_value .eq. '-complex*16iq') then
+                a_setname(-i_dat) = 'C16-I C16-Q'
+                i_setchdr(-i_dat) = 0
+                i_setctlr(-i_dat) = 0
+                i_setvfmt(-i_dat) = 15
               else if (a_value .eq. '-rmg' ) then
                 a_setname(-i_dat) = 'RMG-Mag RMG-Hgt'
                 i_setrhdr(-i_dat) = 0
@@ -1102,9 +1343,9 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
                 i_setvfmt(i_tmp) = 4
               else if (a_value .eq. '-r8' .or. a_value .eq. '-real*8') then
                 i_setvfmt(i_tmp) = 5
-              else if (a_value .eq. '-c8mag' .or. a_value .eq. 'cmag') then
+              else if (a_value .eq. '-c8mag' .or. a_value .eq. '-cmag') then
                 i_setvfmt(i_tmp) = 6
-              else if (a_value .eq. '-c8pha' .or. a_value .eq. 'cpha') then
+              else if (a_value .eq. '-c8pha' .or. a_value .eq. '-cpha') then
                 i_setvfmt(i_tmp) = 7
               else if (a_value .eq. '-b2' .or. a_value .eq. '-byte*2' .or. a_value .eq. '-byte2') then
                 i_setvfmt(i_tmp) = 8
@@ -1120,9 +1361,13 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
                 i_setvfmt(i_tmp) = 13
               else if (a_value .eq. '-r4mag' .or. a_value .eq. '-real*4_mag') then
                 i_setvfmt(i_tmp) = 14
+              else if (a_value .eq. '-c16mag' ) then
+                i_setvfmt(i_tmp) = 15
+              else if (a_value .eq. '-c16pha' ) then
+                i_setvfmt(i_tmp) = 16
               else if (a_value .eq. '-h' .or. a_value .eq. '-hdr') then
                 i_arg=i_arg+1
-                a_setinfo(i_tmp)=a_inarg(i_arg)
+                a_setinfo(i_tmp)=a_inarg(i_arg)(1:len(a_setinfo(i_tmp)))
                 a_nullstr=' '
                 call get_setinfo(            a_nullstr,
      &              a_setinfo(i_tmp),
@@ -1204,7 +1449,7 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
      &              a_dspctbl(i_tmp)   )
               else if (a_value .eq. '-top' .or. a_value .eq. '-air' .or. a_value .eq. '-maghdr' .or. a_value .eq. '-dtehdr') then
                 i_arg=i_arg+1
-                a_hdrfile=a_inarg(i_arg)
+                a_hdrfile=a_inarg(i_arg)(1:len(a_hdrfile))
 
                 i_mbytes=4
                 a_type='sch'
@@ -1255,13 +1500,13 @@ c                write(6,*) 'i_bcnt2 =',i_bcnt
 c                    r_setvmin(i_tmp) =
 c                    r_setvmax(i_tmp) =
 c                    a_setvnul(i_tmp) =
-                    r_setrmlt(i_tmp) = r_spc(1)
-                    r_setradr(i_tmp) = r_str(1)+r_spc(1)
-                    r_setcmlt(i_tmp) = r_spc(2)
-                    r_setcadr(i_tmp) = r_str(2)+r_spc(2)
-                    r_setpegv(1,i_tmp) = r_peg(1)
-                    r_setpegv(2,i_tmp) = r_peg(2)
-                    r_setpegv(3,i_tmp) = r_peg(3)
+                    r_setrmlt(i_tmp) = real(r_spc(1))
+                    r_setradr(i_tmp) = real(r_str(1)+r_spc(1))
+                    r_setcmlt(i_tmp) = real(r_spc(2))
+                    r_setcadr(i_tmp) = real(r_str(2)+r_spc(2))
+                    r_setpegv(1,i_tmp) = real(r_peg(1))
+                    r_setpegv(2,i_tmp) = real(r_peg(2))
+                    r_setpegv(3,i_tmp) = real(r_peg(3))
 
                     if (a_setfile(i_tmp) .ne. ' ') then
                       if(a_setname(i_tmp) .eq. ' ') write(a_setname(i_tmp),'(a,i1)') 'Set_',abs(i_tmp)
@@ -1269,7 +1514,6 @@ c                    a_setvnul(i_tmp) =
                       call put_setinfo(a_setname(i_tmp),
      &                a_setinfo(i_tmp),
      &                a_setproj(i_tmp),
-     &                i_setunit(i_tmp),
      &                i_setrows(i_tmp),
      &                i_setcols(i_tmp),
      &                i_setshdr(i_tmp),
@@ -1312,7 +1556,7 @@ c                    a_setvnul(i_tmp) =
 
                   i_dspactv(1,i_tmp) = i_dspactv(1,-i_dat)
 
-                  a_setname(i_tmp) = a_value
+                  a_setname(i_tmp) = a_value(1:len(a_setname(i_tmp)))
                   if (a_setinfo(i_tmp) .eq. ' ' ) then
                     a_setinfo(i_tmp)=a_setfile(i_tmp
      &                    )(1:rdflen(a_setfile(i_tmp)))//'.mdx'
@@ -1361,7 +1605,7 @@ c     type *,'looking1 at ',a_setinfo(i_tmp),' ',i_tmp
                 else
 
                   if (i_set .eq. 1) then
-                    a_setname(0) = a_value
+                    a_setname(0) = a_value(1:len(a_setname(0)))
                   else
                     a_setname(0) =
      &                    a_setname(0)(1:max(1,rdflen(a_setname(0))))//'
@@ -1388,7 +1632,7 @@ c     type *,'looking1 at ',a_setinfo(i_tmp),' ',i_tmp
 
                   i_dspactv(1,i_tmp) = i_dspactv(1,-i_dat)
 
-                  a_setname(i_tmp) = a_value
+                  a_setname(i_tmp) = a_value(1:len(a_setname(i_tmp)))
                   if (a_setinfo(i_tmp) .eq. ' ' ) then
                     a_setinfo(i_tmp)=a_setfile(i_tmp
      &                    )(1:rdflen(a_setfile(i_tmp)))//'.mdx'
@@ -1436,7 +1680,7 @@ c     type *,'looking1 at ',a_setinfo(i_tmp),' ',i_tmp
                 else
 
                   if (i_set .eq. 1) then
-                    a_setname(0) = a_value
+                    a_setname(0) = a_value(1:len(a_setname(0)))
                   else
                     a_setname(0) =
      &                    a_setname(0)(1:max(1,rdflen(a_setname(0))))//'
@@ -1458,7 +1702,7 @@ c                write(6,*) 'a_value=',a_value,i_dat,i_chn  !@#$%
                         a_label = a_label(max(index(a_label,'/'),index(a_label,'.'))+1:)
                       end do
                     end if
-                    a_setname(-i_dat) = a_label
+                    a_setname(-i_dat) = a_label(1:len(a_setname(-i_dat)))
                   end if
 c                  write(6,*) 'i_dat=',i_dat
 c                  write(6,*) 'a_setname=',a_setname(-i_dat)   !@#$%
@@ -1478,7 +1722,7 @@ c                  write(6,*) 'a_setname=',a_setname(-i_dat)   !@#$%
      &                          r_dspaddr,r_dspmult,r_dspwrap,r_dspexpn,r_dspcplw,r_dspcphi,
      &                          r_dspval1,r_dspval2,r_dspval3,i_dspmode,i_dspaddr,i_dspmult,i_dspmixv,
      &                          a_dspctbl,i_dspdvdc)
-                    a_setname(i_tmp) = a_sss(i_chn)
+                    a_setname(i_tmp) = a_sss(i_chn)(1:len(a_setname(i_tmp)))
 
                     i_dspactv(1,i_tmp) = i_dspactv(1,-i_dat)
 
@@ -1547,7 +1791,7 @@ c                write(6,*) 'hello=',i_dat,i_tmp,i_chn  !@#$%
 
                 i_dspactv(1,i_tmp) = i_dspactv(1,0)
 
-                a_setfile(i_tmp) = a_value
+                a_setfile(i_tmp) = a_value(1:len(a_setfile(i_tmp)))
 
 c                write(6,*) 'hello2=',i_dat,i_tmp,i_chn  !@#$%
 c                write(6,*) 'hello3=',a_setinfo(i_tmp) !@#$%
@@ -1555,86 +1799,53 @@ c                write(6,*) 'hello3=',a_setinfo(i_tmp) !@#$%
                   a_setinfo(i_tmp)=a_setfile(i_tmp
      &                 )(1:rdflen(a_setfile(i_tmp)))//'.mdx'
 c                  write(6,*) 'openning=',a_setname(i_tmp) !@#$%
-                  call get_airsarinfo(         a_setname(i_tmp),  ! Only executes if no header is specified
+                  call get_airsarinfo(a_setname(i_tmp),  ! Only executes if no header is specified
      &              a_setfile(i_tmp),
      &              a_setproj(i_tmp),
-     &              i_setunit(i_tmp),
      &              i_setrows(i_tmp),
      &              i_setcols(i_tmp),
      &              i_setshdr(i_tmp),
-     &              i_setstlr(i_tmp),
-     &              i_setrhdr(i_tmp),
-     &              i_setrtlr(i_tmp),
-     &              i_setchdr(i_tmp),
-     &              i_setctlr(i_tmp),
-     &              i_setvend(i_tmp),
      &              i_setvfmt(i_tmp),
      &              r_setvmlt(i_tmp),
      &              r_setvadr(i_tmp),
-     &              r_setvmin(i_tmp),
-     &              r_setvmax(i_tmp),
-     &              a_setvnul(i_tmp),
      &              r_setrmlt(i_tmp),
      &              r_setradr(i_tmp),
      &              r_setcmlt(i_tmp),
      &              r_setcadr(i_tmp),
-     &              r_setpegv(1,i_tmp),
-     &              a_dspctbl(i_tmp)   )
+     &              r_setpegv(1,i_tmp) )
 c                    write(6,*) 'openning1=',a_setname(i_tmp) !@#$%
-                  call get_pdsinfo(            a_setname(i_tmp),  ! Only executes if no header is specified
+                  call get_pdsinfo(  ! Only executes if no header is specified
      &              a_setfile(i_tmp),
      &              a_setproj(i_tmp),
-     &              i_setunit(i_tmp),
      &              i_setrows(i_tmp),
      &              i_setcols(i_tmp),
      &              i_setshdr(i_tmp),
-     &              i_setstlr(i_tmp),
      &              i_setrhdr(i_tmp),
-     &              i_setrtlr(i_tmp),
-     &              i_setchdr(i_tmp),
-     &              i_setctlr(i_tmp),
-     &              i_setvend(i_tmp),
      &              i_setvfmt(i_tmp),
-     &              r_setvmlt(i_tmp),
-     &              r_setvadr(i_tmp),
-     &              r_setvmin(i_tmp),
-     &              r_setvmax(i_tmp),
-     &              a_setvnul(i_tmp),
      &              r_setrmlt(i_tmp),
      &              r_setradr(i_tmp),
      &              r_setcmlt(i_tmp),
      &              r_setcadr(i_tmp),
      &              r_setpegv(1,i_tmp),
-     &              a_dspctbl(i_tmp) , i_debug   )
+     &              i_debug   )
 c                    write(6,*) 'openning2=',a_setname(i_tmp) !@#$%
-                  call get_cubinfo(            a_setname(i_tmp),  ! Only executes if no header is specified
+                  call get_cubinfo(a_setname(i_tmp),  ! Only executes if no header is specified
      &              a_setfile(i_tmp),
      &              a_setproj(i_tmp),
-     &              i_setunit(i_tmp),
      &              i_setrows(i_tmp),
      &              i_setcols(i_tmp),
      &              i_setshdr(i_tmp),
-     &              i_setstlr(i_tmp),
-     &              i_setrhdr(i_tmp),
-     &              i_setrtlr(i_tmp),
-     &              i_setchdr(i_tmp),
-     &              i_setctlr(i_tmp),
      &              i_setvend(i_tmp),
      &              i_setvfmt(i_tmp),
-     &              r_setvmlt(i_tmp),
-     &              r_setvadr(i_tmp),
-     &              r_setvmin(i_tmp),
-     &              r_setvmax(i_tmp),
-     &              a_setvnul(i_tmp),
      &              r_setrmlt(i_tmp),
      &              r_setradr(i_tmp),
      &              r_setcmlt(i_tmp),
      &              r_setcadr(i_tmp),
      &              r_setpegv(1,i_tmp),
-     &              a_dspctbl(i_tmp) , i_debug   )
+     &              i_debug   )
                 end if
 c                write(6,*) 'openning3=',a_setinfo(i_tmp) !@#$%
-                call get_setinfo(              a_setname(i_tmp),
+                call get_setinfo(a_setname(i_tmp),
      &              a_setinfo(i_tmp),
      &              a_setproj(i_tmp),
      &              i_setunit(i_tmp),
@@ -1690,7 +1901,7 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
                   a_label = a_label(max(index(a_label,'/'),index(a_label,'.'))+1:)
                 end do
               end if
-              a_setname(-i_dat) = a_label
+              a_setname(-i_dat) = a_label(1:len(a_setname(-i_dat)))
             end if
             if (a_setname(-i_dat) .eq. ' ') then
               write(a_setname(-i_dat),'(a,i2)') 'Set ',i_dat
@@ -1713,7 +1924,7 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
 
               i_dspactv(1,i_tmp) = i_dspactv(1,-i_dat)
 
-              a_setname(i_tmp) = a_sss(i_chn)
+              a_setname(i_tmp) = a_sss(i_chn)(1:len(a_setname(i_tmp)))
 
               if (a_setinfo(i_tmp) .eq. ' ' ) then
                 a_setinfo(i_tmp)=a_setfile(i_tmp
@@ -1763,11 +1974,32 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
           end if
 
           do i_chn = 1,i_set        ! In order to make the -c8 option work correctly
-            if (a_setname(i_chn) .eq. 'C8-Mag') then
+            if (a_setname(i_chn) .eq. 'C2-Mag') then
+              i_setvfmt(i_chn) = 10
+            else if (a_setname(i_chn) .eq. 'C2-Pha') then
+              i_setvfmt(i_chn) = 11
+              r_dspwrap(i_chn) = real(2.0d0*r_pi)
+              i_dspmode(i_chn) = 6
+              a_dspctbl(i_chn) = 'cmy'
+            else if (a_setname(i_chn) .eq. 'C4-Mag') then
+              i_setvfmt(i_chn) = 12
+            else if (a_setname(i_chn) .eq. 'C4-Pha') then
+              i_setvfmt(i_chn) = 13
+              r_dspwrap(i_chn) = real(2.0d0*r_pi)
+              i_dspmode(i_chn) = 6
+              a_dspctbl(i_chn) = 'cmy'
+            else if (a_setname(i_chn) .eq. 'C8-Mag') then
               i_setvfmt(i_chn) = 6
             else if (a_setname(i_chn) .eq. 'C8-Pha') then
               i_setvfmt(i_chn) = 7
-              r_dspwrap(i_chn) = 2.0d0*r_pi
+              r_dspwrap(i_chn) = real(2.0d0*r_pi)
+              i_dspmode(i_chn) = 6
+              a_dspctbl(i_chn) = 'cmy'
+            else if (a_setname(i_chn) .eq. 'C16-Mag') then
+              i_setvfmt(i_chn) = 15
+            else if (a_setname(i_chn) .eq. 'C16-Pha') then
+              i_setvfmt(i_chn) = 16
+              r_dspwrap(i_chn) = real(2.0d0*r_pi)
               i_dspmode(i_chn) = 6
               a_dspctbl(i_chn) = 'cmy'
             else if (a_setname(i_chn) .eq. 'C8-I') then
@@ -1778,20 +2010,14 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
               i_setvfmt(i_chn) = 4
               i_setchdr(i_chn) = 4
               i_setctlr(i_chn) = 0
-            else if (a_setname(i_chn) .eq. 'C2-Mag') then
-              i_setvfmt(i_chn) = 10
-            else if (a_setname(i_chn) .eq. 'C2-Pha') then
-              i_setvfmt(i_chn) = 11
-              r_dspwrap(i_chn) = 2.0d0*r_pi
-              i_dspmode(i_chn) = 6
-              a_dspctbl(i_chn) = 'cmy'
-            else if (a_setname(i_chn) .eq. 'C4-Mag') then
-              i_setvfmt(i_chn) = 12
-            else if (a_setname(i_chn) .eq. 'C4-Pha') then
-              i_setvfmt(i_chn) = 13
-              r_dspwrap(i_chn) = 2.0d0*r_pi
-              i_dspmode(i_chn) = 6
-              a_dspctbl(i_chn) = 'cmy'
+            else if (a_setname(i_chn) .eq. 'C16-I') then
+              i_setvfmt(i_chn) = 5
+              i_setchdr(i_chn) = 0
+              i_setctlr(i_chn) = 8
+            else if (a_setname(i_chn) .eq. 'C16-Q') then
+              i_setvfmt(i_chn) = 5
+              i_setchdr(i_chn) = 8
+              i_setctlr(i_chn) = 0
             else if (a_setname(i_chn) .eq. 'SRTM-dte') then
               i_setvfmt(i_chn) = 2
               r_dspwrap(i_chn) = 200.
@@ -1805,7 +2031,7 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
                 i_str=i_str+index(a_setfile(i_chn)(i_str+1:),'/')
               end do
               read(a_setfile(i_chn)(i_str+1:),'(x,i2.2)') i_lat
-              i_lat=i_lat+1.0
+              i_lat=i_lat+1
               if (a_setfile(i_chn)(i_str+1:i_str+1) .eq. 'S') i_lat=-i_lat
               read(a_setfile(i_chn)(i_str+1:),'(4x,i3.3)') i_lon
               if (a_setfile(i_chn)(i_str+4:i_str+4) .eq. 'W') i_lon=-i_lon
@@ -1814,9 +2040,9 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
               i_setvend(i_chn) = 1
               a_setproj(i_chn) = 'eqa'
               r_setcadr(i_chn) = i_lon
-              r_setcmlt(i_chn) = 1.0d0/3600
+              r_setcmlt(i_chn) = real(1.0d0/3600)
               r_setradr(i_chn) = i_lat
-              r_setrmlt(i_chn) = -1.0d0/3600
+              r_setrmlt(i_chn) = real(-1.0d0/3600)
               r_setvmin(i_chn) = -10000.
             end if
           end do
@@ -1855,7 +2081,7 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
           end do
 
           do i_chn = 1,i_set        ! set b_setvnul
-            b_setvnul(0,i_chn) = rdflen(a_setvnul(i_chn))/2
+            b_setvnul(0,i_chn) = cnvt_to_byte(rdflen(a_setvnul(i_chn))/2)
             if (i_debug .eq. -5 .or. i_debug .ge. 5) write(6,*) 'i_chn,len,a_setvnul(i_chn) ',i_chn,b_setvnul(0
      &        ,i_chn),'#',a_setvnul(i_chn),'#'
             do i=1,16
@@ -1865,7 +2091,7 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
               else
                 b_setvnul(i,i_chn) = 0
               end if
-              if (b_setvnul(i,i_chn) .ge. 128) b_setvnul(i,i_chn) = b_setvnul(i,i_chn)-256
+              if (b_setvnul(i,i_chn) .ge. 128) b_setvnul(i,i_chn) = cnvt_to_byte(b_setvnul(i,i_chn)-256)
               if (i_debug .eq. -10 .or. i_debug .ge. 10) write(6,*) 'b_setvnul = ',i_chn,i,b_setvnul(i,i_chn)
             end do
           end do
@@ -1931,7 +2157,10 @@ c                   write(6,*) 'set name = ',a_setname(i_tmp)
             if (i_debug .eq. -4 .or. i_debug .ge. 4) write(6,*) 'dspctbl = ',a_dspctbl(i_chn)(1:50)
 
           end do
-
+          if (i_set .lt. 1) then
+            write(6,*) ' '
+            stop ' '
+          end if
           if (i_setcols(1) .eq. 0) then
             write(6,*) 'Number of columns not specified'
             stop ' '
@@ -1953,10 +2182,10 @@ c     open image files
                 if (i_setunit(i_chn) .le. 0) stop 'set number less than or equal to zero'
               end if
               if (i_fbytes .gt. 0) then
-                i_setrows(i_chn) = min(i_eight(i_setrows(i_chn)),(i_fbytes
+                i_setrows(i_chn) = int(min(i_eight(i_setrows(i_chn)),(i_fbytes
      &              -i_setshdr(i_chn)-i_setstlr(i_chn))/((i_setvbyt(i_setvfmt(i_chn))
      &              +i_setchdr(i_chn)+i_setctlr(i_chn))*i_setcols(i_chn)+i_setrhdr(i_chn)+i_setrtlr(i_chn)
-     &              ))
+     &              )))
 
 c                i_setunit(i_chn) = 20+i_chn
 c                open(unit=i_setunit(i_chn),file=a_setfile(i_chn),status='old',
@@ -2105,9 +2334,9 @@ c
                 end do
 
                 if (i_cnt .gt. 0) then
-                  r_setvavg(i_chn) = r_sum/max(i_cnt,1)
-                  r_setvstd(i_chn) = sqrt(max(1.d-99,(r_sqr/max(i_cnt,1))
-     &              -r_setvavg(i_chn)**2))
+                  r_setvavg(i_chn) = real(r_sum/max(i_cnt,1))
+                  r_setvstd(i_chn) = real(sqrt(max(1.d-99,(r_sqr/max(i_cnt,1))
+     &              -r_setvavg(i_chn)**2)))
                   if (i_debug .ge. 3) write(6,*) 'avg/std = ',r_setvavg(i_chn),r_setvstd(i_chn),i_cnt
 c                  call median(0.5,min(i_cnt,I_WKSPACE),r_val,r_median)
                   if (i_debug .ge. 4) write(6,*) 'average = ',r_setvavg(i_chn),i_cnt
@@ -2246,12 +2475,12 @@ c
             i_event(0) = 0    ! tells data to go to print file instead of screen
             i_event(1) = 1
             i_event(2) = 1
-            i_event(3) = (i_vxo(1,1)*r_winzoom(0))/r_winzoom(1)
-            i_event(4) = (i_vyo(1,1)*r_winzoom(0))/r_winzoom(1)
-            i_event(5) = ((min(i_vxs(1,1)+i_vxo(1,1),i_wincols(1))-i_vxo(1,1))*
-     &          r_winzoom(0))/r_winzoom(1)
-            i_event(6) = ((min(i_vys(1,1)+i_vyo(1,1),i_winrows(1))-i_vyo(1,1))*
-     &          r_winzoom(0))/r_winzoom(1)
+            i_event(3) = int((i_vxo(1,1)*r_winzoom(0))/r_winzoom(1))
+            i_event(4) = int((i_vyo(1,1)*r_winzoom(0))/r_winzoom(1))
+            i_event(5) = int(((min(i_vxs(1,1)+i_vxo(1,1),i_wincols(1))-i_vxo(1,1))*
+     &          r_winzoom(0))/r_winzoom(1))
+            i_event(6) = int(((min(i_vys(1,1)+i_vyo(1,1),i_winrows(1))-i_vyo(1,1))*
+     &          r_winzoom(0))/r_winzoom(1))
             i_event(7) = 0
             i_event(8) = i_event(4)
             i_event(9) = i_event(6)
@@ -2263,16 +2492,16 @@ c
             if (i_debug .eq. -22 .or. i_debug .ge. 22) write(6,*) 'Printing:',i_event(3),i_event(4),i_event(5),i_event(6)
           else
             if (r_lat .ge. -2.0d0*r_pi .and. r_lon .ge. -2.0d0*r_pi) then
-              r_eux(1)=r_lat
-              r_eux(2)=r_lon
+              r_eux(1)=real(r_lat)
+              r_eux(2)=real(r_lon)
               r_eux(3)=0.0
 c              write(6,*) 'r_eux=',r_eux
               call get_coordinates(a_setproj(1),r_setpegv(1,1),r_dnx,r_eux,2,i_debug,i_err)
 c              i_rcenter=((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) )*r_winzoom(1)
 c              write(6,*) 'r_dnx=',r_dnx
 c              write(6,*) 'real center=',((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) ),((r_dnx(2)-r_setcadr(1))/r_setcmlt(1)-i_wincadr(1) )
-              i_rcenter=((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) )
-              i_ccenter=((r_dnx(2)-r_setcadr(1))/r_setcmlt(1)-i_wincadr(1) )
+              i_rcenter=int(((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) ))
+              i_ccenter=int(((r_dnx(2)-r_setcadr(1))/r_setcmlt(1)-i_wincadr(1) ))
             end if
             if (i_debug .eq. -9 .or. i_debug .ge. 9) write(6,*) 'moving scroll to',i_ccenter,i_rcenter
             i_d=1
@@ -2413,26 +2642,26 @@ c              write(6,*) 'real center=',((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i
                         i_edat(3,i) = max(i_edat(3,i),i_vxo(i_d,i_w)-1)
                         i_edat(5,i) = i_max-i_edat(3,i)
 
-c                       write(6,*) '***** ',i,i_edat(4,i),i_edat(6,i),i_vyo(i_d,i_w),i_vys(i_d,i_w)
+c                        write(6,*) '***** ',i,i_edat(4,i),i_edat(6,i),i_vyo(i_d,i_w),i_vys(i_d,i_w)
                         i_max=min(i_edat(4,i)+i_edat(6,i),i_vyo(i_d,i_w)+i_vys(i_d,i_w)+1)
                         i_edat(4,i) = max(i_edat(4,i),i_vyo(i_d,i_w)-1)
                         i_edat(6,i) = i_max-i_edat(4,i)
                         i_edat(8,i)=i_edat(4,i)
                         i_edat(9,i)=i_edat(6,i)
-c                       write(6,*) '***** ',i,i_edat(4,i),i_edat(6,i),i_vyo(i_d,i_w),i_vys(i_d,i_w)
+c                        write(6,*) '***** ',i,i_edat(4,i),i_edat(6,i),i_vyo(i_d,i_w),i_vys(i_d,i_w)
                       end if
                     end if
                   end do
                 if (i_debug .ge. 7) write(6,*) 'i_ecnt0= ',i_ecnt,
-     &              i_bdat(1,i_ecnt),i_bdat(2,i_ecnt),i_bdat(3,i_ecnt),
-     &              i_bdat(4,i_ecnt),i_bdat(5,i_ecnt),i_bdat(6,i_ecnt)
+     &            i_bdat(1,i_ecnt),i_bdat(2,i_ecnt),i_bdat(3,i_ecnt),
+     &            i_bdat(4,i_ecnt),i_bdat(5,i_ecnt),i_bdat(6,i_ecnt)
                 end if
               else if (i_evn .eq. 2) then ! Configure window event
-c               if (i_win .eq. 1 .and.. i_bdat(3,1) .lt. i_vxo(i_dsp,i_win)) then ! remember if scrolling up or down
-c                 i_scroll = 1
-c               else
-c                 i_scroll = 0
-c               end if
+c                if (i_win .eq. 1 .and.. i_bdat(3,1) .lt. i_vxo(i_dsp,i_win)) then ! remember if scrolling up or down
+c                  i_scroll = 1
+c                else
+c                  i_scroll = 0
+c                end if
                 i_vxo(i_dsp,i_win) = i_bdat(3,1) ! offset of viewport
                 i_vyo(i_dsp,i_win) = i_bdat(4,1) ! offset of viewport
                 i_wxs(i_dsp,i_win) = i_bdat(5,1) ! size of window
@@ -2482,34 +2711,34 @@ c                write(6,*) 'click event: ',i_dsp,i_win,i_button
                   end if
                 else if (i_button .eq. 5 .and. i_win .eq. 1) then
                   if (i_key .eq. 0) then  ! Scroll Bar down
-!                   write(6,*) 'xxx ',i_wys(i_dsp,1),i_vyo(i_dsp,1),i_vys(i_dsp,1)
+!                    write(6,*) 'xxx ',i_wys(i_dsp,1),i_vyo(i_dsp,1),i_vys(i_dsp,1)
                     if (i_debug .eq. -4 .or. i_debug .ge. 4) write(6,*)
      &                    'Scroll down',i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1))))
-!                   call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1)))))
+!                    call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1)))))
                     call move_scroll(i_dsp,1,i_vxo(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1))))
                   else ! Scroll Bar right
-!                   call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
+!                    call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
                     call move_scroll(i_dsp,1,max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1))),i_vyo(i_dsp,1))
                   end if
                 else if (i_button .eq. 6 .and. i_win .eq. 1) then
                   if (i_key .ne. 0) then ! Scroll Bar up
                     if (i_debug .eq. -4 .or. i_debug .ge. 4) write(6,*)
      &                    'Scroll up',i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)-int(0.2*i_vys(i_dsp,1))))
-!                   call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)-int(0.2*i_vys(i_dsp,1)))))
+!                    call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)-int(0.2*i_vys(i_dsp,1)))))
                     call move_scroll(i_dsp,1,i_vxo(i_dsp,1),max(0,i_vyo(i_dsp,1)-int(0.2*i_vys(i_dsp,1))))
                   else ! Scroll Bar left
-!                   call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)-int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
+!                    call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)-int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
                     call move_scroll(i_dsp,1,max(0,i_vxo(i_dsp,1)-int(0.2*i_vxs(i_dsp,1))),i_vyo(i_dsp,1))
                   end if
                 else if (i_button .eq. 7 .and. i_win .eq. 1) then
                   if (i_key .ne. 0) then  ! Scroll Bar down
-!                   write(6,*) 'xxx ',i_wys(i_dsp,1),i_vyo(i_dsp,1),i_vys(i_dsp,1)
+!                    write(6,*) 'xxx ',i_wys(i_dsp,1),i_vyo(i_dsp,1),i_vys(i_dsp,1)
                     if (i_debug .eq. -4 .or. i_debug .ge. 4) write(6,*)
      &                    'Scroll down',i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1))))
-!                   call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1)))))
+!                    call move_scroll(i_dsp,1,i_vxo(i_dsp,1),min(i_wys(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1)))))
                     call move_scroll(i_dsp,1,i_vxo(i_dsp,1),max(0,i_vyo(i_dsp,1)+int(0.2*i_vys(i_dsp,1))))
                   else ! Scroll Bar right
-!                   call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
+!                    call move_scroll(i_dsp,1,min(i_wxs(i_dsp,1),max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1)))),i_vyo(i_dsp,1))
                     call move_scroll(i_dsp,1,max(0,i_vxo(i_dsp,1)+int(0.2*i_vxs(i_dsp,1))),i_vyo(i_dsp,1))
                   end if
                 else if (i_button .ge. 8) then  !
@@ -2655,7 +2884,7 @@ c                      write(a_data(8),'(f15.4)') r_dspcphi(i_chn)
                         end do
                         if (a_data(9)(1:1) .eq. ' ') a_data(9)=a_data(9)(2:)
                       else
-                        a_data(9)=a_dspctbl(i_chn)
+                        a_data(9)=a_dspctbl(i_chn)(1:len(a_data(9)))
                       end if
                       call entry_window(i_chn,a_labels,a_data)
 c                      call entry_window(i_chn,a_labels,a_data)  ! Hack to get around some memory bug
@@ -3132,26 +3361,26 @@ c                  write(6,*) 'i_bcnt2 =',i_bcnt
      &                 rdflen(a_message) .gt. 0) a_message=a_message(1:rdflen(a_message))//'.'
                   end if
                   if (i_debug .ge. 6) write(6,*) 'channel=',i_chn,'   field=',i_field,
-     &                                           '   ival=',i_value,'  msg=',a_message(1:30)
+     &                                             '   ival=',i_value,'  msg=',a_message(1:30)
                   if (i_field .eq. 1) then
                     i_ewupdate=1
-                    if (i_value .eq. 1) then                       ! Range Mode
+                    if (i_value .eq. 1) then                        ! Range Mode
                       i_dspmult(i_chn) = 0
                       i_dspaddr(i_chn) = 0
                       i_dspmode(i_chn)=i_value
-                    else if (i_value .eq. 2) then                  ! SDEV Mode
+                    else if (i_value .eq. 2) then                   ! SDEV Mode
                       if (r_dspval1(i_chn) .eq. 0) r_dspval1(i_chn)=2.0
                       if (i_dspmode(i_chn) .eq. 2) then
                         i_dspaddr(i_chn) = 1
                       end if
                       i_dspmult(i_chn)=1
                       i_dspmode(i_chn)=i_value
-                    else if (i_value .eq. 3) then                  ! Percent Mode
+                    else if (i_value .eq. 3) then                   ! Percent Mode
                       if (r_dspval2(i_chn) .eq. 0) r_dspval2(i_chn)=90.0
                       i_dspaddr(i_chn)=1
                       i_dspmult(i_chn)=1
                       i_dspmode(i_chn)=i_value
-                    else if (i_value .eq. 5) then                  ! CW Mode
+                    else if (i_value .eq. 5) then                   ! CW Mode
                       if (r_dspval3(i_chn) .eq. 0) r_dspval3(i_chn)=1.0
                       r_dspaddr(i_chn)=0
                       i_dspaddr(i_chn)=0
@@ -3213,7 +3442,7 @@ c                    read(a_message,*,iostat=i_err) r_value
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_dspaddr(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_dspaddr(i_chn)) i_ewupdate = 1
                       r_dspaddr(i_chn) = r_value
                       i_dspaddr(i_chn)=0
                     end if
@@ -3222,7 +3451,7 @@ c                     if (r_value .ne. r_dspaddr(i_chn)) i_ewupdate = 1
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_dspexpn(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_dspexpn(i_chn)) i_ewupdate = 1
                       r_dspexpn(i_chn) = r_value
                     end if
                   else if (i_field .eq. 5) then
@@ -3230,7 +3459,7 @@ c                     if (r_value .ne. r_dspexpn(i_chn)) i_ewupdate = 1
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_setvmin(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_setvmin(i_chn)) i_ewupdate = 1
                       r_setvmin(i_chn) = r_value
                     end if
                   else if (i_field .eq. 6) then
@@ -3238,7 +3467,7 @@ c                     if (r_value .ne. r_setvmin(i_chn)) i_ewupdate = 1
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_setvmax(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_setvmax(i_chn)) i_ewupdate = 1
                       r_setvmax(i_chn) =  r_value
                     end if
                   else if (i_field .eq. 7) then
@@ -3246,7 +3475,7 @@ c                     if (r_value .ne. r_setvmax(i_chn)) i_ewupdate = 1
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_dspcplw(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_dspcplw(i_chn)) i_ewupdate = 1
                       r_dspcplw(i_chn) = r_value
                     end if
                   else if (i_field .eq. 8) then
@@ -3254,7 +3483,7 @@ c                     if (r_value .ne. r_dspcplw(i_chn)) i_ewupdate = 1
                     if (i_err .ne. 0) then
                       i_ewupdate = 1
                     else
-c                     if (r_value .ne. r_dspcphi(i_chn)) i_ewupdate = 1
+c                      if (r_value .ne. r_dspcphi(i_chn)) i_ewupdate = 1
                       r_dspcphi(i_chn) = r_value
                     end if
                   else if (i_field .eq. 9) then
@@ -3263,7 +3492,7 @@ c                    if (a_message .eq. ' ') then
                       i_colorset = i_value
                       if (i_colorset .gt. 0 .and. i_colorset .le. i_colormax) then
                         if (a_colorfile(i_colorset) .ne. a_dspctbl(i_chn)) i_ewupdate = 1
-                        a_dspctbl(i_chn)=a_colorfile(i_colorset)
+                        a_dspctbl(i_chn)=a_colorfile(i_colorset)(1:len(a_dspctbl(i_chn)))
                         if (i_colorset .eq. 1) a_dspctbl(i_chn)=' '
                         i_colorset = 0
                       end if
@@ -3290,7 +3519,7 @@ c                 if (i_dspmult(i_chn) .eq. 1 .or. i_dspaddr(i_chn) .eq. 1) then
                     if (i_debug .ge. 6) write(6,*) 'Going to recompute mean/Std   i_bcnt2 =',i_bcnt
                     call buffer_cmd(i_event,i_bdat,i_bcnt,2,I_BMAX,i_abort,i_debug)
                   end if
-                  if (1 .eq. i_ewupdate) then        ! Add command to buffer to re-draw entry window
+                  if (1 .eq. i_ewupdate) then             ! Add command to buffer to re-draw entry window
                     i_event(0) = 0
                     i_event(1) = i_chn+1
                     i_event(2) = 4
@@ -3316,23 +3545,23 @@ c                 if (i_dspmult(i_chn) .eq. 1 .or. i_dspaddr(i_chn) .eq. 1) then
                       call buffer_cmd(i_event,i_bdat,i_bcnt,2,I_BMAX,i_abort,i_debug)
                     end if
                   end do
-c              write(a_data(1),'(i10)') i_dspmode(i_chn)
+c               write(a_data(1),'(i10)') i_dspmode(i_chn)
 c                 if (i_dspmode(i_chn) .eq. 1) then
-c                   a_labels(2)='Range:'
-c                   write(a_data(2),'(f15.4)') r_dspmult(i_chn)
-c              else if (i_dspmode(i_chn) .eq. 2) then
-c                   a_labels(2)='SDEV Factor:'
+c                    a_labels(2)='Range:'
+c                    write(a_data(2),'(f15.4)') r_dspmult(i_chn)
+c               else if (i_dspmode(i_chn) .eq. 2) then
+c                    a_labels(2)='SDEV Factor:'
 c                    write(a_data(2),'(f15.2)') r_dspval1(i_chn)
 c                 else
-c                   a_labels(2)='Wrap:'
-c                   write(a_data(2),'(f15.4)') r_dspwrap(i_chn)
-c              end if
-c              write(a_data(3),'(f15.4)') r_dspaddr(i_chn)
-c              write(a_data(4),'(f15.4)') r_setvmin(i_chn)
-c              write(a_data(5),'(f15.4)') r_setvmax(i_chn)
-c              write(a_data(6),'(f15.4)') r_dspcplw(i_chn)
-c              write(a_data(7),'(f15.4)') r_dspcphi(i_chn)
-c              a_data(8)=a_dspctbl(i_chn)
+c                    a_labels(2)='Wrap:'
+c                    write(a_data(2),'(f15.4)') r_dspwrap(i_chn)
+c               end if
+c               write(a_data(3),'(f15.4)') r_dspaddr(i_chn)
+c                 write(a_data(4),'(f15.4)') r_setvmin(i_chn)
+c               write(a_data(5),'(f15.4)') r_setvmax(i_chn)
+c               write(a_data(6),'(f15.4)') r_dspcplw(i_chn)
+c               write(a_data(7),'(f15.4)') r_dspcphi(i_chn)
+c               a_data(8)=a_dspctbl(i_chn)
 c                 call entry_window(i_chn,a_labels,a_data)
                  else
                    if (i_field .eq. 1) then
@@ -3341,7 +3570,7 @@ c                 call entry_window(i_chn,a_labels,a_data)
                        i_rcenter=i_row
                        i_ccenter=i_col
                        i_cdsp=i_dspselect
-c                      write(6,*) 'i_key=',i_key
+c                       write(6,*) 'i_key=',i_key
                        if (i_debug .ge. 9) write(6,*) 'moving scroll to',i_ccenter,i_rcenter
                        if (i_winactv(i_dspselect) .ne. 0) then
                          if (i_winradr(i_dspselect) .ne.
@@ -3380,14 +3609,14 @@ c                      write(6,*) 'i_key=',i_key
                    else if (i_field .eq. 2) then
                      read(a_message,*,iostat=i_err) r_lat,r_lon
                      if (i_err .eq. 0) then
-                       r_eux(1)=r_lat/r_rtod
-                       r_eux(2)=r_lon/r_rtod
+                       r_eux(1)=real(r_lat/r_rtod)
+                       r_eux(2)=real(r_lon/r_rtod)
                        r_eux(3)=0.0
                        call get_coordinates(a_setproj(1),r_setpegv(1,1),r_dnx,r_eux,2,i_debug,i_err)
-                       i_rcenter=((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) )
-                       i_ccenter=((r_dnx(2)-r_setcadr(1))/r_setcmlt(1)-i_wincadr(1) )
+                       i_rcenter=int(((r_dnx(1)-r_setradr(1))/r_setrmlt(1)-i_winradr(1) ))
+                       i_ccenter=int(((r_dnx(2)-r_setcadr(1))/r_setcmlt(1)-i_wincadr(1) ))
                        i_cdsp=i_dspselect
-c                      write(6,*) 'i_key=',i_key
+c                       write(6,*) 'i_key=',i_key
                        if (i_debug .eq. -9 .or. i_debug .ge. 9) write(6,*) 'moving scroll to',i_ccenter,i_rcenter
                        if (i_winactv(i_dspselect) .ne. 0) then
                          if (i_winradr(i_dspselect) .ne.
@@ -3562,6 +3791,7 @@ c                       write(6,*) 'i_row,col=',i_row,i_col
                         do i = 2,rdflen(a_setfile(i_chn))+1
                           if (index('+-*/x',a_setfile(i_chn)(i:i)) .gt. 0 .or. a_setfile(i_chn)(i:i) .eq. ' ') then
                             if (a_value .ne. ' ') then
+c                              write(6,*) 'a_value=',a_value
                               read(a_value,*) r_value
                               if (i_opr .eq. 1) then
                                 r_data(1)=r_data(1)+r_value
@@ -3641,8 +3871,8 @@ c     &                       wrap(r_data(i_c),r_dspwrap(i_chn))
                 if (i_cnt .gt. 0) then
                   r_avg = r_sum/max(i_cnt,1)
                   r_std = sqrt(max(1.d-99,(r_sqr/max(i_cnt,1))-(r_avg)**2))
-                  r_setvavg(i_chn)=r_avg
-                  r_setvstd(i_chn)=r_std
+                  r_setvavg(i_chn)=real(r_avg)
+                  r_setvstd(i_chn)=real(r_std)
                   if (i_debug .ge. 4) write(6,*) 'average = ',r_setvavg(i_chn),i_cnt
                   if (i_dspmode(i_chn) .eq. 3) then
                     call median(   (1.-(r_dspval2(i_chn)/100))/2.,min(i_cnt,I_WKSPACE),r_val,r_median)
@@ -3652,10 +3882,10 @@ c     &                       wrap(r_data(i_c),r_dspwrap(i_chn))
                     if (i_debug .ge. 4) write(6,*) 'median = ',r_dspaddr(i_chn),r_median,i_cnt
                   else if (i_dspmode(i_chn) .eq. 5) then
                     r_dspaddr(i_chn)=0.
-                    r_dspmult(i_chn)=r_avg/(0.7*r_dspval3(i_chn))
+                    r_dspmult(i_chn)=real(r_avg/(0.7*r_dspval3(i_chn)))
                   else
-                    if (i_dspaddr(i_chn) .eq. 1) r_dspaddr(i_chn) = r_avg-(r_dspval1(i_chn)*r_std)
-                    if (i_dspmult(i_chn) .eq. 1) r_dspmult(i_chn) = 2.*r_dspval1(i_chn)*r_std
+                    if (i_dspaddr(i_chn) .eq. 1) r_dspaddr(i_chn) = real(r_avg-(r_dspval1(i_chn)*r_std))
+                    if (i_dspmult(i_chn) .eq. 1) r_dspmult(i_chn) = real(2.*r_dspval1(i_chn)*r_std)
                   end if
                 else
                   r_dspaddr(i_chn) = 0.0d0
@@ -3716,7 +3946,7 @@ c                  write(a_data(8),'(f15.4)') r_dspcphi(i_chn)
                     end do
                     if (a_data(9)(1:1) .eq. ' ') a_data(9)=a_data(9)(2:)
                   else
-                    a_data(9)=a_dspctbl(i_chn)
+                    a_data(9)=a_dspctbl(i_chn)(1:len(a_data(9)))
                   end if
                   call entry_window(i_chn,a_labels,a_data)
                 end if
@@ -3726,7 +3956,7 @@ c                  write(a_data(8),'(f15.4)') r_dspcphi(i_chn)
                 if (i_msgid .ge. 0) then
                   call get_message(i_msgid,a_message)
                 else
-                  a_message=a_ptsfile
+                  a_message=a_ptsfile(1:len(a_message))
                   a_ptsfile=' '
                 end if
                 if (i_debug .eq. -14 .or. i_debug .ge. 14) write(6,*) 'File message = ',i_msgid,i_value,' ',a_message
@@ -3874,8 +4104,8 @@ c                    write(6,*) 'dspselect = ',i_dspselect,'  setting to 1'
                                         ! do nothing
                   else if (i_button .ne. 2) then ! Left or right click
 c                    write(6,*) 'left or right click'
-                    i_rcenter=i_row/r_winzoom(i_dsp)+i_winradr(i_dsp)
-                    i_ccenter=i_col/r_winzoom(i_dsp)+i_wincadr(i_dsp)
+                    i_rcenter=int(i_row/r_winzoom(i_dsp)+i_winradr(i_dsp))
+                    i_ccenter=int(i_col/r_winzoom(i_dsp)+i_wincadr(i_dsp))
                     if (a_clickcmd(1) .ne. ' ' .and. i_typ .eq. 1) then
                       write(a_command,'(a,4i8,a)') a_clickcmd(1)(1:max(1,rdflen(a_clickcmd(1)))),i_button,i_ccenter,i_rcenter,
      &                    i_typ,' &'
@@ -3921,7 +4151,7 @@ c                    write(6,*) 'left or right click'
                         ! do nothing
                       else if (i_smode .eq. 1) then   ! Point
                         if (i_button .eq. 1 .or. i_typ .eq. 3) then
-                          i_samps = min(i_samps+1,I_MAXSAMP)
+                          i_samps = min(i_samps+1,I_MAXCOLS)
                           i_rsamps(i_samps) = i_rcenter
                           i_csamps(i_samps) = i_ccenter
                           i_tsamps(i_samps) = 1
@@ -3930,7 +4160,7 @@ c                    write(6,*) 'left or right click'
                         end if
                       else if (i_smode .eq. 2) then   ! Line
                         if (i_button .eq. 1 .or. i_typ .ne. 2) then
-                          i_samps = min(i_samps+1,I_MAXSAMP)
+                          i_samps = min(i_samps+1,I_MAXCOLS)
                           i_rsamps(i_samps) = i_rcenter
                           i_csamps(i_samps) = i_ccenter
                           r_wsamps(i_samps) = r_wdth
@@ -3948,7 +4178,7 @@ c                        write(6,*) 'i_button = ',i_button
                         if (i_region .eq. 0) then
                           if ((i_button .eq. 1 .and. i_typ .eq. 3) .or.
      &                        (i_button .eq. 3 .and. i_typ .eq. 1)  ) then
-                            i_samps=min(i_samps+1,I_MAXSAMP)
+                            i_samps=min(i_samps+1,I_MAXCOLS)
                             i_rsamps(i_samps)=i_rcenter
                             i_csamps(i_samps)=i_ccenter
                             i_tsamps(i_samps)=+3
@@ -3959,7 +4189,7 @@ c                        write(6,*) 'i_button = ',i_button
                           end if
                         else if (i_typ .eq. 3) then
                           if (i_button .eq. 1) then
-                            i_samps=min(i_samps+1,I_MAXSAMP)
+                            i_samps=min(i_samps+1,I_MAXCOLS)
                             i_rsamps(i_samps)=i_rcenter
                             i_csamps(i_samps)=i_ccenter
                             i_tsamps(i_samps)=-3
@@ -3969,7 +4199,7 @@ c                        write(6,*) 'i_button = ',i_button
                             if (i_debug .eq. -12 .or. i_debug .ge. 12) write(6,*) '   add region:   ',i_region
                           else if (i_button .eq. 3) then
                             if (i_region .eq. 1) then
-                              i_samps=min(i_samps+1,I_MAXSAMP)
+                              i_samps=min(i_samps+1,I_MAXCOLS)
                               i_rsamps(i_samps)=i_rsamps(i_samps-i_region)
                               i_csamps(i_samps)=i_ccenter
                               i_tsamps(i_samps)=-3
@@ -3978,7 +4208,7 @@ c                        write(6,*) 'i_button = ',i_button
                               i_region=i_region+1
                               if (i_debug .eq. -12 .or. i_debug .ge. 12) write(6,*) '   rect 1: ',i_region
 
-                              i_samps=min(i_samps+1,I_MAXSAMP)
+                              i_samps=min(i_samps+1,I_MAXCOLS)
                               i_rsamps(i_samps)=i_rcenter
                               i_csamps(i_samps)=i_ccenter
                               i_tsamps(i_samps)=-3
@@ -3987,7 +4217,7 @@ c                        write(6,*) 'i_button = ',i_button
                               i_region=i_region+1
                               if (i_debug .eq. -12 .or. i_debug .ge. 12) write(6,*) '   rect 2: ',i_region
 
-                              i_samps=min(i_samps+1,I_MAXSAMP)
+                              i_samps=min(i_samps+1,I_MAXCOLS)
                               i_rsamps(i_samps)=i_rcenter
                               i_csamps(i_samps)=i_csamps(i_samps-i_region)
                               i_tsamps(i_samps)=-3
@@ -3996,7 +4226,7 @@ c                        write(6,*) 'i_button = ',i_button
                               i_region=i_region+1
                               if (i_debug .eq. -12 .or. i_debug .ge. 12) write(6,*) '   rect 3: ',i_region
 
-                              i_samps=min(i_samps+1,I_MAXSAMP)
+                              i_samps=min(i_samps+1,I_MAXCOLS)
                               i_rsamps(i_samps)=i_rsamps(i_samps-i_region)
                               i_csamps(i_samps)=i_csamps(i_samps-i_region)
                               i_tsamps(i_samps)=-3
@@ -4005,7 +4235,7 @@ c                        write(6,*) 'i_button = ',i_button
                               i_region=i_region+1
                               if (i_debug .eq. -12 .or. i_debug .ge. 12) write(6,*) '   rect 4: ',i_region
                             else
-                              i_samps=min(i_samps+1,I_MAXSAMP)
+                              i_samps=min(i_samps+1,I_MAXCOLS)
                               i_rsamps(i_samps)=i_rsamps(i_samps-i_region)
                               i_csamps(i_samps)=i_csamps(i_samps-i_region)
                               i_tsamps(i_samps)=-3
@@ -4159,7 +4389,7 @@ c                      end if
 
                       if (a_label1 .eq. ' ') then
                         write(a_label,fmt=a_colfrmt,iostat=i_err) int(i_col/r_winzoom(i_dsp))+i_wincadr(i_dsp)
-                        a_label1='COL: '//a_label
+                        a_label1='COL: '//a_label(1:len(a_label1)-5)
 
                         write(a_label,fmt=a_rowfrmt,iostat=i_err) int(i_row/r_winzoom(i_dsp))+i_winradr(i_dsp)
                         a_label1=a_label1(1:rdflen(a_label1))//'   ROW: '//a_label
@@ -4179,7 +4409,7 @@ c                      end if
                             if (i_debug .ge. 6) write(6,*) 'i_key = ',i_key
                             if (i_debug .ge. 6) write(6,*) a_setproj(i_chn),r_eux(1)*180.0/r_pi,r_eux(2)*180.0/r_pi
                             write(a_label,'(f10.5)') r_eux(1)*180.0/r_pi
-                            a_label1='LAT: '//a_label
+                            a_label1='LAT: '//a_label(1:len(a_label1)-5)
 
                             write(a_label,'(f11.5)',iostat=i_err) r_eux(2)*180.0/r_pi
                             a_label1=a_label1(1:rdflen(a_label1))//'   LON: '//a_label
@@ -4195,7 +4425,7 @@ c                      end if
                           if (i_debug .ge. 6) write(6,*) 'i_key = ',i_key
                           if (i_debug .ge. 6) write(6,*) a_setproj(i_chn),r_eux(1),r_eux(2)
                           write(a_label,'(f10.4)') r_eux(1)
-                          a_label1='CPS: '//a_label
+                          a_label1='CPS: '//a_label(1:len(a_label1)-5)
 
                           write(a_label,'(f11.4)',iostat=i_err) r_eux(2)
                           a_label1=a_label1(1:rdflen(a_label1))//'   RPS: '//a_label
@@ -4234,12 +4464,12 @@ c                      end if
                     if (i_button .eq. 3 .and. i_typ .eq. 3) write(6,*) a_filename(1:max(rdflen(a_filename),1))//'  '//
      &                 a_label1(1:max(1,rdflen(a_label1)))//' '//a_label2(1:max(1,rdflen(a_label2)))
                   else if (i_button .eq. 2)  then ! middle click
-                    i_rcenter=i_row/r_winzoom(i_dsp)+i_winradr(i_dsp)
-                    i_ccenter=i_col/r_winzoom(i_dsp)+i_wincadr(i_dsp)
+                    i_rcenter=int(i_row/r_winzoom(i_dsp)+i_winradr(i_dsp))
+                    i_ccenter=int(i_col/r_winzoom(i_dsp)+i_wincadr(i_dsp))
                     i_cdsp = i_dsp
                     i_cset = 1
                     if (i_debug .ge. 8) write(6,*) '--i_cdsp,i_cset = ',i_cdsp,i_cset
-c                   if (i_debug .ge. 9) write(6,*) 'i_key=',i_key
+c                    if (i_debug .ge. 9) write(6,*) 'i_key=',i_key
                     if (i_debug .ge. 9) write(6,*) 'moving scroll to',i_ccenter,i_rcenter
                     do i_d=1,I_DMAX
                       if (i_winactv(i_d) .ne. 0) then
@@ -4350,9 +4580,9 @@ c     &                       ,i_vxs(i_d,1),i_vys(i_d,1),i_cw,i_ch
 c                          write(6,*) 'calling i_getfsize  ',i_fbytes,i_setunit(i_chn)
                         end if
                         if (i_fbytes .gt. 0) then
-                          i_setrows(i_chn) = (i_fbytes
+                          i_setrows(i_chn) = int((i_fbytes
      &                      -i_setshdr(i_chn)-i_setstlr(i_chn))/((i_setvbyt(i_setvfmt(i_chn))
-     &                      +i_setchdr(i_chn)+i_setctlr(i_chn))*i_setcols(i_chn)+i_setrhdr(i_chn)+i_setrtlr(i_chn))
+     &                      +i_setchdr(i_chn)+i_setctlr(i_chn))*i_setcols(i_chn)+i_setrhdr(i_chn)+i_setrtlr(i_chn)))
                         end if
                       end if
                     end do
@@ -4392,15 +4622,15 @@ c                    write(6,*) 'New number of rows = ',i_winrows(i_dsp)
                     i_wincols(i_dsp) = min(nint(i_setcols(1)*r_winzoom(i_dsp)),32000)
                     call resize_win(i_dsp,1,i_wincols(i_dsp),i_winrows(i_dsp))
                     if (i_winradr(i_dsp) .ne.
-     &                   max(min(i_rcenter-int((32000/2)/r_winzoom(i_dsp)),i_setrows(1)-int(32000/r_winzoom(i_dsp))),0) ) then
+     &                  max(min(i_rcenter-int((32000/2)/r_winzoom(i_dsp)),i_setrows(1)-int(32000/r_winzoom(i_dsp))),0) ) then
                       i_winradr(i_dsp) =
-     &                   max(min(i_rcenter-int((32000/2)/r_winzoom(i_dsp)),i_setrows(1)-int(32000/r_winzoom(i_dsp))),0)
+     &                  max(min(i_rcenter-int((32000/2)/r_winzoom(i_dsp)),i_setrows(1)-int(32000/r_winzoom(i_dsp))),0)
                       i_redraw(i_dsp)=1
                     end if
                     if (i_wincadr(i_dsp) .ne.
-     &                   max(min(i_ccenter-int((32000/2)/r_winzoom(i_dsp)),i_setcols(1)-int(32000/r_winzoom(i_dsp))),0) ) then
+     &                  max(min(i_ccenter-int((32000/2)/r_winzoom(i_dsp)),i_setcols(1)-int(32000/r_winzoom(i_dsp))),0) ) then
                       i_wincadr(i_dsp) =
-     &                   max(min(i_ccenter-int((32000/2)/r_winzoom(i_dsp)),i_setcols(1)-int(32000/r_winzoom(i_dsp))),0)
+     &                  max(min(i_ccenter-int((32000/2)/r_winzoom(i_dsp)),i_setcols(1)-int(32000/r_winzoom(i_dsp))),0)
                       i_redraw(i_dsp)=1
                     end if
                     if (i_redraw(i_dsp) .eq. 1) then
@@ -4510,18 +4740,18 @@ c                    write(6,*) 'file:',a_value(1:70)
 c                    i_event(3) = (i_vxo(i_dsp,1)*r_winzoom(0))/r_winzoom(i_dsp)
 c                    i_event(4) = (i_vyo(i_dsp,1)*r_winzoom(0))/r_winzoom(i_dsp)
 
-                    i_event(3) = (max(i_vxo(i_dsp,1)-1,0)/r_winzoom(i_dsp)+i_wincadr(i_dsp))*r_winzoom(0)
-                    i_event(4) = (max(i_vyo(i_dsp,1)-1,0)/r_winzoom(i_dsp)+i_winradr(i_dsp))*r_winzoom(0)
+                    i_event(3) = int((max(i_vxo(i_dsp,1)-1,0)/r_winzoom(i_dsp)+i_wincadr(i_dsp))*r_winzoom(0))
+                    i_event(4) = int((max(i_vyo(i_dsp,1)-1,0)/r_winzoom(i_dsp)+i_winradr(i_dsp))*r_winzoom(0))
 
-c                    i_event(5) = ((min(i_vxs(i_dsp,1)+i_vxo(i_dsp,1),i_wincols(i_dsp))-i_vxo(i_dsp,1))*
-c     &                  r_winzoom(0))/r_winzoom(i_dsp)
-c                    i_event(6) = ((min(i_vys(i_dsp,1)+i_vyo(i_dsp,1),i_winrows(i_dsp))-i_vyo(i_dsp,1))*
-c     &                  r_winzoom(0))/r_winzoom(i_dsp)
+c                    i_event(5) = int(((min(i_vxs(i_dsp,1)+i_vxo(i_dsp,1),i_wincols(i_dsp))-i_vxo(i_dsp,1))*
+c     &                  r_winzoom(0))/r_winzoom(i_dsp))
+c                    i_event(6) = int(((min(i_vys(i_dsp,1)+i_vyo(i_dsp,1),i_winrows(i_dsp))-i_vyo(i_dsp,1))*
+c     &                  r_winzoom(0))/r_winzoom(i_dsp))
 
-                    i_event(5) = max((min(i_vxs(i_dsp,1)-i_pcpad,i_wincols(i_dsp)-i_vxo(i_dsp,1))/
-     &                  r_winzoom(i_dsp))*r_winzoom(0),20.)
-                    i_event(6) =     (min(i_vys(i_dsp,1)-i_prpad,i_winrows(i_dsp)-i_vyo(i_dsp,1))/
-     &                  r_winzoom(i_dsp))*r_winzoom(0)
+                    i_event(5) = int(max((min(i_vxs(i_dsp,1)-i_pcpad,i_wincols(i_dsp)-i_vxo(i_dsp,1))/
+     &                  r_winzoom(i_dsp))*r_winzoom(0),20.))
+                    i_event(6) = int((min(i_vys(i_dsp,1)-i_prpad,i_winrows(i_dsp)-i_vyo(i_dsp,1))/
+     &                  r_winzoom(i_dsp))*r_winzoom(0))
 
                     i_event(7) = 0
                     i_event(8) = i_event(4)
@@ -4581,7 +4811,7 @@ c                        i_samps=-abs(i_samps)
                           if (i .eq. 1) then
                             r_path = 0.0
                           else
-                            r_path = r_path + sqrt(float(i_csamps(i)-i_csamps(i-1))**2.0+float(i_rsamps(i)-i_rsamps(i-1))**2.0)
+                            r_path = r_path + sqrt(float(i_csamps(i)-i_csamps(max(1,i-1)))**2.0+float(i_rsamps(i)-i_rsamps(max(1,i-1)))**2.0)
                           end if
 
                           a_label=' '
@@ -4736,7 +4966,7 @@ c                        write(19,*) a_setfile(i_act)(1:rdflen(a_setfile(i_act))
                           if (i .eq. 1 .or. i_tsamps(i) .gt. 0) then
                             r_path = 0.0
                           else
-                            r_path = r_path + sqrt(float(i_csamps(i)-i_csamps(i-1))**2.0+float(i_rsamps(i)-i_rsamps(i-1))**2.0)
+                            r_path = r_path + sqrt(float(i_csamps(i)-i_csamps(max(1,i-1)))**2.0+float(i_rsamps(i)-i_rsamps(max(1,i-1)))**2.0)
                           end if
                           write(19,'(3i8,2e15.5)') i_csamps(i),i_rsamps(i),i_tsamps(i),r_path,r_vsamps(i,i_act)
                         end do
@@ -4846,7 +5076,7 @@ c                    write(6,*) 'rdflen(a_value)  =',rdflen(a_value)
                   i_stop=0
                   i_incr=-1
                   i_coff=mod(i_ecol,nint(r_winzoom(i_edsp)))
-c                 write(6,*) 'strt,stop,i_coff=',i_strt,i_stop,i_coff,i_incr
+c                  write(6,*) 'strt,stop,i_coff=',i_strt,i_stop,i_coff,i_incr
                 else
                   i_strt=0
                   i_stop=i_encx-1
@@ -5050,9 +5280,9 @@ c                  write(6,*) 'i_r=',i_r,i_encx-1
                     call getevent(1,i_event)
                     if (i_debug .ge. 5) then
                        if (i_event(0) .ne. 0) then
-                          write(6,'(1x,a,7i10)')
-     &                        'i_event=',i_event(0),i_event(1),i_event(2)
-     &                        ,i_event(3),i_event(4),i_event(5),i_event(6)
+                         write(6,'(1x,a,7i10)')
+     &                       'i_event=',i_event(0),i_event(1),i_event(2)
+     &                       ,i_event(3),i_event(4),i_event(5),i_event(6)
                        end if
                     end if
                     if (i_event(2) .ne. 9 .or. i_button .ne. 0) call buffer_cmd(i_event,i_bdat,i_bcnt,2,I_BMAX,i_abort,i_debug)
@@ -5130,9 +5360,9 @@ c                              write(6,*) 'row expose: ',int(r_rowlow*i_winrows(
                       do ir=0,i_enrx2-1
 
                         do ic=0,min(i_encx,I_WKSPACE)-1
-                          b_out(ic*3+1) = max(0,min(255,int(r_rdat(ic+ir*i_encx)*256)))
-                          b_out(ic*3+2) = max(0,min(255,int(r_gdat(ic+ir*i_encx)*256)))
-                          b_out(ic*3+3) = max(0,min(255,int(r_bdat(ic+ir*i_encx)*256)))
+                          b_out(ic*3+1) = cnvt_to_byte(max(0,min(255,int(r_rdat(ic+ir*i_encx)*256))))
+                          b_out(ic*3+2) = cnvt_to_byte(max(0,min(255,int(r_gdat(ic+ir*i_encx)*256))))
+                          b_out(ic*3+3) = cnvt_to_byte(max(0,min(255,int(r_bdat(ic+ir*i_encx)*256))))
                         end do
 
                         write(i_pid,rec=2+ir+i_erow-i_ecmd(8),iostat=i_stat) (b_out(ib),ib=1,3*i_encx)
@@ -5243,8 +5473,8 @@ c            write(6,*) ' a_valu:',a_valu
               i_found=3
               call rdf_getfields(a_valu,i_inarg,a_inarg)
               if (i_inarg .ge. 2) then
-                a_tname(i_found)=a_inarg(1)
-                a_tcmnd(i_found)=a_inarg(2)
+                a_tname(i_found)=a_inarg(1)(1:len(a_tname(i_found)))
+                a_tcmnd(i_found)=a_inarg(2)(1:len(a_tcmnd(i_found)))
                 a_twait(i_found)=' '
                 do j=3,i_inarg
                   if (a_inarg(j) .ne. '&') then
@@ -5258,8 +5488,8 @@ c            write(6,*) ' a_valu:',a_valu
               i_found=4
               call rdf_getfields(a_valu,i_inarg,a_inarg)
               if (i_inarg .ge. 2) then
-                a_tname(i_found)=a_inarg(1)
-                a_tcmnd(i_found)=a_inarg(2)
+                a_tname(i_found)=a_inarg(1)(1:len(a_tname(i_found)))
+                a_tcmnd(i_found)=a_inarg(2)(1:len(a_tcmnd(i_found)))
                 a_twait(i_found)=' '
                 do j=3,i_inarg
                   if (a_inarg(j) .ne. '&') then
@@ -5273,8 +5503,8 @@ c            write(6,*) ' a_valu:',a_valu
               i_found=5
               call rdf_getfields(a_valu,i_inarg,a_inarg)
               if (i_inarg .ge. 2) then
-                a_tname(i_found)=a_inarg(1)
-                a_tcmnd(i_found)=a_inarg(2)
+                a_tname(i_found)=a_inarg(1)(1:len(a_tname(i_found)))
+                a_tcmnd(i_found)=a_inarg(2)(1:len(a_tcmnd(i_found)))
                 a_twait(i_found)=' '
                 do j=3,i_inarg
                   if (a_inarg(j) .ne. '&') then
@@ -5288,7 +5518,7 @@ c            write(6,*) ' a_valu:',a_valu
               i_found=1
               call rdf_getfields(a_valu,i_inarg,a_inarg)
               if (i_inarg .ge. 2) then
-                a_clickcmd(1)=a_inarg(2)
+                a_clickcmd(1)=a_inarg(2)(1:len(a_clickcmd(1)))
                 do j=3,i_inarg
                     a_clickcmd(i_found)=a_clickcmd(i_found)(1:rdflen(a_clickcmd(i_found)))//' '//a_inarg(j)
                 end do
@@ -5301,8 +5531,8 @@ c            write(6,*) ' a_valu:',a_valu
               if (i_found .ne. 0) then
                 call rdf_getfields(a_valu,i_inarg,a_inarg)
                 if (i_inarg .ge. 2) then
-                  a_tname(i_found)=a_inarg(1)
-                  a_tcmnd(i_found)=a_inarg(2)
+                  a_tname(i_found)=a_inarg(1)(1:len(a_tname(i_found)))
+                  a_tcmnd(i_found)=a_inarg(2)(1:len(a_tcmnd(i_found)))
                   a_twait(i_found)=' '
                   do j=3,i_inarg
                     if (a_inarg(j) .ne. '&') then
@@ -5323,8 +5553,8 @@ c            write(6,*) ' a_valu:',a_valu
                   i_colormax=I_KMAX
                   write(6,*) 'i_colormax error'
                 end if
-                a_colorname(i_colormax)=a_inarg(1)
-                a_colorfile(i_colormax)=a_inarg(2)
+                a_colorname(i_colormax)=a_inarg(1)(1:len(a_colorname(i_colormax)))
+                a_colorfile(i_colormax)=a_inarg(2)(1:len(a_colorfile(i_colormax)))
 c                write(6,*) 'adding color file: ',a_colorfile(i_colormax)
               end if
             else if (a_keyw .eq. 'delcmap') then
@@ -5443,14 +5673,14 @@ c                write(6,*) 'adding color file: ',a_colorfile(i_colormax)
           integer*4 i_itr
 
 
-c           write(6,*) 'i_cnt=',i_cnt
+c            write(6,*) 'i_cnt=',i_cnt
             r_low=r_val(1)
             r_hgh=r_val(1)
             do i=2,i_cnt
                if (r_val(i) .lt. r_low) r_low=r_val(i)
                if (r_val(i) .gt. r_hgh) r_hgh=r_val(i)
             end do
-c           write(6,*) 'looking for lvl: ',r_lvl
+c            write(6,*) 'looking for lvl: ',r_lvl
             if (r_lvl .le. 0) then
               r_med=r_low
             else if (r_lvl .ge. 1.) then
@@ -5462,10 +5692,10 @@ c           write(6,*) 'looking for lvl: ',r_lvl
               do while(i_hist(i_idx) .gt. max(int(0.00001*i_cnt),1) .and. i_itr .lt. 10 .and.
      &             r_hgh-r_low .gt. 0)
                 i_itr=i_itr+1
-c               write(6,*) 'low,high = ',r_low,r_hgh
-c               write(6,*) 'Loop',i_itr
+c                write(6,*) 'low,high = ',r_low,r_hgh
+c                write(6,*) 'Loop',i_itr
                 r_rng=(r_hgh-r_low)
-c               write(6,*) 'rng = ',r_rng
+c                write(6,*) 'rng = ',r_rng
                 do i=0,11
                   i_hist(i)=0
                 end do
@@ -5477,11 +5707,11 @@ c                  i_idx=min(max(int((10*(r_val(i)-r_low)/(r_rng))+1),0),11)
                 i_sum=0
                 i_idx=0
                 do i=0,11
-c                 write(6,*) 'Hist ',i,i_hist(i)
+c                  write(6,*) 'Hist ',i,i_hist(i)
                   i_sum=i_sum+i_hist(i)
                   if (i_sum .le. i_cnt*r_lvl) i_idx=i+1
                 end do
-c               write(6,*) 'idx = ',i_idx
+c                write(6,*) 'idx = ',i_idx
                 r_low=(r_rng*(float(i_idx-1)/10))+r_low
                 r_hgh=r_low+r_rng/10
               end do
@@ -5490,7 +5720,7 @@ c               write(6,*) 'idx = ',i_idx
               do i=1,i_cnt
                  if ((r_val(i) .ge. r_low) .and. (r_val(i) .le. r_hgh)) then
                    i_num=i_num+1
-c                  write(6,*) 'idx,r_val=',i_num,r_val(i)
+c                   write(6,*) 'idx,r_val=',i_num,r_val(i)
                    r_med = r_med+r_val(i)
                  end if
               end do
@@ -5505,9 +5735,18 @@ c                  write(6,*) 'idx,r_val=',i_num,r_val(i)
                  if (r_val(i) .lt. r_med) i_low=i_low+1
                  if (r_val(i) .gt. r_med) i_hgh=i_hgh+1
               end do
-c             write(6,*) 'balance=',i_low,i_hgh,i_low/float(i_low+i_hgh)
+c              write(6,*) 'balance=',i_low,i_hgh,i_low/float(i_low+i_hgh)
             end if
           return
+        end
+
+        byte function  cnvt_to_byte(i_input)
+
+        implicit none
+        integer*4 i_input
+
+          cnvt_to_byte = i_input
+
         end
 
 
@@ -5552,8 +5791,8 @@ c             write(6,*) 'balance=',i_low,i_hgh,i_low/float(i_low+i_hgh)
         integer i_setvfmt
         integer i_bytes
 
-          goto (10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150), abs(i_setvfmt)+1
-c           write (6,*) 'i_setvbyt error = ',i_bytes
+          goto (10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150,160, 170), abs(i_setvfmt)+1
+c            write (6,*) 'i_setvbyt error = ',i_bytes
             i_bytes=4
             goto 200
 
@@ -5602,6 +5841,12 @@ c           write (6,*) 'i_setvbyt error = ',i_bytes
 150       continue        ! 14 - Real*4_Magnitude
              i_bytes=4
              goto 200
+160        continue        ! 6 - complex magnitude
+             i_bytes=16
+             goto 200
+170        continue        ! 7 - complex phase
+             i_bytes=16
+             goto 200
 200       continue
           i_setvbyt = i_bytes
           return
@@ -5625,8 +5870,8 @@ c           write (6,*) 'i_setvbyt error = ',i_bytes
           integer*4 i_ncx
           integer*4 i_nrx
           integer*4 i_scl
-          integer*4 i_brow
-          integer*4 i_blks
+          integer*4 i_brow            ! Number of lines in action
+          integer*4 i_blks            ! Number of blocks needed to complete action
           integer*4 i_wkspace
 
           integer*4 i_debug
@@ -5676,10 +5921,10 @@ c            if (i_blks .eq. 1 .and. i_nrx .eq. i_brow) i_ecmd(7)= 0        ! Fr
           real*4 r_outp
 
 c            r_outp=r_value-r_wrap*nint((r_value/r_wrap)-0.5)
-c           if (r_outp .eq. r_wrap) r_outp=0.
+c            if (r_outp .eq. r_wrap) r_outp=0.
             r_outp = mod(r_value,r_wrap)
             if (r_value .lt. 0) r_outp=r_wrap-abs(r_outp)
-c           if (r_wrap .eq. 100) write(6,*) '*** value,wrap,mod,outp: ',r_value,r_wrap,mod(r_value,r_wrap),r_outp
+c            if (r_wrap .eq. 100) write(6,*) '*** value,wrap,mod,outp: ',r_value,r_wrap,mod(r_value,r_wrap),r_outp
           wrap=r_outp
           return
 
@@ -5761,15 +6006,15 @@ c*****************************************************************
 
         implicit none
 
-c       INPUT VARIABLES:
+c        INPUT VARIABLES:
         real*8 r_a                    !semimajor axis
         real*8 r_e2                   !eccentricity squared
         real*8 r_peg(3)               !peg latitude,longitude,heading
 
-c       OUTPUT VARIABLES:
+c        OUTPUT VARIABLES:
         real*8 r_atm(3,4)             !rotation matris
 
-c       LOCAL VARIABLES:
+c        LOCAL VARIABLES:
         integer i_type
         real*8 r_hgt
         real*8 r_slt,r_clt,r_clo,r_slo,r_chg,r_shg
@@ -5777,9 +6022,9 @@ c       LOCAL VARIABLES:
         real*8 rdir
         external rdir
 
-c       DATA STATEMENTS:none
+c        DATA STATEMENTS:none
 
-c       PROCESSING STEPS:
+c          PROCESSING STEPS:
 
 c       first determine the rotation matris
 
@@ -5992,7 +6237,7 @@ c*****************************************************************
         real*8 r_a,r_e2,r_lat
 
         rnorth = (r_a*(1.d0 - r_e2))/
-     1                  (1.d0 - r_e2*sin(r_lat)**2)**(1.5d0)
+     1                        (1.d0 - r_e2*sin(r_lat)**2)**(1.5d0)
 
         end
 
@@ -6426,7 +6671,7 @@ c
           r_dd=a11*(a22*a33-a23*a32)-a12*(a21*a33-a23*a31)+
      &         a13*(a21*a32-a22*a31)
 
-          if (r_dd .ne. 0.) then
+          if (abs(r_dd) .gt. epsilon(0.0)) then
             r_b(1,1)=(a22*a33-a23*a32)/r_dd
             r_b(1,2)=(a13*a32-a12*a33)/r_dd
             r_b(1,3)=(a12*a23-a13*a22)/r_dd
@@ -6464,9 +6709,6 @@ c
         integer*4     i_debug
         integer*4     i_err
         real*4        r_setpegv(3)   ! Peg Point
-        real*4        r_row
-        real*4        r_col
-        real*4        r_val
 
         real*4        r_loc11(3)
         real*4        r_loc22(3)
@@ -6565,9 +6807,9 @@ c
                  i_err=1
                  if (i_debug .ge. 1) write(6,*) 'Lat/Long conversion not supported for ',a_setproj(1:max(1,rdflen(a_setproj)))
               end if
-              r_loc22(1)=r_lat
-              r_loc22(2)=r_lon
-              r_loc22(3)=r_hhh
+              r_loc22(1)=real(r_lat)
+              r_loc22(2)=real(r_lon)
+              r_loc22(3)=real(r_hhh)
 
            else  ! convert lat/lon to row/column
 
@@ -6591,9 +6833,9 @@ c
                  call vecaddit(r_mta(1,4),r_loc2,r_loc2)
                  if (i_debug .eq. -6 .or. i_debug .ge. 6) write(6,*) 'tcnxyz=',r_loc2
                  call sch_to_tcn(r_rad,r_loc2,r_lat,r_lon,r_hhh,2) ! convert tcn to sch
-                 r_loc11(1)=r_lon*r_rad ! Convert sch
-                 r_loc11(2)=r_lat*r_rad
-                 r_loc11(3)=r_hhh
+                 r_loc11(1)=real(r_lon*r_rad) ! Convert sch
+                 r_loc11(2)=real(r_lat*r_rad)
+                 r_loc11(3)=real(r_hhh)
               else if (a_setproj .eq. 'scx' .or. a_setproj .eq. 'SCX') then
                  r_hhh=0.0
                  call latlon(r_a,r_e2,r_loc1,r_lat,r_lon,r_hhh,1) ! convert lat/lon to wgs84 xyz
@@ -6605,13 +6847,13 @@ c                 write(6,*) 'peg=',r_setpegv
                  call vecaddit(r_mta(1,4),r_loc2,r_loc2)
                  if (i_debug .eq. -9 .or. i_debug .ge. 9) write(6,*) 'tcnxyz=',r_loc2
                  call sch_to_tcn(r_rad,r_loc2,r_lat,r_lon,r_hhh,2) ! convert tcn to sch
-                 r_loc11(1)=r_lon*r_rad ! Convert sch
-                 r_loc11(2)=r_lat*r_rad
-                 r_loc11(3)=r_hhh
+                 r_loc11(1)=real(r_lon*r_rad) ! Convert sch
+                 r_loc11(2)=real(r_lat*r_rad)
+                 r_loc11(3)=real(r_hhh)
               else if (a_setproj .eq. 'eqa' .or. a_setproj .eq. 'EQA') then
-                 r_loc11(1)=r_lat*r_rtod
-                 r_loc11(2)=r_lon*r_rtod
-                 r_loc11(3)=r_hhh
+                 r_loc11(1)=real(r_lat*r_rtod)
+                 r_loc11(2)=real(r_lon*r_rtod)
+                 r_loc11(3)=real(r_hhh)
               else
                  i_err=1
                  if (i_debug .ge. 1) write(6,*) 'Lat/Long output not supported for ',a_setproj(1:max(1,rdflen(a_setproj)))
@@ -6635,10 +6877,8 @@ c                 write(6,*) 'peg=',r_setpegv
       integer*4 i_debug
 
       integer*4 i
-      integer*4 j
-      integer*4 k
-      integer*4 ii
 
+       if (i_debug .eq. -71) write(6,*) 'In buffer_cmd  ',i_base,i_abort ! dummy debut to avoid unused dummy-argument-error
 c      if ((i_event(0) .eq. 0 .and. i_event(2) .eq. 0) .or. i_event(2) .eq. 9) then
         if ((i_event(0) .eq. 0 .and. i_event(2) .eq. 0) ) then
            ! do nothing
@@ -6671,7 +6911,6 @@ c      if ((i_event(0) .eq. 0 .and. i_event(2) .eq. 0) .or. i_event(2) .eq. 9) t
 
       integer*4     i, j, k
       integer*4     i_cnt
-      integer*4     i_loc
       integer*4     ierr
 
       integer rdflen
@@ -7011,8 +7250,6 @@ c     structure / dspinfo / s_dsp
       parameter(I_CMAX=10)
 
       character*200 a_dspctbl(-I_FMAX:I_CMAX) ! Color table file
-      integer i_dspcnt
-      integer i_dspchnl         ! Number of sets to display
       integer i_dspaddr(-I_FMAX:I_CMAX) ! Add  auto Scale flag
       integer i_dspmult(-I_FMAX:I_CMAX) ! Mult auto Scale flag
       integer i_dspmixv(-I_FMAX:I_CMAX) ! Method to mix set (add, multiply, max, avg)
@@ -7225,7 +7462,6 @@ c
       end do
       if (i_close .ne. 0) a_labl(i_wxi) = 'Close'
 
-      write(6,*) 'i_set=',i_set,I_CMAX
       do i=1,min(i_set,I_CMAX)
          if (a_setname(i) .ne. ' ') then
             a_labl(i+1)=a_setname(i)
@@ -7233,8 +7469,6 @@ c
             write(a_labl(i+1),'(a,i2)') 'Set',i
          end if
       end do
-
-      write(6,*) 'a_labl(i_wxi)=',a_labl(i_wxi)
 
       if (i_winx .ne. 0) then
         i_wxs(0) = i_winx
@@ -7396,12 +7630,12 @@ c             i_cnt = i_cnt + 64
 c             i_cnt = i_cnt + 128
            else if (index(a_tmp,'Magnitude Scale and Shift') .gt. 0) then
              read(a_tmp,*) r_mdnc
-             r_mmul=r_mdnc(1)
-             r_madd=r_mdnc(2)
+             r_mmul=real(r_mdnc(1))
+             r_madd=real(r_mdnc(2))
            else if (index(a_tmp,'Elevation Scale and Shift') .gt. 0) then
              read(a_tmp,*) r_ddnc
-             r_dmul=r_ddnc(1)
-             r_dadd=r_ddnc(2)
+             r_dmul=real(r_ddnc(1))
+             r_dadd=real(r_ddnc(2))
              write(6,*) 'r_dm,r_da=',r_dmul,r_dadd
            else if (index(a_tmp,'Magnitude Bytes per Pixel') .gt. 0) then
              read(a_tmp,*) i_mbytes
@@ -7426,44 +7660,25 @@ c             i_cnt = i_cnt + 128
       subroutine get_airsarinfo(          a_setname,
      &     a_setfile,
      &     a_setproj,
-     &     i_setunit,
      &     i_setrows,
      &     i_setcols,
      &     i_setshdr,
-     &     i_setstlr,
-     &     i_setrhdr,
-     &     i_setrtlr,
-     &     i_setchdr,
-     &     i_setctlr,
-     &     i_setvend,
      &     i_setvfmt,
      &     r_setvmlt,
      &     r_setvadr,
-     &     r_setvmin,
-     &     r_setvmax,
-     &     a_setvnul,
      &     r_setrmlt,
      &     r_setradr,
      &     r_setcmlt,
      &     r_setcadr,
-     &     r_setpegv,
-     &     a_dspctbl   )
+     &     r_setpegv )
 
 c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       character*200 a_setname   ! Parameter name
       character*200 a_setfile   ! Data filename
-      character*200 a_setinfo   ! Header filename
       character*200 a_setproj   ! Projection name
-      integer i_setunit         ! Unit number to read set
       integer i_setrows         ! Number of rows in set
       integer i_setcols         ! Number of columns in set
       integer i_setshdr         ! Number of bytes in set header
-      integer i_setstlr         ! Number of bytes in set trailer
-      integer i_setrhdr         ! Number of bytes in row header
-      integer i_setrtlr         ! Number of bytes in row trailer
-      integer i_setchdr         ! Number of bytes in column header
-      integer i_setctlr         ! Number of bytes in column trailer
-      integer i_setvend         ! Endian flag
       integer i_setvfmt         ! Method to decode columns
       real*4  r_setrmlt         ! Row Scale  for set
       real*4  r_setradr         ! Row Offset for set
@@ -7471,15 +7686,9 @@ c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       real*4  r_setcadr         ! Column Offset for set
       real*4  r_setvmlt         ! Value Scale  for set
       real*4  r_setvadr         ! Value Offset for set
-      real*4  r_setvmin         ! Minimum valid value
-      real*4  r_setvmax         ! Maximum valid value
-      character*16 a_setvnul    ! Invalid value
-      real*4  r_setvavg         ! Average value in set
-      real*4  r_setvstd         ! Standard deviation of values in set
       real*4  r_setpegv(3)      ! Peg Point
 c     end structure
 
-      character*200 a_dspctbl
 
         integer i
         integer i_err
@@ -7541,10 +7750,10 @@ c          write(6,*) 'i_unit=',i_unit
           i_demoff = 0
 #ifdef IO64
           nseek   = ioseek64(i_unit,i_demoff,0)
-c         write(6,*) 'nseek64=',nseek
+c          write(6,*) 'nseek64=',nseek
 #else
           nseek   = ioseek(i_unit,i_demoff,0)
-c         write(6,*) 'nseek=',nseek
+c          write(6,*) 'nseek=',nseek
 #endif
 c          write(6,*) 'i_unit again = ',i_unit
           nread = ioread(i_unit,b_string(1),5000)
@@ -7552,7 +7761,7 @@ c          write(6,*) 'i_unit again = ',i_unit
           i_demoff = -1
           i_magoff = -1
           i_paroff = -1
-c         write(6,*) 'nread=',nread
+c          write(6,*) 'nread=',nread
           nread=5000
           do i=1,(nread-1)/50+1
             if (a_string(i) .eq. ' ') then
@@ -7612,19 +7821,19 @@ c         write(6,*) 'nread=',nread
                 read(a_string(i)(35:),*) r_setcmlt
               else if (index(a_string(i),'ELEVATION INCREMENT (M) =') .gt. 0) then
                 read(a_string(i)(35:),*,iostat=i_err) r_temp
-                if (r_temp .ne. 0.0) r_setvmlt = r_temp
+                if (abs(r_temp) .gt. 0.0) r_setvmlt = r_temp
               else if (index(a_string(i),'ELEVATION OFFSET (M) =') .gt. 0) then
                 read(a_string(i)(35:),*,iostat=i_err) r_setvadr
               else if (index(a_string(i),'LATITUDE OF PEG POINT =') .gt. 0) then
                 read(a_string(i)(35:),*) r_setpegv(1)
-                r_setpegv(1) = r_setpegv(1) / r_rtod
+                r_setpegv(1) = real(r_setpegv(1) / r_rtod)
                 a_setproj = 'sch'
               else if (index(a_string(i),'LONGITUDE OF PEG POINT =') .gt. 0) then
                 read(a_string(i)(35:),*) r_setpegv(2)
-                r_setpegv(2) = r_setpegv(2) / r_rtod
+                r_setpegv(2) = real(r_setpegv(2) / r_rtod)
               else if (index(a_string(i),'HEADING AT PEG POINT (DEGREES) =') .gt. 0) then
                 read(a_string(i)(35:),*) r_setpegv(3)
-                r_setpegv(3) = r_setpegv(3) / r_rtod
+                r_setpegv(3) = real(r_setpegv(3) / r_rtod)
               else if (index(a_string(i),'ALONG-TRACK OFFSET S0 (M) =') .gt. 0) then
                 read(a_string(i)(35:),*) r_setradr
               else if (index(a_string(i),'CROSS-TRACK OFFSET C0 (M) =') .gt. 0) then
@@ -7640,65 +7849,36 @@ c         write(6,*) 'nread=',nread
 
 
 
-      subroutine get_pdsinfo(          a_setname,
+      subroutine get_pdsinfo(
      &     a_setfile,
      &     a_setproj,
-     &     i_setunit,
      &     i_setrows,
      &     i_setcols,
      &     i_setshdr,
-     &     i_setstlr,
      &     i_setrhdr,
-     &     i_setrtlr,
-     &     i_setchdr,
-     &     i_setctlr,
-     &     i_setvend,
      &     i_setvfmt,
-     &     r_setvmlt,
-     &     r_setvadr,
-     &     r_setvmin,
-     &     r_setvmax,
-     &     a_setvnul,
      &     r_setrmlt,
      &     r_setradr,
      &     r_setcmlt,
      &     r_setcadr,
      &     r_setpegv,
-     &     a_dspctbl,i_debug   )
+     &     i_debug   )
 
 c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
-      character*200 a_setname   ! Parameter name
       character*200 a_setfile   ! Data filename
-      character*200 a_setinfo   ! Header filename
       character*200 a_setproj   ! Projection name
-      integer i_setunit         ! Unit number to read set
       integer i_setrows         ! Number of rows in set
       integer i_setcols         ! Number of columns in set
       integer i_setshdr         ! Number of bytes in set header
-      integer i_setstlr         ! Number of bytes in set trailer
       integer i_setrhdr         ! Number of bytes in row header
-      integer i_setrtlr         ! Number of bytes in row trailer
-      integer i_setchdr         ! Number of bytes in column header
-      integer i_setctlr         ! Number of bytes in column trailer
-      integer i_setvend         ! Endian flag
       integer i_setvfmt         ! Method to decode columns
       real*4  r_setrmlt         ! Row Scale  for set
       real*4  r_setradr         ! Row Offset for set
       real*4  r_setcmlt         ! Column Scale  for set
       real*4  r_setcadr         ! Column Offset for set
-      real*4  r_setvmlt         ! Value Scale  for set
-      real*4  r_setvadr         ! Value Offset for set
-      real*4  r_setvmin         ! Minimum valid value
-      real*4  r_setvmax         ! Maximum valid value
-      character*16 a_setvnul    ! Invalid value
-      real*4  r_setvavg         ! Average value in set
-      real*4  r_setvstd         ! Standard deviation of values in set
       real*4  r_setpegv(3)      ! Peg Point
 c     end structure
 
-      character*200 a_dspctbl
-
-        integer i
         integer i_err
         integer i_unit
         integer i_bytes
@@ -7717,7 +7897,6 @@ c     end structure
 
         real*8 r_pi
         real*8 r_rtod
-        real*4 r_temp
 
         integer nread
 
@@ -7770,10 +7949,10 @@ c          write(6,*) 'i_unit=',i_unit
           i_demoff = 0
 #ifdef IO64
           nseek   = ioseek64(i_unit,i_demoff,0)
-c         write(6,*) 'nseek64=',nseek
+c          write(6,*) 'nseek64=',nseek
 #else
           nseek   = ioseek(i_unit,i_demoff,0)
-c         write(6,*) 'nseek=',nseek
+c          write(6,*) 'nseek=',nseek
 #endif
 c          write(6,*) 'i_unit again = ',i_unit
           nread = ioread(i_unit,b_string(1),10000)
@@ -7916,14 +8095,14 @@ c                    write(6,*) 'i_setvfmt = ',i_setvfmt
                   read(a_val,*) r_setcmlt
                 else if (a_key .eq. '  OBLIQUE_PROJ_POLE_LATITUDE') then
                   read(a_val,*) r_setpegv(1)
-                  r_setpegv(1) = r_setpegv(1) / r_rtod
-                a_setproj = 'sch'
+                  r_setpegv(1) = real(r_setpegv(1) / r_rtod)
+                  a_setproj = 'sch'
                 else if (a_key .eq. '  OBLIQUE_PROJ_POLE_LONGITUDE') then
                   read(a_val,*) r_setpegv(2)
-                  r_setpegv(2) = r_setpegv(2) / r_rtod
+                  r_setpegv(2) = real(r_setpegv(2) / r_rtod)
                 else if (a_key .eq. '  OBLIQUE_PROJ_POLE_ROTATION') then
                   read(a_val,*) r_setpegv(3)
-                  r_setpegv(3) = r_setpegv(3) / r_rtod
+                  r_setpegv(3) = real(r_setpegv(3) / r_rtod)
                 else if (a_key .eq. '  LINE_PROJECTION_OFFSET') then
                   read(a_val,*) r_setradr
                 else if (a_key .eq. '  SAMPLE_PROJECTION_OFFSET') then
@@ -7942,60 +8121,33 @@ c                    write(6,*) 'i_setvfmt = ',i_setvfmt
       subroutine get_cubinfo(          a_setname,
      &     a_setfile,
      &     a_setproj,
-     &     i_setunit,
      &     i_setrows,
      &     i_setcols,
      &     i_setshdr,
-     &     i_setstlr,
-     &     i_setrhdr,
-     &     i_setrtlr,
-     &     i_setchdr,
-     &     i_setctlr,
      &     i_setvend,
      &     i_setvfmt,
-     &     r_setvmlt,
-     &     r_setvadr,
-     &     r_setvmin,
-     &     r_setvmax,
-     &     a_setvnul,
      &     r_setrmlt,
      &     r_setradr,
      &     r_setcmlt,
      &     r_setcadr,
      &     r_setpegv,
-     &     a_dspctbl,i_debug   )
+     &     i_debug   )
 
 c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       character*200 a_setname   ! Parameter name
       character*200 a_setfile   ! Data filename
-      character*200 a_setinfo   ! Header filename
       character*200 a_setproj   ! Projection name
-      integer i_setunit         ! Unit number to read set
       integer i_setrows         ! Number of rows in set
       integer i_setcols         ! Number of columns in set
       integer i_setshdr         ! Number of bytes in set header
-      integer i_setstlr         ! Number of bytes in set trailer
-      integer i_setrhdr         ! Number of bytes in row header
-      integer i_setrtlr         ! Number of bytes in row trailer
-      integer i_setchdr         ! Number of bytes in column header
-      integer i_setctlr         ! Number of bytes in column trailer
       integer i_setvend         ! Endian flag
       integer i_setvfmt         ! Method to decode columns
       real*4  r_setrmlt         ! Row Scale  for set
       real*4  r_setradr         ! Row Offset for set
       real*4  r_setcmlt         ! Column Scale  for set
       real*4  r_setcadr         ! Column Offset for set
-      real*4  r_setvmlt         ! Value Scale  for set
-      real*4  r_setvadr         ! Value Offset for set
-      real*4  r_setvmin         ! Minimum valid value
-      real*4  r_setvmax         ! Maximum valid value
-      character*16 a_setvnul    ! Invalid value
-      real*4  r_setvavg         ! Average value in set
-      real*4  r_setvstd         ! Standard deviation of values in set
       real*4  r_setpegv(3)      ! Peg Point
 c     end structure
-
-      character*200 a_dspctbl
 
         integer i
         integer i_err
@@ -8022,7 +8174,6 @@ c     end structure
 
         real*8 r_pi
         real*8 r_rtod
-        real*4 r_temp
 
         integer nread
 
@@ -8075,10 +8226,10 @@ c          write(6,*) 'i_unit=',i_unit
           i_demoff = 0
 #ifdef IO64
           nseek   = ioseek64(i_unit,i_demoff,0)
-c         write(6,*) 'nseek64=',nseek
+c          write(6,*) 'nseek64=',nseek
 #else
           nseek   = ioseek(i_unit,i_demoff,0)
-c         write(6,*) 'nseek=',nseek
+c          write(6,*) 'nseek=',nseek
 #endif
 c          write(6,*) 'i_unit again = ',i_unit
           nread = ioread(i_unit,b_string(1),10000)
@@ -8318,7 +8469,6 @@ c     OUTPUT VARIABLES:
 
 c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       character*200 a_setname   ! Parameter name
-      character*200 a_setfile   ! Data filename
       character*200 a_setinfo   ! Header filename
       character*200 a_setproj   ! Projection name
       integer i_setunit         ! Unit number to read set
@@ -8341,22 +8491,16 @@ c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       real*4  r_setvmin         ! Minimum valid value
       real*4  r_setvmax         ! Maximum valid value
       character*16 a_setvnul    ! Invalid value
-      real*4  r_setvavg         ! Average value in set
-      real*4  r_setvstd         ! Standard deviation of values in set
       real*4  r_setpegv(3)      ! Peg Point
 c     end structure
 
 c     structure / dspinfo / s_dsp
           character*200 a_dspctbl ! Color table file
-          integer i_dspcnt
-          integer i_dspchnl         ! Number of sets to display
           integer i_dspaddr ! Add  auto Scale flag
           integer i_dspmult ! Mult auto Scale flag
           integer i_dspmixv ! Method to mix set (add, multiply, max, avg)
-          integer i_dspnumt ! Number of entries in color table
           integer i_dspmode
           integer i_dspdvdc
-          integer i_dspactv(0:5)
 c          real*4  r_dspredt(0:255) ! Values of red color table
 c          real*4  r_dspgrnt(0:255) ! Values of green color table
 c          real*4  r_dspblut(0:255) ! Values of blue color table
@@ -8366,8 +8510,6 @@ c          real*4  r_dspblut(0:255) ! Values of blue color table
           real*4  r_dspaddr ! Shift data by value
           real*4  r_dspwrap ! Wrap data by value
           real*4  r_dspmult ! Multiply data by value
-          real*4  r_dspvmin ! Min value to display
-          real*4  r_dspvmax ! Max value to display
           real*4  r_dspval1
           real*4  r_dspval2
           real*4  r_dspval3
@@ -8375,21 +8517,11 @@ c     end structure
 
 c     LOCAL VARIABLES:
 
-      integer*4 i
-      integer*4 j
-      integer*4 i_cnt
-      integer*4 i_oper
-      integer*4 i_set
-      integer*4 i_stat
       integer*4 i_flg
       integer*4 i_indx
 
-      character*255 a_tmp
-      character*255 a_set
       character*255 a_key
-      character*255 a_keyword
-      character*255 a_valword
-      character*255 a_value
+      character*320 a_value
 
 c     FUNCTION STATEMENTS:
 
@@ -8466,7 +8598,7 @@ c     write(6,*) ' '
      &     ,i_flg)
       if (i_flg .eq. 1) then
          a_value=rdfdata(a_key(1:max(1,rdflen(a_key)))//'set_name','&')
-         if (a_value .ne. ' ') a_setname = a_value
+         if (a_value .ne. ' ') a_setname = a_value(1:len(a_setname))
       end if
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'set_rows',i_indx
      &     ,i_flg)
@@ -8608,7 +8740,7 @@ c         write(6,*) 'r_setvadr=',a_value
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'val_null',i_indx,i_flg)
       if (i_flg .eq. 1) then
          a_value=rdfdata(a_key(1:max(1,rdflen(a_key)))//'val_null',' ')
-         if (a_value .ne. ' ') a_setvnul = a_value
+         if (a_value .ne. ' ') a_setvnul = a_value(1:len(a_setvnul))
       end if
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'set_plat',i_indx,i_flg)
       if (i_flg .eq. 1) then
@@ -8632,13 +8764,15 @@ c         write(6,*) 'r_setvadr=',a_value
       end if
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'set_proj',i_indx,i_flg)
       if (i_flg .eq. 1) then
-         a_setproj=rdfvalu(a_key(1:max(1,rdflen(a_key)))//'set_proj')
+         a_value=rdfvalu(a_key(1:max(1,rdflen(a_key)))//'set_proj')
+         a_setproj=a_value(1:len(a_setproj))
       end if
 
 
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'dsp_cmap',i_indx,i_flg)
       if (i_flg .eq. 1) then
-         a_dspctbl=rdfvalu(a_key(1:max(1,rdflen(a_key)))//'dsp_cmap')
+         a_value=rdfvalu(a_key(1:max(1,rdflen(a_key)))//'dsp_cmap')
+         a_dspctbl=a_value(1:len(a_dspctbl))
       end if
 
       call rdf_index(a_key(1:max(1,rdflen(a_key)))//'dsp_mode',i_indx,i_flg)
@@ -8721,7 +8855,6 @@ c           write(6,*) 'setting mode to 1'
       subroutine put_setinfo(          a_setname,
      &     a_setinfo,
      &     a_setproj,
-     &     i_setunit,
      &     i_setrows,
      &     i_setcols,
      &     i_setshdr,
@@ -8751,10 +8884,8 @@ c     OUTPUT VARIABLES:
 
 c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       character*200 a_setname   ! Parameter name
-      character*200 a_setfile   ! Data filename
       character*200 a_setinfo   ! Header filename
       character*200 a_setproj   ! Projection name
-      integer i_setunit         ! Unit number to read set
       integer i_setrows         ! Number of rows in set
       integer i_setcols         ! Number of columns in set
       integer i_setshdr         ! Number of bytes in set header
@@ -8774,29 +8905,11 @@ c     structure / set_structure / s_set(-I_FMAX:I_CMAX)
       real*4  r_setvmin         ! Minimum valid value
       real*4  r_setvmax         ! Maximum valid value
       character*16 a_setvnul    ! Invalid value
-      real*4  r_setvavg         ! Average value in set
-      real*4  r_setvstd         ! Standard deviation of values in set
       real*4  r_setpegv(3)      ! Peg Point
 c     end structure
 
 
 c     LOCAL VARIABLES:
-
-      integer*4 i
-      integer*4 j
-      integer*4 i_cnt
-      integer*4 i_oper
-      integer*4 i_set
-      integer*4 i_stat
-      integer*4 i_flg
-      integer*4 i_indx
-
-      character*255 a_tmp
-      character*255 a_set
-      character*255 a_key
-      character*255 a_keyword
-      character*255 a_valword
-      character*255 a_value
 
       character*255 a_data
 
@@ -8952,6 +9065,10 @@ c     FUNCTION STATEMENTS:
          i_fmt = 13
       else if (rdfupper(a_fmt) .eq. 'REAL*4_MAGNITUDE') then
          i_fmt = 14
+      else if (rdfupper(a_fmt) .eq. 'COMPLEX*16_MAGNITUDE') then
+         i_fmt = 15
+      else if (rdfupper(a_fmt) .eq. 'COMPLEX*16_PHASE') then
+         i_fmt = 16
       else
          i_fmt = -1
       endif
@@ -9094,13 +9211,25 @@ c     FUNCTION STATEMENTS:
         write(6,*) '-r4, or -real*4     =  IEEE 4-byte Float file'
         write(6,*) '-c2, or -complex*2  =  Complex*2  (mag and phase sets)'
         write(6,*) '-c8, or -complex*8  =  Complex*8  (mag and phase sets)'
+        write(6,*) '-c16,or -complex*16 =  Complex*8  (mag and phase sets)'
         write(6,*) '-c8mag, or -cmag    =  Magnitude portion of a c8 file only'
         write(6,*) '-c8pha, or -cpha    =  Phase portion of a c8 file only'
+        write(6,*) '-c16mag, or         =  Magnitude portion of a c8 file only'
+        write(6,*) '-c16pha, or         =  Phase portion of a c8 file only'
         write(6,*) '-c2mag              =  Magnitude portion of a c2 file only'
         write(6,*) '-c2pha,             =  Phase portion of a c2 file only'
         write(6,*) '-rmg                =  RMG file (mag and dte sets)'
         write(6,*) '-vfmt or -val_frmt  =  Character string indicating format (i.e. real*4)'
         write(6,*) ' '
+        write(6,*) 'To create a set using simple math functions using previously defined sets, have the'
+        write(6,*) '    set name start with an "=" sign.  Use "s" followed by the set number to indicate'
+        write(6,*) '    the set to use.  For example, to display the sum of set 1 and set 2 use the '
+        write(6,*) '    following: '
+        write(6,*) ' '
+        write(6,*) '        -set =s1+s2'
+        write(6,*) ' '
+        write(6,*) '    The valid operations are + - x /.  Operations are performed left to right on the '
+        write(6,*) '    running total'
         write(6,*) ' '
         write(6,*) 'Please forward any comments or suggestions '
         write(6,*) 'regarding mdx to:  Scott.Shaffer@jpl.nasa.gov    '
@@ -9200,10 +9329,17 @@ c     FUNCTION STATEMENTS:
 
       real r_data(0:i_num-1)
       integer i_data(0:i_num-1)
-      byte b_data(0:400000)
 
-      real r_data2(0:100000)
-      integer i_data2(0:100000)
+      integer I_MAXCOLS
+      parameter(I_MAXCOLS =  200000)  !@#$% This line needs to be modified to match I_MAXCOLS values
+      byte b_data(0:I_MAXCOLS)
+      save b_data
+
+      real*4 r_last
+      real*4 r_next
+
+      integer*4 i_last
+      integer*4 i_next
 
       integer i_checknul
       external i_checknul
@@ -9214,6 +9350,8 @@ c     FUNCTION STATEMENTS:
       byte b_tmp(4)
       real*4 r_tmp
       equivalence(b_tmp,r_tmp)
+
+      i_err=0
 
       if (i_num .gt. 100000) stop 'Error - i_num too big in readdat'
 
@@ -9232,11 +9370,11 @@ c     write(6,*) 'i_rowsize=',i_rowsize
            nseek   = ioseek64(i_setunit,i_strtc,0)
            if (nseek .ne. i_strtc) write(6,*) 'nseek<>i_strtc ',nseek,i_strtc
 
-           i_numxx = i_stopc - i_strtc
+           i_numxx = int(i_stopc - i_strtc)
            nread = ioread(i_setunit,b_data(max(0,-i_colsize*i_col)),i_numxx)
          else
-           i_numxx = i_stopc - i_strtc
-           nread = readfunc(0,-i_setunit,i_strtc,i_numxx,b_data(max(0,-i_colsize*i_col)))
+           i_numxx = int(i_stopc - i_strtc)
+           nread = int(readfunc(0,-i_setunit,i_strtc,i_numxx,b_data(max(0,-i_colsize*i_col))))
 
          end if
 #else
@@ -9263,7 +9401,7 @@ c     write(6,*) 'i_rowsize=',i_rowsize
                if (i_checknul(i_setvbyt(i_setvfmt),b_data(i_pos),b_setvnul) .eq. 0) ! Data not flagged as bad
      &              then
                   r_data(i) = r_cnvrtdat(i_setvfmt,i_setvend,b_data(i_pos))
-                  if (r_data(i) .eq. r_data(i)) then                                ! Check if valid number
+                  if (abs(r_data(i) - r_data(i)) .lt.epsilon(0.0)) then                                ! Check if valid number
                     r_data(i) = r_setvmlt*r_data(i)+r_setvadr
                     i_data(i) = 0
                     if (r_setvmax .gt. r_setvmin) then ! check for bad data outside range
@@ -9289,20 +9427,22 @@ c     write(6,*) 'i_rowsize=',i_rowsize
 c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
          end do
          if (i_setvfmt .lt. 0) then
+           r_last=r_data(0)
+           i_last=i_data(0)
            do i = 0, i_num-1
-             r_data2(i) = r_data(i)
-             i_data2(i) = i_data(i)
-           end do
-           do i = 0, i_num-1
+             r_next=r_data(i)
+             i_next=i_data(i)
              i_ll=max(0,i-1)
              i_hh=min(i_num-1,i+1)
-             if (i_data2(i_ll) .eq. 0 .and. i_data2(i_hh) .eq. 0) then
+             if (i_last .eq. 0 .and. i_data(i_hh) .eq. 0) then
                i_data(i)=0
-               r_data(i)=(r_data2(i_hh)-r_data2(i_ll))/(i_hh-i_ll)
+               r_data(i)=(r_data(i_hh)-r_last)/(i_hh-i_ll)
              else
                i_data(i)=1
                r_data(i)=0
              end if
+             r_last=r_next
+             i_last=i_next
            end do
          end if
       else
@@ -9364,7 +9504,7 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
       equivalence(b_value,r_value8)
 
       r_val=0
-      goto (10,20,30,40,50,60,70,80,90,100,110,120,130,140,150), abs(i_fmt)+1
+      goto (10,20,30,40,50,60,70,80,90,100,110,120,130,140,150,160,170), abs(i_fmt)+1
          stop 'Format not recognized in r_cnvrtdat'
 
 10    continue ! byte
@@ -9428,7 +9568,7 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
              b_value(i) = b_data(9-i)
            end do
          end if
-         r_val = r_value8(1)
+         r_val = real(r_value8(1))
       goto 200
 
 70    continue ! Complex*8 Magnitude
@@ -9444,7 +9584,7 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
          end if
          r_realval = r_value4(1)
          r_imagval = r_value4(2)
-         r_val = sqrt(r_realval**2+r_imagval**2)
+         r_val = real(sqrt(r_realval**2+r_imagval**2))
       goto 200
 
 80    continue ! Complex*8 Phase
@@ -9458,7 +9598,7 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
                b_value(4+i) = b_data(9-i)
             end do
          end if
-         if (r_value4(2) .eq. 0.0 .and. r_value4(1) .eq. 0.0) then
+         if (abs(r_value4(2)) .lt. epsilon(0.0) .and. abs(r_value4(1)) .lt. epsilon(0.0)) then
            r_val=0.0
          else
            r_val = atan2(r_value4(2),r_value4(1))
@@ -9483,9 +9623,9 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
 
 100    continue ! Stokes11
          i_value2(1) = b_data(1)
-         if (i_value2(1) .ge. 128) i_value2(1) = i_value2(1)-256
+         if (i_value2(1) .ge. 128) i_value2(1) = int2(i_value2(1)-256)
          i_value2(2) = b_data(2)
-         if (i_value2(2) .ge. 128) i_value2(2) = i_value2(2)-256
+         if (i_value2(2) .ge. 128) i_value2(2) = int2(i_value2(2)-256)
          r_val = ((float(int(i_value2(2)))/254.0) + 1.5) * 2.**(i_value2(1))
       goto 200
 110   continue ! Complex*2 Magnitude
@@ -9542,6 +9682,44 @@ c     write(6,*) 'r_data=',r_data(i),i,i_row,i_col,i_strtc,i_numxx
            b_value(4) = b_data(1)
          end if
          r_val = abs(r_value4(1))
+      goto 200
+
+160    continue ! Complex*16 Magnitude
+         if (i_end .gt. 0) then
+            do i=1,16
+               b_value(i) = b_data(i)
+            end do
+         else
+            do i=1,4
+               b_value( i  ) = b_data( 5-i)
+               b_value( 4+i) = b_data( 9-i)
+               b_value( 8+i) = b_data(13-i)
+               b_value(12+i) = b_data(17-i)
+            end do
+         end if
+         r_realval = r_value8(1)
+         r_imagval = r_value8(2)
+         r_val = real(sqrt(r_realval**2+r_imagval**2))
+      goto 200
+
+170    continue ! Complex*16 Phase
+         if (i_end .gt. 0) then
+            do i=1,16
+               b_value(i) = b_data(i)
+            end do
+         else
+            do i=1,4
+               b_value( i  ) = b_data( 5-i)
+               b_value( 4+i) = b_data( 9-i)
+               b_value( 8+i) = b_data(13-i)
+               b_value(12+i) = b_data(17-i)
+            end do
+         end if
+         if (abs(r_value8(2)) .lt. epsilon(0.0d0) .and. abs(r_value8(1)) .lt. epsilon(0.0d0)) then
+           r_val=0.0
+         else
+           r_val = real(atan2(r_value8(2),r_value8(1)))
+         end if
       goto 200
 
 
