@@ -39,7 +39,7 @@
                     integer*8 :: acc
                     integer :: irow,band,n,i
 
-                    call getLineBand(acc,carr,band,irow)
+                    call getLineBand_c(acc,carr,band,irow)
                 end subroutine readCpxAmp
 
                 subroutine readAmp(acc,arr,irow,band,n,carr)
@@ -49,7 +49,7 @@
                     integer :: irow,band,n
                     integer :: i
 
-                    call getLineBand(acc,arr,band,irow)
+                    call getLineBand_r4(acc,arr,band,irow)
                     do i=1,n
                         carr(i) = cmplx(arr(i), 0.0)
                     enddo
