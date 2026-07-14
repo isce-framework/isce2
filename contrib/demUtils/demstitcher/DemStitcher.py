@@ -555,6 +555,10 @@ class DemStitcher(Component):
             zip = zipfile.ZipFile(filen,'r')
             import zlib
             zip.extractall(downloadDir)
+            if not os.path.exists(os.path.basename(filen)[0:7] + '.hgt') :
+               if os.path.exists(os.path.basename(filen)[0:7] + '.SRTMGL1.hgt') :
+                  os.rename(os.path.basename(filen)[0:7] + '.SRTMGL1.hgt', os.path.basename(filen)[0:7] + '.hgt')
+
         except:
             self.extract(downloadDir,filen)
 
@@ -563,7 +567,6 @@ class DemStitcher(Component):
 
     def extract(self,downloadDir,filen):
         os.system('unzip -o -qq '    + os.path.join(filen)  + ' -d ' + downloadDir)
-
 
     def defaultName(self,snwe):
         latMin = math.floor(snwe[0])
