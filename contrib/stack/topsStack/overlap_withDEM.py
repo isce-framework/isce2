@@ -21,6 +21,8 @@ def createParser():
             help='Directory with the secondary image')
     parser.add_argument('-s', '--secondary_dir', type=str, dest='secondary', required=True,
             help='Directory with the secondary image')
+    parser.add_argument('--stack_reference_dir', required=True,
+            help='Full-burst stack reference used by overlap resampling')
     parser.add_argument('-d', '--overlap_dir', type=str, dest='overlap', required=True,
             help='Directory with overlap products')
 
@@ -54,10 +56,10 @@ def multilook(intName, alks=5, rlks=15):
 
 
 
-def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceBot, secondaryTop, secondaryBot, azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot , misreg=0.0):
+def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceBot, secondaryTop, secondaryBot, azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot , misreg=0.0, referenceShift=0.0, secondaryShift=0.0, referenceIsStack=False, secondaryIsStack=False):
     # Added by Heresh Fattahi
     '''
-    Estimate separation in frequency due to unit pixel misregistration.
+    Estimate the mean phase response (rad/source pixel).
     '''
     ''' 
     dt = topBurstIfg.azimuthTimeInterval
@@ -82,7 +84,7 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
 
 
 
-    y = np.arange(topStart, topStart+overlapLen)[:,None] * np.ones((overlapLen, topBurstIfg.numberOfSamples))
+    y = np.arange(overlapLen)[:,None] * np.ones((overlapLen, topBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, topBurstIfg.numberOfSamples)) * np.arange(topBurstIfg.numberOfSamples)[None,:]
 
     if os.path.exists(azMasTop) and os.path.exists(rgMasTop):
@@ -91,8 +93,10 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
           xx = np.memmap( rgMasTop, dtype=np.float32, mode='r',
                  shape=(topBurstIfg.numberOfLines, topBurstIfg.numberOfSamples))
     else:
-          yy = 0.0
-          xx = 0.0
+          if not referenceIsStack:
+              raise ValueError('Missing overlap offsets for a resampled date')
+          yy = (topBurstIfg.sensingStart - referenceTop.sensingStart).total_seconds() / referenceTop.azimuthTimeInterval
+          xx = (topBurstIfg.startingRange - referenceTop.startingRange) / referenceTop.rangePixelSize
 
 
     azi = y + yy
@@ -104,13 +108,14 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
     Ka = referenceTop.azimuthFMRate(rng)
 
     Ktm1 = Ks / (1.0 - Ks / Ka)
-    tm1 = (azi - (referenceTop.numberOfLines//2)) * referenceTop.azimuthTimeInterval
+    tm1 = (azi - (referenceTop.numberOfLines//2) + referenceShift) * referenceTop.azimuthTimeInterval
 
     fm1 = referenceTop.doppler(rng)
+    tm1 -= referenceTop.doppler(referenceTop.startingRange) / referenceTop.azimuthFMRate(referenceTop.startingRange) - fm1 / Ka
 
     ##############
     # reference bottom : m2
-    y = np.arange(botStart, botStart + overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
+    y = np.arange(overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, botBurstIfg.numberOfSamples)) * np.arange(botBurstIfg.numberOfSamples)[None,:]
 
     if os.path.exists(azMasBot) and os.path.exists(rgMasBot):
@@ -119,8 +124,10 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
           xx = np.memmap( rgMasBot, dtype=np.float32, mode='r',
                 shape=(botBurstIfg.numberOfLines, botBurstIfg.numberOfSamples))
     else:
-          yy = 0.0
-          xx = 0.0
+          if not referenceIsStack:
+              raise ValueError('Missing overlap offsets for a resampled date')
+          yy = (botBurstIfg.sensingStart - referenceBot.sensingStart).total_seconds() / referenceBot.azimuthTimeInterval
+          xx = (botBurstIfg.startingRange - referenceBot.startingRange) / referenceBot.rangePixelSize
 
     azi = y + yy
     rng = x + xx
@@ -131,13 +138,14 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
     Ka = referenceBot.azimuthFMRate(rng)
 
     Ktm2 = Ks / (1.0 - Ks / Ka)
-    tm2 = (azi - (referenceBot.numberOfLines//2)) * referenceBot.azimuthTimeInterval
+    tm2 = (azi - (referenceBot.numberOfLines//2) + referenceShift) * referenceBot.azimuthTimeInterval
     fm2 = referenceBot.doppler(rng)
+    tm2 -= referenceBot.doppler(referenceBot.startingRange) / referenceBot.azimuthFMRate(referenceBot.startingRange) - fm2 / Ka
 
 
     ##############
     # secondary top : s1
-    y = np.arange(topStart, topStart+overlapLen)[:,None] * np.ones((overlapLen, topBurstIfg.numberOfSamples))
+    y = np.arange(overlapLen)[:,None] * np.ones((overlapLen, topBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, topBurstIfg.numberOfSamples)) * np.arange(topBurstIfg.numberOfSamples)[None,:]
 
     if os.path.exists(azSlvTop) and os.path.exists(rgSlvTop):
@@ -146,8 +154,10 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
           xx = np.memmap( rgSlvTop, dtype=np.float32, mode='r',
                  shape=(topBurstIfg.numberOfLines, topBurstIfg.numberOfSamples))
     else:
-          yy = 0.0
-          xx = 0.0
+          if not secondaryIsStack:
+              raise ValueError('Missing overlap offsets for a resampled date')
+          yy = (topBurstIfg.sensingStart - secondaryTop.sensingStart).total_seconds() / secondaryTop.azimuthTimeInterval
+          xx = (topBurstIfg.startingRange - secondaryTop.startingRange) / secondaryTop.rangePixelSize
     
 
     azi = y + yy + misreg
@@ -164,14 +174,15 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
     Ka = secondaryTop.azimuthFMRate(rng)
 
     Kts1 = Ks / (1.0 - Ks / Ka)
-    ts1 = (azi - (secondaryTop.numberOfLines//2)) * secondaryTop.azimuthTimeInterval
+    ts1 = (azi - (secondaryTop.numberOfLines//2) + secondaryShift) * secondaryTop.azimuthTimeInterval
     fs1 = secondaryTop.doppler(rng)
+    ts1 -= secondaryTop.doppler(secondaryTop.startingRange) / secondaryTop.azimuthFMRate(secondaryTop.startingRange) - fs1 / Ka
 
 
 
     ##############
     # secondary bot : s2
-    y = np.arange(botStart, botStart + overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
+    y = np.arange(overlapLen)[:,None] * np.ones((overlapLen, botBurstIfg.numberOfSamples))
     x = np.ones((overlapLen, botBurstIfg.numberOfSamples)) * np.arange(botBurstIfg.numberOfSamples)[None,:]
 
     ####Bottom secondary
@@ -181,8 +192,10 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
           xx = np.memmap( rgSlvBot, dtype=np.float32, mode='r',
                 shape=(botBurstIfg.numberOfLines, botBurstIfg.numberOfSamples))
     else:
-          yy = 0.0
-          xx = 0.0
+          if not secondaryIsStack:
+              raise ValueError('Missing overlap offsets for a resampled date')
+          yy = (botBurstIfg.sensingStart - secondaryBot.sensingStart).total_seconds() / secondaryBot.azimuthTimeInterval
+          xx = (botBurstIfg.startingRange - secondaryBot.startingRange) / secondaryBot.rangePixelSize
 
     azi = y + yy + misreg
     rng = x + xx
@@ -198,11 +211,17 @@ def overlapSpectralSeparation(topBurstIfg, botBurstIfg, referenceTop, referenceB
     Ka = secondaryBot.azimuthFMRate(rng)
     Kts2 = Ks / (1.0 - Ks / Ka)
 
-    ts2 = (azi - (secondaryBot.numberOfLines//2)) * secondaryBot.azimuthTimeInterval
+    ts2 = (azi - (secondaryBot.numberOfLines//2) + secondaryShift) * secondaryBot.azimuthTimeInterval
     fs2 = secondaryBot.doppler(rng)
+    ts2 -= secondaryBot.doppler(secondaryBot.startingRange) / secondaryBot.azimuthFMRate(secondaryBot.startingRange) - fs2 / Ka
 
     ##############
-    frequencySeparation =  -Ktm2*tm2 + Ktm1*tm1  + Kts1*ts1 - Kts2*ts2 +  fm2 - fm1 + fs1 -fs2
+    # For nearly equal date responses, DD phase / mean response gives the relative shift.
+    fm1 = 2 * np.pi * referenceTop.azimuthTimeInterval * (Ktm1*tm1 + fm1)
+    fm2 = 2 * np.pi * referenceBot.azimuthTimeInterval * (Ktm2*tm2 + fm2)
+    fs1 = 2 * np.pi * secondaryTop.azimuthTimeInterval * (Kts1*ts1 + fs1)
+    fs2 = 2 * np.pi * secondaryBot.azimuthTimeInterval * (Kts2*ts2 + fs2)
+    frequencySeparation = (fm1 - fm2 + fs1 - fs2) / 2
     #print(frequencySeparation)
     #print(tm2)
     #print(tm1)
@@ -254,6 +273,8 @@ def main(iargs=None):
     '''
 
     inps = cmdLineParse(iargs)
+    referenceIsStack = os.path.realpath(inps.reference) == os.path.realpath(inps.stack_reference_dir)
+    secondaryIsStack = os.path.realpath(inps.secondary) == os.path.realpath(inps.stack_reference_dir)
     inps.interferogram = os.path.join(inps.interferogram,'overlap')
     inps.reference = os.path.join(inps.reference,'overlap')
     inps.secondary = os.path.join(inps.secondary,'overlap')
@@ -269,7 +290,13 @@ def main(iargs=None):
         referenceBot = ut.loadProduct(os.path.join(inps.reference , IWstr + '_bottom.xml'))
     
         secondaryTop = ut.loadProduct(os.path.join(inps.secondary, IWstr + '_top.xml'))
-        secondaryBot = ut.loadProduct(os.path.join(inps.secondary, IWstr + '_bottom.xml'))    
+        secondaryBot = ut.loadProduct(os.path.join(inps.secondary, IWstr + '_bottom.xml'))
+        stackReference = ut.loadProduct(os.path.join(inps.stack_reference_dir, IWstr + '.xml'))
+        mOffset, mMin, mMax = stackReference.getCommonBurstLimits(referenceTop.source)
+        sOffset, sMin, sMax = stackReference.getCommonBurstLimits(secondaryTop.source)
+        mShifts = ut.getRelativeShifts(stackReference, referenceTop.source, mMin, mMax, mMin + mOffset)
+        sShifts = ut.getRelativeShifts(stackReference, secondaryTop.source, sMin, sMax, sMin + sOffset)
+
 
 
         ####Load metadata for burst IFGs
@@ -307,8 +334,8 @@ def main(iargs=None):
 
         for ii in range(minBurst, maxBurst + 1):
             ind = ii - minBurst            ###Index into overlaps
-            mind = ii - minReference  ### Index into reference
-            sind = ii - minSecondary   ###Index into secondary
+            mind = ii - 1 + mOffset  ### Index into full source reference
+            sind = ii - 1 + sOffset  ### Index into full source secondary
 
             topBurstIfg = ifgTop.bursts[ind]
             botBurstIfg = ifgBottom.bursts[ind]
@@ -376,10 +403,12 @@ def main(iargs=None):
             sFullBot = secondaryBot.source.bursts[sind+1]
 
             freqdiff = overlapSpectralSeparation(topBurstIfg, botBurstIfg, mFullTop, mFullBot, sFullTop, sFullBot, 
-              azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot)
+              azMasTop, rgMasTop, azMasBot, rgMasBot, azSlvTop, rgSlvTop, azSlvBot, rgSlvBot,
+              referenceShift=-mShifts[mind], secondaryShift=-sShifts[sind],
+              referenceIsStack=referenceIsStack, secondaryIsStack=secondaryIsStack)
 
             with open(freqName, 'wb') as fid:
-                (freqdiff * 2 * np.pi * mFullTop.azimuthTimeInterval).astype(np.float32).tofile(fid)
+                freqdiff.astype(np.float32).tofile(fid)
 
             img = isceobj.createImage()
             img.setFilename(freqName)

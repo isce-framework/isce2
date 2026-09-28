@@ -134,6 +134,7 @@ class config(object):
         self.f.write('overlap_withDEM : '+'\n')
         self.f.write('interferogram : ' + self.interferogramDir +'\n')
         self.f.write('reference_dir : ' + self.referenceDir+'\n')
+        self.f.write('stack_reference_dir : ' + os.path.join(self.work_dir, 'reference') + '\n')
         self.f.write('secondary_dir : ' + self.secondaryDir+'\n')
         self.f.write('overlap_dir : ' + self.overlapDir+'\n')
 
